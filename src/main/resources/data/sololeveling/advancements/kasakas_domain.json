@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:kasakas_venom_fangs"
+    },
+    "title": {
+      "translate": "advancements.kasakas_domain.title"
+    },
+    "description": {
+      "translate": "advancements.kasakas_domain.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "kasakas_domain": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 50
+  },
+  "parent": "sololeveling:explore_dun_instance_c"
+}

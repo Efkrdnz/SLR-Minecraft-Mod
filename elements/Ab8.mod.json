@@ -1,0 +1,12 @@
+{
+  "_fv": 57,
+  "_type": "keybind",
+  "definition": {
+    "triggerKey": "8",
+    "keyBindingName": "Ab 8",
+    "keyBindingCategoryKey": "sololeveling",
+    "onKeyPressed": {
+      "name": "Ab8OnKeyPressed"
+    }
+  }
+}

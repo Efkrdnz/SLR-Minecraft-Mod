@@ -1,0 +1,70 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Entities",
+    "items": [],
+    "blocks": [],
+    "functions": [],
+    "entities": [
+      {
+        "value": "CUSTOM:Attackshard"
+      },
+      {
+        "value": "CUSTOM:ShadowSoul"
+      },
+      {
+        "value": "CUSTOM:PocketDimension"
+      },
+      {
+        "value": "CUSTOM:FlagOfProtection"
+      },
+      {
+        "value": "CUSTOM:BellOfHealing"
+      },
+      {
+        "value": "CUSTOM:BearTrap"
+      },
+      {
+        "value": "CUSTOM:Icecle"
+      },
+      {
+        "value": "CUSTOM:AfterImage"
+      },
+      {
+        "value": "CUSTOM:AfterImage2"
+      },
+      {
+        "value": "CUSTOM:FxPuddle"
+      },
+      {
+        "value": "CUSTOM:IceBall"
+      },
+      {
+        "value": "CUSTOM:AfterImage1"
+      },
+      {
+        "value": "CUSTOM:IceChunk"
+      },
+      {
+        "value": "CUSTOM:DaggerSlash"
+      },
+      {
+        "value": "CUSTOM:Slasheffectsword"
+      },
+      {
+        "value": "CUSTOM:FlameVortex"
+      },
+      {
+        "value": "CUSTOM:FireTornado"
+      },
+      {
+        "value": "CUSTOM:Dragonhead"
+      }
+    ],
+    "biomes": [],
+    "damageTypes": [],
+    "name": "side",
+    "namespace": "minecraft"
+  }
+}

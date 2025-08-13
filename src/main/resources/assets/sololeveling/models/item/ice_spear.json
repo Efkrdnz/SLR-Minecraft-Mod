@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/frostspear",
+  "textures": {
+    "0": "sololeveling:block/frostspear",
+    "particle": "sololeveling:item/icespear"
+  }
+}

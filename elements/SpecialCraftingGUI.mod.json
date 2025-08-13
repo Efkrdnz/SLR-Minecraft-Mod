@@ -1,0 +1,161 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 1,
+    "width": 170,
+    "height": 158,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "systemcrafting.png",
+          "use1Xscale": true,
+          "x": 139,
+          "y": 5
+        }
+      },
+      {
+        "type": "inputslot",
+        "data": {
+          "inputLimit": {
+            "value": "TAG:minecraft:slot_1"
+          },
+          "disablePlacement": {
+            "fixedValue": false
+          },
+          "color": {
+            "value": -16763917,
+            "falpha": 0.0
+          },
+          "id": 0,
+          "disablePickup": {
+            "fixedValue": false
+          },
+          "dropItemsWhenNotBound": true,
+          "x": 178,
+          "y": 26
+        }
+      },
+      {
+        "type": "inputslot",
+        "data": {
+          "inputLimit": {
+            "value": "TAG:minecraft:slot_2"
+          },
+          "disablePlacement": {
+            "fixedValue": false
+          },
+          "color": {
+            "value": -16763917,
+            "falpha": 0.0
+          },
+          "id": 1,
+          "disablePickup": {
+            "fixedValue": false
+          },
+          "dropItemsWhenNotBound": true,
+          "x": 243,
+          "y": 40
+        }
+      },
+      {
+        "type": "inputslot",
+        "data": {
+          "inputLimit": {
+            "value": "TAG:minecraft:slot_3"
+          },
+          "disablePlacement": {
+            "fixedValue": false
+          },
+          "color": {
+            "value": -16763917,
+            "falpha": 0.0
+          },
+          "id": 2,
+          "disablePickup": {
+            "fixedValue": false
+          },
+          "dropItemsWhenNotBound": true,
+          "x": 196,
+          "y": 85
+        }
+      },
+      {
+        "type": "outputslot",
+        "data": {
+          "id": 3,
+          "disablePickup": {
+            "fixedValue": false
+          },
+          "dropItemsWhenNotBound": true,
+          "x": 205,
+          "y": 52
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_systemcraftbutton",
+          "image": "systemcraftbutton.png",
+          "hoveredImage": "systemcraftbuttonhover.png",
+          "onClick": {
+            "name": "CraftButtonClick"
+          },
+          "x": 232,
+          "y": 74
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_weapon_or_rune",
+          "text": {
+            "fixedValue": "Weapon or Rune"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 176,
+          "y": 23
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_potion_or_powerstone",
+          "text": {
+            "fixedValue": "Potion Or Powerstone"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 240,
+          "y": 37
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_manastone",
+          "text": {
+            "fixedValue": "Manastone"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 194,
+          "y": 82
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

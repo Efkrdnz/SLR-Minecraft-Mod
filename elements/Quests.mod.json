@@ -1,0 +1,176 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "panel_rework_empty_small.png",
+          "use1Xscale": false,
+          "x": 113,
+          "y": 35
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_rework_quests_daily",
+          "image": "panel_rework_quests_daily.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "DailyQuestGUIOpen"
+          },
+          "x": 195,
+          "y": 77
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_sslquests_tab",
+          "text": {
+            "fixedValue": " §lQuests Tab"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 185,
+          "y": 61
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_daily_quests",
+          "text": {
+            "fixedValue": "Daily Quests"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 77
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_daily_quests1",
+          "text": {
+            "fixedValue": "Daily Quests"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 77
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_daily_quests2",
+          "text": {
+            "fixedValue": "Daily Quests"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 89
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_daily_quests3",
+          "text": {
+            "fixedValue": "Daily Quests"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 89
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_rework_quests_path",
+          "image": "panel_rework_quests_path.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenPathGui"
+          },
+          "x": 195,
+          "y": 122
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_path",
+          "text": {
+            "fixedValue": "Path"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 122
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_path1",
+          "text": {
+            "fixedValue": "Path"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 122
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_path2",
+          "text": {
+            "fixedValue": "Path"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 134
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_path3",
+          "text": {
+            "fixedValue": "Path"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 134
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

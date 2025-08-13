@@ -1,0 +1,36 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:knight_killer"
+    },
+    "title": {
+      "translate": "advancements.explore_dun_job_change.title"
+    },
+    "description": {
+      "translate": "advancements.explore_dun_job_change.descr"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "explore_dun_job_change": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "biome": "sololeveling:dungeon_biome_igris"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "parent": "sololeveling:awakened"
+}

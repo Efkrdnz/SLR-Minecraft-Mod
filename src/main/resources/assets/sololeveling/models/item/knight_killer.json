@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/knightkillerrework",
+  "textures": {
+    "0": "sololeveling:block/knightkillerrew",
+    "particle": "sololeveling:item/knightkiller"
+  }
+}

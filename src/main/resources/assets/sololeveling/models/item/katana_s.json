@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/stierkatana",
+  "textures": {
+    "0": "sololeveling:block/stierkatana",
+    "particle": "sololeveling:item/dungeonswords"
+  }
+}

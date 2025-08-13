@@ -1,0 +1,556 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "panel3.png",
+          "use1Xscale": true,
+          "x": 128,
+          "y": 3
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_vitality_text",
+          "text": {
+            "fixedValue": "",
+            "name": "VitalityText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 273,
+          "y": 161
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_strength_text",
+          "text": {
+            "fixedValue": "",
+            "name": "StrengthText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 207,
+          "y": 162
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_intelligence_text",
+          "text": {
+            "fixedValue": "",
+            "name": "IntelligenceText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 218,
+          "y": 194
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_speed_text",
+          "text": {
+            "fixedValue": "",
+            "name": "SpeedText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 195,
+          "y": 177
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_level_text",
+          "text": {
+            "fixedValue": "",
+            "name": "LevelText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 265,
+          "y": 38
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_skill_points_text",
+          "text": {
+            "fixedValue": "",
+            "name": "SkillPointsText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 246,
+          "y": 218
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_empty",
+          "text": {
+            "fixedValue": "",
+            "name": "MaxXpText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 254,
+          "y": 60
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest",
+          "image": "invest4.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "StrengthIncrease"
+          },
+          "displayCondition": {
+            "name": "HasSkillPoints"
+          },
+          "x": 150,
+          "y": 162
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_oie_transparent",
+          "image": "invest4.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "SpeedIncrease"
+          },
+          "displayCondition": {
+            "name": "HasSkillPoints"
+          },
+          "x": 150,
+          "y": 177
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_oie_transparent1",
+          "image": "invest4.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "SenseIncrease"
+          },
+          "displayCondition": {
+            "name": "HasSkillPoints"
+          },
+          "x": 225,
+          "y": 177
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_oie_transparent2",
+          "image": "invest4.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "VitalityIncrease"
+          },
+          "displayCondition": {
+            "name": "HasSkillPoints"
+          },
+          "x": 225,
+          "y": 162
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_oie_transparent3",
+          "image": "invest4.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "IntelligenceIncrease"
+          },
+          "displayCondition": {
+            "name": "HasSkillPoints"
+          },
+          "x": 150,
+          "y": 194
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_fatigue_text",
+          "text": {
+            "fixedValue": "",
+            "name": "FatigueText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 273,
+          "y": 84
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_health_text",
+          "text": {
+            "fixedValue": "",
+            "name": "HealthText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 167,
+          "y": 104
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_mana_text_gui",
+          "text": {
+            "fixedValue": "",
+            "name": "ManaTextGUI"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 166,
+          "y": 126
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_title_text",
+          "text": {
+            "fixedValue": "",
+            "name": "TitleText"
+          },
+          "color": {
+            "value": -13312,
+            "falpha": 0.0
+          },
+          "x": 170,
+          "y": 82
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_oie_transparent5",
+          "image": "reward2.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "RewardScreenOpen"
+          },
+          "x": 108,
+          "y": 109
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_oie_transparent6",
+          "image": "oie_transparent.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenTrainingGUI"
+          },
+          "x": 308,
+          "y": 76
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_store",
+          "image": "store.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenStoreGUI"
+          },
+          "x": 108,
+          "y": 76
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_quests",
+          "image": "quests.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "DailyQuestGUIOpen"
+          },
+          "x": 108,
+          "y": 142
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_active_quests",
+          "text": {
+            "fixedValue": "Active Quests"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 104,
+          "y": 136
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_training",
+          "text": {
+            "fixedValue": "Training"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 305,
+          "y": 71
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_daily_rewards",
+          "text": {
+            "fixedValue": "Rewards"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 105,
+          "y": 104
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_shop",
+          "text": {
+            "fixedValue": "Shop"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 105,
+          "y": 71
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_abilities",
+          "image": "abilities.png",
+          "hoveredImage": "abilities.png",
+          "onClick": {
+            "name": "AbilitiesGUIopen"
+          },
+          "x": 308,
+          "y": 142
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_adjust_abilities",
+          "text": {
+            "fixedValue": "Adjust Abilities"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 305,
+          "y": 137
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_craftingmenu",
+          "image": "craftingmenu.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "CraftingGUIopen"
+          },
+          "x": 308,
+          "y": 109
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_craft_special_items",
+          "text": {
+            "fixedValue": "Craft Special Items"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 305,
+          "y": 104
+        }
+      },
+      {
+        "type": "entitymodel",
+        "data": {
+          "entityModel": {
+            "name": "ReturnPlayer"
+          },
+          "scale": 30,
+          "rotationX": 0,
+          "followMouseMovement": true,
+          "x": 313,
+          "y": 46
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_name_and_guild",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnNameAndGuild"
+          },
+          "color": {
+            "value": -3355444,
+            "falpha": 0.0
+          },
+          "x": 174,
+          "y": 37
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_class_name",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnClassName"
+          },
+          "color": {
+            "value": -3355444,
+            "falpha": 0.0
+          },
+          "x": 168,
+          "y": 59
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_sense_text",
+          "text": {
+            "fixedValue": "",
+            "name": "SenseText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 263,
+          "y": 177
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_welcome_player",
+          "text": {
+            "fixedValue": "Welcome Player"
+          },
+          "color": {
+            "value": -6684673,
+            "falpha": 0.0
+          },
+          "x": 181,
+          "y": 14
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_daily",
+          "text": {
+            "fixedValue": "Daily:"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 149,
+          "y": 140
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_timer_text",
+          "text": {
+            "fixedValue": "",
+            "name": "TimerText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 181,
+          "y": 141
+        }
+      }
+    ],
+    "onOpen": {
+      "name": "PanelEarlyThisGUIIsOpened"
+    },
+    "onClosed": {
+      "name": "PanelEarlyThisGUIIsClosed"
+    },
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 18,
+      "oy": 18,
+      "snapOnGrid": false
+    }
+  }
+}

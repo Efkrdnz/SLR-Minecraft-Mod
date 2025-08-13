@@ -1,0 +1,23 @@
+{
+  "display": {
+    "background": "sololeveling:textures/screens/base.png",
+    "icon": {
+      "item": "sololeveling:creativetabitem"
+    },
+    "title": {
+      "translate": "advancements.rulers_will.title"
+    },
+    "description": {
+      "translate": "advancements.rulers_will.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "rulers_will": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

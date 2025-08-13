@@ -1,0 +1,11 @@
+{
+  "_fv": 57,
+  "_type": "tab",
+  "definition": {
+    "name": "Dungeon Portals",
+    "icon": {
+      "value": "CUSTOM:Creativetabitem"
+    },
+    "showSearch": false
+  }
+}

@@ -1,0 +1,169 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.sungjinarmor - Converted - Converted",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 3.5,
+				"visible_bounds_offset": [0, 1.25, 0]
+			},
+			"bones": [
+				{
+					"name": "Body",
+					"pivot": [0, 24, 0],
+					"cubes": [
+						{
+							"origin": [-4, 11.75, -2.5],
+							"size": [8, 12.5, 5],
+							"uv": {
+								"north": {"uv": [4, 20], "uv_size": [8, 12]},
+								"east": {"uv": [0, 20], "uv_size": [4, 12]},
+								"south": {"uv": [16, 20], "uv_size": [8, 12]},
+								"west": {"uv": [12, 20], "uv_size": [4, 12]},
+								"up": {"uv": [4, 16], "uv_size": [8, 4]},
+								"down": {"uv": [12, 20], "uv_size": [8, -4]}
+							}
+						}
+					]
+				},
+				{
+					"name": "RightArm",
+					"pivot": [-5, 22, 0],
+					"cubes": [
+						{
+							"origin": [-8.5, 20, -2.5],
+							"size": [4.5, 4, 5],
+							"inflate": 0.2,
+							"uv": {
+								"north": {"uv": [38, 23], "uv_size": [4, 4]},
+								"east": {"uv": [34, 23], "uv_size": [4, 4]},
+								"south": {"uv": [46, 23], "uv_size": [4, 4]},
+								"west": {"uv": [42, 23], "uv_size": [4, 4]},
+								"up": {"uv": [38, 19], "uv_size": [4, 4]},
+								"down": {"uv": [42, 23], "uv_size": [4, -4]}
+							}
+						},
+						{
+							"origin": [-8, 15, -2.25],
+							"size": [4.25, 1, 4.5],
+							"inflate": 0.2,
+							"pivot": [-6, 17, 0],
+							"rotation": [0, 0, 22.5],
+							"uv": {
+								"north": {"uv": [38, 31], "uv_size": [4, 1]},
+								"east": {"uv": [34, 31], "uv_size": [4, 1]},
+								"south": {"uv": [46, 31], "uv_size": [4, 1]},
+								"west": {"uv": [42, 31], "uv_size": [4, 1]},
+								"up": {"uv": [38, 27], "uv_size": [4, 4]},
+								"down": {"uv": [42, 31], "uv_size": [4, -4]}
+							}
+						},
+						{
+							"origin": [-8.5, 12, -2.25],
+							"size": [4.5, 12, 4.25],
+							"uv": {
+								"north": {"uv": [20, 39], "uv_size": [4, 12]},
+								"east": {"uv": [16, 39], "uv_size": [4, 12]},
+								"south": {"uv": [28, 39], "uv_size": [4, 12]},
+								"west": {"uv": [24, 39], "uv_size": [4, 12]},
+								"up": {"uv": [20, 35], "uv_size": [4, 4]},
+								"down": {"uv": [24, 39], "uv_size": [4, -4]}
+							}
+						}
+					]
+				},
+				{
+					"name": "rightaura",
+					"parent": "RightArm",
+					"pivot": [-6, 17, 2],
+					"cubes": [
+						{
+							"origin": [-6.25, 9, 1],
+							"size": [0, 18, 10],
+							"pivot": [-6, 17, 2],
+							"rotation": [0, -45, 0],
+							"uv": {
+								"north": {"uv": [54, 46], "uv_size": [0, 18]},
+								"east": {"uv": [44, 46], "uv_size": [10, 18]},
+								"south": {"uv": [64, 46], "uv_size": [0, 18]},
+								"west": {"uv": [54, 46], "uv_size": [10, 18]},
+								"up": {"uv": [54, 36], "uv_size": [0, 10]},
+								"down": {"uv": [54, 46], "uv_size": [0, -10]}
+							}
+						}
+					]
+				},
+				{
+					"name": "LeftArm",
+					"pivot": [5, 22, 0],
+					"cubes": [
+						{
+							"origin": [4, 20, -2.5],
+							"size": [4.5, 4, 5],
+							"inflate": 0.2,
+							"uv": {
+								"north": {"uv": [42, 23], "uv_size": [-4, 4]},
+								"east": {"uv": [46, 23], "uv_size": [-4, 4]},
+								"south": {"uv": [50, 23], "uv_size": [-4, 4]},
+								"west": {"uv": [38, 23], "uv_size": [-4, 4]},
+								"up": {"uv": [42, 19], "uv_size": [-4, 4]},
+								"down": {"uv": [46, 23], "uv_size": [-4, -4]}
+							}
+						},
+						{
+							"origin": [3.75, 15, -2.25],
+							"size": [4.25, 1, 4.5],
+							"inflate": 0.2,
+							"pivot": [6, 17, 0],
+							"rotation": [0, 0, -22.5],
+							"uv": {
+								"north": {"uv": [42, 31], "uv_size": [-4, 1]},
+								"east": {"uv": [46, 31], "uv_size": [-4, 1]},
+								"south": {"uv": [50, 31], "uv_size": [-4, 1]},
+								"west": {"uv": [38, 31], "uv_size": [-4, 1]},
+								"up": {"uv": [42, 27], "uv_size": [-4, 4]},
+								"down": {"uv": [46, 31], "uv_size": [-4, -4]}
+							}
+						},
+						{
+							"origin": [4, 12, -2.25],
+							"size": [4.25, 12, 4.5],
+							"uv": {
+								"north": {"uv": [24, 39], "uv_size": [-4, 12]},
+								"east": {"uv": [28, 39], "uv_size": [-4, 12]},
+								"south": {"uv": [32, 39], "uv_size": [-4, 12]},
+								"west": {"uv": [20, 39], "uv_size": [-4, 12]},
+								"up": {"uv": [24, 35], "uv_size": [-4, 4]},
+								"down": {"uv": [28, 39], "uv_size": [-4, -4]}
+							}
+						}
+					]
+				},
+				{
+					"name": "leftaura",
+					"parent": "LeftArm",
+					"pivot": [6, 17, 2],
+					"cubes": [
+						{
+							"origin": [6.25, 9, 1],
+							"size": [0, 18, 10],
+							"pivot": [6, 17, 2],
+							"rotation": [0, 45, 0],
+							"uv": {
+								"north": {"uv": [54, 46], "uv_size": [0, 18]},
+								"east": {"uv": [64, 46], "uv_size": [-10, 18]},
+								"south": {"uv": [64, 46], "uv_size": [0, 18]},
+								"west": {"uv": [54, 46], "uv_size": [-10, 18]},
+								"up": {"uv": [54, 36], "uv_size": [0, 10]},
+								"down": {"uv": [54, 46], "uv_size": [0, -10]}
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

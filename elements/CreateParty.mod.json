@@ -1,0 +1,10 @@
+{
+  "_fv": 57,
+  "_type": "command",
+  "definition": {
+    "commandName": "Party",
+    "type": "STANDARD",
+    "permissionLevel": "No requirement",
+    "argsxml": "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"args_start\" deletable=\"false\" x=\"68\" y=\"96\"><next><block type=\"literal\"><field name=\"name\">Create</field><statement name=\"args\"><block type=\"string\"><field name=\"type\">word</field><field name=\"name\">name</field><statement name=\"args\"><block type=\"string\"><field name=\"type\">word</field><field name=\"name\">pass</field><statement name=\"args\"><block type=\"call_procedure\"><field name=\"procedure\">CreatingParty</field></block></statement></block></statement></block></statement><next><block type=\"literal\"><field name=\"name\">Join</field><statement name=\"args\"><block type=\"string\"><field name=\"type\">word</field><field name=\"name\">name</field><statement name=\"args\"><block type=\"string\"><field name=\"type\">word</field><field name=\"name\">pass</field><statement name=\"args\"><block type=\"call_procedure\"><field name=\"procedure\">JoiningParty</field></block></statement></block></statement></block></statement><next><block type=\"literal\"><field name=\"name\">Leave</field><statement name=\"args\"><block type=\"call_procedure\"><field name=\"procedure\">PartyLeave</field></block></statement><next><block type=\"literal\"><field name=\"name\">Members</field><statement name=\"args\"><block type=\"call_procedure\"><field name=\"procedure\">PartyMembers</field></block></statement><next><block type=\"literal\"><field name=\"name\">Show</field><statement name=\"args\"><block type=\"call_procedure\"><field name=\"procedure\">PartyShow</field></block></statement></block></next></block></next></block></next></block></next></block></next></block></xml>"
+  }
+}

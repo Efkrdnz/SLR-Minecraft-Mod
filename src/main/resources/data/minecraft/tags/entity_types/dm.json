@@ -1,0 +1,33 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:igris",
+    "sololeveling:orc",
+    "sololeveling:beru_boss",
+    "sololeveling:gem_golem",
+    "sololeveling:d_knight_1",
+    "sololeveling:d_knight_2",
+    "sololeveling:d_knight_3",
+    "sololeveling:mini_gem_golem",
+    "sololeveling:kasaka",
+    "sololeveling:steel_fang_wolf",
+    "sololeveling:ancient_samurai",
+    "sololeveling:baruka",
+    "sololeveling:centipede",
+    "sololeveling:polar_bear",
+    "sololeveling:stone_golem",
+    "sololeveling:ice_elf",
+    "sololeveling:futuristic_golem",
+    "sololeveling:mutated",
+    "sololeveling:goblin_club",
+    "sololeveling:goblin_king",
+    "sololeveling:goblin_mage",
+    "sololeveling:goblin_archer",
+    "#soloboss",
+    "sololeveling:ancient_golem",
+    "sololeveling:green_orc",
+    "sololeveling:high_orc",
+    "sololeveling:skeleton_brute",
+    "sololeveling:skeleton_warrior"
+  ]
+}

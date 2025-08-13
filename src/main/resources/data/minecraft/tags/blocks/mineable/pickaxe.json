@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:golem_drop_block_gem",
+    "sololeveling:wooden_passage_open",
+    "sololeveling:cell_door_closed",
+    "sololeveling:cell_door_open",
+    "sololeveling:dungeon_wall_small",
+    "sololeveling:dungeon_barrel",
+    "sololeveling:dungeon_grave_1",
+    "sololeveling:dungeon_grave_2"
+  ]
+}

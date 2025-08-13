@@ -1,0 +1,10 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "soul_sand_valley",
+  "spawners": {
+    "type": "sololeveling:sung_jin_woo",
+    "weight": 1,
+    "minCount": 1,
+    "maxCount": 1
+  }
+}

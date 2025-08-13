@@ -1,0 +1,235 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": true,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "panel_rework_vertical2_purple.png",
+          "use1Xscale": true,
+          "x": 114,
+          "y": 8
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_rework_rewardbutton_purple",
+          "image": "panel_rework_rewardbutton_purple.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "KnightExchangeSave"
+          },
+          "displayCondition": {
+            "name": "DoesHaveKnights"
+          },
+          "x": 182,
+          "y": 49
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_knight",
+          "text": {
+            "fixedValue": "Knight"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "displayCondition": {
+            "name": "DoesHaveKnights"
+          },
+          "x": 198,
+          "y": 55
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_rework_rewardbutton_purple1",
+          "image": "panel_rework_rewardbutton_purple.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "GoblinClubExchangeSave"
+          },
+          "displayCondition": {
+            "name": "DoesHaveGoblin"
+          },
+          "x": 182,
+          "y": 74
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_goblin_club",
+          "text": {
+            "fixedValue": "Goblin Club"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "displayCondition": {
+            "name": "DoesHaveGoblin"
+          },
+          "x": 186,
+          "y": 81
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_rework_rewardbutton_purple2",
+          "image": "panel_rework_rewardbutton2_purple.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "GoblinArcherExchangeSave"
+          },
+          "displayCondition": {
+            "name": "DoesHaveGoblinArcher"
+          },
+          "x": 166,
+          "y": 99
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_goblin_archer",
+          "text": {
+            "fixedValue": "Goblin Archer"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "displayCondition": {
+            "name": "DoesHaveGoblinArcher"
+          },
+          "x": 180,
+          "y": 105
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_rework_rewardbutton2_purpl",
+          "image": "panel_rework_rewardbutton_purple.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "GoblinMageExchangeSave"
+          },
+          "displayCondition": {
+            "name": "DoesHaveGoblinMage"
+          },
+          "x": 182,
+          "y": 124
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_goblin_mage",
+          "text": {
+            "fixedValue": "Goblin Mage"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "displayCondition": {
+            "name": "DoesHaveGoblinMage"
+          },
+          "x": 186,
+          "y": 131
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_rework_rewardbutton_purple3",
+          "image": "panel_rework_rewardbutton_purple.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "LycanExchangeSave"
+          },
+          "displayCondition": {
+            "name": "DoesHaveWolf"
+          },
+          "x": 182,
+          "y": 149
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_lycan",
+          "text": {
+            "fixedValue": "Lycan"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "displayCondition": {
+            "name": "DoesHaveWolf"
+          },
+          "x": 200,
+          "y": 156
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_rework_rewardbutton2_purpl1",
+          "image": "panel_rework_rewardbutton_purple.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "PolarBearExchangeSave"
+          },
+          "displayCondition": {
+            "name": "DoesHavePolarBear"
+          },
+          "x": 182,
+          "y": 173
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_polar_bear",
+          "text": {
+            "fixedValue": "Polar Bear"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "displayCondition": {
+            "name": "DoesHavePolarBear"
+          },
+          "x": 188,
+          "y": 180
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

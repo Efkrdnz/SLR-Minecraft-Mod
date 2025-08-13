@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/igrislongsword",
+  "textures": {
+    "0": "sololeveling:block/igrislongswordtexture",
+    "particle": "sololeveling:item/igrislongswordtexture"
+  }
+}

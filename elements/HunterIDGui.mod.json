@@ -1,0 +1,122 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "idcard1.png",
+          "use1Xscale": false,
+          "x": 126,
+          "y": 65
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_hunters_association",
+          "text": {
+            "fixedValue": "§lHunters Association"
+          },
+          "color": {
+            "value": -13421569,
+            "falpha": 0.0
+          },
+          "x": 159,
+          "y": 80
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_hunter_id_card",
+          "text": {
+            "fixedValue": "§lHunter ID Card"
+          },
+          "color": {
+            "value": -13421569,
+            "falpha": 0.0
+          },
+          "x": 168,
+          "y": 89
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_id_person",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnIDPerson"
+          },
+          "color": {
+            "value": -12829636,
+            "falpha": 0.0
+          },
+          "x": 138,
+          "y": 120
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_id_rank",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnIDRank"
+          },
+          "color": {
+            "value": -12829636,
+            "falpha": 0.0
+          },
+          "x": 138,
+          "y": 136
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_id_class",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnIDClass"
+          },
+          "color": {
+            "value": -12829636,
+            "falpha": 0.0
+          },
+          "x": 138,
+          "y": 153
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_certified_hunter",
+          "text": {
+            "fixedValue": "Certified Hunter"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 255,
+          "y": 145
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

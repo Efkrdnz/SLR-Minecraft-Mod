@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "3": "dagger_3"
+      },
+      "name": "default"
+    }
+  }
+}

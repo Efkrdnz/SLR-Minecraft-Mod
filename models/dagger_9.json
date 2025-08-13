@@ -1,0 +1,92 @@
+{
+	"credit": "wolf_awwent made with blockbench",
+	"texture_size": [32, 32],
+	"textures": {
+		"4": "modelfoundry:mega_weapon_pack/dagger_9",
+		"particle": "modelfoundry:mega_weapon_pack/dagger_9_e"
+	},
+	"elements": [
+		{
+			"from": [7.5, 4.97553, 7.25],
+			"to": [8.5, 8.97553, 8.75],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8.25, 8.3372, 9.91115]},
+			"faces": {
+				"north": {"uv": [10, 9, 9.5, 11], "texture": "#4"},
+				"east": {"uv": [7.75, 9, 7, 11], "texture": "#4"},
+				"south": {"uv": [9.5, 9, 9, 11], "texture": "#4"},
+				"west": {"uv": [8.75, 9, 8, 11], "texture": "#4"},
+				"up": {"uv": [10.5, 9, 10, 9.75], "texture": "#4"},
+				"down": {"uv": [10.5, 10.75, 10, 10], "texture": "#4"}
+			}
+		},
+		{
+			"from": [8, 6.97553, 0.375],
+			"to": [8, 24.97553, 15.625],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8.3372, 9.28615]},
+			"faces": {
+				"north": {"uv": [0, 0, 0, 9], "texture": "#4"},
+				"east": {"uv": [7.75, 0, 0, 9], "texture": "#4"},
+				"south": {"uv": [0, 0, 0, 9], "texture": "#4"},
+				"west": {"uv": [15.75, 0, 8, 9], "texture": "#4"},
+				"up": {"uv": [0, 0, 0, 7.75], "texture": "#4"},
+				"down": {"uv": [0, 7.75, 0, 0], "texture": "#4"}
+			}
+		},
+		{
+			"from": [8, -2.02447, 4.5],
+			"to": [8, 5.97553, 11.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8.3372, 12.16115]},
+			"faces": {
+				"north": {"uv": [0, 0, 0, 4], "texture": "#4"},
+				"east": {"uv": [3.5, 9, 0, 13], "texture": "#4"},
+				"south": {"uv": [0, 0, 0, 4], "texture": "#4"},
+				"west": {"uv": [7, 9, 3.5, 13], "texture": "#4"},
+				"up": {"uv": [0, 0, 0, 3.5], "texture": "#4"},
+				"down": {"uv": [0, 3.5, 0, 0], "texture": "#4"}
+			}
+		}
+	],
+	"gui_light": "front",
+	"display": {
+		"thirdperson_righthand": {
+			"translation": [0, -0.25, 0.75]
+		},
+		"thirdperson_lefthand": {
+			"translation": [0, -0.25, 0.75]
+		},
+		"firstperson_righthand": {
+			"rotation": [-29.01, 1.76, 0.96],
+			"translation": [1.75, 1.75, 0]
+		},
+		"firstperson_lefthand": {
+			"rotation": [-29.01, 1.76, 0.96],
+			"translation": [1.75, 1.75, 0]
+		},
+		"ground": {
+			"rotation": [-31.91, -6.41, 22.24],
+			"translation": [0, 3.75, 0],
+			"scale": [0.8, 0.8, 0.8]
+		},
+		"gui": {
+			"rotation": [-90, 39.25, 90],
+			"translation": [2.25, -1.25, 0],
+			"scale": [0.8, 0.8, 0.8]
+		},
+		"head": {
+			"rotation": [-90, 42.5, -90],
+			"translation": [-1.75, -15.5, 4.75]
+		},
+		"fixed": {
+			"rotation": [-90, 46.75, 90],
+			"translation": [1.75, -2, 0]
+		}
+	},
+	"groups": [
+		{
+			"name": "group",
+			"origin": [-4, 5.72553, 8.625],
+			"color": 0,
+			"children": [0, 1, 2]
+		}
+	]
+}

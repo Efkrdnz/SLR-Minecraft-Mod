@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "3": "kasakas_venom_fang"
+      },
+      "name": "default"
+    }
+  }
+}

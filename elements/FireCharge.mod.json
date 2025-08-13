@@ -1,0 +1,96 @@
+{
+  "_fv": 57,
+  "_type": "overlay",
+  "definition": {
+    "priority": "NORMAL",
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "firecharge1.png",
+          "use1Xscale": false,
+          "displayCondition": {
+            "name": "FireCharge1"
+          },
+          "anchorPoint": "CENTER",
+          "x": 197,
+          "y": 110
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "firecharge1.png",
+          "use1Xscale": false,
+          "displayCondition": {
+            "name": "FireCharge1"
+          },
+          "anchorPoint": "CENTER",
+          "x": 198,
+          "y": 110
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "firecharge2.png",
+          "use1Xscale": false,
+          "displayCondition": {
+            "name": "FireCharg2"
+          },
+          "anchorPoint": "CENTER",
+          "x": 197,
+          "y": 110
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "firecharge2.png",
+          "use1Xscale": false,
+          "displayCondition": {
+            "name": "FireCharg2"
+          },
+          "anchorPoint": "CENTER",
+          "x": 198,
+          "y": 110
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "firecharge3.png",
+          "use1Xscale": false,
+          "displayCondition": {
+            "name": "FireCharge3"
+          },
+          "anchorPoint": "CENTER",
+          "x": 197,
+          "y": 110
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "firecharge3.png",
+          "use1Xscale": false,
+          "displayCondition": {
+            "name": "FireCharge3"
+          },
+          "anchorPoint": "CENTER",
+          "x": 198,
+          "y": 110
+        }
+      }
+    ],
+    "baseTexture": "",
+    "overlayTarget": "Ingame",
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

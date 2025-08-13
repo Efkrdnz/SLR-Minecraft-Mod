@@ -1,0 +1,54 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"idle": {
+			"loop": true,
+			"bones": {
+				"root": {
+					"rotation": [-57.5, 0, 0],
+					"position": [0, -9, -15]
+				},
+				"LeftLeg": {
+					"rotation": [-25.43821, 8.31227, -42.22033]
+				},
+				"bone9": {
+					"rotation": [5.59237, 28.84006, 31.52182]
+				},
+				"RightLeg": {
+					"rotation": [-44.61874, 8.64917, 5.03837]
+				},
+				"bone11": {
+					"rotation": [45, 0, 0]
+				},
+				"bone12": {
+					"rotation": [37.5, 0, 0]
+				},
+				"Body": {
+					"rotation": [62.5, 0, 0]
+				},
+				"Head": {
+					"rotation": [42.5, 0, 0]
+				},
+				"Cape": {
+					"rotation": [27.5, 0, 0]
+				},
+				"RightArm": {
+					"rotation": [-39.97766, 1.15408, 2.21783]
+				},
+				"bone": {
+					"rotation": [-78.96655, -50.33155, 57.60231]
+				},
+				"Sword": {
+					"rotation": [69.6389, -19.56045, 15.57825],
+					"position": [4.3663, -0.0955, 11.22169]
+				},
+				"LeftArm": {
+					"rotation": [-52.5, 0, 0]
+				},
+				"bone7": {
+					"rotation": [0, 0, 42.5]
+				}
+			}
+		}
+	}
+}

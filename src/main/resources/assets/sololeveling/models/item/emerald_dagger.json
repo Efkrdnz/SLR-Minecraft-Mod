@@ -1,0 +1,10 @@
+{
+  "parent": "sololeveling:custom/emeralddagger",
+  "textures": {
+    "0": "sololeveling:block/woodtext",
+    "1": "sololeveling:block/image",
+    "2": "sololeveling:block/bladetext",
+    "missing": "sololeveling:block/",
+    "particle": "sololeveling:item/testsword"
+  }
+}

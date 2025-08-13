@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "sololeveling:block/deepslate_keyblock"
+    },
+    "facing=east": {
+      "model": "sololeveling:block/deepslate_keyblock",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "sololeveling:block/deepslate_keyblock",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "sololeveling:block/deepslate_keyblock",
+      "y": 270
+    }
+  }
+}

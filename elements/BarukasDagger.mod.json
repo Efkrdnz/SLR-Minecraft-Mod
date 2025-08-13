@@ -1,0 +1,41 @@
+{
+  "_fv": 57,
+  "_type": "tool",
+  "definition": {
+    "toolType": "Sword",
+    "renderType": 1,
+    "blockingRenderType": 0,
+    "texture": "barukadagger",
+    "customModelName": "barukadagger:default",
+    "blockingModelName": "Normal blocking",
+    "name": "§6Barukas Dagger",
+    "specialInformation": {
+      "fixedValue": [
+        "§6LEVEL OF DIFFICULTY: A",
+        "§6TYPE: DAGGER",
+        "§6ATTACK: +110",
+        "§6AGILITY: +10",
+        "§6THIS DAGGER  WAS ONCE USED BY WARLORD \"BARUKA\" ",
+        "§6THIS WEAPON IS INFUSED WITH MAGIC THAT REDUCES THE WEIGHT OF ITS WIELDER",
+        "§6ALLOWING FOR GREATER AGILITY"
+      ]
+    },
+    "creativeTab": {
+      "value": "CUSTOM:SoloLevelingWeapons"
+    },
+    "harvestLevel": 1,
+    "efficiency": 4.0,
+    "attackSpeed": 2.0,
+    "enchantability": 2,
+    "damageVsEntity": 9.0,
+    "usageCount": 0,
+    "blocksAffected": [],
+    "glowCondition": {
+      "fixedValue": false
+    },
+    "repairItems": [],
+    "immuneToFire": false,
+    "stayInGridWhenCrafting": false,
+    "damageOnCrafting": false
+  }
+}

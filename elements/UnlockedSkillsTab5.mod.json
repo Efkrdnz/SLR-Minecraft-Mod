@@ -1,0 +1,359 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "big_frame2.png",
+          "use1Xscale": true,
+          "x": 139,
+          "y": 12
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_plist_return_1",
+          "text": {
+            "fixedValue": "",
+            "name": "PlistReturn33"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 153,
+          "y": 32
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_plist_return_2",
+          "text": {
+            "fixedValue": "",
+            "name": "PlistReturn34"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 153,
+          "y": 51
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_plist_return_3",
+          "text": {
+            "fixedValue": "",
+            "name": "PlistReturn35"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 153,
+          "y": 70
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_plist_return_4",
+          "text": {
+            "fixedValue": "",
+            "name": "PlistReturn36"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 153,
+          "y": 89
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_button1",
+          "image": "button1.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenAbilitylist4"
+          },
+          "x": 87,
+          "y": 93
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_empty",
+          "text": {
+            "fixedValue": "<<<<<<"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 94,
+          "y": 98
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_button11",
+          "image": "button1.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenAbilitylist6"
+          },
+          "x": 294,
+          "y": 93
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_empty1",
+          "text": {
+            "fixedValue": ">>>>>>"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 303,
+          "y": 98
+        }
+      },
+      {
+        "type": "button",
+        "data": {
+          "name": "button_equip",
+          "text": "equip",
+          "isUndecorated": false,
+          "onClick": {
+            "name": "AbilityAppendButton33"
+          },
+          "displayCondition": {
+            "name": "PlistButtonCon33"
+          },
+          "width": 51,
+          "height": 20,
+          "x": 232,
+          "y": 25
+        }
+      },
+      {
+        "type": "button",
+        "data": {
+          "name": "button_equip1",
+          "text": "equip",
+          "isUndecorated": false,
+          "onClick": {
+            "name": "AbilityAppendButton34"
+          },
+          "displayCondition": {
+            "name": "PlistButtonCon34"
+          },
+          "width": 51,
+          "height": 20,
+          "x": 232,
+          "y": 44
+        }
+      },
+      {
+        "type": "button",
+        "data": {
+          "name": "button_equip2",
+          "text": "equip",
+          "isUndecorated": false,
+          "onClick": {
+            "name": "AbilityAppendButton35"
+          },
+          "displayCondition": {
+            "name": "PlistButtonCon35"
+          },
+          "width": 51,
+          "height": 20,
+          "x": 232,
+          "y": 63
+        }
+      },
+      {
+        "type": "button",
+        "data": {
+          "name": "button_equip3",
+          "text": "equip",
+          "isUndecorated": false,
+          "onClick": {
+            "name": "AbilityAppendButton36"
+          },
+          "displayCondition": {
+            "name": "PlistButtonCon36"
+          },
+          "width": 51,
+          "height": 20,
+          "x": 232,
+          "y": 82
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_plist_return_37",
+          "text": {
+            "fixedValue": "",
+            "name": "PlistReturn37"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 153,
+          "y": 108
+        }
+      },
+      {
+        "type": "button",
+        "data": {
+          "name": "button_equip4",
+          "text": "equip",
+          "isUndecorated": false,
+          "onClick": {
+            "name": "AbilityAppendButton37"
+          },
+          "displayCondition": {
+            "name": "PlistButtonCon37"
+          },
+          "width": 51,
+          "height": 20,
+          "x": 232,
+          "y": 101
+        }
+      },
+      {
+        "type": "button",
+        "data": {
+          "name": "button_equip5",
+          "text": "equip",
+          "isUndecorated": false,
+          "onClick": {
+            "name": "AbilityAppendButton38"
+          },
+          "displayCondition": {
+            "name": "PlistButtonCon38"
+          },
+          "width": 51,
+          "height": 20,
+          "x": 232,
+          "y": 120
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_plist_return_38",
+          "text": {
+            "fixedValue": "",
+            "name": "PlistReturn38"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 153,
+          "y": 127
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_plist_return_39",
+          "text": {
+            "fixedValue": "",
+            "name": "PlistReturn39"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 153,
+          "y": 146
+        }
+      },
+      {
+        "type": "button",
+        "data": {
+          "name": "button_equip6",
+          "text": "equip",
+          "isUndecorated": false,
+          "onClick": {
+            "name": "AbilityAppendButton39"
+          },
+          "displayCondition": {
+            "name": "PlistButtonCon39"
+          },
+          "width": 51,
+          "height": 20,
+          "x": 232,
+          "y": 139
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_plist_return_40",
+          "text": {
+            "fixedValue": "",
+            "name": "PlistReturn40"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 153,
+          "y": 164
+        }
+      },
+      {
+        "type": "button",
+        "data": {
+          "name": "button_equip7",
+          "text": "equip",
+          "isUndecorated": false,
+          "onClick": {
+            "name": "AbilityAppendButton40"
+          },
+          "displayCondition": {
+            "name": "PlistButtonCon40"
+          },
+          "width": 51,
+          "height": 20,
+          "x": 232,
+          "y": 158
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

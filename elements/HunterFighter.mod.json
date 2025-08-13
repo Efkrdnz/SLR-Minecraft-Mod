@@ -1,0 +1,67 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Items",
+    "items": [
+      {
+        "value": "CUSTOM:DTierSword"
+      },
+      {
+        "value": "CUSTOM:CTierSword"
+      },
+      {
+        "value": "CUSTOM:BTierSword"
+      },
+      {
+        "value": "CUSTOM:ATierSword"
+      },
+      {
+        "value": "CUSTOM:STierSword"
+      },
+      {
+        "value": "CUSTOM:KatanaStier"
+      },
+      {
+        "value": "CUSTOM:DaggerKnightD"
+      },
+      {
+        "value": "CUSTOM:DaggerDuolityA"
+      },
+      {
+        "value": "CUSTOM:DaggerKarambitE"
+      },
+      {
+        "value": "CUSTOM:DaggerGoldenB"
+      },
+      {
+        "value": "CUSTOM:DaggerHeatA"
+      },
+      {
+        "value": "CUSTOM:SwordCurvedD"
+      },
+      {
+        "value": "CUSTOM:KatanaS"
+      },
+      {
+        "value": "CUSTOM:Igrislongsword"
+      },
+      {
+        "value": "Items.IRON_SWORD"
+      },
+      {
+        "value": "Items.DIAMOND_SWORD"
+      },
+      {
+        "value": "Blocks.AIR"
+      }
+    ],
+    "blocks": [],
+    "functions": [],
+    "entities": [],
+    "biomes": [],
+    "damageTypes": [],
+    "name": "hunter_fighter",
+    "namespace": "minecraft"
+  }
+}

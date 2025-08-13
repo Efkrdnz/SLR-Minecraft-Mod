@@ -1,0 +1,19 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:portal",
+    "sololeveling:portal_1",
+    "sololeveling:portal_12",
+    "sololeveling:portal_beru",
+    "sololeveling:spawner_portal",
+    "sololeveling:red_gate",
+    "sololeveling:portal_lush",
+    "sololeveling:random_cave_large",
+    "sololeveling:portal_sewers",
+    "sololeveling:portal_lab",
+    "sololeveling:portal_job_change",
+    "sololeveling:portal_ancient_golem",
+    "sololeveling:portal_kargalgans_throne_room",
+    "sololeveling:portal_cemetery"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:test"
+    },
+    "title": {
+      "translate": "advancements.futuristic_golem_adv.title"
+    },
+    "description": {
+      "translate": "advancements.futuristic_golem_adv.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "futuristic_golem_adv": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 50
+  },
+  "parent": "sololeveling:explore_dun_rank_a"
+}

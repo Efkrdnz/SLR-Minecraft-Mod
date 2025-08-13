@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/katana",
+  "textures": {
+    "0": "sololeveling:block/katana",
+    "particle": "sololeveling:item/stierkatana"
+  }
+}

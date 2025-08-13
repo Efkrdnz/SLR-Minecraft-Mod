@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "net.solocraft.mixins",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "mixins.sololeveling.refmap.json",
+  "mixins": [
+    "DisableHotbarKeymappingMixin",
+    "SMixin"
+  ],
+  "client": [],
+  "minVersion": "0.8"
+}

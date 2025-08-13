@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/kasaka_dagger",
+  "textures": {
+    "3": "sololeveling:block/kasakas_venom_fang",
+    "particle": "sololeveling:item/kasakavenomfang"
+  }
+}

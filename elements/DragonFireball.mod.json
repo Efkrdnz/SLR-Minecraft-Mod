@@ -1,0 +1,31 @@
+{
+  "_fv": 57,
+  "_type": "projectile",
+  "definition": {
+    "projectileItem": {
+      "value": "Blocks.AIR"
+    },
+    "showParticles": false,
+    "actionSound": {
+      "value": ""
+    },
+    "igniteFire": false,
+    "power": 1.0,
+    "damage": 10.0,
+    "knockback": 0,
+    "entityModel": "Modelinv",
+    "customModelTexture": "invistext.png",
+    "onHitsBlock": {
+      "name": "DragonFireballProjectileHitsBlock"
+    },
+    "onHitsPlayer": {
+      "name": "DragonFireballProjectileHitsPlayer"
+    },
+    "onHitsEntity": {
+      "name": "DragonFireballProjectileHitsLivingEntity"
+    },
+    "onFlyingTick": {
+      "name": "DragonFireballWhileProjectileFlyingTick"
+    }
+  }
+}

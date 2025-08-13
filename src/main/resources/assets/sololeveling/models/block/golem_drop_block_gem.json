@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/golemafterblock",
+  "textures": {
+    "all": "sololeveling:block/gemblock",
+    "particle": "sololeveling:block/gemblock",
+    "0": "sololeveling:block/gemblock"
+  },
+  "render_type": "cutout"
+}

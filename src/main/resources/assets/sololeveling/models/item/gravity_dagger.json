@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/gravitydagger",
+  "textures": {
+    "0": "sololeveling:block/gravitydagger",
+    "particle": "sololeveling:item/gravitydagger"
+  }
+}

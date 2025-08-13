@@ -1,0 +1,25 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Biomes",
+    "items": [],
+    "blocks": [],
+    "functions": [],
+    "entities": [],
+    "biomes": [
+      {
+        "value": "CUSTOM:DungeonBiomeIgris"
+      },
+      {
+        "value": "CUSTOM:DungeonBiomeSnow"
+      },
+      {
+        "value": "CUSTOM:DungeonBiomeA"
+      }
+    ],
+    "damageTypes": [],
+    "name": "duna",
+    "namespace": "minecraft"
+  }
+}

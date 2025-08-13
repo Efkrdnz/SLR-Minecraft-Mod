@@ -1,0 +1,13 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "sololeveling:block/whiteportal",
+    "up": "sololeveling:block/whiteportal",
+    "north": "sololeveling:block/whiteportal",
+    "east": "sololeveling:block/whiteportal",
+    "south": "sololeveling:block/whiteportal",
+    "west": "sololeveling:block/whiteportal",
+    "particle": "sololeveling:block/whiteportal"
+  },
+  "render_type": "solid"
+}

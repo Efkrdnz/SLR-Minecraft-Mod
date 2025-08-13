@@ -1,0 +1,13 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "sololeveling:block/shadowblock1",
+    "up": "sololeveling:block/shadowblock6",
+    "north": "sololeveling:block/shadowblock3",
+    "east": "sololeveling:block/shadowblock2",
+    "south": "sololeveling:block/shadowblock5",
+    "west": "sololeveling:block/shadowblock4",
+    "particle": "sololeveling:block/shadowblock1"
+  },
+  "render_type": "solid"
+}

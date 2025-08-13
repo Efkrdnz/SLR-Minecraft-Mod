@@ -1,0 +1,26 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:emerald_dagger",
+    "minecraft:diamond_leggings",
+    "minecraft:diamond_helmet",
+    "minecraft:diamond_chestplate",
+    "minecraft:diamond_boots",
+    "minecraft:diamond_block",
+    "minecraft:netherite_ingot",
+    "sololeveling:mana_crystal_e",
+    "sololeveling:mana_crystal_d",
+    "sololeveling:mana_crystal_c",
+    "sololeveling:mana_crystal_b",
+    "sololeveling:mana_crystal_a",
+    "sololeveling:mana_crystal_s",
+    "sololeveling:instance_dungeon_key",
+    "minecraft:redstone",
+    "sololeveling:bluekey",
+    "sololeveling:yellowkey",
+    "sololeveling:redkey",
+    "minecraft:golden_apple",
+    "minecraft:enchanted_golden_apple",
+    "minecraft:golden_carrot"
+  ]
+}

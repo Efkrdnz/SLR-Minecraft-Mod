@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:d_tier_sword",
+    "sololeveling:c_tier_sword",
+    "sololeveling:b_tier_sword",
+    "sololeveling:a_tier_sword",
+    "sololeveling:s_tier_sword",
+    "sololeveling:katana_stier",
+    "sololeveling:dagger_knight_d",
+    "sololeveling:dagger_duolity_a",
+    "sololeveling:dagger_karambit_e",
+    "sololeveling:dagger_golden_b",
+    "sololeveling:dagger_heat_a",
+    "sololeveling:sword_curved_d",
+    "sololeveling:katana_s",
+    "sololeveling:igrislongsword",
+    "minecraft:iron_sword",
+    "minecraft:diamond_sword",
+    "minecraft:air"
+  ]
+}

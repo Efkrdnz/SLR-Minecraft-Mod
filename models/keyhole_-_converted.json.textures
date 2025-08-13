@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "0": "keyhole1"
+      },
+      "name": "default"
+    }
+  }
+}

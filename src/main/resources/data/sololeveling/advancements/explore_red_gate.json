@@ -1,0 +1,36 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:redstone"
+    },
+    "title": {
+      "translate": "advancements.explore_red_gate.title"
+    },
+    "description": {
+      "translate": "advancements.explore_red_gate.descr"
+    },
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "explore_red_gate": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "biome": "sololeveling:dungeon_biome_snow"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "parent": "sololeveling:explore_dun_rank_a"
+}

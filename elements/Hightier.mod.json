@@ -1,0 +1,34 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Entities",
+    "items": [],
+    "blocks": [],
+    "functions": [],
+    "entities": [
+      {
+        "value": "CUSTOM:Igris"
+      },
+      {
+        "value": "EntityDragon"
+      },
+      {
+        "value": "EntityWither"
+      },
+      {
+        "value": "CUSTOM:BeruBoss"
+      },
+      {
+        "value": "CUSTOM:GemGolem"
+      },
+      {
+        "value": "CUSTOM:Kargalgan"
+      }
+    ],
+    "biomes": [],
+    "damageTypes": [],
+    "name": "hightier",
+    "namespace": "minecraft"
+  }
+}

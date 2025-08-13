@@ -1,0 +1,6 @@
+{
+  "parent": "sololeveling:displaysettings/magicgun.item",
+  "textures": {
+    "layer0": "sololeveling:item/managuntex"
+  }
+}

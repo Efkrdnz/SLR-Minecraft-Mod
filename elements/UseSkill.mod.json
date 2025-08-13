@@ -1,0 +1,15 @@
+{
+  "_fv": 57,
+  "_type": "keybind",
+  "definition": {
+    "triggerKey": "Z",
+    "keyBindingName": "Use the selected skill",
+    "keyBindingCategoryKey": "sololeveling",
+    "onKeyPressed": {
+      "name": "UseSkillOnKeyPressed"
+    },
+    "onKeyReleased": {
+      "name": "UseSkillOnKeyReleased"
+    }
+  }
+}

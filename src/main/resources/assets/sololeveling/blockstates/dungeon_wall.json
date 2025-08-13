@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "sololeveling:custom/dungeon_wall_particle"
+    },
+    "facing=east": {
+      "model": "sololeveling:custom/dungeon_wall_particle",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "sololeveling:custom/dungeon_wall_particle",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "sololeveling:custom/dungeon_wall_particle",
+      "y": 270
+    }
+  }
+}

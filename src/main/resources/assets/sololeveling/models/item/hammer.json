@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/hammer",
+  "textures": {
+    "1": "sololeveling:block/hammertexture",
+    "particle": "sololeveling:item/hammertexture"
+  }
+}

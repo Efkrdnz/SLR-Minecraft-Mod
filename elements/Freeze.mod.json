@@ -1,0 +1,26 @@
+{
+  "_fv": 57,
+  "_type": "potioneffect",
+  "definition": {
+    "effectName": "Frozen",
+    "icon": "freezeeffect.png",
+    "color": {
+      "value": -8848641,
+      "falpha": 0.0
+    },
+    "isInstant": false,
+    "isBad": true,
+    "isBenefitical": false,
+    "renderStatusInInventory": true,
+    "renderStatusInHUD": true,
+    "onStarted": {
+      "name": "FreezeEffectStartedapplied"
+    },
+    "onActiveTick": {
+      "name": "FreezeOnEffectActiveTick"
+    },
+    "onExpired": {
+      "name": "FreezeEffectExpires"
+    }
+  }
+}

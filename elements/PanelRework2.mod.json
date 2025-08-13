@@ -1,0 +1,501 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "panel_rework_8.png",
+          "use1Xscale": true,
+          "x": 65,
+          "y": 0
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_strength",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnStrength"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 174,
+          "y": 150
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_vitality",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnVitality"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 241,
+          "y": 150
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_agility",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnAgility"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 174,
+          "y": 165
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_intelligence",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnIntelligence"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 242,
+          "y": 165
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_perception",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPerception"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 174,
+          "y": 181
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_sp",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnSP"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 242,
+          "y": 181
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_name",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnName"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 140,
+          "y": 48
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_title",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnTitle"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 140,
+          "y": 63
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_job",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnJob"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 140,
+          "y": 79
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_fatigue",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnFatigue"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 140,
+          "y": 93
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_level",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnLevel"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 140,
+          "y": 35
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_hp",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnHP"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 135,
+          "y": 111
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_mp",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnMP"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 217,
+          "y": 111
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest2",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "StrengthIncrease"
+          },
+          "x": 127,
+          "y": 149
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest21",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "SpeedIncrease"
+          },
+          "x": 127,
+          "y": 165
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest22",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "SenseIncrease"
+          },
+          "x": 127,
+          "y": 181
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest23",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "VitalityIncrease"
+          },
+          "x": 299,
+          "y": 149
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest24",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "IntelligenceIncrease"
+          },
+          "x": 299,
+          "y": 165
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_buttonshop",
+          "image": "buttonshop.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenStoreGUI"
+          },
+          "x": 55,
+          "y": 30
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_buttonquests",
+          "image": "buttonquests.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenMainQuestsGUI"
+          },
+          "x": 55,
+          "y": 164
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_buttonrewards",
+          "image": "buttonrewards.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "RewardScreenOpen"
+          },
+          "x": 53,
+          "y": 97
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_buttoncrafting",
+          "image": "buttoncrafting.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "CraftingGUIopen"
+          },
+          "x": 350,
+          "y": 108
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_buttontrain",
+          "image": "buttontrain.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenTrainingGUI"
+          },
+          "x": 348,
+          "y": 42
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_buttonabilities",
+          "image": "buttonabilities.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "AbilitiesGUIopen"
+          },
+          "x": 348,
+          "y": 176
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_remaining_xp",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnRemainingXP"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 164,
+          "y": 27
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_remaining_xp1",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnRemainingXP"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 139,
+          "y": 27
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_open_system_shop",
+          "text": {
+            "fixedValue": "Open System Shop"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 59,
+          "y": 34
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_collectible_rewards",
+          "text": {
+            "fixedValue": "Collectible Rewards"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 57,
+          "y": 101
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_daily_quest",
+          "text": {
+            "fixedValue": "Quests"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 59,
+          "y": 168
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_settings",
+          "text": {
+            "fixedValue": "Settings"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 352,
+          "y": 180
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_crafting",
+          "text": {
+            "fixedValue": "Crafting"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 354,
+          "y": 112
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_training",
+          "text": {
+            "fixedValue": "Training"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 352,
+          "y": 46
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_titles_wip",
+          "text": {
+            "fixedValue": "titles wip"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 139,
+          "y": 57
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

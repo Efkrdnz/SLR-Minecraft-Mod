@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:katana_stier",
+    "sololeveling:knight_killer",
+    "sololeveling:a_tier_sword",
+    "sololeveling:s_tier_sword",
+    "sololeveling:b_tier_sword",
+    "sololeveling:c_tier_sword",
+    "sololeveling:d_tier_sword",
+    "sololeveling:e_tier_sword",
+    "sololeveling:mythic_dagger",
+    "sololeveling:war_axe",
+    "sololeveling:hammer",
+    "sololeveling:dagger_chain_c",
+    "sololeveling:dagger_knight_d",
+    "sololeveling:dagger_duolity_a",
+    "sololeveling:dagger_karambit_e",
+    "sololeveling:dagger_golden_b",
+    "sololeveling:dagger_heat_a",
+    "sololeveling:sword_curved_d",
+    "sololeveling:sword_enriched_b",
+    "sololeveling:sword_twinwing_c",
+    "sololeveling:sword_nature_b",
+    "sololeveling:sword_warrior_d",
+    "sololeveling:gravity_dagger",
+    "sololeveling:emerald_dagger"
+  ]
+}

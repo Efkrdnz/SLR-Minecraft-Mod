@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/dungeon_door_through_wall",
+  "textures": {
+    "all": "sololeveling:block/dungeon_door_through_wall",
+    "particle": "sololeveling:block/dungeon_door_through_wall",
+    "4": "sololeveling:block/dungeon_door_through_wall"
+  },
+  "render_type": "solid"
+}

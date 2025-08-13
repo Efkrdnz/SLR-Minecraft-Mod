@@ -1,0 +1,13 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "sololeveling:block/image",
+    "up": "sololeveling:block/image",
+    "north": "sololeveling:block/image",
+    "east": "sololeveling:block/image",
+    "south": "sololeveling:block/image",
+    "west": "sololeveling:block/image",
+    "particle": "sololeveling:block/image"
+  },
+  "render_type": "solid"
+}

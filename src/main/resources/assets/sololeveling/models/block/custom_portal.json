@@ -1,0 +1,13 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "sololeveling:block/placeholder",
+    "up": "sololeveling:block/placeholder",
+    "north": "sololeveling:block/placeholder",
+    "east": "sololeveling:block/placeholder",
+    "south": "sololeveling:block/placeholder",
+    "west": "sololeveling:block/placeholder",
+    "particle": "sololeveling:block/placeholder"
+  },
+  "render_type": "translucent"
+}

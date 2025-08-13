@@ -1,0 +1,666 @@
+{
+  "_fv": 57,
+  "_type": "livingentity",
+  "definition": {
+    "mobName": "Hunter",
+    "mobLabel": "Hunter",
+    "mobModelName": "Biped",
+    "mobModelTexture": "human_base.png",
+    "transparentModelCondition": {
+      "fixedValue": false
+    },
+    "isShakingCondition": {
+      "fixedValue": false
+    },
+    "solidBoundingBox": {
+      "fixedValue": false
+    },
+    "visualScale": {
+      "fixedValue": 1.0
+    },
+    "boundingBoxScale": {
+      "fixedValue": 1.0
+    },
+    "modelLayers": [
+      {
+        "model": "Default",
+        "texture": "eyes_var1.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyes1"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "eyes_var2.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyes2"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "eyes_var3.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyes3"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "eyes_var4.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyes4"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "eyes_var5.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyes5"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "eyes_var6.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyes6"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "eyes_var7.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyes7"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "eyes_var8.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyes8"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mhair_var1.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomHair1"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mhair_var2.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomHair2"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mhair_var3.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomHair3"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mhair_var4.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomHair4"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mhair_var5.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomHair5"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mhair_var6.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomHair6"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mhair_var7.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomHair7"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mhair_var8.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomHair8"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_in_var1.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopIn1"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_in_var2.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopIn2"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_in_var3.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopIn3"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_in_var4.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopIn4"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var1.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut1"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var2.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut2"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var3.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut3"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var4.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut4"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var5.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut5"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var6.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut6"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var7.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut7"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var8.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut8"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var9.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut9"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var10.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut10"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var11.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut11"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var12.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut12"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var13.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut13"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var14.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut14"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "top_out_var15.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomTopOut15"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "bottom_var1.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomBottom1"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "bottom_var2.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomBottom2"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "bottom_var3.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomBottom3"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "bottom_var4.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomBottom4"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "bottom_var5.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomBottom5"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "foot_var1.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomFoot1"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "foot_var2.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomFoot2"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "foot_var3.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomFoot3"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "foot_var4.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomFoot4"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mouth_var1.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomMouth1"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "mouth_var2.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyeBrows2"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "eyeb_var1.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyeBrows1"
+        }
+      },
+      {
+        "model": "Default",
+        "texture": "eyeb_var2.png",
+        "glow": false,
+        "condition": {
+          "name": "ReturnHunterRandomEyeBrows2"
+        }
+      }
+    ],
+    "modelWidth": 0.6,
+    "modelHeight": 1.8,
+    "modelShadowSize": 0.5,
+    "mountedYOffset": 0.0,
+    "hasSpawnEgg": true,
+    "spawnEggBaseColor": {
+      "value": -6684775,
+      "falpha": 0.0
+    },
+    "spawnEggDotColor": {
+      "value": -256,
+      "falpha": 0.0
+    },
+    "creativeTab": {
+      "value": "CUSTOM:SoloLevelingMobs"
+    },
+    "isBoss": false,
+    "bossBarColor": "PINK",
+    "bossBarType": "PROGRESS",
+    "equipmentMainHand": {
+      "value": ""
+    },
+    "equipmentOffHand": {
+      "value": ""
+    },
+    "equipmentHelmet": {
+      "value": ""
+    },
+    "equipmentBody": {
+      "value": ""
+    },
+    "equipmentLeggings": {
+      "value": ""
+    },
+    "equipmentBoots": {
+      "value": ""
+    },
+    "mobBehaviourType": "Creature",
+    "mobCreatureType": "UNDEFINED",
+    "attackStrength": 1,
+    "attackKnockback": 0.0,
+    "knockbackResistance": 0.0,
+    "movementSpeed": 0.3,
+    "stepHeight": 0.6,
+    "armorBaseValue": 6.0,
+    "trackingRange": 64,
+    "followRange": 16,
+    "health": 20,
+    "xpAmount": 4,
+    "waterMob": false,
+    "breatheUnderwater": {
+      "fixedValue": false
+    },
+    "pushedByFluids": {
+      "fixedValue": true
+    },
+    "flyingMob": false,
+    "guiBoundTo": "<NONE>",
+    "inventorySize": 9,
+    "inventoryStackSize": 64,
+    "disableCollisions": false,
+    "ridable": false,
+    "canControlForward": false,
+    "canControlStrafe": false,
+    "immuneToFire": false,
+    "immuneToArrows": false,
+    "immuneToFallDamage": false,
+    "immuneToCactus": false,
+    "immuneToDrowning": false,
+    "immuneToLightning": false,
+    "immuneToPotions": false,
+    "immuneToPlayer": false,
+    "immuneToExplosion": false,
+    "immuneToTrident": false,
+    "immuneToAnvil": false,
+    "immuneToWither": false,
+    "immuneToDragonBreath": false,
+    "mobDrop": {
+      "value": ""
+    },
+    "livingSound": {
+      "value": ""
+    },
+    "hurtSound": {
+      "value": "entity.generic.hurt"
+    },
+    "deathSound": {
+      "value": "entity.generic.death"
+    },
+    "stepSound": {
+      "value": ""
+    },
+    "entityDataEntries": [
+      {
+        "name": "Rank",
+        "type": "string",
+        "value": ""
+      },
+      {
+        "name": "HunterClass",
+        "type": "string",
+        "value": ""
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "TopIn",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "TopOut",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "Bottom",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "Foot",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "Eyes",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "EyeBs",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "Hair",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "Mouth",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "IA",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "min": -2147483648,
+        "max": 2147483647,
+        "name": "backoff",
+        "type": "integer",
+        "value": 0
+      },
+      {
+        "name": "Allies",
+        "type": "string",
+        "value": ""
+      },
+      {
+        "name": "Enemies",
+        "type": "string",
+        "value": ""
+      }
+    ],
+    "onRightClickedOn": {
+      "name": "HunterRightClickedOnEntity"
+    },
+    "onMobTickUpdate": {
+      "name": "HunterOnEntityTickUpdate"
+    },
+    "onInitialSpawn": {
+      "name": "HunterOnInitialEntitySpawn"
+    },
+    "hasAI": true,
+    "aiBase": "(none)",
+    "aixml": "<xml xmlns=\"https://developers.google.com/blockly/xml\"><block type=\"aitasks_container\" deletable=\"false\" x=\"40\" y=\"40\"><next><block type=\"attack_action\"><field name=\"callhelp\">FALSE</field><field name=\"condition\">null,null</field><next><block type=\"attack_entity\"><field name=\"insight\">TRUE</field><field name=\"nearby\">TRUE</field><field name=\"entity\">EntityMonster</field><field name=\"condition\">null,null</field><next><block type=\"attack_on_collide\"><field name=\"speed\">1.2</field><field name=\"longmemory\">FALSE</field><field name=\"condition\">IsNotAvoidingMelee,null</field><next><block type=\"follow_owner\"><field name=\"speed\">1</field><field name=\"min_distance\">10</field><field name=\"max_distance\">2</field><field name=\"condition\">IsNotInCombat,IsNotInCombat</field><next><block type=\"protect_owner\"><field name=\"condition\">null,null</field><next><block type=\"protect_owner\"><field name=\"condition\">null,null</field><next><block type=\"wander\"><field name=\"speed\">1</field><field name=\"condition\">null,null</field><next><block type=\"look_around\"><field name=\"condition\">null,null</field><next><block type=\"swim_in_water\"><field name=\"condition\">null,null</field><next><block type=\"doors_close\"><field name=\"condition\">null,null</field><next><block type=\"doors_open\"><field name=\"condition\">null,null</field></block></next></block></next></block></next></block></next></block></next></block></next></block></next></block></next></block></next></block></next></block></next></block></xml>",
+    "breedable": true,
+    "tameable": true,
+    "breedTriggerItems": [
+      {
+        "value": "Items.COMMAND_BLOCK_MINECART"
+      }
+    ],
+    "ranged": false,
+    "rangedAttackItem": {
+      "value": ""
+    },
+    "rangedItemType": "Default item",
+    "rangedAttackInterval": 20,
+    "rangedAttackRadius": 10.0,
+    "spawnThisMob": false,
+    "doesDespawnWhenIdle": false,
+    "spawningCondition": {
+      "name": "HunterNaturalEntitySpawningCondition"
+    },
+    "spawningProbability": 2,
+    "mobSpawningType": "monster",
+    "minNumberOfMobsPerGroup": 1,
+    "maxNumberOfMobsPerGroup": 3,
+    "restrictionBiomes": [
+      {
+        "value": "CUSTOM:DungeonBiomeBeru"
+      },
+      {
+        "value": "CUSTOM:DungeonBiomeLab"
+      },
+      {
+        "value": "CUSTOM:DungeonBiomeLush"
+      },
+      {
+        "value": "CUSTOM:DungeonBiomeRandom"
+      },
+      {
+        "value": "CUSTOM:DungeonBiomeRandomLarge"
+      },
+      {
+        "value": "CUSTOM:DungeonBiomeSewers"
+      },
+      {
+        "value": "CUSTOM:DungeonBiomeThroneRoom"
+      },
+      {
+        "value": "plains"
+      },
+      {
+        "value": "birch_forest"
+      },
+      {
+        "value": "mutated_forest"
+      },
+      {
+        "value": "forest"
+      }
+    ],
+    "spawnInDungeons": false
+  }
+}

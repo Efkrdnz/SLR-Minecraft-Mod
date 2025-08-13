@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/barukadagger",
+  "textures": {
+    "0": "sololeveling:block/barukadagger",
+    "particle": "sololeveling:item/barukadagger"
+  }
+}

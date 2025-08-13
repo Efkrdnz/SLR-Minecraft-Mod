@@ -1,0 +1,12 @@
+{
+  "_fv": 57,
+  "_type": "keybind",
+  "definition": {
+    "triggerKey": "V",
+    "keyBindingName": "Job Ability 3",
+    "keyBindingCategoryKey": "sololeveling",
+    "onKeyPressed": {
+      "name": "Ability3OnKeyPressed"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"pageup": {
+			"animation_length": 0.54167,
+			"bones": {
+				"page2": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, -142.5, 0]
+						},
+						"0.5417": {
+							"vector": [0, 0, 0]
+						}
+					}
+				}
+			}
+		},
+		"pagedown": {
+			"animation_length": 0.54167,
+			"bones": {
+				"page": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 142.5, 0],
+							"easing": "easeInSine"
+						},
+						"0.5417": {
+							"vector": [0, 0, 0],
+							"easing": "easeInSine"
+						}
+					}
+				}
+			}
+		},
+		"idle": {
+			"loop": true
+		}
+	},
+	"geckolib_format_version": 2
+}

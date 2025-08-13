@@ -1,0 +1,43 @@
+{
+  "_fv": 57,
+  "_type": "tool",
+  "definition": {
+    "toolType": "Special",
+    "renderType": 1,
+    "blockingRenderType": 0,
+    "texture": "hammertexture",
+    "customModelName": "hammer:default",
+    "blockingModelName": "Normal blocking",
+    "name": "§6Heavy Titan's Resonance",
+    "specialInformation": {
+      "fixedValue": [
+        "§6RARITY: S",
+        "§6ATTACK: +400",
+        "§6TYPE: HAMMER",
+        "§6THIS HAMMER WAS PREVIOUSLY USED BY GIANTS BUT THEN IT'S SIZE REDUCED BY THE HELP OF THE DWARVES TO A LEVEL WHERE HUMANS CAN USE IT.",
+        "§6BUT STILL THERE ARE VERY LESS CHOOSEN PEOPLE WHO CAN LIFT IT"
+      ]
+    },
+    "creativeTab": {
+      "value": "CUSTOM:SoloLevelingWeapons"
+    },
+    "harvestLevel": 1,
+    "efficiency": 4.0,
+    "attackSpeed": 0.8,
+    "enchantability": 2,
+    "damageVsEntity": 14.0,
+    "usageCount": 0,
+    "blocksAffected": [],
+    "glowCondition": {
+      "fixedValue": false,
+      "name": "DemonKingsLongSwordHasItemGlowingEffect"
+    },
+    "repairItems": [],
+    "immuneToFire": false,
+    "stayInGridWhenCrafting": false,
+    "damageOnCrafting": false,
+    "onEntityHitWith": {
+      "name": "HammerLivingEntityIsHitWithTool"
+    }
+  }
+}

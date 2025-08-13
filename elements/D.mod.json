@@ -1,0 +1,15 @@
+{
+  "_fv": 57,
+  "_type": "keybind",
+  "definition": {
+    "triggerKey": "MOUSE_RIGHT",
+    "keyBindingName": "Sword Enhance",
+    "keyBindingCategoryKey": "sololeveling",
+    "onKeyPressed": {
+      "name": "DOnKeyPressed"
+    },
+    "onKeyReleased": {
+      "name": "DOnKeyReleased"
+    }
+  }
+}

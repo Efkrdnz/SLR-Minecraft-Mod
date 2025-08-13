@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:barukas_dagger"
+    },
+    "title": {
+      "translate": "advancements.baruka_adv.title"
+    },
+    "description": {
+      "translate": "advancements.baruka_adv.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "baruka_adv": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 50
+  },
+  "parent": "sololeveling:explore_red_gate"
+}

@@ -1,0 +1,41 @@
+{
+  "has_precipitation": true,
+  "temperature": -1,
+  "downfall": 1,
+  "effects": {
+    "foliage_color": -6684724,
+    "grass_color": -1,
+    "sky_color": -6684673,
+    "fog_color": -6684673,
+    "water_color": -1,
+    "water_fog_color": -3342337
+  },
+  "spawners": {
+    "monster": [],
+    "creature": [],
+    "ambient": [],
+    "axolotls": [],
+    "underground_water_creature": [],
+    "water_creature": [],
+    "water_ambient": [],
+    "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "sololeveling:dungeon_biome_snow_tree",
+      "minecraft:trees_jungle"
+    ],
+    []
+  ]
+}

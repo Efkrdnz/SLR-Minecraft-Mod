@@ -1,0 +1,87 @@
+{
+  "_fv": 57,
+  "_type": "overlay",
+  "definition": {
+    "priority": "NORMAL",
+    "components": [
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_quest_name",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnQuestName"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 8
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_quest_lines",
+          "text": {
+            "fixedValue": "",
+            "name": "QuestLines"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 26
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_clear_the_dungeon",
+          "text": {
+            "fixedValue": "Clear the dungeon!"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "displayCondition": {
+            "name": "Dungeoning"
+          },
+          "anchorPoint": "TOP_CENTER",
+          "x": 168,
+          "y": 17
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "notice.png",
+          "use1Xscale": false,
+          "displayCondition": {
+            "name": "Dungeoning"
+          },
+          "anchorPoint": "TOP_CENTER",
+          "x": 204,
+          "y": 1
+        }
+      }
+    ],
+    "baseTexture": "",
+    "overlayTarget": "Ingame",
+    "displayCondition": {
+      "name": "QuestInfoGet"
+    },
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "_fv": 57,
+  "_type": "overlay",
+  "definition": {
+    "priority": "NORMAL",
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_1.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge0"
+          },
+          "anchorPoint": "CENTER",
+          "x": 182,
+          "y": 5
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_2.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge1"
+          },
+          "anchorPoint": "CENTER",
+          "x": 182,
+          "y": 5
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_3.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge2"
+          },
+          "anchorPoint": "CENTER",
+          "x": 182,
+          "y": 5
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_4.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge3"
+          },
+          "anchorPoint": "CENTER",
+          "x": 181,
+          "y": 5
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_5.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge4"
+          },
+          "anchorPoint": "CENTER",
+          "x": 181,
+          "y": 5
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_6.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge5"
+          },
+          "anchorPoint": "CENTER",
+          "x": 180,
+          "y": 5
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_7.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge6"
+          },
+          "anchorPoint": "CENTER",
+          "x": 180,
+          "y": 5
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_8.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge7"
+          },
+          "anchorPoint": "CENTER",
+          "x": 180,
+          "y": 5
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_9.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge8"
+          },
+          "anchorPoint": "CENTER",
+          "x": 180,
+          "y": 5
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "progress_10.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Kamishcharge9"
+          },
+          "anchorPoint": "CENTER",
+          "x": 180,
+          "y": 5
+        }
+      }
+    ],
+    "baseTexture": "",
+    "overlayTarget": "Ingame",
+    "displayCondition": {
+      "name": "CeismicslashbarDisplayOverlayIngame"
+    },
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

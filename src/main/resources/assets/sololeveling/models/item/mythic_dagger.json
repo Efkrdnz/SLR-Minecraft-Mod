@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/mythicdagger",
+  "textures": {
+    "0": "sololeveling:block/mythicdaggerblock",
+    "particle": "sololeveling:item/mythicdaggersmooth"
+  }
+}

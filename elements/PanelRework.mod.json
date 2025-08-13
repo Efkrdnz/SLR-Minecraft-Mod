@@ -1,0 +1,380 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": true,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "panel_rework_6.png",
+          "use1Xscale": true,
+          "x": 101,
+          "y": 15
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_normal_quest",
+          "image": "normal_quest.png",
+          "hoveredImage": "hover_quest.png",
+          "onClick": {
+            "name": "DailyQuestGUIOpen"
+          },
+          "x": 70,
+          "y": 135
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_normal_reward",
+          "image": "normal_reward.png",
+          "hoveredImage": "hover_reward.png",
+          "onClick": {
+            "name": "RewardScreenOpen"
+          },
+          "x": 70,
+          "y": 95
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_normal_store",
+          "image": "normal_store.png",
+          "hoveredImage": "hover_store.png",
+          "onClick": {
+            "name": "OpenStoreGUI"
+          },
+          "x": 70,
+          "y": 54
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_normal_abilities",
+          "image": "normal_abilities.png",
+          "hoveredImage": "hover_abilities.png",
+          "onClick": {
+            "name": "AbilitiesGUIopen"
+          },
+          "x": 325,
+          "y": 54
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_normal_training",
+          "image": "normal_training.png",
+          "hoveredImage": "hover_training.png",
+          "onClick": {
+            "name": "OpenTrainingGUI"
+          },
+          "x": 326,
+          "y": 94
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_normal_craft",
+          "image": "normal_craft.png",
+          "hoveredImage": "hover_craft.png",
+          "onClick": {
+            "name": "CraftingGUIopen"
+          },
+          "x": 325,
+          "y": 134
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_return_name_and_guild",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnNameAndGuild"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 158,
+          "y": 66
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_title_text",
+          "text": {
+            "fixedValue": "",
+            "name": "TitleText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 158,
+          "y": 85
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_skill_points_text",
+          "text": {
+            "fixedValue": "",
+            "name": "SkillPointsText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 240,
+          "y": 153
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_intelligence_text",
+          "text": {
+            "fixedValue": "",
+            "name": "IntelligenceText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 257,
+          "y": 138
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_strength_text",
+          "text": {
+            "fixedValue": "",
+            "name": "StrengthText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 192,
+          "y": 122
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_vitality_text",
+          "text": {
+            "fixedValue": "",
+            "name": "VitalityText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 257,
+          "y": 122
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_speed_text",
+          "text": {
+            "fixedValue": "",
+            "name": "SpeedText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 192,
+          "y": 139
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_sense_text",
+          "text": {
+            "fixedValue": "",
+            "name": "SenseText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 192,
+          "y": 154
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_level_text",
+          "text": {
+            "fixedValue": "",
+            "name": "LevelText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 266,
+          "y": 76
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_remaining_xp",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnRemainingXP"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 241,
+          "y": 68
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_fatigue_text",
+          "text": {
+            "fixedValue": "",
+            "name": "FatigueText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 209,
+          "y": 102
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_health_text",
+          "text": {
+            "fixedValue": "",
+            "name": "HealthText"
+          },
+          "color": {
+            "value": -39322,
+            "falpha": 0.0
+          },
+          "x": 153,
+          "y": 102
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_mana_text",
+          "text": {
+            "fixedValue": "",
+            "name": "ManaText"
+          },
+          "color": {
+            "value": -10040065,
+            "falpha": 0.0
+          },
+          "x": 246,
+          "y": 102
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest2",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "StrengthIncrease"
+          },
+          "x": 127,
+          "y": 122
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest21",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "SpeedIncrease"
+          },
+          "x": 127,
+          "y": 138
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest22",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "SenseIncrease"
+          },
+          "x": 127,
+          "y": 154
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest23",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "VitalityIncrease"
+          },
+          "x": 293,
+          "y": 122
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest24",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "IntelligenceIncrease"
+          },
+          "x": 293,
+          "y": 138
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

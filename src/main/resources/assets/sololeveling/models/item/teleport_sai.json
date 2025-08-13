@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/sai",
+  "textures": {
+    "0": "sololeveling:block/sai",
+    "particle": "sololeveling:item/sai"
+  }
+}

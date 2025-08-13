@@ -1,0 +1,13 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "0": "woodtext",
+        "1": "image",
+        "2": "bladetext",
+        "missing": ""
+      },
+      "name": "default"
+    }
+  }
+}

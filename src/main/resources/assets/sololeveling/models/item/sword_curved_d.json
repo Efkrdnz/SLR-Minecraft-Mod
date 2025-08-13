@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/sword_1",
+  "textures": {
+    "1": "sololeveling:block/sword_1",
+    "particle": "sololeveling:item/dungeonswords"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:give_beru"
+    },
+    "title": {
+      "translate": "advancements.ant_king.title"
+    },
+    "description": {
+      "translate": "advancements.ant_king.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "ant_king": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 50
+  },
+  "parent": "sololeveling:explore_dun_rank_s"
+}

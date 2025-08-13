@@ -1,0 +1,21 @@
+{
+  "_fv": 57,
+  "_type": "particle",
+  "definition": {
+    "texture": "cleave.png",
+    "animate": true,
+    "frameDuration": 2,
+    "width": 0.30000000000000004,
+    "height": 0.30000000000000004,
+    "scale": 4.0,
+    "speedFactor": 0.0,
+    "gravity": 0.0,
+    "maxAge": 7,
+    "maxAgeDiff": 0,
+    "angularVelocity": 0.0,
+    "angularAcceleration": 0.0,
+    "canCollide": false,
+    "alwaysShow": true,
+    "renderType": "OPAQUE"
+  }
+}

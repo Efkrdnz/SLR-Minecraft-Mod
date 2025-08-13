@@ -1,0 +1,13 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "sololeveling:block/dungeonportal",
+    "up": "sololeveling:block/dungeonportal",
+    "north": "sololeveling:block/dungeonportal",
+    "east": "sololeveling:block/dungeonportal",
+    "south": "sololeveling:block/dungeonportal",
+    "west": "sololeveling:block/dungeonportal",
+    "particle": "sololeveling:block/dungeonportal"
+  },
+  "render_type": "solid"
+}

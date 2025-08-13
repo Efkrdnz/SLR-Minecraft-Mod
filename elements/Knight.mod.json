@@ -1,0 +1,31 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Entities",
+    "items": [],
+    "blocks": [],
+    "functions": [],
+    "entities": [
+      {
+        "value": "CUSTOM:AncientSamurai"
+      },
+      {
+        "value": "CUSTOM:DKnight1"
+      },
+      {
+        "value": "CUSTOM:DKnight2"
+      },
+      {
+        "value": "CUSTOM:DKnight3"
+      },
+      {
+        "value": "CUSTOM:Igris"
+      }
+    ],
+    "biomes": [],
+    "damageTypes": [],
+    "name": "knight",
+    "namespace": "minecraft"
+  }
+}

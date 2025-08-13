@@ -1,0 +1,19 @@
+{
+  "_fv": 57,
+  "_type": "projectile",
+  "definition": {
+    "projectileItem": {
+      "value": "Blocks.AIR"
+    },
+    "showParticles": false,
+    "actionSound": {
+      "value": "block.amethyst_block.break"
+    },
+    "igniteFire": false,
+    "power": 2.0,
+    "damage": 3.0,
+    "knockback": 1,
+    "entityModel": "Modelmanaarrow",
+    "customModelTexture": "spiritarrow.png"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:shadow_armor_boots"
+    },
+    "title": {
+      "translate": "advancements.monarchs_domain.title"
+    },
+    "description": {
+      "translate": "advancements.monarchs_domain.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "monarchs_domain": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 2
+  },
+  "parent": "sololeveling:shadow_extraction"
+}

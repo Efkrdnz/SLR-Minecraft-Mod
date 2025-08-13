@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/dungeon_barrel",
+  "textures": {
+    "all": "sololeveling:block/dungeon_barrel",
+    "particle": "sololeveling:block/dungeon_barrel",
+    "0": "sololeveling:block/dungeon_barrel"
+  },
+  "render_type": "cutout_mipped"
+}

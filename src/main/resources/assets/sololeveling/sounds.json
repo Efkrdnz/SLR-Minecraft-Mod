@@ -1,0 +1,90 @@
+{
+  "seismicslash": {
+    "subtitle": "subtitles.seismicslash",
+    "sounds": [
+      {
+        "name": "sololeveling:seismicslash",
+        "stream": false
+      }
+    ]
+  },
+  "flagdeploy": {
+    "sounds": [
+      {
+        "name": "sololeveling:boom-sound-effect-_-bass-sound-effect-_-fortnite-sound-effect",
+        "stream": false
+      }
+    ]
+  },
+  "bellirng": {
+    "sounds": [
+      {
+        "name": "sololeveling:big-bell-sound-effect-_hd_",
+        "stream": false
+      }
+    ]
+  },
+  "telepush": {
+    "subtitle": "subtitles.telepush",
+    "sounds": [
+      {
+        "name": "sololeveling:telekinesispush",
+        "stream": false
+      }
+    ]
+  },
+  "slash": {
+    "subtitle": "subtitles.slash",
+    "sounds": [
+      {
+        "name": "sololeveling:slash",
+        "stream": false
+      }
+    ]
+  },
+  "impact1": {
+    "subtitle": "subtitles.impact1",
+    "sounds": [
+      {
+        "name": "sololeveling:impact2",
+        "stream": false
+      }
+    ]
+  },
+  "dash": {
+    "subtitle": "subtitles.dash",
+    "sounds": [
+      {
+        "name": "sololeveling:dash",
+        "stream": false
+      }
+    ]
+  },
+  "panelopen": {
+    "subtitle": "subtitles.panelopen",
+    "sounds": [
+      {
+        "name": "sololeveling:system-notification.mp3",
+        "stream": false
+      }
+    ]
+  },
+  "panelclose": {
+    "subtitle": "subtitles.panelclose",
+    "sounds": [
+      {
+        "name": "sololeveling:system-notification2.mp3",
+        "stream": false
+      }
+    ]
+  },
+  "swordclash": {
+    "subtitle": "subtitles.swordclash",
+    "sounds": [
+      {
+        "name": "sololeveling:sword-clash-241729",
+        "stream": false
+      }
+    ]
+  }
+}

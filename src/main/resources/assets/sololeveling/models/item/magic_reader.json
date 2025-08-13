@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/magicreader",
+  "textures": {
+    "0": "sololeveling:block/magicreader",
+    "particle": "sololeveling:item/classchooser1"
+  }
+}

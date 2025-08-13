@@ -1,0 +1,181 @@
+{
+  "_fv": 57,
+  "_type": "overlay",
+  "definition": {
+    "priority": "NORMAL",
+    "components": [
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_mana_text",
+          "text": {
+            "fixedValue": "",
+            "name": "ManaText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 16,
+          "y": 7
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "bar1.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana0"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana10.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana10"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana20.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana20"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana30.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana30"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana40.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana40"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana50.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana50"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana60.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana60"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana70.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana70"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 7,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana80.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana80"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana90.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana90"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "barmana100.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "Mana100"
+          },
+          "anchorPoint": "TOP_LEFT",
+          "x": 6,
+          "y": 6
+        }
+      }
+    ],
+    "baseTexture": "",
+    "overlayTarget": "Ingame",
+    "displayCondition": {
+      "name": "MPOnlyOverlayDisplayOverlayIngame"
+    },
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

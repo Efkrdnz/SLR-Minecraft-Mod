@@ -1,0 +1,198 @@
+{
+  "_fv": 57,
+  "_type": "block",
+  "definition": {
+    "texture": "dungeon_grave1",
+    "textureTop": "",
+    "textureLeft": "",
+    "textureFront": "",
+    "textureRight": "",
+    "textureBack": "",
+    "renderType": 2,
+    "customModelName": "dungeon_grave1:default",
+    "rotationMode": 1,
+    "enablePitch": false,
+    "emissiveRendering": false,
+    "displayFluidOverlay": false,
+    "itemTexture": "",
+    "particleTexture": "",
+    "tintType": "No tint",
+    "isItemTinted": false,
+    "hasTransparency": true,
+    "connectedSides": false,
+    "transparencyType": "SOLID",
+    "disableOffset": false,
+    "boundingBoxes": [
+      {
+        "mx": 1.0,
+        "my": 0.0,
+        "mz": 5.0,
+        "Mx": 15.0,
+        "My": 1.0,
+        "Mz": 12.0,
+        "subtract": false
+      },
+      {
+        "mx": 2.0,
+        "my": 1.0,
+        "mz": 6.0,
+        "Mx": 14.0,
+        "My": 4.0,
+        "Mz": 11.0,
+        "subtract": false
+      },
+      {
+        "mx": 2.5,
+        "my": 4.0,
+        "mz": 7.0,
+        "Mx": 13.5,
+        "My": 14.0,
+        "Mz": 10.0,
+        "subtract": false
+      },
+      {
+        "mx": 4.5,
+        "my": 14.0,
+        "mz": 7.0,
+        "Mx": 11.5,
+        "My": 19.0,
+        "Mz": 10.0,
+        "subtract": false
+      },
+      {
+        "mx": 3.26777,
+        "my": 12.85355,
+        "mz": 7.0,
+        "Mx": 4.66777,
+        "My": 15.70355,
+        "Mz": 10.0,
+        "subtract": false
+      },
+      {
+        "mx": 3.52735,
+        "my": 19.0124,
+        "mz": 7.0,
+        "Mx": 12.37735,
+        "My": 20.4124,
+        "Mz": 10.0,
+        "subtract": false
+      },
+      {
+        "mx": 5.52735,
+        "my": 20.3624,
+        "mz": 7.0,
+        "Mx": 10.37735,
+        "My": 22.4124,
+        "Mz": 10.0,
+        "subtract": false
+      },
+      {
+        "mx": 11.33223,
+        "my": 12.85355,
+        "mz": 7.0,
+        "Mx": 12.73223,
+        "My": 15.70355,
+        "Mz": 10.0,
+        "subtract": false
+      }
+    ],
+    "name": "Dungeon Grave 1",
+    "specialInformation": {
+      "fixedValue": []
+    },
+    "hardness": 1.0,
+    "resistance": 10.0,
+    "hasGravity": false,
+    "isWaterloggable": false,
+    "creativeTab": {
+      "value": "CUSTOM:DungeonBlocks"
+    },
+    "destroyTool": "pickaxe",
+    "customDrop": {
+      "value": ""
+    },
+    "dropAmount": 1,
+    "useLootTableForDrops": false,
+    "requiresCorrectTool": true,
+    "enchantPowerBonus": 0.0,
+    "plantsGrowOn": false,
+    "canRedstoneConnect": false,
+    "lightOpacity": 0,
+    "material": {
+      "value": "ROCK"
+    },
+    "tickRate": 0,
+    "tickRandomly": false,
+    "isReplaceable": false,
+    "canProvidePower": false,
+    "emittedRedstonePower": {
+      "fixedValue": 15.0
+    },
+    "colorOnMap": "DEFAULT",
+    "creativePickItem": {
+      "value": ""
+    },
+    "offsetType": "NONE",
+    "aiPathNodeType": "DEFAULT",
+    "flammability": 0,
+    "fireSpreadSpeed": 0,
+    "isLadder": false,
+    "slipperiness": 0.6,
+    "speedFactor": 1.0,
+    "jumpFactor": 1.0,
+    "reactionToPushing": "NORMAL",
+    "isNotColidable": false,
+    "isCustomSoundType": false,
+    "soundOnStep": {
+      "value": "STONE"
+    },
+    "breakSound": {
+      "value": ""
+    },
+    "fallSound": {
+      "value": ""
+    },
+    "hitSound": {
+      "value": ""
+    },
+    "placeSound": {
+      "value": ""
+    },
+    "stepSound": {
+      "value": ""
+    },
+    "luminance": 0,
+    "unbreakable": false,
+    "breakHarvestLevel": 1,
+    "isBonemealable": false,
+    "hasInventory": false,
+    "guiBoundTo": "<NONE>",
+    "openGUIOnRightClick": false,
+    "inventorySize": 9,
+    "inventoryStackSize": 64,
+    "inventoryDropWhenDestroyed": true,
+    "inventoryComparatorPower": true,
+    "inventoryOutSlotIDs": [],
+    "inventoryInSlotIDs": [],
+    "hasEnergyStorage": false,
+    "energyInitial": 0,
+    "energyCapacity": 400000,
+    "energyMaxReceive": 200,
+    "energyMaxExtract": 200,
+    "isFluidTank": false,
+    "fluidCapacity": 8000,
+    "fluidRestrictions": [],
+    "generateFeature": false,
+    "restrictionBiomes": [],
+    "blocksToReplace": [
+      {
+        "value": "TAG:stone_ore_replaceables"
+      }
+    ],
+    "generationShape": "UNIFORM",
+    "frequencyPerChunks": 10,
+    "frequencyOnChunk": 16,
+    "minGenerateHeight": 0,
+    "maxGenerateHeight": 64
+  }
+}

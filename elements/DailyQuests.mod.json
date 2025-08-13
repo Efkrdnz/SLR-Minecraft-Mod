@@ -1,0 +1,234 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": false,
+    "doesPauseGame": true,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "panel_rework_vertical2.png",
+          "use1Xscale": true,
+          "x": 113,
+          "y": 8
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_goals",
+          "text": {
+            "fixedValue": "Goals"
+          },
+          "color": {
+            "value": -13382656,
+            "falpha": 0.0
+          },
+          "x": 197,
+          "y": 65
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_pushups",
+          "text": {
+            "fixedValue": "-PUSH-UPS"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 159,
+          "y": 99
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_situps",
+          "text": {
+            "fixedValue": "-SIT-UPS"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 158,
+          "y": 117
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_squats",
+          "text": {
+            "fixedValue": "-SQUATS"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 159,
+          "y": 136
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_run",
+          "text": {
+            "fixedValue": "-RUN"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 160,
+          "y": 154
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest2",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "PushUpStart"
+          },
+          "x": 211,
+          "y": 101
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest21",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "SitUpStart"
+          },
+          "x": 206,
+          "y": 118
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invest22",
+          "image": "invest2.png",
+          "hoveredImage": "invest3.png",
+          "onClick": {
+            "name": "SquatStart"
+          },
+          "x": 201,
+          "y": 138
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_push_up_text",
+          "text": {
+            "fixedValue": "",
+            "name": "PushUpText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 227,
+          "y": 100
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_situp_text",
+          "text": {
+            "fixedValue": "",
+            "name": "SitupText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 227,
+          "y": 119
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_squat_text",
+          "text": {
+            "fixedValue": "",
+            "name": "SquatText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 227,
+          "y": 138
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_run_text",
+          "text": {
+            "fixedValue": "",
+            "name": "RunText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 228,
+          "y": 157
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_timer_text",
+          "text": {
+            "fixedValue": "",
+            "name": "TimerText"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 161,
+          "y": 186
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "notice.png",
+          "use1Xscale": false,
+          "x": 202,
+          "y": 48
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

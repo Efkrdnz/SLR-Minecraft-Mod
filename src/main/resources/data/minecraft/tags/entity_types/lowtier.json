@@ -1,0 +1,24 @@
+{
+  "replace": false,
+  "values": [
+    "zombie",
+    "husk",
+    "drowned",
+    "skeleton",
+    "witch",
+    "wither_skeleton",
+    "creeper",
+    "piglin",
+    "piglin_brute",
+    "zombified_piglin",
+    "pillager",
+    "blaze",
+    "cave_spider",
+    "enderman",
+    "ghast",
+    "sololeveling:centipede",
+    "sololeveling:d_knight_1",
+    "sololeveling:d_knight_2",
+    "sololeveling:d_knight_3"
+  ]
+}

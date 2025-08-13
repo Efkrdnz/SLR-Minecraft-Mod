@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "sololeveling:white_tiger_guild",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 35,
+    "separation": 34,
+    "salt": 714689003
+  }
+}

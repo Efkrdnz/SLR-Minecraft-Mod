@@ -1,0 +1,10 @@
+{
+  "parent": "sololeveling:custom/stormgrimoire",
+  "textures": {
+    "0": "sololeveling:block/stormshine_1",
+    "1": "sololeveling:block/stormpaper_1",
+    "2": "sololeveling:block/stormjewel_1",
+    "3": "sololeveling:block/stormgrimoire",
+    "particle": "sololeveling:item/griamore"
+  }
+}

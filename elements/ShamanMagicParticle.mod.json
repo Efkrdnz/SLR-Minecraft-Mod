@@ -1,0 +1,21 @@
+{
+  "_fv": 57,
+  "_type": "particle",
+  "definition": {
+    "texture": "shamanmagic.png",
+    "animate": true,
+    "frameDuration": 2,
+    "width": 2.0,
+    "height": 2.0,
+    "scale": 4.0,
+    "speedFactor": 0.0,
+    "gravity": 0.0,
+    "maxAge": 4,
+    "maxAgeDiff": 0,
+    "angularVelocity": 0.0,
+    "angularAcceleration": 0.0,
+    "canCollide": false,
+    "alwaysShow": true,
+    "renderType": "LIT"
+  }
+}

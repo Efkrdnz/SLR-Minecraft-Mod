@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:shadow_armor_boots"
+    },
+    "title": {
+      "translate": "advancements.shadow_storage_level_4.title"
+    },
+    "description": {
+      "translate": "advancements.shadow_storage_level_4.descr"
+    },
+    "frame": "challenge",
+    "show_toast": false,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "shadow_storage_level_4": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:shadow_storage_level_3"
+}

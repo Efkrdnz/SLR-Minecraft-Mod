@@ -1,0 +1,131 @@
+{
+	"credit": "wolf_awwent made with blockbench",
+	"texture_size": [32, 32],
+	"textures": {
+		"1": "modelfoundry:mega_weapon_pack/dagger_1",
+		"particle": "modelfoundry:mega_weapon_pack/dagger_1"
+	},
+	"elements": [
+		{
+			"from": [7.25, -3, 7],
+			"to": [8.75, 0, 8.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, -0.63833, 5.83885]},
+			"faces": {
+				"north": {"uv": [5.5, 10.5, 6.25, 12], "texture": "#1"},
+				"east": {"uv": [6.5, 10.5, 7.25, 12], "texture": "#1"},
+				"south": {"uv": [7.5, 10.5, 8.25, 12], "texture": "#1"},
+				"west": {"uv": [8.5, 10.5, 9.25, 12], "texture": "#1"},
+				"up": {"uv": [11.75, 5.25, 11, 4.5], "texture": "#1"},
+				"down": {"uv": [11.75, 5.5, 11, 6.25], "texture": "#1"}
+			}
+		},
+		{
+			"from": [7.75, 0, 7],
+			"to": [8.25, 5, 9],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8.5, -0.63833, 5.83885]},
+			"faces": {
+				"north": {"uv": [11, 2, 11.25, 4.5], "texture": "#1"},
+				"east": {"uv": [3.5, 10.5, 4.5, 13], "texture": "#1"},
+				"south": {"uv": [11.5, 2, 11.75, 4.5], "texture": "#1"},
+				"west": {"uv": [4.5, 10.5, 5.5, 13], "texture": "#1"},
+				"up": {"uv": [11.75, 9.5, 11.5, 8.5], "texture": "#1"},
+				"down": {"uv": [9.75, 11.5, 9.5, 12.5], "texture": "#1"}
+			}
+		},
+		{
+			"from": [7.26, -3.79185, 7.7112],
+			"to": [8.74, -1.81185, 9.1912],
+			"rotation": {"angle": 22.5, "axis": "x", "origin": [8, -0.63833, 5.83885]},
+			"faces": {
+				"north": {"uv": [9.5, 10.5, 10.25, 11.5], "texture": "#1"},
+				"east": {"uv": [10.5, 10.5, 11.25, 11.5], "texture": "#1"},
+				"south": {"uv": [11, 0, 11.75, 1], "texture": "#1"},
+				"west": {"uv": [11, 1, 11.75, 2], "texture": "#1"},
+				"up": {"uv": [12.25, 7.25, 11.5, 6.5], "texture": "#1"},
+				"down": {"uv": [12.25, 7.5, 11.5, 8.25], "texture": "#1"}
+			}
+		},
+		{
+			"from": [8, -11.05385, 6.15703],
+			"to": [8, -3.05385, 13.15703],
+			"rotation": {"angle": 22.5, "axis": "x", "origin": [8, -0.63833, 5.83885]},
+			"faces": {
+				"north": {"uv": [0, 0, 0, 4], "texture": "#1"},
+				"east": {"uv": [8, 6.5, 11.5, 10.5], "texture": "#1"},
+				"south": {"uv": [0, 0, 0, 4], "texture": "#1"},
+				"west": {"uv": [0, 10.5, 3.5, 14.5], "texture": "#1"},
+				"up": {"uv": [0, 3.5, 0, 0], "texture": "#1"},
+				"down": {"uv": [0, 0, 0, 3.5], "texture": "#1"}
+			}
+		},
+		{
+			"from": [7.99, -11.06385, 2.14703],
+			"to": [8.01, -3.04385, 10.16703],
+			"rotation": {"angle": 22.5, "axis": "x", "origin": [8, -0.63833, 5.83885]},
+			"faces": {
+				"north": {"uv": [0, 0, 0, 4], "texture": "#1"},
+				"east": {"uv": [0, 6.5, 4, 10.5], "texture": "#1"},
+				"south": {"uv": [0, 0, 0, 4], "texture": "#1"},
+				"west": {"uv": [4, 6.5, 8, 10.5], "texture": "#1"},
+				"up": {"uv": [0, 4, 0, 0], "texture": "#1"},
+				"down": {"uv": [0, 0, 0, 4], "texture": "#1"}
+			}
+		},
+		{
+			"from": [8, -1, 2.5],
+			"to": [8, 12, 13.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, -0.63833, 5.83885]},
+			"faces": {
+				"north": {"uv": [0, 0, 0, 6.5], "texture": "#1"},
+				"east": {"uv": [0, 0, 5.5, 6.5], "texture": "#1"},
+				"south": {"uv": [0, 0, 0, 6.5], "texture": "#1"},
+				"west": {"uv": [5.5, 0, 11, 6.5], "texture": "#1"},
+				"up": {"uv": [0, 5.5, 0, 0], "texture": "#1"},
+				"down": {"uv": [0, 0, 0, 5.5], "texture": "#1"}
+			}
+		}
+	],
+	"gui_light": "front",
+	"display": {
+		"thirdperson_righthand": {
+			"translation": [0, 9.25, 1.5]
+		},
+		"thirdperson_lefthand": {
+			"translation": [0, 9.25, 1.5]
+		},
+		"firstperson_righthand": {
+			"rotation": [-39.01, -0.3, -0.39],
+			"translation": [0, 10, -2]
+		},
+		"firstperson_lefthand": {
+			"rotation": [-39.01, -0.3, -0.39],
+			"translation": [0, 10, -2]
+		},
+		"ground": {
+			"rotation": [-31.91, -6.41, 22.24],
+			"translation": [0, 10.75, 0],
+			"scale": [0.8, 0.8, 0.8]
+		},
+		"gui": {
+			"rotation": [-90, 39.25, 90],
+			"translation": [-3.5, 6.75, 0]
+		},
+		"head": {
+			"rotation": [-90, 42.5, -90],
+			"translation": [7.75, -20.5, 4.75],
+			"scale": [1.5, 1.5, 1.5]
+		},
+		"fixed": {
+			"rotation": [-90, 46.75, 90],
+			"translation": [-1.5, 6.25, 0]
+		}
+	},
+	"groups": [
+		{
+			"name": "group",
+			"origin": [-4, -3.25, 8],
+			"color": 0,
+			"children": [0, 1, 2, 3, 4, 5]
+		}
+	]
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "sololeveling:displaysettings/evaluator.item",
+  "textures": {
+    "particle": "sololeveling:block/altartexture1"
+  }
+}

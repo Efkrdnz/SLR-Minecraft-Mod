@@ -1,0 +1,21 @@
+{
+  "_fv": 57,
+  "_type": "particle",
+  "definition": {
+    "texture": "curse_smoke.png",
+    "animate": true,
+    "frameDuration": 1,
+    "width": 1.0,
+    "height": 1.0,
+    "scale": 7.0,
+    "speedFactor": 1.0,
+    "gravity": 0.0,
+    "maxAge": 22,
+    "maxAgeDiff": 0,
+    "angularVelocity": 0.0,
+    "angularAcceleration": 0.0,
+    "canCollide": false,
+    "alwaysShow": false,
+    "renderType": "LIT"
+  }
+}

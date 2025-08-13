@@ -1,0 +1,13 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "sololeveling:block/dungeon_block_floor",
+    "up": "sololeveling:block/dungeon_block_floor",
+    "north": "sololeveling:block/dungeon_block_floor",
+    "east": "sololeveling:block/dungeon_block_floor",
+    "south": "sololeveling:block/dungeon_block_floor",
+    "west": "sololeveling:block/dungeon_block_floor",
+    "particle": "sololeveling:block/dungeon_block_floor"
+  },
+  "render_type": "solid"
+}

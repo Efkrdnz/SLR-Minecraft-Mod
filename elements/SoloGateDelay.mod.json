@@ -1,0 +1,12 @@
+{
+  "_fv": 57,
+  "_type": "gamerule",
+  "definition": {
+    "type": "Number",
+    "displayName": "SLR Gate Delay",
+    "description": "Minimum time must pass between gate spawns (In seconds)",
+    "category": "SPAWNING",
+    "defaultValueLogic": false,
+    "defaultValueNumber": 400
+  }
+}

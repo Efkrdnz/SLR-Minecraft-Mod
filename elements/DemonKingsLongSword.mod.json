@@ -1,0 +1,43 @@
+{
+  "_fv": 57,
+  "_type": "tool",
+  "definition": {
+    "toolType": "Sword",
+    "renderType": 1,
+    "blockingRenderType": 0,
+    "texture": "demonkingslongsword",
+    "customModelName": "demonkingsls:default",
+    "blockingModelName": "Normal blocking",
+    "name": "Demon King's Long Sword",
+    "specialInformation": {
+      "fixedValue": [
+        "§6LEVEL OF DIFFICULTY: S",
+        "§6ATTACK +350",
+        "§6TYPE: LONGSWORD",
+        "§6A LONGSWORD CONTANING THE POWERS OF BARAN, THE DEMON KING. THE EFFECT \"STORM OF THE FLAMES\" WILL ACTIVATE EVERY TIME THIS SWORD IS SWUNG.",
+        "§6EFFECT \"STORM OF THE FLAMES\" : A VIOLENT THUNDERSTORM IS SUMMONED WITHIN A SPECIFIED AREA"
+      ]
+    },
+    "creativeTab": {
+      "value": "CUSTOM:SoloLevelingWeapons"
+    },
+    "harvestLevel": 1,
+    "efficiency": 4.0,
+    "attackSpeed": 1.2,
+    "enchantability": 2,
+    "damageVsEntity": 12.0,
+    "usageCount": 0,
+    "blocksAffected": [],
+    "glowCondition": {
+      "fixedValue": true,
+      "name": "DemonKingsLongSwordHasItemGlowingEffect"
+    },
+    "repairItems": [],
+    "immuneToFire": true,
+    "stayInGridWhenCrafting": false,
+    "damageOnCrafting": false,
+    "onEntityHitWith": {
+      "name": "DemonKingsLongSwordLivingEntityIsHitWithTool"
+    }
+  }
+}

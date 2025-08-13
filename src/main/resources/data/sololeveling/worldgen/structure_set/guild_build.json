@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "sololeveling:guild_build",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 20,
+    "separation": 19,
+    "salt": 1804240760
+  }
+}

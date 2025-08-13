@@ -1,0 +1,9 @@
+{
+  "_fv": 57,
+  "_type": "mixin",
+  "definition": {
+    "mixins": [
+      "SMixin"
+    ]
+  }
+}

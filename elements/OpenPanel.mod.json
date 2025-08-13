@@ -1,0 +1,12 @@
+{
+  "_fv": 57,
+  "_type": "keybind",
+  "definition": {
+    "triggerKey": "N",
+    "keyBindingName": "Open Panel",
+    "keyBindingCategoryKey": "sololeveling",
+    "onKeyPressed": {
+      "name": "OpenPanelOnKeyPressed"
+    }
+  }
+}

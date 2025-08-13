@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:red_sandstone",
+    "minecraft:air",
+    "minecraft:dirt",
+    "minecraft:snow",
+    "minecraft:grass_block"
+  ]
+}

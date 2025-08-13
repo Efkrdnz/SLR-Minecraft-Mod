@@ -1,0 +1,287 @@
+repositories {
+	maven {
+    	url = 'https://cursemaven.com/'
+    }
+}
+
+dependencies {
+    	implementation fg.deobf("curse.maven:kiwi-303657:5039878")
+}
+
+minecraft {
+	runs {
+    	client {
+        	property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+        }
+		server {
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+        }
+        data {
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+        }
+	}
+}
+
+
+repositories {
+    maven {
+        url "https://www.cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+}
+dependencies {
+   compileOnly fg.deobf("curse.maven:bettercombat-forge-639842:4823303")
+   runtimeOnly fg.deobf("curse.maven:bettercombat-forge-639842:4823303")
+}
+
+
+repositories {
+   maven {
+       url = 'https://cursemaven.com/'
+   }
+}
+
+dependencies {
+    implementation fg.deobf("curse.maven:loquat-forge-885292:4925464")
+}
+
+minecraft {
+	runs {
+    	client {
+        	property 'mixin.env.remapRefMap', 'true'
+        	property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    	}
+    
+     	server {
+        	property 'mixin.env.remapRefMap', 'true'
+        	property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    	}
+     	data {
+        	property 'mixin.env.remapRefMap', 'true'
+        	property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    	}
+	}
+}
+
+
+repositories {
+    maven { url 'https://www.cursemaven.com'
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+}
+
+dependencies {
+    implementation fg.deobf("curse.maven:jade-324717:4986594")
+	// Plugin Note: Jade versions can be found here: https://www.curseforge.com/minecraft/mc-mods/jade/files/all?page=1&pageSize=20&gameVersionTypeId=1
+}
+
+
+repositories {
+  maven {
+      url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+  }
+}
+
+dependencies {
+  implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.20.1:4.4.2')
+}
+
+minecraft {
+  runs {
+     client {
+        property 'mixin.env.remapRefMap', 'true'
+        property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    }
+      server {
+        property 'mixin.env.remapRefMap', 'true'
+        property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    }
+      data {
+        property 'mixin.env.remapRefMap', 'true'
+        property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    }
+  }
+}
+
+
+minecraft {
+  runs {
+   client {    
+      property 'mixin.env.remapRefMap', 'true'
+      property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+       }
+        server {
+         property 'mixin.env.remapRefMap', 'true'
+         property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+       }
+      }
+     }
+
+repositories {
+ maven {
+     url = 'https://maven.kosmx.dev/'
+ }
+}
+
+ dependencies {
+   implementation fg.deobf("dev.kosmx.player-anim:player-animation-lib-forge:1.0.2-rc1+1.20")
+ }
+
+
+repositories {
+   maven {
+       url = 'https://cursemaven.com/'
+   }
+}
+
+dependencies {
+	implementation fg.deobf("curse.maven:world-preview-891429:4964102")
+}
+
+minecraft {
+	runs {
+    	client {
+        	property 'mixin.env.remapRefMap', 'true'
+        	property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    	}
+    
+     	server {
+        	property 'mixin.env.remapRefMap', 'true'
+        	property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    	}
+     	data {
+        	property 'mixin.env.remapRefMap', 'true'
+        	property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    	}
+	}
+}
+
+
+repositories {
+    maven {
+        url "https://www.cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+}
+dependencies {
+   compileOnly fg.deobf("curse.maven:cloth-config-forge-348521:4633444")
+   runtimeOnly fg.deobf("curse.maven:cloth-config-forge-348521:4633444")
+}
+
+
+repositories {
+    maven {
+        url "https://cursemaven.com"
+    }
+}
+
+dependencies {
+    implementation fg.deobf("curse.maven:worldedit-225608:4586218")
+}
+
+
+repositories {
+   maven {
+       url = 'https://cursemaven.com/'
+   }
+}
+
+dependencies {
+	implementation fg.deobf("curse.maven:cloth-config-348521:4973441")
+}
+
+minecraft {
+	runs {
+    	client {
+        	property 'mixin.env.remapRefMap', 'true'
+        	property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    	}
+    
+     	server {
+        	property 'mixin.env.remapRefMap', 'true'
+        	property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    	}
+     	data {
+        	property 'mixin.env.remapRefMap', 'true'
+        	property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+    	}
+	}
+}
+
+
+repositories {
+    maven {
+        name "Modding Legacy Maven"
+        url "https://maven.moddinglegacy.com/maven"
+    }
+}
+
+dependencies {
+    implementation fg.deobf("com.legacy:structure-gel:1.20.1-2.16.0.7")
+}
+
+minecraft {
+    runs {
+ 
+        all {
+            def srgToMcpFile = project.tasks.createSrgToMcp.outputs.files[0].path
+
+            property 'net.minecraftforge.gradle.GradleStart.srg.srg-mcp', srgToMcpFile
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', srgToMcpFile
+        }
+        
+        // ...
+    }
+}
+
+
+repositories {
+    maven {
+        url "https://cursemaven.com"
+    }
+}
+
+dependencies {
+    implementation fg.deobf("curse.maven:huge-structure-blocks-474114:4803547")
+}
+
+minecraft {
+    runs {
+
+        all {
+            def srgToMcpFile = project.tasks.createSrgToMcp.outputs.files[0].path
+ 
+            property 'net.minecraftforge.gradle.GradleStart.srg.srg-mcp', srgToMcpFile
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', srgToMcpFile
+        }
+        
+        // ...
+    }
+ }
+
+
+repositories {
+    maven {
+        url "https://www.cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+}
+dependencies {
+   compileOnly fg.deobf("curse.maven:mpp-forge-986014:5262463")
+   runtimeOnly fg.deobf("curse.maven:mpp-forge-986014:5262463")
+}
+
+

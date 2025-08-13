@@ -1,0 +1,11 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "0": "dagger_slash_1_dark",
+        "1": "dagger_slash_1"
+      },
+      "name": "default"
+    }
+  }
+}

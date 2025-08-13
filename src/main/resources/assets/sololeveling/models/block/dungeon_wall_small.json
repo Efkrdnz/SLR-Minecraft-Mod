@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/dungeon_small_wall",
+  "textures": {
+    "all": "sololeveling:block/dungeon_small_wall",
+    "particle": "sololeveling:block/dungeon_small_wall",
+    "3": "sololeveling:block/dungeon_small_wall"
+  },
+  "render_type": "solid"
+}

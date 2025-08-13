@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:shadow_armor_leggings"
+    },
+    "title": {
+      "translate": "advancements.shadow_storage.title"
+    },
+    "description": {
+      "translate": "advancements.shadow_storage.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "shadow_storage": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:shadow_extraction"
+}

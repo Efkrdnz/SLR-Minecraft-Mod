@@ -1,0 +1,103 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Entities",
+    "items": [],
+    "blocks": [],
+    "functions": [],
+    "entities": [
+      {
+        "value": "CUSTOM:Igris"
+      },
+      {
+        "value": "CUSTOM:Orc"
+      },
+      {
+        "value": "CUSTOM:BeruBoss"
+      },
+      {
+        "value": "CUSTOM:GemGolem"
+      },
+      {
+        "value": "CUSTOM:DKnight1"
+      },
+      {
+        "value": "CUSTOM:DKnight2"
+      },
+      {
+        "value": "CUSTOM:DKnight3"
+      },
+      {
+        "value": "CUSTOM:MiniGemGolem"
+      },
+      {
+        "value": "CUSTOM:Kasaka"
+      },
+      {
+        "value": "CUSTOM:SteelFangWolf"
+      },
+      {
+        "value": "CUSTOM:AncientSamurai"
+      },
+      {
+        "value": "CUSTOM:Baruka"
+      },
+      {
+        "value": "CUSTOM:Centipede"
+      },
+      {
+        "value": "CUSTOM:PolarBear"
+      },
+      {
+        "value": "CUSTOM:StoneGolem"
+      },
+      {
+        "value": "CUSTOM:IceElf"
+      },
+      {
+        "value": "CUSTOM:Goblin2Daggers"
+      },
+      {
+        "value": "CUSTOM:FuturisticGolem"
+      },
+      {
+        "value": "CUSTOM:Mutated"
+      },
+      {
+        "value": "CUSTOM:GoblinClub"
+      },
+      {
+        "value": "CUSTOM:GoblinKing"
+      },
+      {
+        "value": "CUSTOM:GoblinMage"
+      },
+      {
+        "value": "CUSTOM:GoblinArcher"
+      },
+      {
+        "value": "#soloboss"
+      },
+      {
+        "value": "CUSTOM:AncientGolem"
+      },
+      {
+        "value": "CUSTOM:GreenOrc"
+      },
+      {
+        "value": "CUSTOM:HighOrc"
+      },
+      {
+        "value": "CUSTOM:SkeletonBrute"
+      },
+      {
+        "value": "CUSTOM:SkeletonWarrior"
+      }
+    ],
+    "biomes": [],
+    "damageTypes": [],
+    "name": "dm",
+    "namespace": "minecraft"
+  }
+}

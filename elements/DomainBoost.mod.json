@@ -1,0 +1,23 @@
+{
+  "_fv": 57,
+  "_type": "potioneffect",
+  "definition": {
+    "effectName": "Monarchs Domain Boost",
+    "icon": "telekinesis_cooldown.png",
+    "color": {
+      "value": -1,
+      "falpha": 0.0
+    },
+    "isInstant": false,
+    "isBad": false,
+    "isBenefitical": false,
+    "renderStatusInInventory": false,
+    "renderStatusInHUD": false,
+    "onStarted": {
+      "name": "DomainBoostEffectStartedapplied"
+    },
+    "onExpired": {
+      "name": "DomainBoostEffectExpires"
+    }
+  }
+}

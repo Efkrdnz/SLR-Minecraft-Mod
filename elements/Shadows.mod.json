@@ -1,0 +1,55 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Entities",
+    "items": [],
+    "blocks": [],
+    "functions": [],
+    "entities": [
+      {
+        "value": "CUSTOM:ShadowSold1"
+      },
+      {
+        "value": "CUSTOM:OrcShadow"
+      },
+      {
+        "value": "CUSTOM:BeruShadow"
+      },
+      {
+        "value": "CUSTOM:SteelFangWolfShadow"
+      },
+      {
+        "value": "CUSTOM:ShadowPolarBear"
+      },
+      {
+        "value": "CUSTOM:GoblinClubShadow"
+      },
+      {
+        "value": "CUSTOM:GoblinArcherShadow"
+      },
+      {
+        "value": "CUSTOM:GoblinMageShadow"
+      },
+      {
+        "value": "CUSTOM:KamishShadow"
+      },
+      {
+        "value": "CUSTOM:IgrisShadow"
+      },
+      {
+        "value": "CUSTOM:ShadowGreenOrc"
+      },
+      {
+        "value": "CUSTOM:ShadowHighOrc"
+      },
+      {
+        "value": "CUSTOM:TuskShadow"
+      }
+    ],
+    "biomes": [],
+    "damageTypes": [],
+    "name": "shadows",
+    "namespace": "minecraft"
+  }
+}

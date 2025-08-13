@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/cell_door_open",
+  "textures": {
+    "all": "sololeveling:block/cell_door_open",
+    "particle": "sololeveling:block/cell_door_open",
+    "1": "sololeveling:block/cell_door_open"
+  },
+  "render_type": "solid"
+}

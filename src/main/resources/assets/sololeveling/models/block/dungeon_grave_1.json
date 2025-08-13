@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/dungeon_grave1",
+  "textures": {
+    "all": "sololeveling:block/dungeon_grave1",
+    "particle": "sololeveling:block/dungeon_grave1",
+    "0": "sololeveling:block/dungeon_grave1"
+  },
+  "render_type": "solid"
+}

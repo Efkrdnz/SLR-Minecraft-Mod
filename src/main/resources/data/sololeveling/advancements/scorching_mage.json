@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:grand_mage"
+    },
+    "title": {
+      "translate": "advancements.scorching_mage.title"
+    },
+    "description": {
+      "translate": "advancements.scorching_mage.descr"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "scorching_mage": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 25
+  },
+  "parent": "sololeveling:awakened"
+}

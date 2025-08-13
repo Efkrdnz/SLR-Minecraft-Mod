@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:demon_kings_dagger"
+    },
+    "title": {
+      "translate": "advancements.monarch_of_blue_flames.title"
+    },
+    "description": {
+      "translate": "advancements.monarch_of_blue_flames.descr"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "monarch_of_blue_flames": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 25
+  },
+  "parent": "sololeveling:awakened"
+}

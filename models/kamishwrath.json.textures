@@ -1,0 +1,11 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "0": "kamishtexture",
+        "1": "kamishbladetexture"
+      },
+      "name": "default"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "_fv": 57,
+  "_type": "particle",
+  "definition": {
+    "texture": "slashcase3.png",
+    "animate": true,
+    "frameDuration": 2,
+    "width": 3.0,
+    "height": 3.0,
+    "scale": 3.0,
+    "speedFactor": 0.0,
+    "gravity": 0.0,
+    "maxAge": 2,
+    "maxAgeDiff": 0,
+    "angularVelocity": 0.0,
+    "angularAcceleration": 0.0,
+    "canCollide": false,
+    "alwaysShow": true,
+    "renderType": "OPAQUE"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Entities",
+    "items": [],
+    "blocks": [],
+    "functions": [],
+    "entities": [
+      {
+        "value": "CUSTOM:Portal"
+      },
+      {
+        "value": "CUSTOM:Portal1"
+      },
+      {
+        "value": "CUSTOM:Portal12"
+      },
+      {
+        "value": "CUSTOM:PortalBeru"
+      },
+      {
+        "value": "CUSTOM:SpawnerPortal"
+      },
+      {
+        "value": "CUSTOM:RedGate"
+      },
+      {
+        "value": "CUSTOM:PortalLush"
+      },
+      {
+        "value": "CUSTOM:RandomCaveLarge"
+      },
+      {
+        "value": "CUSTOM:PortalSewers"
+      },
+      {
+        "value": "CUSTOM:PortalLab"
+      },
+      {
+        "value": "CUSTOM:PortalJobChange"
+      },
+      {
+        "value": "CUSTOM:PortalAncientGolem"
+      },
+      {
+        "value": "CUSTOM:PortalKargalgansThroneRoom"
+      },
+      {
+        "value": "CUSTOM:PortalCemetery"
+      }
+    ],
+    "biomes": [],
+    "damageTypes": [],
+    "name": "portals",
+    "namespace": "minecraft"
+  }
+}

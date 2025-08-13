@@ -1,0 +1,6 @@
+{
+  "parent": "sololeveling:displaysettings/griamore.item",
+  "textures": {
+    "layer0": "sololeveling:item/griamore"
+  }
+}

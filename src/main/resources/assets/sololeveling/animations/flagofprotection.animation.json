@@ -1,0 +1,83 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"idle": {
+			"loop": true,
+			"animation_length": 4,
+			"bones": {
+				"flag": {
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"2.0": {
+							"vector": [0, -0.5, 0],
+							"easing": "easeInOutQuad"
+						},
+						"4.0": {
+							"vector": [0, 0, 0],
+							"easing": "easeInOutQuad"
+						}
+					}
+				}
+			}
+		},
+		"spawnin": {
+			"animation_length": 1.45833,
+			"override_previous_animation": true,
+			"bones": {
+				"flag": {
+					"position": {
+						"0.0": {
+							"vector": [0, -11, 0]
+						},
+						"0.9583": {
+							"vector": [0, 0, 0],
+							"easing": "step",
+							"easingArgs": [8]
+						}
+					},
+					"scale": {
+						"0.5": {
+							"vector": [0, 1, 0]
+						},
+						"0.9583": {
+							"vector": [1, 1, 1],
+							"easing": "step",
+							"easingArgs": [8]
+						}
+					}
+				}
+			}
+		},
+		"despawn": {
+			"animation_length": 0.95833,
+			"override_previous_animation": true,
+			"bones": {
+				"flag": {
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0],
+							"easing": "step",
+							"easingArgs": [8]
+						},
+						"0.9583": {
+							"vector": [0, -11, 0]
+						}
+					},
+					"scale": {
+						"0.0": {
+							"vector": [1, 1, 1],
+							"easing": "step",
+							"easingArgs": [8]
+						},
+						"0.5": {
+							"vector": [0, 1, 0]
+						}
+					}
+				}
+			}
+		}
+	},
+	"geckolib_format_version": 2
+}

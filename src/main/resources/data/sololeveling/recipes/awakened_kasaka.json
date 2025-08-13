@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " a ",
+    "bcb",
+    " a "
+  ],
+  "key": {
+    "a": {
+      "item": "sololeveling:mana_crystal_s"
+    },
+    "b": {
+      "item": "sololeveling:mana_crystal_a"
+    },
+    "c": {
+      "item": "sololeveling:kasakas_venom_fangs"
+    }
+  },
+  "result": {
+    "item": "sololeveling:kasakas_awakened_venom_fang",
+    "count": 1
+  }
+}

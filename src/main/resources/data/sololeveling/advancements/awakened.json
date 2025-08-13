@@ -1,0 +1,23 @@
+{
+  "display": {
+    "background": "minecraft:textures/block/stone.png",
+    "icon": {
+      "item": "sololeveling:creativetabitem"
+    },
+    "title": {
+      "translate": "advancements.awakened.title"
+    },
+    "description": {
+      "translate": "advancements.awakened.descr"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "awakened": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

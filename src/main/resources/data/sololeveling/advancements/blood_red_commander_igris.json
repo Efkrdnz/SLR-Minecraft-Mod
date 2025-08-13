@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:give_igris"
+    },
+    "title": {
+      "translate": "advancements.blood_red_commander_igris.title"
+    },
+    "description": {
+      "translate": "advancements.blood_red_commander_igris.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "blood_red_commander_igris": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 50
+  },
+  "parent": "sololeveling:explore_dun_job_change"
+}

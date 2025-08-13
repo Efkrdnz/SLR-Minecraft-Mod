@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "1": "cell_door_open"
+      },
+      "name": "default"
+    }
+  }
+}

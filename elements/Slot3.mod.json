@@ -1,0 +1,34 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Items",
+    "items": [
+      {
+        "value": "CUSTOM:SpringWaterOfTheEchoingForest"
+      },
+      {
+        "value": "CUSTOM:ManaCrystalS"
+      },
+      {
+        "value": "CUSTOM:ManaCrystalA"
+      },
+      {
+        "value": "CUSTOM:ManaCrystalC"
+      },
+      {
+        "value": "CUSTOM:ManaCrystalD"
+      },
+      {
+        "value": "CUSTOM:ManaCrystalE"
+      }
+    ],
+    "blocks": [],
+    "functions": [],
+    "entities": [],
+    "biomes": [],
+    "damageTypes": [],
+    "name": "slot_3",
+    "namespace": "minecraft"
+  }
+}

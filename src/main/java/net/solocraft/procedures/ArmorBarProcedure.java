@@ -1,0 +1,12 @@
+package net.solocraft.procedures;
+
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
+
+public class ArmorBarProcedure {
+	public static String execute(Entity entity) {
+		if (entity == null)
+			return "";
+		return "" + Math.round(entity instanceof LivingEntity _livEnt ? _livEnt.getArmorValue() : 0);
+	}
+}

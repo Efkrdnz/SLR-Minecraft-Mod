@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "4": "dungeon_door_through_wall"
+      },
+      "name": "default"
+    }
+  }
+}

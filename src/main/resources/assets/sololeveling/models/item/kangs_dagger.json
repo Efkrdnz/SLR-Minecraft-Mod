@@ -1,0 +1,6 @@
+{
+  "parent": "sololeveling:displaysettings/taeshikdagger_-_converted.item",
+  "textures": {
+    "layer0": "sololeveling:item/taeshikdagger"
+  }
+}

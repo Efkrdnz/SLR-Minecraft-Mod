@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "sololeveling:block/unbreakable_deepslate"
+    },
+    "facing=east": {
+      "model": "sololeveling:block/unbreakable_deepslate",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "sololeveling:block/unbreakable_deepslate",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "sololeveling:block/unbreakable_deepslate",
+      "y": 270
+    }
+  }
+}

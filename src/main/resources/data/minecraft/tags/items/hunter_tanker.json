@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:war_axe",
+    "sololeveling:hammer",
+    "minecraft:iron_axe",
+    "minecraft:diamond_axe",
+    "minecraft:netherite_axe"
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "_fv": 57,
+  "_type": "procedure",
+  "definition": {
+    "procedurexml": "<xml xmlns=\"https://developers.google.com/blockly/xml\"><variables><variable type=\"String\" id=\"reward_to_collect\">reward_to_collect</variable></variables><block type=\"event_trigger\" deletable=\"false\" x=\"40\" y=\"40\"><field name=\"trigger\">no_ext_trigger</field><next><block type=\"variables_set_string\"><mutation xmlns=\"http://www.w3.org/1999/xhtml\" is_player_var=\"false\" has_entity=\"false\"></mutation><field name=\"VAR\">local:reward_to_collect</field><value name=\"VAL\"><block type=\"variables_get_string\"><mutation xmlns=\"http://www.w3.org/1999/xhtml\" is_player_var=\"true\" has_entity=\"true\"></mutation><field name=\"VAR\">global:reward_2</field><value name=\"entity\"><block type=\"entity_from_deps\"></block></value></block></value><next><block type=\"java_code\"><field name=\"CODE\">RewardCollectProcedure.execute(entity, reward_to_collect);</field><next><block type=\"variables_set_string\"><mutation xmlns=\"http://www.w3.org/1999/xhtml\" is_player_var=\"true\" has_entity=\"true\"></mutation><field name=\"VAR\">global:reward_2</field><value name=\"VAL\"><block type=\"text\"><field name=\"TEXT\"></field></block></value><value name=\"entity\"><block type=\"entity_from_deps\"></block></value></block></next></block></next></block></next></block></xml>"
+  }
+}

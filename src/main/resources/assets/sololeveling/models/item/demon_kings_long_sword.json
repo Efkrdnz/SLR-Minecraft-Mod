@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/demonkingsls",
+  "textures": {
+    "0": "sololeveling:block/demonkingslongsword",
+    "particle": "sololeveling:item/demonkingslongsword"
+  }
+}

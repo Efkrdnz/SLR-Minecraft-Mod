@@ -1,0 +1,8 @@
+{
+  "parent": "block/cube_all",
+  "textures": {
+    "all": "sololeveling:block/cobblestone",
+    "particle": "sololeveling:block/cobblestone"
+  },
+  "render_type": "solid"
+}

@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:shadow_armor_chestplate"
+    },
+    "title": {
+      "translate": "advancements.shadow_exchange.title"
+    },
+    "description": {
+      "translate": "advancements.shadow_exchange.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "shadow_exchange": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:monarchs_domain"
+}

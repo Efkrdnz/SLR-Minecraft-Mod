@@ -1,0 +1,22 @@
+{
+  "_fv": 57,
+  "_type": "projectile",
+  "definition": {
+    "projectileItem": {
+      "value": "Blocks.AIR"
+    },
+    "showParticles": false,
+    "actionSound": {
+      "value": ""
+    },
+    "igniteFire": false,
+    "power": 1.0,
+    "damage": 0.0,
+    "knockback": 0,
+    "entityModel": "Modelinv",
+    "customModelTexture": "invistext.png",
+    "onFlyingTick": {
+      "name": "NecroBlastWhileProjectileFlyingTick"
+    }
+  }
+}

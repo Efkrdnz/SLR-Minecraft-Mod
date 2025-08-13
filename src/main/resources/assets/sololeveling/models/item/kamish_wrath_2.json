@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/blade2",
+  "textures": {
+    "1": "sololeveling:block/blade2",
+    "particle": "sololeveling:item/blade2"
+  }
+}

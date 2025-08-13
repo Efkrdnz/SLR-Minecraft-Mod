@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/spiritbow",
+  "textures": {
+    "1": "sololeveling:block/spiritbow",
+    "particle": "sololeveling:item/spiritbow"
+  }
+}

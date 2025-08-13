@@ -1,0 +1,13 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "0": "stormshine_1",
+        "1": "stormpaper_1",
+        "2": "stormjewel_1",
+        "3": "stormgrimoire"
+      },
+      "name": "default"
+    }
+  }
+}

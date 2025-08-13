@@ -1,0 +1,12 @@
+{
+  "_fv": 57,
+  "_type": "keybind",
+  "definition": {
+    "triggerKey": "SPACE",
+    "keyBindingName": "Triple Jump",
+    "keyBindingCategoryKey": "sololeveling",
+    "onKeyPressed": {
+      "name": "TripleJumpOnKeyPressed"
+    }
+  }
+}

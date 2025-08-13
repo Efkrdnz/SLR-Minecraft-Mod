@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/dungeon_door_wooden_empty",
+  "textures": {
+    "all": "sololeveling:block/dungeon_door_wooden_empty",
+    "particle": "sololeveling:block/dungeon_door_wooden_empty",
+    "1": "sololeveling:block/dungeon_door_wooden_empty"
+  },
+  "render_type": "solid"
+}

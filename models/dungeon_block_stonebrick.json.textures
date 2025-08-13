@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "1": "dungeon_block_stonebrick"
+      },
+      "name": "default"
+    }
+  }
+}

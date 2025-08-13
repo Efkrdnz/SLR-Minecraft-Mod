@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/axe1",
+  "textures": {
+    "2": "sololeveling:block/waraxe",
+    "particle": "sololeveling:item/waraxe"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "_fv": 57,
+  "_type": "projectile",
+  "definition": {
+    "projectileItem": {
+      "value": "Blocks.AIR"
+    },
+    "showParticles": false,
+    "actionSound": {
+      "value": "CUSTOM:slash"
+    },
+    "igniteFire": false,
+    "power": 1.0,
+    "damage": 6.0,
+    "knockback": 1,
+    "entityModel": "ModelSlash2",
+    "customModelTexture": "slash.png",
+    "onHitsBlock": {
+      "name": "SlashProjectileHitsBlock"
+    },
+    "onHitsEntity": {
+      "name": "SlashProjectileHitsLivingEntity"
+    },
+    "onFlyingTick": {
+      "name": "SlashWhileProjectileFlyingTick"
+    }
+  }
+}

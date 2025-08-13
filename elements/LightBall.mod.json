@@ -1,0 +1,28 @@
+{
+  "_fv": 57,
+  "_type": "projectile",
+  "definition": {
+    "projectileItem": {
+      "value": "Blocks.AIR"
+    },
+    "showParticles": false,
+    "actionSound": {
+      "value": "entity.wither.shoot"
+    },
+    "igniteFire": false,
+    "power": 1.0,
+    "damage": 6.0,
+    "knockback": 5,
+    "entityModel": "Modellight_ball",
+    "customModelTexture": "light_ball.png",
+    "onHitsBlock": {
+      "name": "LightBallProjectileHitsBlock"
+    },
+    "onHitsEntity": {
+      "name": "LightBallProjectileHitsLivingEntity"
+    },
+    "onFlyingTick": {
+      "name": "LightBallWhileProjectileFlyingTick"
+    }
+  }
+}

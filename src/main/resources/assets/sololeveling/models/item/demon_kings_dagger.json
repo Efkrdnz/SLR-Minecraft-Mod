@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/demonkingsdaggers",
+  "textures": {
+    "0": "sololeveling:block/demonkingsdaggers4",
+    "particle": "sololeveling:item/demonkingsdagger"
+  }
+}

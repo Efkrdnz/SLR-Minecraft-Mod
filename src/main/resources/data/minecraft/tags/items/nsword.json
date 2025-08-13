@@ -1,0 +1,25 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:e_tier_sword",
+    "sololeveling:d_tier_sword",
+    "sololeveling:c_tier_sword",
+    "sololeveling:b_tier_sword",
+    "sololeveling:a_tier_sword",
+    "sololeveling:s_tier_sword",
+    "sololeveling:demon_kings_long_sword",
+    "sololeveling:igrislongsword",
+    "minecraft:wooden_sword",
+    "minecraft:stone_sword",
+    "minecraft:iron_sword",
+    "minecraft:golden_sword",
+    "minecraft:diamond_sword",
+    "minecraft:netherite_sword",
+    "sololeveling:sword_curved_d",
+    "sololeveling:sword_enriched_b",
+    "sololeveling:sword_twinwing_c",
+    "sololeveling:sword_nature_b",
+    "sololeveling:sword_warrior_d",
+    "sololeveling:katana_s"
+  ]
+}

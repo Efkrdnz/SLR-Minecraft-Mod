@@ -1,0 +1,40 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.FlameField",
+				"texture_width": 16,
+				"texture_height": 16,
+				"visible_bounds_width": 2,
+				"visible_bounds_height": 3,
+				"visible_bounds_offset": [0, 0.5, 0]
+			},
+			"bones": [
+				{
+					"name": "creepingice",
+					"pivot": [0, 0, 0]
+				},
+				{
+					"name": "bone",
+					"parent": "creepingice",
+					"pivot": [0, 4.44, 0],
+					"cubes": [
+						{
+							"origin": [-4.44, 0, -4.44],
+							"size": [8.88, 8.88, 8.88],
+							"uv": {
+								"north": {"uv": [4, 8], "uv_size": [4, 4]},
+								"east": {"uv": [0, 12], "uv_size": [4, 4]},
+								"south": {"uv": [8, 12], "uv_size": [4, 4]},
+								"west": {"uv": [4, 12], "uv_size": [4, 4]},
+								"up": {"uv": [8, 8], "uv_size": [4, 4]},
+								"down": {"uv": [12, 16], "uv_size": [4, -4]}
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

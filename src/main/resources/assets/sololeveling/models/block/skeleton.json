@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/dungeon_skeleton",
+  "textures": {
+    "all": "sololeveling:block/dungeon_skeleton",
+    "particle": "sololeveling:block/dungeon_skeleton",
+    "0": "sololeveling:block/dungeon_skeleton"
+  },
+  "render_type": "solid"
+}

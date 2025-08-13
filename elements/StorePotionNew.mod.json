@@ -1,0 +1,723 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "panel_rework_empty.png",
+          "use1Xscale": true,
+          "x": 66,
+          "y": 0
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_rework_back",
+          "image": "panel_rework_back.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenStoreGUI"
+          },
+          "x": 50,
+          "y": 14
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_potion_health1",
+          "image": "panel_potion_health1.png",
+          "hoveredImage": "panel_potion_hover_health1.png",
+          "onClick": {
+            "name": "BuyPotionHP1"
+          },
+          "x": 123,
+          "y": 68
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_potion_health2",
+          "image": "panel_potion_health2.png",
+          "hoveredImage": "panel_potion_hover_health2.png",
+          "onClick": {
+            "name": "BuyPotionHP2"
+          },
+          "x": 195,
+          "y": 68
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_potion_health3",
+          "image": "panel_potion_health3.png",
+          "hoveredImage": "panel_potion_hover_health3.png",
+          "onClick": {
+            "name": "BuyPotionHP3"
+          },
+          "x": 267,
+          "y": 68
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_potion_mana1",
+          "image": "panel_potion_mana1.png",
+          "hoveredImage": "panel_potion_hover_mana1.png",
+          "onClick": {
+            "name": "BuyPotionMP1"
+          },
+          "x": 123,
+          "y": 117
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_potion_mana2",
+          "image": "panel_potion_mana2.png",
+          "hoveredImage": "panel_potion_hover_mana2.png",
+          "onClick": {
+            "name": "BuyPotionMP2"
+          },
+          "x": 195,
+          "y": 117
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_potion_mana3",
+          "image": "panel_potion_mana3.png",
+          "hoveredImage": "panel_potion_hover_mana3.png",
+          "onClick": {
+            "name": "BuyPotionMP3"
+          },
+          "x": 267,
+          "y": 117
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_sslpotions",
+          "text": {
+            "fixedValue": "§lPotions"
+          },
+          "color": {
+            "value": -12793857,
+            "falpha": 0.0
+          },
+          "x": 193,
+          "y": 32
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_gold_text",
+          "text": {
+            "fixedValue": "",
+            "name": "GoldText"
+          },
+          "color": {
+            "value": -26317,
+            "falpha": 0.0
+          },
+          "x": 123,
+          "y": 50
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_potion_fatigue1",
+          "image": "panel_potion_fatigue1.png",
+          "hoveredImage": "panel_potion_hover_fatigue1.png",
+          "onClick": {
+            "name": "BuyPotionFTG1"
+          },
+          "x": 123,
+          "y": 166
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_potion_fatigue2",
+          "image": "panel_potion_fatigue2.png",
+          "hoveredImage": "panel_potion_hover_fatigue2.png",
+          "onClick": {
+            "name": "BuyPotionFTG2"
+          },
+          "x": 195,
+          "y": 166
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_panel_potion_fatigue3",
+          "image": "panel_potion_fatigue3.png",
+          "hoveredImage": "panel_potion_hover_fatigue3.png",
+          "onClick": {
+            "name": "BuyPotionFTG3"
+          },
+          "x": 267,
+          "y": 166
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_1",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 123,
+          "y": 166
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_11",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 135,
+          "y": 178
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_12",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 123,
+          "y": 178
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_13",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 135,
+          "y": 166
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_2",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 178
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_21",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 178
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_22",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 166
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_23",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 166
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_3",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 267,
+          "y": 178
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_31",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 279,
+          "y": 178
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_32",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 267,
+          "y": 166
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_33",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 279,
+          "y": 166
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_1",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 123,
+          "y": 80
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_11",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 135,
+          "y": 80
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_12",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 135,
+          "y": 68
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_13",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 123,
+          "y": 68
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_2",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 80
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_21",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 80
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_22",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 68
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_23",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 68
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_3",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 267,
+          "y": 68
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_31",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 279,
+          "y": 68
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_32",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 267,
+          "y": 80
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionh_33",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionh3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 279,
+          "y": 80
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_1",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 123,
+          "y": 117
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_11",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 135,
+          "y": 117
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_12",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 123,
+          "y": 129
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionf_14",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionf1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 135,
+          "y": 178
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_2",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 117
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_21",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 117
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_22",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 195,
+          "y": 129
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_23",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm2"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 207,
+          "y": 129
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_3",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 267,
+          "y": 117
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_31",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 279,
+          "y": 117
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_32",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 267,
+          "y": 129
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_33",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm3"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 279,
+          "y": 129
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_go_to_previous_tab",
+          "text": {
+            "fixedValue": "Go to previous tab"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 48,
+          "y": 12
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_proc_return_potionm_13",
+          "text": {
+            "fixedValue": "",
+            "name": "ReturnPotionm1"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 135,
+          "y": 129
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

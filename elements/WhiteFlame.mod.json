@@ -1,0 +1,25 @@
+{
+  "_fv": 57,
+  "_type": "projectile",
+  "definition": {
+    "projectileItem": {
+      "value": "Blocks.AIR"
+    },
+    "showParticles": false,
+    "actionSound": {
+      "value": ""
+    },
+    "igniteFire": false,
+    "power": 0.4,
+    "damage": 1.0,
+    "knockback": 0,
+    "entityModel": "Modelinv",
+    "customModelTexture": "invistext.png",
+    "onHitsEntity": {
+      "name": "WhiteFlameProjectileHitsLivingEntity"
+    },
+    "onFlyingTick": {
+      "name": "WhiteFlameWhileProjectileFlyingTick"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/dungeon_tools",
+  "textures": {
+    "all": "sololeveling:block/dungeon_tools",
+    "particle": "sololeveling:block/dungeon_tools",
+    "2": "sololeveling:block/dungeon_tools"
+  },
+  "render_type": "solid"
+}

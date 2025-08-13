@@ -1,0 +1,28 @@
+{
+  "_fv": 57,
+  "_type": "projectile",
+  "definition": {
+    "projectileItem": {
+      "value": "Blocks.AIR"
+    },
+    "showParticles": false,
+    "actionSound": {
+      "value": "entity.ghast.shoot"
+    },
+    "igniteFire": false,
+    "power": 1.0,
+    "damage": 12.0,
+    "knockback": 0,
+    "entityModel": "Default",
+    "customModelTexture": "",
+    "onHitsBlock": {
+      "name": "DragonBreatheProjectileHitsBlock"
+    },
+    "onHitsEntity": {
+      "name": "DragonBreatheProjectileHitsLivingEntity"
+    },
+    "onFlyingTick": {
+      "name": "DragonBreatheWhileProjectileFlyingTick"
+    }
+  }
+}

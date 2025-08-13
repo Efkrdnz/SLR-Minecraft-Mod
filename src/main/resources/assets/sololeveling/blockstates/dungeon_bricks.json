@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "sololeveling:block/dungeon_bricks"
+    },
+    "facing=east": {
+      "model": "sololeveling:block/dungeon_bricks",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "sololeveling:block/dungeon_bricks",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "sololeveling:block/dungeon_bricks",
+      "y": 270
+    }
+  }
+}

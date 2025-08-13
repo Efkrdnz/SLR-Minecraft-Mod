@@ -1,0 +1,6 @@
+{
+  "parent": "sololeveling:displaysettings/keyhole.item",
+  "textures": {
+    "particle": "sololeveling:block/instancecover1"
+  }
+}

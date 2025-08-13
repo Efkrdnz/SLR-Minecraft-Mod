@@ -1,0 +1,9 @@
+{
+  "parent": "sololeveling:custom/evaluator",
+  "textures": {
+    "all": "sololeveling:block/eva",
+    "particle": "sololeveling:block/eva",
+    "1": "sololeveling:block/eva"
+  },
+  "render_type": "solid"
+}

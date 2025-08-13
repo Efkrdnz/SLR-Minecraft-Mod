@@ -1,0 +1,6 @@
+{
+  "parent": "sololeveling:displaysettings/dungeon_wall.item",
+  "textures": {
+    "particle": "sololeveling:block/dungeon_wall"
+  }
+}

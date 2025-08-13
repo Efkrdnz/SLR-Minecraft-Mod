@@ -1,0 +1,166 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": false,
+    "doesPauseGame": true,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "base.png",
+          "use1Xscale": true,
+          "x": 138,
+          "y": 7
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_are_you_sure_you_want",
+          "text": {
+            "fixedValue": "Are you sure you want"
+          },
+          "color": {
+            "value": -13210,
+            "falpha": 0.0
+          },
+          "x": 157,
+          "y": 19
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_to_join_ahjin_guild",
+          "text": {
+            "fixedValue": "to join Ahjin Guild?"
+          },
+          "color": {
+            "value": -13210,
+            "falpha": 0.0
+          },
+          "x": 160,
+          "y": 34
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_empty",
+          "text": {
+            "fixedValue": "Buffs:"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 198,
+          "y": 61
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_x2_xp_boost",
+          "text": {
+            "fixedValue": "200% XP Boost"
+          },
+          "color": {
+            "value": -10027162,
+            "falpha": 0.0
+          },
+          "x": 178,
+          "y": 74
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_major_speed_boost",
+          "text": {
+            "fixedValue": "Major Speed Boost"
+          },
+          "color": {
+            "value": -10027162,
+            "falpha": 0.0
+          },
+          "x": 168,
+          "y": 87
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_requirements",
+          "text": {
+            "fixedValue": "Requirements:"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 180,
+          "y": 115
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_check_if_shadow_monarch",
+          "text": {
+            "fixedValue": "",
+            "name": "CheckIfShadowMonarch"
+          },
+          "color": {
+            "value": -12829636,
+            "falpha": 0.0
+          },
+          "x": 177,
+          "y": 133
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_proc_ahjin_level_req",
+          "text": {
+            "fixedValue": "",
+            "name": "AhjinLevelReq"
+          },
+          "color": {
+            "value": -12829636,
+            "falpha": 0.0
+          },
+          "x": 186,
+          "y": 149
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_guildjoin",
+          "image": "guildjoin.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "AhjinJoinButton"
+          },
+          "x": 198,
+          "y": 192
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

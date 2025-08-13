@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "default": {
+      "map": {
+        "0": "venom_fang_new"
+      },
+      "name": "default"
+    }
+  }
+}

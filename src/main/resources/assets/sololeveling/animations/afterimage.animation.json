@@ -1,0 +1,37 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"idle": {
+			"loop": true,
+			"animation_length": 2.875,
+			"bones": {
+				"Head": {
+					"rotation": {
+						"vector": [-10, 0, 0]
+					}
+				},
+				"RightArm": {
+					"rotation": {
+						"vector": [25, 0, 0]
+					}
+				},
+				"LeftArm": {
+					"rotation": {
+						"vector": [-30, 0, 0]
+					}
+				},
+				"RightLeg": {
+					"rotation": {
+						"vector": [-17.5, 0, 0]
+					}
+				},
+				"LeftLeg": {
+					"rotation": {
+						"vector": [17.5, 0, 0]
+					}
+				}
+			}
+		}
+	},
+	"geckolib_format_version": 2
+}

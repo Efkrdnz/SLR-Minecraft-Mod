@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "sololeveling:block/golem_drop_block_gem"
+    },
+    "facing=east": {
+      "model": "sololeveling:block/golem_drop_block_gem",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "sololeveling:block/golem_drop_block_gem",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "sololeveling:block/golem_drop_block_gem",
+      "y": 270
+    },
+    "facing=up": {
+      "model": "sololeveling:block/golem_drop_block_gem",
+      "x": 270
+    },
+    "facing=down": {
+      "model": "sololeveling:block/golem_drop_block_gem",
+      "x": 90
+    }
+  }
+}

@@ -1,0 +1,98 @@
+
+/*
+ *	MCreator note: This file will be REGENERATED on each build.
+ */
+package net.solocraft.init;
+
+import net.solocraft.world.inventory.WTJoinMenu;
+import net.solocraft.world.inventory.UnlockedSkillsTab7Menu;
+import net.solocraft.world.inventory.UnlockedSkillsTab6Menu;
+import net.solocraft.world.inventory.UnlockedSkillsTab5Menu;
+import net.solocraft.world.inventory.UnlockedSkillsTab4Menu;
+import net.solocraft.world.inventory.UnlockedSkillsTab3Menu;
+import net.solocraft.world.inventory.UnlockedSkillsTab2Menu;
+import net.solocraft.world.inventory.UnlockedSkillsTab1Menu;
+import net.solocraft.world.inventory.TrainingGUIMenu;
+import net.solocraft.world.inventory.StorepotionMenu;
+import net.solocraft.world.inventory.StoreWeaponReworkMenu;
+import net.solocraft.world.inventory.StoreWeaponMenu;
+import net.solocraft.world.inventory.StorePotionNewMenu;
+import net.solocraft.world.inventory.StoreGUIMenu;
+import net.solocraft.world.inventory.SpecialCraftingGUIMenu;
+import net.solocraft.world.inventory.ShopMenu;
+import net.solocraft.world.inventory.ShadowSummonGUIMenu;
+import net.solocraft.world.inventory.ShadowGUIMenu;
+import net.solocraft.world.inventory.ShadowExchangeSaveMenu;
+import net.solocraft.world.inventory.ShadowExchangeSETMenu;
+import net.solocraft.world.inventory.ShadowExchangeMainGUIMenu;
+import net.solocraft.world.inventory.SelectionBoxGUIMenu;
+import net.solocraft.world.inventory.RewardPanelMenu;
+import net.solocraft.world.inventory.ReaderGUIMenu;
+import net.solocraft.world.inventory.QuestsMenu;
+import net.solocraft.world.inventory.PocketDimensionGUIMenu;
+import net.solocraft.world.inventory.PathMenu;
+import net.solocraft.world.inventory.PanelReworkMenu;
+import net.solocraft.world.inventory.PanelRework2Menu;
+import net.solocraft.world.inventory.PanelEarlyMenu;
+import net.solocraft.world.inventory.MiscItemsMenu;
+import net.solocraft.world.inventory.HuntersJoinMenu;
+import net.solocraft.world.inventory.HunterIDGuiMenu;
+import net.solocraft.world.inventory.FoodGuiMenu;
+import net.solocraft.world.inventory.FireGriamoreMenu;
+import net.solocraft.world.inventory.EquippedAbilitiesMenu;
+import net.solocraft.world.inventory.DailyQuestsMenu;
+import net.solocraft.world.inventory.ChooseClassMenu;
+import net.solocraft.world.inventory.AhjinJoinMenu;
+import net.solocraft.world.inventory.AbilitiesGUIMenu;
+import net.solocraft.SololevelingMod;
+
+import net.minecraftforge.registries.RegistryObject;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.common.extensions.IForgeMenuType;
+
+import net.minecraft.world.inventory.MenuType;
+
+public class SololevelingModMenus {
+	public static final DeferredRegister<MenuType<?>> REGISTRY = DeferredRegister.create(ForgeRegistries.MENU_TYPES, SololevelingMod.MODID);
+	public static final RegistryObject<MenuType<PanelEarlyMenu>> PANEL_EARLY = REGISTRY.register("panel_early", () -> IForgeMenuType.create(PanelEarlyMenu::new));
+	public static final RegistryObject<MenuType<RewardPanelMenu>> REWARD_PANEL = REGISTRY.register("reward_panel", () -> IForgeMenuType.create(RewardPanelMenu::new));
+	public static final RegistryObject<MenuType<TrainingGUIMenu>> TRAINING_GUI = REGISTRY.register("training_gui", () -> IForgeMenuType.create(TrainingGUIMenu::new));
+	public static final RegistryObject<MenuType<AhjinJoinMenu>> AHJIN_JOIN = REGISTRY.register("ahjin_join", () -> IForgeMenuType.create(AhjinJoinMenu::new));
+	public static final RegistryObject<MenuType<StoreGUIMenu>> STORE_GUI = REGISTRY.register("store_gui", () -> IForgeMenuType.create(StoreGUIMenu::new));
+	public static final RegistryObject<MenuType<StoreWeaponMenu>> STORE_WEAPON = REGISTRY.register("store_weapon", () -> IForgeMenuType.create(StoreWeaponMenu::new));
+	public static final RegistryObject<MenuType<StorepotionMenu>> STOREPOTION = REGISTRY.register("storepotion", () -> IForgeMenuType.create(StorepotionMenu::new));
+	public static final RegistryObject<MenuType<AbilitiesGUIMenu>> ABILITIES_GUI = REGISTRY.register("abilities_gui", () -> IForgeMenuType.create(AbilitiesGUIMenu::new));
+	public static final RegistryObject<MenuType<PocketDimensionGUIMenu>> POCKET_DIMENSION_GUI = REGISTRY.register("pocket_dimension_gui", () -> IForgeMenuType.create(PocketDimensionGUIMenu::new));
+	public static final RegistryObject<MenuType<ChooseClassMenu>> CHOOSE_CLASS = REGISTRY.register("choose_class", () -> IForgeMenuType.create(ChooseClassMenu::new));
+	public static final RegistryObject<MenuType<SpecialCraftingGUIMenu>> SPECIAL_CRAFTING_GUI = REGISTRY.register("special_crafting_gui", () -> IForgeMenuType.create(SpecialCraftingGUIMenu::new));
+	public static final RegistryObject<MenuType<FireGriamoreMenu>> FIRE_GRIAMORE = REGISTRY.register("fire_griamore", () -> IForgeMenuType.create(FireGriamoreMenu::new));
+	public static final RegistryObject<MenuType<ShadowGUIMenu>> SHADOW_GUI = REGISTRY.register("shadow_gui", () -> IForgeMenuType.create(ShadowGUIMenu::new));
+	public static final RegistryObject<MenuType<HuntersJoinMenu>> HUNTERS_JOIN = REGISTRY.register("hunters_join", () -> IForgeMenuType.create(HuntersJoinMenu::new));
+	public static final RegistryObject<MenuType<WTJoinMenu>> WT_JOIN = REGISTRY.register("wt_join", () -> IForgeMenuType.create(WTJoinMenu::new));
+	public static final RegistryObject<MenuType<DailyQuestsMenu>> DAILY_QUESTS = REGISTRY.register("daily_quests", () -> IForgeMenuType.create(DailyQuestsMenu::new));
+	public static final RegistryObject<MenuType<StoreWeaponReworkMenu>> STORE_WEAPON_REWORK = REGISTRY.register("store_weapon_rework", () -> IForgeMenuType.create(StoreWeaponReworkMenu::new));
+	public static final RegistryObject<MenuType<ShopMenu>> SHOP = REGISTRY.register("shop", () -> IForgeMenuType.create(ShopMenu::new));
+	public static final RegistryObject<MenuType<FoodGuiMenu>> FOOD_GUI = REGISTRY.register("food_gui", () -> IForgeMenuType.create(FoodGuiMenu::new));
+	public static final RegistryObject<MenuType<ShadowSummonGUIMenu>> SHADOW_SUMMON_GUI = REGISTRY.register("shadow_summon_gui", () -> IForgeMenuType.create(ShadowSummonGUIMenu::new));
+	public static final RegistryObject<MenuType<ReaderGUIMenu>> READER_GUI = REGISTRY.register("reader_gui", () -> IForgeMenuType.create(ReaderGUIMenu::new));
+	public static final RegistryObject<MenuType<HunterIDGuiMenu>> HUNTER_ID_GUI = REGISTRY.register("hunter_id_gui", () -> IForgeMenuType.create(HunterIDGuiMenu::new));
+	public static final RegistryObject<MenuType<MiscItemsMenu>> MISC_ITEMS = REGISTRY.register("misc_items", () -> IForgeMenuType.create(MiscItemsMenu::new));
+	public static final RegistryObject<MenuType<SelectionBoxGUIMenu>> SELECTION_BOX_GUI = REGISTRY.register("selection_box_gui", () -> IForgeMenuType.create(SelectionBoxGUIMenu::new));
+	public static final RegistryObject<MenuType<PanelReworkMenu>> PANEL_REWORK = REGISTRY.register("panel_rework", () -> IForgeMenuType.create(PanelReworkMenu::new));
+	public static final RegistryObject<MenuType<PanelRework2Menu>> PANEL_REWORK_2 = REGISTRY.register("panel_rework_2", () -> IForgeMenuType.create(PanelRework2Menu::new));
+	public static final RegistryObject<MenuType<EquippedAbilitiesMenu>> EQUIPPED_ABILITIES = REGISTRY.register("equipped_abilities", () -> IForgeMenuType.create(EquippedAbilitiesMenu::new));
+	public static final RegistryObject<MenuType<UnlockedSkillsTab1Menu>> UNLOCKED_SKILLS_TAB_1 = REGISTRY.register("unlocked_skills_tab_1", () -> IForgeMenuType.create(UnlockedSkillsTab1Menu::new));
+	public static final RegistryObject<MenuType<UnlockedSkillsTab2Menu>> UNLOCKED_SKILLS_TAB_2 = REGISTRY.register("unlocked_skills_tab_2", () -> IForgeMenuType.create(UnlockedSkillsTab2Menu::new));
+	public static final RegistryObject<MenuType<UnlockedSkillsTab3Menu>> UNLOCKED_SKILLS_TAB_3 = REGISTRY.register("unlocked_skills_tab_3", () -> IForgeMenuType.create(UnlockedSkillsTab3Menu::new));
+	public static final RegistryObject<MenuType<UnlockedSkillsTab4Menu>> UNLOCKED_SKILLS_TAB_4 = REGISTRY.register("unlocked_skills_tab_4", () -> IForgeMenuType.create(UnlockedSkillsTab4Menu::new));
+	public static final RegistryObject<MenuType<UnlockedSkillsTab5Menu>> UNLOCKED_SKILLS_TAB_5 = REGISTRY.register("unlocked_skills_tab_5", () -> IForgeMenuType.create(UnlockedSkillsTab5Menu::new));
+	public static final RegistryObject<MenuType<UnlockedSkillsTab6Menu>> UNLOCKED_SKILLS_TAB_6 = REGISTRY.register("unlocked_skills_tab_6", () -> IForgeMenuType.create(UnlockedSkillsTab6Menu::new));
+	public static final RegistryObject<MenuType<ShadowExchangeSETMenu>> SHADOW_EXCHANGE_SET = REGISTRY.register("shadow_exchange_set", () -> IForgeMenuType.create(ShadowExchangeSETMenu::new));
+	public static final RegistryObject<MenuType<ShadowExchangeSaveMenu>> SHADOW_EXCHANGE_SAVE = REGISTRY.register("shadow_exchange_save", () -> IForgeMenuType.create(ShadowExchangeSaveMenu::new));
+	public static final RegistryObject<MenuType<ShadowExchangeMainGUIMenu>> SHADOW_EXCHANGE_MAIN_GUI = REGISTRY.register("shadow_exchange_main_gui", () -> IForgeMenuType.create(ShadowExchangeMainGUIMenu::new));
+	public static final RegistryObject<MenuType<StorePotionNewMenu>> STORE_POTION_NEW = REGISTRY.register("store_potion_new", () -> IForgeMenuType.create(StorePotionNewMenu::new));
+	public static final RegistryObject<MenuType<UnlockedSkillsTab7Menu>> UNLOCKED_SKILLS_TAB_7 = REGISTRY.register("unlocked_skills_tab_7", () -> IForgeMenuType.create(UnlockedSkillsTab7Menu::new));
+	public static final RegistryObject<MenuType<PathMenu>> PATH = REGISTRY.register("path", () -> IForgeMenuType.create(PathMenu::new));
+	public static final RegistryObject<MenuType<QuestsMenu>> QUESTS = REGISTRY.register("quests", () -> IForgeMenuType.create(QuestsMenu::new));
+}

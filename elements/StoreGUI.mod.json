@@ -1,0 +1,153 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": true,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "panel_rework_vertical2.png",
+          "use1Xscale": true,
+          "x": 105,
+          "y": 6
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invb50",
+          "image": "panel_rework_shop_sword1.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenShop"
+          },
+          "x": 164,
+          "y": 92
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invb501",
+          "image": "panel_rework_shop_food1.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenFoodGui"
+          },
+          "x": 164,
+          "y": 137
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_invb502",
+          "image": "panel_rework_shop_potion1.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "StopPotionGUIopen"
+          },
+          "x": 207,
+          "y": 92
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_storeaccecories",
+          "image": "panel_rework_shop_misc1.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "OpenMistItems"
+          },
+          "displayCondition": {
+            "name": "IsMiscEnabled"
+          },
+          "x": 207,
+          "y": 137
+        }
+      },
+      {
+        "type": "label",
+        "data": {
+          "name": "label_sslshop",
+          "text": {
+            "fixedValue": "§lShop"
+          },
+          "color": {
+            "value": -1,
+            "falpha": 0.0
+          },
+          "x": 191,
+          "y": 63
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_weapons",
+          "text": {
+            "fixedValue": "Weapons"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 170,
+          "y": 98
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_potions",
+          "text": {
+            "fixedValue": "Potions"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 213,
+          "y": 98
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_foods",
+          "text": {
+            "fixedValue": "Foods"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 170,
+          "y": 143
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_misc",
+          "text": {
+            "fixedValue": "Misc"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 213,
+          "y": 143
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "type": "forge:add_spawns",
+  "biomes": "plains",
+  "spawners": {
+    "type": "sololeveling:choijong",
+    "weight": 1,
+    "minCount": 1,
+    "maxCount": 1
+  }
+}

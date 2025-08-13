@@ -1,0 +1,7 @@
+{
+  "parent": "sololeveling:custom/random_lootbox",
+  "textures": {
+    "0": "sololeveling:block/randomlootbox",
+    "particle": "sololeveling:item/randomspecial"
+  }
+}

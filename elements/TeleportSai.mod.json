@@ -1,0 +1,39 @@
+{
+  "_fv": 57,
+  "_type": "tool",
+  "definition": {
+    "toolType": "Sword",
+    "renderType": 1,
+    "blockingRenderType": 0,
+    "texture": "sai",
+    "customModelName": "sai:default",
+    "blockingModelName": "Normal blocking",
+    "name": "Demonic Sai",
+    "specialInformation": {
+      "fixedValue": [
+        "User can teleport to enemy after throwing the kunai and become invincible for 1 second"
+      ]
+    },
+    "creativeTab": {
+      "value": "No creative tab entry"
+    },
+    "harvestLevel": 1,
+    "efficiency": 4.0,
+    "attackSpeed": 2.2,
+    "enchantability": 2,
+    "damageVsEntity": 8.0,
+    "usageCount": 0,
+    "blocksAffected": [],
+    "glowCondition": {
+      "fixedValue": false,
+      "name": "DemonKingsLongSwordHasItemGlowingEffect"
+    },
+    "repairItems": [],
+    "immuneToFire": false,
+    "stayInGridWhenCrafting": false,
+    "damageOnCrafting": false,
+    "onRightClickedInAir": {
+      "name": "TeleportSaiRightclicked"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "_fv": 57,
+  "_type": "particle",
+  "definition": {
+    "texture": "pinkslash2.png",
+    "animate": true,
+    "frameDuration": 4,
+    "width": 0.5,
+    "height": 0.5,
+    "scale": 4.0,
+    "speedFactor": 0.0,
+    "gravity": 0.0,
+    "maxAge": 10,
+    "maxAgeDiff": 0,
+    "angularVelocity": 0.0,
+    "angularAcceleration": 0.0,
+    "canCollide": false,
+    "alwaysShow": true,
+    "renderType": "OPAQUE"
+  }
+}

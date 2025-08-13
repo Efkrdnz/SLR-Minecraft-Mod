@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "item": "sololeveling:shadow_armor_chestplate"
+    },
+    "title": {
+      "translate": "advancements.shadow_spiritual_body_manifestation.title"
+    },
+    "description": {
+      "translate": "advancements.shadow_spiritual_body_manifestation.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "shadow_spiritual_body_manifestation": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:shadow_exchange"
+}

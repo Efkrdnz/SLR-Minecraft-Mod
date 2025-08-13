@@ -1,0 +1,343 @@
+{
+  "_fv": 57,
+  "_type": "gui",
+  "definition": {
+    "type": 0,
+    "width": 0,
+    "height": 0,
+    "inventoryOffsetX": 0,
+    "inventoryOffsetY": 0,
+    "renderBgLayer": false,
+    "doesPauseGame": false,
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "techbase.png",
+          "use1Xscale": true,
+          "x": 139,
+          "y": 47
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_classchooseassasin",
+          "image": "classchooseassasin.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "ClassChooseButton1"
+          },
+          "x": 149,
+          "y": 57
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_classchoosemage",
+          "image": "classchoosemage.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "ClassChooseButton2"
+          },
+          "x": 215,
+          "y": 57
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_classchooseknight",
+          "image": "classchooseknight.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "ClassChooseButton3"
+          },
+          "x": 149,
+          "y": 94
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_classchoosetank",
+          "image": "classchoosetank.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "ClassChooseButton4"
+          },
+          "x": 215,
+          "y": 94
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_classchoosehealer",
+          "image": "classchoosehealer.png",
+          "hoveredImage": "",
+          "onClick": {
+            "name": "ClassChooseButton5"
+          },
+          "x": 149,
+          "y": 131
+        }
+      },
+      {
+        "type": "imagebutton",
+        "data": {
+          "name": "imagebutton_classchoosearcher",
+          "image": "classchoosearcher.png",
+          "hoveredImage": "classchoosearcher.png",
+          "onClick": {
+            "name": "ClassChooseButton6"
+          },
+          "x": 215,
+          "y": 131
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_speed_and_strenght_fro",
+          "text": {
+            "fixedValue": "Increased speed and strenght from holding Daggers"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 147,
+          "y": 55
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_speed_and_strenght_fro1",
+          "text": {
+            "fixedValue": "Increased speed and strenght from holding Daggers"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 190,
+          "y": 55
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_speed_and_strenght_fro2",
+          "text": {
+            "fixedValue": "Increased speed and strenght from holding Daggers"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 169,
+          "y": 55
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_passive_mana_regenerat",
+          "text": {
+            "fixedValue": "Increased passive mana regeneration"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 214,
+          "y": 55
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_passive_mana_regenerat1",
+          "text": {
+            "fixedValue": "Increased passive mana regeneration"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 238,
+          "y": 55
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_passive_mana_regenerat2",
+          "text": {
+            "fixedValue": "Increased passive mana regeneration"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 257,
+          "y": 55
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_damage_from_using_swor",
+          "text": {
+            "fixedValue": "Increased damage from using swords"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 147,
+          "y": 92
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_damage_from_using_swor1",
+          "text": {
+            "fixedValue": "Increased damage from using swords"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 169,
+          "y": 92
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_damage_from_using_swor2",
+          "text": {
+            "fixedValue": "Increased damage from using swords"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 190,
+          "y": 92
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_strenght_and_defence_w",
+          "text": {
+            "fixedValue": "Increased strenght and defence while holding Axes or  Maces"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 214,
+          "y": 92
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_strenght_and_defence_w1",
+          "text": {
+            "fixedValue": "Increased strenght and defence while holding Axes or  Maces"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 235,
+          "y": 92
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_increased_strenght_and_defence_w2",
+          "text": {
+            "fixedValue": "Increased strenght and defence while holding Axes or  Maces"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 257,
+          "y": 92
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_passive_regeneration_effects_on",
+          "text": {
+            "fixedValue": "Passive Regeneration Effects on you and comrades close to you."
+          },
+          "width": 24,
+          "height": 24,
+          "x": 169,
+          "y": 131
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_passive_regeneration_effects_on1",
+          "text": {
+            "fixedValue": "Passive Regeneration Effects on you and comrades close to you."
+          },
+          "width": 24,
+          "height": 24,
+          "x": 147,
+          "y": 130
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_passive_regeneration_effects_on2",
+          "text": {
+            "fixedValue": "Passive Regeneration Effects on you and comrades close to you."
+          },
+          "width": 24,
+          "height": 24,
+          "x": 190,
+          "y": 131
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_utilize_special_bows_and_use_man",
+          "text": {
+            "fixedValue": "Utilize special bows and use mana as arrow"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 214,
+          "y": 130
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_utilize_special_bows_and_use_man1",
+          "text": {
+            "fixedValue": "Utilize special bows and use mana as arrow"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 235,
+          "y": 130
+        }
+      },
+      {
+        "type": "tooltip",
+        "data": {
+          "name": "tooltip_utilize_special_bows_and_use_man2",
+          "text": {
+            "fixedValue": "Utilize special bows and use mana as arrow"
+          },
+          "width": 24,
+          "height": 24,
+          "x": 256,
+          "y": 130
+        }
+      }
+    ],
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "_fv": 57,
+  "_type": "overlay",
+  "definition": {
+    "priority": "NORMAL",
+    "components": [
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotempty.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrostBase"
+          },
+          "anchorPoint": "CENTER",
+          "x": 203,
+          "y": 30
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotempty.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrostBase"
+          },
+          "anchorPoint": "CENTER",
+          "x": 209,
+          "y": 38
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotempty.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrostBase"
+          },
+          "anchorPoint": "CENTER",
+          "x": 197,
+          "y": 38
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotempty.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrostBase"
+          },
+          "anchorPoint": "CENTER",
+          "x": 215,
+          "y": 30
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotempty.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrostBase"
+          },
+          "anchorPoint": "CENTER",
+          "x": 221,
+          "y": 38
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotuse.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrost1"
+          },
+          "anchorPoint": "CENTER",
+          "x": 197,
+          "y": 38
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotuse.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrost2"
+          },
+          "anchorPoint": "CENTER",
+          "x": 203,
+          "y": 30
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotuse.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrost3"
+          },
+          "anchorPoint": "CENTER",
+          "x": 209,
+          "y": 38
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotuse.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrost4"
+          },
+          "anchorPoint": "CENTER",
+          "x": 215,
+          "y": 30
+        }
+      },
+      {
+        "type": "image",
+        "data": {
+          "image": "frostslotuse.png",
+          "use1Xscale": true,
+          "displayCondition": {
+            "name": "ReturnFrost5"
+          },
+          "anchorPoint": "CENTER",
+          "x": 221,
+          "y": 38
+        }
+      }
+    ],
+    "baseTexture": "",
+    "overlayTarget": "Ingame",
+    "gridSettings": {
+      "sx": 18,
+      "sy": 18,
+      "ox": 11,
+      "oy": 15,
+      "snapOnGrid": false
+    }
+  }
+}

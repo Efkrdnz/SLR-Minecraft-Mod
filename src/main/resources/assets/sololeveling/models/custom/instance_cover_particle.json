@@ -1,0 +1,6 @@
+{
+  "parent": "sololeveling:displaysettings/instancecover.item",
+  "textures": {
+    "particle": "sololeveling:block/instancecover1"
+  }
+}

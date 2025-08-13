@@ -1,0 +1,34 @@
+{
+  "_fv": 57,
+  "_type": "tag",
+  "definition": {
+    "type": "Items",
+    "items": [
+      {
+        "value": "CUSTOM:DaggerHeatA"
+      },
+      {
+        "value": "CUSTOM:DaggerGoldenB"
+      },
+      {
+        "value": "CUSTOM:DaggerKarambitE"
+      },
+      {
+        "value": "CUSTOM:DaggerDuolityA"
+      },
+      {
+        "value": "CUSTOM:DaggerKnightD"
+      },
+      {
+        "value": "CUSTOM:DaggerChainC"
+      }
+    ],
+    "blocks": [],
+    "functions": [],
+    "entities": [],
+    "biomes": [],
+    "damageTypes": [],
+    "name": "dagger_pack",
+    "namespace": "minecraft"
+  }
+}

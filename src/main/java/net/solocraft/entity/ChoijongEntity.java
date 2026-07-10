@@ -58,7 +58,7 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 		setMaxUpStep(0.6f);
 		xpReward = 35;
 		setNoAi(false);
-		setCustomName(Component.literal("Hunters Guild: Guild Master"));
+		setCustomName(Component.literal("Choi Jong-In"));
 		setCustomNameVisible(true);
 		setPersistenceRequired();
 	}

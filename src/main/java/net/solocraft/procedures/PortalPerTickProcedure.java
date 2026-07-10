@@ -27,9 +27,15 @@ public class PortalPerTickProcedure {
 			return;
 		entity.getPersistentData().putDouble("PortalLife", (entity.getPersistentData().getDouble("PortalLife") + 1));
 		if (entity.getPersistentData().getDouble("PortalLife") >= 24000) {
+			if (entity.getPersistentData().getBoolean("slr_is_red_gate")) {
+				SololevelingModVariables.MapVariables.get(world).RedGate = false;
+				SololevelingModVariables.MapVariables.get(world).syncData(world);
+			}
 			if (!entity.level().isClientSide())
 				entity.discard();
 			if (world.getLevelData().getGameRules().getBoolean(SololevelingModGameRules.SOLO_DUNGEON_BREAK)) {
+				if (!GateBreakChanceProcedure.shouldBreak(world, entity))
+					return;
 				if (entity instanceof Portal1Entity) {
 					if (world instanceof ServerLevel _level) {
 						Entity entityToSpawn = SololevelingModEntities.GOBLIN_CLUB.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
@@ -56,13 +62,13 @@ public class PortalPerTickProcedure {
 						}
 					}
 					if (world instanceof ServerLevel _level) {
-						Entity entityToSpawn = SololevelingModEntities.ORC.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
+						Entity entityToSpawn = SololevelingModEntities.GREEN_ORC.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 						if (entityToSpawn != null) {
 							entityToSpawn.setYRot(world.getRandom().nextFloat() * 360F);
 						}
 					}
 					if (world instanceof ServerLevel _level) {
-						Entity entityToSpawn = SololevelingModEntities.ORC.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
+						Entity entityToSpawn = SololevelingModEntities.GREEN_ORC.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 						if (entityToSpawn != null) {
 							entityToSpawn.setYRot(world.getRandom().nextFloat() * 360F);
 						}
@@ -130,13 +136,13 @@ public class PortalPerTickProcedure {
 					}
 				} else if (entity instanceof PortalLushEntity) {
 					if (world instanceof ServerLevel _level) {
-						Entity entityToSpawn = SololevelingModEntities.STEEL_FANG_WOLF.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
+						Entity entityToSpawn = SololevelingModEntities.STEEL_FANGED_LYCAN.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 						if (entityToSpawn != null) {
 							entityToSpawn.setYRot(world.getRandom().nextFloat() * 360F);
 						}
 					}
 					if (world instanceof ServerLevel _level) {
-						Entity entityToSpawn = SololevelingModEntities.STEEL_FANG_WOLF.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
+						Entity entityToSpawn = SololevelingModEntities.STEEL_FANGED_LYCAN.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 						if (entityToSpawn != null) {
 							entityToSpawn.setYRot(world.getRandom().nextFloat() * 360F);
 						}

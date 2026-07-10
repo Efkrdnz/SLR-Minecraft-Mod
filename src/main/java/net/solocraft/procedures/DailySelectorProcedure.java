@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModGameRules;
+import net.solocraft.util.SystemNotifications;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -10,6 +11,9 @@ import net.minecraftforge.event.TickEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
 
@@ -44,7 +48,7 @@ public class DailySelectorProcedure {
 						});
 					}
 					{
-						double _setval = 1.5;
+						double _setval = 0;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 							capability.overlay_alpha_dailyquestwarning = _setval;
 							capability.syncPlayerVariables(entity);
@@ -77,6 +81,12 @@ public class DailySelectorProcedure {
 							capability.RUN = _setval;
 							capability.syncPlayerVariables(entity);
 						});
+					}
+					DailyQuestHelper.activateSecretQuestIfEligible(entity);
+					if (entity instanceof ServerPlayer player) {
+						SystemNotifications.showTitleUnder(player, SystemNotifications.ACCENT, 100,
+								Component.literal("DAILY QUEST").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
+								Component.literal("Training goals assigned.\nComplete them before the timer ends.").withStyle(ChatFormatting.GRAY));
 					}
 					{
 						double _setval = 12000;

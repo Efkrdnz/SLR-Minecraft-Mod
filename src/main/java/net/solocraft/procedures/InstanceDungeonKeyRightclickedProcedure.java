@@ -41,6 +41,8 @@ public class InstanceDungeonKeyRightclickedProcedure {
 			double _setval = entity.getX();
 			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 				capability.DunX = _setval;
+				capability.instancecomplete = false;
+				capability.tpd = false;
 				capability.syncPlayerVariables(entity);
 			});
 		}

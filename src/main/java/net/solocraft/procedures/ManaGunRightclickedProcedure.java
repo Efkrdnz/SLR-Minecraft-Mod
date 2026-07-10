@@ -23,7 +23,7 @@ public class ManaGunRightclickedProcedure {
 		if (entity == null)
 			return;
 		if (entity instanceof Player _player)
-			_player.getCooldowns().addCooldown(itemstack.getItem(), 20);
+			_player.getCooldowns().addCooldown(itemstack.getItem(), _player.isCreative() ? 10 : 20);
 		if (itemstack.getItem() instanceof ManaGunItem)
 			itemstack.getOrCreateTag().putString("geckoAnim", "shoot");
 		if (world instanceof Level _level) {

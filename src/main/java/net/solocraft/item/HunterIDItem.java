@@ -2,7 +2,7 @@
 package net.solocraft.item;
 
 import net.solocraft.world.inventory.HunterIDGuiMenu;
-import net.solocraft.procedures.HunterIDItemInInventoryTickProcedure;
+import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.item.inventory.HunterIDInventoryCapability;
 
 import net.minecraftforge.network.NetworkHooks;
@@ -71,7 +71,45 @@ public class HunterIDItem extends Item {
 	@Override
 	public void inventoryTick(ItemStack itemstack, Level world, Entity entity, int slot, boolean selected) {
 		super.inventoryTick(itemstack, world, entity, slot, selected);
-		HunterIDItemInInventoryTickProcedure.execute(entity, itemstack);
+		updateHunterIdTags(entity, itemstack);
+	}
+
+	private static void updateHunterIdTags(Entity entity, ItemStack itemstack) {
+		if (entity == null)
+			return;
+		SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
+		if (itemstack.getOrCreateTag().getString("Rank").equals("")) {
+			if (vars.HunterRank == 1) {
+				itemstack.getOrCreateTag().putString("Rank", "\u00A7aE");
+			} else if (vars.HunterRank == 2) {
+				itemstack.getOrCreateTag().putString("Rank", "\u00A70D");
+			} else if (vars.HunterRank == 3) {
+				itemstack.getOrCreateTag().putString("Rank", "\u00A7aC");
+			} else if (vars.HunterRank == 4) {
+				itemstack.getOrCreateTag().putString("Rank", "\u00A79B");
+			} else if (vars.HunterRank == 5) {
+				itemstack.getOrCreateTag().putString("Rank", "\u00A79A");
+			} else if (vars.HunterRank == 6) {
+				itemstack.getOrCreateTag().putString("Rank", "\u00A76S");
+			}
+		}
+		if (itemstack.getOrCreateTag().getString("Class").equals("")) {
+			if (vars.Classes == 1) {
+				itemstack.getOrCreateTag().putString("Class", "\u00A79Assassin");
+			} else if (vars.Classes == 2) {
+				itemstack.getOrCreateTag().putString("Class", "\u00A76Mage");
+			} else if (vars.Classes == 3) {
+				itemstack.getOrCreateTag().putString("Class", "\u00A7cFighter");
+			} else if (vars.Classes == 4) {
+				itemstack.getOrCreateTag().putString("Class", "\u00A78Tanker");
+			} else if (vars.Classes == 5) {
+				itemstack.getOrCreateTag().putString("Class", "\u00A7aHealer");
+			} else if (vars.Classes == 6) {
+				itemstack.getOrCreateTag().putString("Class", "\u00A73Ranger");
+			}
+		}
+		if (itemstack.getOrCreateTag().getString("Person").equals(""))
+			itemstack.getOrCreateTag().putString("Person", "\u00A7c" + entity.getDisplayName().getString());
 	}
 
 	@Override

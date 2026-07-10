@@ -107,19 +107,6 @@ public class ShadowExtractionShowProcedure {
 					}
 				}
 			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shadowstorageusage >= 10) {
-				if (!(entity instanceof ServerPlayer _plr12 && _plr12.level() instanceof ServerLevel
-						&& _plr12.getAdvancements().getOrStartProgress(_plr12.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:monarchs_domain"))).isDone())) {
-					if (entity instanceof ServerPlayer _player) {
-						Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:monarchs_domain"));
-						AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
-						if (!_ap.isDone()) {
-							for (String criteria : _ap.getRemainingCriteria())
-								_player.getAdvancements().award(_adv, criteria);
-						}
-					}
-				}
-			}
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shadowstorageusage >= 30) {
 				if (!(entity instanceof ServerPlayer _plr14 && _plr14.level() instanceof ServerLevel
 						&& _plr14.getAdvancements().getOrStartProgress(_plr14.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:shadow_exchange"))).isDone())) {

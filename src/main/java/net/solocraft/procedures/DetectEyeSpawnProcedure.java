@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.DetectEyeInvEntity;
 
@@ -20,13 +19,14 @@ import net.minecraft.core.BlockPos;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class DetectEyeSpawnProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 200) {
-			if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.DETECTION_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "Detection")) {
 				{
 					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 200;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -41,10 +41,8 @@ public class DetectEyeSpawnProcedure {
 						capability.syncPlayerVariables(entity);
 					});
 				}
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 50, 1, false, false));
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.DETECTION_COOLDOWN.get(), 250, 1, false, false));
+				CooldownManager.set(entity, "mana_refresh", 50);
+				CooldownManager.set(entity, "Detection", 250);
 				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 					_entity.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 170, 1, false, false));
 				if (world instanceof ServerLevel _level) {

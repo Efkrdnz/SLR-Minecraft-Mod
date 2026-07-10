@@ -1,16 +1,11 @@
 
 package net.solocraft.network;
 
+import net.solocraft.procedures.AbilityAppendButtonProcedure;
 import net.solocraft.world.inventory.UnlockedSkillsTab1Menu;
+import net.solocraft.procedures.OpenAbilitiesListProcedure;
 import net.solocraft.procedures.OpenAbilitylist2Procedure;
-import net.solocraft.procedures.AbilityAppendButton8Procedure;
-import net.solocraft.procedures.AbilityAppendButton7Procedure;
-import net.solocraft.procedures.AbilityAppendButton6Procedure;
-import net.solocraft.procedures.AbilityAppendButton5Procedure;
-import net.solocraft.procedures.AbilityAppendButton4Procedure;
-import net.solocraft.procedures.AbilityAppendButton3Procedure;
-import net.solocraft.procedures.AbilityAppendButton2Procedure;
-import net.solocraft.procedures.AbilityAppendButton1Procedure;
+import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -29,19 +24,26 @@ import java.util.HashMap;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class UnlockedSkillsTab1ButtonMessage {
 	private final int buttonID, x, y, z;
+	private final int skillIndex;
 
 	public UnlockedSkillsTab1ButtonMessage(FriendlyByteBuf buffer) {
 		this.buttonID = buffer.readInt();
 		this.x = buffer.readInt();
 		this.y = buffer.readInt();
 		this.z = buffer.readInt();
+		this.skillIndex = buffer.readInt();
 	}
 
 	public UnlockedSkillsTab1ButtonMessage(int buttonID, int x, int y, int z) {
+		this(buttonID, x, y, z, 0);
+	}
+
+	public UnlockedSkillsTab1ButtonMessage(int buttonID, int x, int y, int z, int skillIndex) {
 		this.buttonID = buttonID;
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		this.skillIndex = skillIndex;
 	}
 
 	public static void buffer(UnlockedSkillsTab1ButtonMessage message, FriendlyByteBuf buffer) {
@@ -49,6 +51,7 @@ public class UnlockedSkillsTab1ButtonMessage {
 		buffer.writeInt(message.x);
 		buffer.writeInt(message.y);
 		buffer.writeInt(message.z);
+		buffer.writeInt(message.skillIndex);
 	}
 
 	public static void handler(UnlockedSkillsTab1ButtonMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -59,48 +62,66 @@ public class UnlockedSkillsTab1ButtonMessage {
 			int x = message.x;
 			int y = message.y;
 			int z = message.z;
-			handleButtonAction(entity, buttonID, x, y, z);
+			handleButtonAction(entity, buttonID, x, y, z, message.skillIndex);
 		});
 		context.setPacketHandled(true);
 	}
 
 	public static void handleButtonAction(Player entity, int buttonID, int x, int y, int z) {
+		handleButtonAction(entity, buttonID, x, y, z, 0);
+	}
+
+	public static void handleButtonAction(Player entity, int buttonID, int x, int y, int z, int skillIndex) {
+		if (entity == null)
+			return;
 		Level world = entity.level();
 		HashMap guistate = UnlockedSkillsTab1Menu.guistate;
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
+		if (buttonID == 101) {
+			OpenAbilitiesListProcedure.execute(world, x, y, z, entity);
+			return;
+		}
+		if (buttonID == 100 && skillIndex > 0) {
+			ShadowMonarchManager.removeFormationSkill(entity, skillIndex);
+			return;
+		}
+		if (skillIndex > 0) {
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, skillIndex, false);
+			return;
+		}
 		if (buttonID == 0) {
 
-			AbilityAppendButton1Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 1, false);
 		}
 		if (buttonID == 1) {
 
-			AbilityAppendButton2Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 2, false);
 		}
 		if (buttonID == 2) {
 
-			AbilityAppendButton3Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 3, true);
 		}
 		if (buttonID == 3) {
 
-			AbilityAppendButton4Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 4, true);
 		}
 		if (buttonID == 4) {
 
-			AbilityAppendButton5Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 5, true);
 		}
 		if (buttonID == 5) {
 
-			AbilityAppendButton6Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 6, true);
 		}
 		if (buttonID == 6) {
 
-			AbilityAppendButton7Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 7, true);
 		}
 		if (buttonID == 7) {
 
-			AbilityAppendButton8Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 8, true);
 		}
 		if (buttonID == 8) {
 

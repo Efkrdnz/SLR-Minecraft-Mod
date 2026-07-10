@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -53,6 +54,13 @@ public class InstanceQueryTimerTickProcedure {
 				}
 			}
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).instance_query_timer == 2) {
+				{
+					boolean _setval = false;
+					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+						capability.tpd = _setval;
+						capability.syncPlayerVariables(entity);
+					});
+				}
 				if (entity instanceof ServerPlayer _player && !_player.level().isClientSide()) {
 					ResourceKey<Level> destinationType = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_kasaka"));
 					if (_player.level().dimension() == destinationType)
@@ -88,7 +96,8 @@ public class InstanceQueryTimerTickProcedure {
 								.performPrefixedCommand(
 										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"execute in sololeveling:dungeon_dimension_kasaka as @s at @s unless entity @e[type=sololeveling:portal_12,distance=..100] run spawninstanceclear");
+										"execute in sololeveling:dungeon_dimension_kasaka as @s at @s unless entity @e[type=sololeveling:portal_12,distance=..100] run spawninstance");
+						SololevelingMod.queueServerWork(30, () -> DunKasakaTeleportAndSpawnProcedure.execute(_ent.level(), _ent));
 					}
 				}
 			}

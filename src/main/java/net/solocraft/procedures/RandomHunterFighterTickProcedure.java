@@ -17,6 +17,7 @@ public class RandomHunterFighterTickProcedure {
 			return;
 		double Rank = 0;
 		if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
+			HunterAIHelper.fighterCombatTick(entity);
 			entity.lookAt(EntityAnchorArgument.Anchor.EYES,
 					new Vec3(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()),
 							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY() + (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getBbHeight()),

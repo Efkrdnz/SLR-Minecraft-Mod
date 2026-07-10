@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModGameRules;
+import net.solocraft.util.GateSpawnerUtil;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -34,7 +35,7 @@ public class GlobalGateTimerProcedure {
 						SololevelingModVariables.MapVariables.get(world).gatetimer = SololevelingModVariables.MapVariables.get(world).gatetimer + 1;
 						SololevelingModVariables.MapVariables.get(world).syncData(world);
 					} else if (SololevelingModVariables.MapVariables.get(world).gatetimer >= (world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_GATE_DELAY))) {
-						GetRandomPlayerProcedure.execute(world);
+						GateSpawnerUtil.spawnNearRandomOverworldPlayer(world);
 					}
 				}
 			}

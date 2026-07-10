@@ -1,9 +1,6 @@
-
-/*
- *    MCreator note: This file will be REGENERATED on each build.
- */
 package net.solocraft.init;
 
+import net.solocraft.block.entity.GuildComputerBlockEntity;
 import net.solocraft.block.entity.InstanceDungeonKeyLoggerTileEntity;
 import net.solocraft.block.entity.InstanceCoverTileEntity;
 import net.solocraft.block.entity.HunterRankEvaluatorTileEntity;
@@ -28,6 +25,10 @@ public class SololevelingModBlockEntities {
 			() -> BlockEntityType.Builder.of(HunterRankEvaluatorTileEntity::new, SololevelingModBlocks.HUNTER_RANK_EVALUATOR.get()).build(null));
 	public static final RegistryObject<BlockEntityType<DungeonWallTileEntity>> DUNGEON_WALL = REGISTRY.register("dungeon_wall", () -> BlockEntityType.Builder.of(DungeonWallTileEntity::new, SololevelingModBlocks.DUNGEON_WALL.get()).build(null));
 	public static final RegistryObject<BlockEntityType<?>> CUSTOM_PORTAL = register("custom_portal", SololevelingModBlocks.CUSTOM_PORTAL, CustomPortalBlockEntity::new);
+
+	// â”€â”€ Guild System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+	public static final RegistryObject<BlockEntityType<GuildComputerBlockEntity>> GUILD_COMPUTER = REGISTRY.register("guild_computer",
+			() -> BlockEntityType.Builder.of(GuildComputerBlockEntity::new, SololevelingModBlocks.GUILD_COMPUTER.get()).build(null));
 
 	private static RegistryObject<BlockEntityType<?>> register(String registryname, RegistryObject<Block> block, BlockEntityType.BlockEntitySupplier<?> supplier) {
 		return REGISTRY.register(registryname, () -> BlockEntityType.Builder.of(supplier, block.get()).build(null));

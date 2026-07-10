@@ -36,6 +36,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.damagesource.DamageSource;
@@ -217,8 +218,23 @@ public class SkeletonSummonerEntity extends Monster implements GeoEntity {
 	@Override
 	public void baseTick() {
 		super.baseTick();
-		SkeletonSummonerOnEntityTickUpdateProcedure.execute(this.level(), this);
+		if (isDeathLocked())
+			stopDeathLockedActions();
+		else
+			SkeletonSummonerOnEntityTickUpdateProcedure.execute(this.level(), this);
 		this.refreshDimensions();
+	}
+
+	@Override
+	public boolean canAttack(LivingEntity target) {
+		return !isDeathLocked() && super.canAttack(target);
+	}
+
+	@Override
+	public boolean doHurtTarget(Entity target) {
+		if (isDeathLocked())
+			return false;
+		return super.doHurtTarget(target);
 	}
 
 	@Override
@@ -235,9 +251,14 @@ public class SkeletonSummonerEntity extends Monster implements GeoEntity {
 		super.setNoGravity(true);
 	}
 
+	@Override
 	public void aiStep() {
+		if (isDeathLocked())
+			stopDeathLockedActions();
 		super.aiStep();
 		this.setNoGravity(true);
+		if (isDeathLocked())
+			stopDeathLockedActions();
 	}
 
 	public static void init() {
@@ -255,14 +276,14 @@ public class SkeletonSummonerEntity extends Monster implements GeoEntity {
 	}
 
 	private PlayState movementPredicate(AnimationState event) {
+		if (isDeathLocked()) {
+			return event.setAndContinue(RawAnimation.begin().thenPlay("death"));
+		}
 		if (this.animationprocedure.equals("empty")) {
 			if ((event.isMoving() || !(event.getLimbSwingAmount() > -0.15F && event.getLimbSwingAmount() < 0.15F))
 
 			) {
 				return event.setAndContinue(RawAnimation.begin().thenLoop("walk"));
-			}
-			if (this.isDeadOrDying()) {
-				return event.setAndContinue(RawAnimation.begin().thenPlay("death"));
 			}
 			return event.setAndContinue(RawAnimation.begin().thenLoop("idle"));
 		}
@@ -270,6 +291,10 @@ public class SkeletonSummonerEntity extends Monster implements GeoEntity {
 	}
 
 	private PlayState procedurePredicate(AnimationState event) {
+		if (isDeathLocked()) {
+			this.animationprocedure = "empty";
+			return PlayState.STOP;
+		}
 		if (!animationprocedure.equals("empty") && event.getController().getAnimationState() == AnimationController.State.STOPPED) {
 			event.getController().setAnimation(RawAnimation.begin().thenPlay(this.animationprocedure));
 			if (event.getController().getAnimationState() == AnimationController.State.STOPPED) {
@@ -284,11 +309,26 @@ public class SkeletonSummonerEntity extends Monster implements GeoEntity {
 
 	@Override
 	protected void tickDeath() {
+		stopDeathLockedActions();
 		++this.deathTime;
-		if (this.deathTime == 140) {
+		if (this.deathTime == 135) {
 			this.remove(SkeletonSummonerEntity.RemovalReason.KILLED);
 			this.dropExperience();
 		}
+	}
+
+	private boolean isDeathLocked() {
+		return this.isDeadOrDying() || this.deathTime > 0 || this.getHealth() <= 0.0F;
+	}
+
+	private void stopDeathLockedActions() {
+		this.getNavigation().stop();
+		this.setTarget(null);
+		this.setAggressive(false);
+		this.swinging = false;
+		this.animationprocedure = "empty";
+		this.entityData.set(DATA_State, "DEAD");
+		this.entityData.set(DATA_AttackDuration, 0);
 	}
 
 	public String getSyncedAnimation() {

@@ -84,7 +84,7 @@ public class ShopMenu extends AbstractContainerMenu implements Supplier<Map<Inte
 					});
 			}
 		}
-		this.customSlots.put(0, this.addSlot(new SlotItemHandler(internal, 0, -30, -78) {
+		this.customSlots.put(0, this.addSlot(new SlotItemHandler(internal, 0, -30, -60) {
 			private final int slot = 0;
 
 			@Override
@@ -103,7 +103,7 @@ public class ShopMenu extends AbstractContainerMenu implements Supplier<Map<Inte
 				return false;
 			}
 		}));
-		this.customSlots.put(1, this.addSlot(new SlotItemHandler(internal, 1, -30, -51) {
+		this.customSlots.put(1, this.addSlot(new SlotItemHandler(internal, 1, -30, -36) {
 			private final int slot = 1;
 
 			@Override
@@ -122,7 +122,7 @@ public class ShopMenu extends AbstractContainerMenu implements Supplier<Map<Inte
 				return false;
 			}
 		}));
-		this.customSlots.put(2, this.addSlot(new SlotItemHandler(internal, 2, -30, -24) {
+		this.customSlots.put(2, this.addSlot(new SlotItemHandler(internal, 2, -30, -12) {
 			private final int slot = 2;
 
 			@Override
@@ -160,7 +160,7 @@ public class ShopMenu extends AbstractContainerMenu implements Supplier<Map<Inte
 				return false;
 			}
 		}));
-		this.customSlots.put(4, this.addSlot(new SlotItemHandler(internal, 4, -30, 39) {
+		this.customSlots.put(4, this.addSlot(new SlotItemHandler(internal, 4, -30, 36) {
 			private final int slot = 4;
 
 			@Override
@@ -179,7 +179,7 @@ public class ShopMenu extends AbstractContainerMenu implements Supplier<Map<Inte
 				return false;
 			}
 		}));
-		this.customSlots.put(5, this.addSlot(new SlotItemHandler(internal, 5, -30, 66) {
+		this.customSlots.put(5, this.addSlot(new SlotItemHandler(internal, 5, -30, 60) {
 			private final int slot = 5;
 
 			@Override

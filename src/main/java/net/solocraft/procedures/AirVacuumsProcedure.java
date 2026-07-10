@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.SololevelingMod;
 
@@ -14,7 +13,6 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.ServerLevel;
@@ -26,6 +24,7 @@ import net.minecraft.core.particles.ParticleTypes;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class AirVacuumsProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
@@ -33,9 +32,8 @@ public class AirVacuumsProcedure {
 			return;
 		double delay = 0;
 		double dmgmultiplier = 0;
-		if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.AIR_VACUUM_COOLDWON.get()))) {
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.AIR_VACUUM_COOLDWON.get(), 100, 1, false, false));
+		if (!CooldownManager.isOnCooldown(entity, "Curse Sphere")) {
+			CooldownManager.set(entity, "Curse Sphere", 100);
 			entity.getPersistentData().putDouble("range", 100);
 			entity.getPersistentData().putDouble("rotation", 0);
 			entity.getPersistentData().putDouble("sx", (entity.getX()));

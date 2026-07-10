@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModItems;
 
 import net.minecraftforge.fml.common.Mod;
@@ -15,6 +14,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
 
 import javax.annotation.Nullable;
+import net.solocraft.util.CooldownManager;
 
 @Mod.EventBusSubscriber
 public class ManaRegenProcedure {
@@ -39,7 +39,7 @@ public class ManaRegenProcedure {
 				&& !((entity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.LEGS) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_LEGGINGS.get())
 				&& !((entity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.CHEST) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_CHESTPLATE.get())
 				&& !((entity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.HEAD) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_HELMET.get())
-				&& !(entity instanceof LivingEntity _livEnt8 && _livEnt8.hasEffect(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get()))) {
+				&& !CooldownManager.isOnCooldown(entity, "mana_refresh")) {
 			{
 				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP
 						+ (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).manaregen

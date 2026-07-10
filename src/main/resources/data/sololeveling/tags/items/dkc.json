@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "#sololeveling:dkc_access",
+    "#sololeveling:dkc_spawn_eggs",
+    "#sololeveling:dkc_elixir_items",
+    "#sololeveling:dkc_weapons"
+  ]
+}

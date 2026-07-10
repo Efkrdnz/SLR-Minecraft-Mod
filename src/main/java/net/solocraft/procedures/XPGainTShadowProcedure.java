@@ -4,6 +4,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.entity.StoneGolemEntity;
 import net.solocraft.entity.SteelFangWolfEntity;
+import net.solocraft.entity.SteelFangedLycanEntity;
 import net.solocraft.entity.RedAntsEntity;
 import net.solocraft.entity.PolarBearEntity;
 import net.solocraft.entity.OrcEntity;
@@ -182,7 +183,7 @@ public class XPGainTShadowProcedure {
 								capability.syncPlayerVariables((sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null));
 							});
 						}
-					} else if (entity instanceof SteelFangWolfEntity) {
+					} else if (entity instanceof SteelFangWolfEntity || entity instanceof SteelFangedLycanEntity) {
 						{
 							double _setval = ((sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 									.orElse(new SololevelingModVariables.PlayerVariables())).Xp
@@ -198,7 +199,7 @@ public class XPGainTShadowProcedure {
 							double _setval = ((sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 									.orElse(new SololevelingModVariables.PlayerVariables())).Xp
 									+ ((sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-											.orElse(new SololevelingModVariables.PlayerVariables())).xpmultiplier * ((world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER)) / 10) * 12;
+											.orElse(new SololevelingModVariables.PlayerVariables())).xpmultiplier * ((world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER)) / 10) * 5;
 							(sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 								capability.Xp = _setval;
 								capability.syncPlayerVariables((sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null));

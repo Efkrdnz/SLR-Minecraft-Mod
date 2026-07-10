@@ -1,7 +1,3 @@
-
-/*
- *	MCreator note: This file will be REGENERATED on each build.
- */
 package net.solocraft.init;
 
 import org.lwjgl.glfw.GLFW;
@@ -11,7 +7,6 @@ import net.solocraft.network.TripleJumpMessage;
 import net.solocraft.network.TrainingMessage;
 import net.solocraft.network.SkillCycleButtonMessage;
 import net.solocraft.network.QuestInfoMessage;
-import net.solocraft.network.OpenPanelMessage;
 import net.solocraft.network.DMessage;
 import net.solocraft.network.Ability4Message;
 import net.solocraft.network.Ability3Message;
@@ -25,6 +20,7 @@ import net.solocraft.network.Ab4Message;
 import net.solocraft.network.Ab3Message;
 import net.solocraft.network.Ab2Message;
 import net.solocraft.network.Ab1Message;
+import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.fml.common.Mod;
@@ -35,6 +31,8 @@ import net.minecraftforge.api.distmarker.Dist;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
@@ -47,8 +45,10 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new OpenPanelMessage(0, 0));
-				OpenPanelMessage.pressAction(Minecraft.getInstance().player, 0, 0);
+				Minecraft mc = Minecraft.getInstance();
+				if (mc.player != null && mc.screen == null) {
+					mc.setScreen(new net.solocraft.client.gui.system.SystemPanelScreen());
+				}
 			}
 			isDownOld = isDown;
 		}
@@ -109,13 +109,17 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ability1Message(0, 0));
-				Ability1Message.pressAction(Minecraft.getInstance().player, 0, 0);
-				ABILITY_1_LASTPRESS = System.currentTimeMillis();
+				if (isCombatMode()) {
+					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability1Message(0, 0));
+					Ability1Message.pressAction(Minecraft.getInstance().player, 0, 0);
+					ABILITY_1_LASTPRESS = System.currentTimeMillis();
+				}
 			} else if (isDownOld != isDown && !isDown) {
-				int dt = (int) (System.currentTimeMillis() - ABILITY_1_LASTPRESS);
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ability1Message(1, dt));
-				Ability1Message.pressAction(Minecraft.getInstance().player, 1, dt);
+				if (isCombatMode()) {
+					int dt = (int) (System.currentTimeMillis() - ABILITY_1_LASTPRESS);
+					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability1Message(1, dt));
+					Ability1Message.pressAction(Minecraft.getInstance().player, 1, dt);
+				}
 			}
 			isDownOld = isDown;
 		}
@@ -127,8 +131,10 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ability2Message(0, 0));
-				Ability2Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				if (isCombatMode()) {
+					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability2Message(0, 0));
+					Ability2Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				}
 			}
 			isDownOld = isDown;
 		}
@@ -140,8 +146,10 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ability3Message(0, 0));
-				Ability3Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				if (isCombatMode()) {
+					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability3Message(0, 0));
+					Ability3Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				}
 			}
 			isDownOld = isDown;
 		}
@@ -153,8 +161,10 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ability4Message(0, 0));
-				Ability4Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				if (isCombatMode()) {
+					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability4Message(0, 0));
+					Ability4Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				}
 			}
 			isDownOld = isDown;
 		}
@@ -166,8 +176,9 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new TripleJumpMessage(0, 0));
-				TripleJumpMessage.pressAction(Minecraft.getInstance().player, 0, 0);
+				Player player = Minecraft.getInstance().player;
+				Vec3 motion = player != null ? player.getDeltaMovement() : Vec3.ZERO;
+				SololevelingMod.PACKET_HANDLER.sendToServer(new TripleJumpMessage(0, 0, motion.x, motion.z));
 			}
 			isDownOld = isDown;
 		}
@@ -179,8 +190,9 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ab1Message(0, 0));
-				Ab1Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				pressHotbarSkill(1);
+			} else if (isDownOld != isDown && !isDown) {
+				releaseHotbarSkill(1);
 			}
 			isDownOld = isDown;
 		}
@@ -192,8 +204,9 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ab2Message(0, 0));
-				Ab2Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				pressHotbarSkill(2);
+			} else if (isDownOld != isDown && !isDown) {
+				releaseHotbarSkill(2);
 			}
 			isDownOld = isDown;
 		}
@@ -205,8 +218,9 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ab3Message(0, 0));
-				Ab3Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				pressHotbarSkill(3);
+			} else if (isDownOld != isDown && !isDown) {
+				releaseHotbarSkill(3);
 			}
 			isDownOld = isDown;
 		}
@@ -218,8 +232,9 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ab4Message(0, 0));
-				Ab4Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				pressHotbarSkill(4);
+			} else if (isDownOld != isDown && !isDown) {
+				releaseHotbarSkill(4);
 			}
 			isDownOld = isDown;
 		}
@@ -231,8 +246,9 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ab5Message(0, 0));
-				Ab5Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				pressHotbarSkill(5);
+			} else if (isDownOld != isDown && !isDown) {
+				releaseHotbarSkill(5);
 			}
 			isDownOld = isDown;
 		}
@@ -244,8 +260,9 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ab6Message(0, 0));
-				Ab6Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				pressHotbarSkill(6);
+			} else if (isDownOld != isDown && !isDown) {
+				releaseHotbarSkill(6);
 			}
 			isDownOld = isDown;
 		}
@@ -288,8 +305,9 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ab7Message(0, 0));
-				Ab7Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				pressHotbarSkill(7);
+			} else if (isDownOld != isDown && !isDown) {
+				releaseHotbarSkill(7);
 			}
 			isDownOld = isDown;
 		}
@@ -301,16 +319,39 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new Ab8Message(0, 0));
-				Ab8Message.pressAction(Minecraft.getInstance().player, 0, 0);
+				pressHotbarSkill(8);
+			} else if (isDownOld != isDown && !isDown) {
+				releaseHotbarSkill(8);
 			}
 			isDownOld = isDown;
 		}
 	};
+	public static final KeyMapping DDD = new KeyMapping("key.sololeveling.ddd", InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_LEFT, "key.categories.misc");
 	private static long USE_SKILL_LASTPRESS = 0;
 	private static long D_LASTPRESS = 0;
 	private static long ABILITY_1_LASTPRESS = 0;
 	private static long QUEST_INFO_LASTPRESS = 0;
+	private static final long[] HOTBAR_LASTPRESS = new long[8];
+
+	private static void pressHotbarSkill(int slot) {
+		int type = 9 + slot;
+		HOTBAR_LASTPRESS[slot - 1] = System.currentTimeMillis();
+		SololevelingMod.PACKET_HANDLER.sendToServer(new UseSkillMessage(type, 0));
+		UseSkillMessage.pressAction(Minecraft.getInstance().player, type, 0);
+	}
+
+	private static void releaseHotbarSkill(int slot) {
+		int type = 19 + slot;
+		int dt = (int) (System.currentTimeMillis() - HOTBAR_LASTPRESS[slot - 1]);
+		SololevelingMod.PACKET_HANDLER.sendToServer(new UseSkillMessage(type, dt));
+		UseSkillMessage.pressAction(Minecraft.getInstance().player, type, dt);
+	}
+
+	private static boolean isCombatMode() {
+		if (Minecraft.getInstance().player == null)
+			return false;
+		return Minecraft.getInstance().player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).combatmode;
+	}
 
 	@SubscribeEvent
 	public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
@@ -333,6 +374,7 @@ public class SololevelingModKeyMappings {
 		event.register(QUEST_INFO);
 		event.register(AB_7);
 		event.register(AB_8);
+		event.register(DDD);
 	}
 
 	@Mod.EventBusSubscriber({Dist.CLIENT})

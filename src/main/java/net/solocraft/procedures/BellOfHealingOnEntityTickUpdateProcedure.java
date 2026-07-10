@@ -1,7 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.util.CooldownManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -43,10 +43,9 @@ public class BellOfHealingOnEntityTickUpdateProcedure {
 			_level.sendParticles(ParticleTypes.GLOW_SQUID_INK, x, y, z, 3, 9, 9, 9, 1);
 		if (entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) {
 			if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) == (null))) {
-				if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _livEnt6 && _livEnt6.hasEffect(SololevelingModMobEffects.BELL_OF_HEALING_COOLDOWN.get())) {
-					if (((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.BELL_OF_HEALING_COOLDOWN.get())
-							? _livEnt.getEffect(SololevelingModMobEffects.BELL_OF_HEALING_COOLDOWN.get()).getDuration()
-							: 0) % 20 == 0) {
+				Entity _owner = (entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null);
+				if (CooldownManager.isOnCooldown(_owner, "Blessing Mark")) {
+					if (CooldownManager.getRemainingTicks(_owner, "Blessing Mark") % 20 == 0) {
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
 								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:bellirng")), SoundSource.NEUTRAL, (float) 0.1, 1);

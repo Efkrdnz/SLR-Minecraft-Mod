@@ -1,5 +1,6 @@
 package net.solocraft.init;
 
+import net.solocraft.entity.VulcanEntity;
 import net.solocraft.entity.TuskShadowEntity;
 import net.solocraft.entity.ThomasAndreEntity;
 import net.solocraft.entity.StoneGolemEntity;
@@ -44,6 +45,7 @@ import net.solocraft.entity.MagicalSkullEntity;
 import net.solocraft.entity.MagicEyeEntity;
 import net.solocraft.entity.KasakaEntity;
 import net.solocraft.entity.KargalganEntity;
+import net.solocraft.entity.KaiselinEntity;
 import net.solocraft.entity.KamishShadowEntity;
 import net.solocraft.entity.KamishEntity;
 import net.solocraft.entity.IgrisShadowEntity;
@@ -75,9 +77,11 @@ import net.solocraft.entity.DummyPortalRedEntity;
 import net.solocraft.entity.DummyPortalPurpleEntity;
 import net.solocraft.entity.DummyPortalNormalEntity;
 import net.solocraft.entity.DragonheadEntity;
+import net.solocraft.entity.DemonEntity;
 import net.solocraft.entity.DaggerSlashEntity;
 import net.solocraft.entity.CursedChainsEntity;
 import net.solocraft.entity.ChaHaeInEntity;
+import net.solocraft.entity.CerberusEntity;
 import net.solocraft.entity.CentipedeEntity;
 import net.solocraft.entity.BloodRedComIgrisEntity;
 import net.solocraft.entity.BeruShadowEntity;
@@ -86,6 +90,7 @@ import net.solocraft.entity.BeruBossEntity;
 import net.solocraft.entity.BellOfHealingEntity;
 import net.solocraft.entity.BearTrapEntity;
 import net.solocraft.entity.BarukaEntity;
+import net.solocraft.entity.BaranEntity;
 import net.solocraft.entity.AttackshardEntity;
 import net.solocraft.entity.ArrowSplashEntity;
 import net.solocraft.entity.AncientSamuraiEntity;
@@ -748,6 +753,41 @@ public class EntityAnimationFactory {
 				}
 			}
 			if (event.getEntity() instanceof MagicalSkullEntity syncable) {
+				String animation = syncable.getSyncedAnimation();
+				if (!animation.equals("undefined")) {
+					syncable.setAnimation("undefined");
+					syncable.animationprocedure = animation;
+				}
+			}
+			if (event.getEntity() instanceof DemonEntity syncable) {
+				String animation = syncable.getSyncedAnimation();
+				if (!animation.equals("undefined")) {
+					syncable.setAnimation("undefined");
+					syncable.animationprocedure = animation;
+				}
+			}
+			if (event.getEntity() instanceof CerberusEntity syncable) {
+				String animation = syncable.getSyncedAnimation();
+				if (!animation.equals("undefined")) {
+					syncable.setAnimation("undefined");
+					syncable.animationprocedure = animation;
+				}
+			}
+			if (event.getEntity() instanceof VulcanEntity syncable) {
+				String animation = syncable.getSyncedAnimation();
+				if (!animation.equals("undefined")) {
+					syncable.setAnimation("undefined");
+					syncable.animationprocedure = animation;
+				}
+			}
+			if (event.getEntity() instanceof BaranEntity syncable) {
+				String animation = syncable.getSyncedAnimation();
+				if (!animation.equals("undefined")) {
+					syncable.setAnimation("undefined");
+					syncable.animationprocedure = animation;
+				}
+			}
+			if (event.getEntity() instanceof KaiselinEntity syncable) {
 				String animation = syncable.getSyncedAnimation();
 				if (!animation.equals("undefined")) {
 					syncable.setAnimation("undefined");

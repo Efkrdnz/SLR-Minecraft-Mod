@@ -6,6 +6,10 @@ build/
 .idea/
 .settings/
 
+# Local assistant/tooling folders
+.claude/
+.codex/
+
 # MCreator workspace
 .mcreator/
 

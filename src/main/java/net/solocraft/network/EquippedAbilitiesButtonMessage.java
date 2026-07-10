@@ -2,22 +2,8 @@
 package net.solocraft.network;
 
 import net.solocraft.world.inventory.EquippedAbilitiesMenu;
-import net.solocraft.procedures.SkillRemoveButton8Procedure;
-import net.solocraft.procedures.SkillRemoveButton7Procedure;
-import net.solocraft.procedures.SkillRemoveButton6Procedure;
-import net.solocraft.procedures.SkillRemoveButton5Procedure;
-import net.solocraft.procedures.SkillRemoveButton4Procedure;
-import net.solocraft.procedures.SkillRemoveButton3Procedure;
-import net.solocraft.procedures.SkillRemoveButton2Procedure;
-import net.solocraft.procedures.SkillRemoveButton1Procedure;
-import net.solocraft.procedures.EquipButton8Procedure;
-import net.solocraft.procedures.EquipButton7Procedure;
-import net.solocraft.procedures.EquipButton6Procedure;
-import net.solocraft.procedures.EquipButton5Procedure;
-import net.solocraft.procedures.EquipButton4Procedure;
-import net.solocraft.procedures.EquipButton3Procedure;
-import net.solocraft.procedures.EquipButton2Procedure;
-import net.solocraft.procedures.EquipButton1Procedure;
+import net.solocraft.procedures.SkillRemoveButtonProcedure;
+import net.solocraft.procedures.EquipButtonProcedure;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -72,74 +58,24 @@ public class EquippedAbilitiesButtonMessage {
 	}
 
 	public static void handleButtonAction(Player entity, int buttonID, int x, int y, int z) {
+		if (entity == null)
+			return;
 		Level world = entity.level();
 		HashMap guistate = EquippedAbilitiesMenu.guistate;
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
-		if (buttonID == 0) {
-
-			EquipButton1Procedure.execute(world, x, y, z, entity);
+		if (buttonID >= 0 && buttonID <= 7) {
+			EquipButtonProcedure.execute(world, x, y, z, entity, buttonID + 1);
 		}
-		if (buttonID == 1) {
-
-			EquipButton2Procedure.execute(world, x, y, z, entity);
+		if (buttonID >= 8 && buttonID <= 15) {
+			SkillRemoveButtonProcedure.execute(entity, buttonID - 7);
 		}
-		if (buttonID == 2) {
-
-			EquipButton3Procedure.execute(world, x, y, z, entity);
+		if (buttonID >= 16 && buttonID <= 23) {
+			EquipButtonProcedure.execute(world, x, y, z, entity, buttonID - 7);
 		}
-		if (buttonID == 3) {
-
-			EquipButton4Procedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 4) {
-
-			EquipButton5Procedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 5) {
-
-			EquipButton6Procedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 6) {
-
-			EquipButton7Procedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 7) {
-
-			EquipButton8Procedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 8) {
-
-			SkillRemoveButton1Procedure.execute(entity);
-		}
-		if (buttonID == 9) {
-
-			SkillRemoveButton2Procedure.execute(entity);
-		}
-		if (buttonID == 10) {
-
-			SkillRemoveButton3Procedure.execute(entity);
-		}
-		if (buttonID == 11) {
-
-			SkillRemoveButton4Procedure.execute(entity);
-		}
-		if (buttonID == 12) {
-
-			SkillRemoveButton5Procedure.execute(entity);
-		}
-		if (buttonID == 13) {
-
-			SkillRemoveButton6Procedure.execute(entity);
-		}
-		if (buttonID == 14) {
-
-			SkillRemoveButton7Procedure.execute(entity);
-		}
-		if (buttonID == 15) {
-
-			SkillRemoveButton8Procedure.execute(entity);
+		if (buttonID >= 24 && buttonID <= 31) {
+			SkillRemoveButtonProcedure.execute(entity, buttonID - 15);
 		}
 	}
 

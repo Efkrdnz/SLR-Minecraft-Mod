@@ -1,7 +1,7 @@
 
 package net.solocraft.potion;
 
-import net.solocraft.procedures.NoFallDamageOnEffectActiveTickProcedure;
+import net.solocraft.init.SololevelingModMobEffects;
 
 import net.minecraftforge.client.extensions.common.IClientMobEffectExtensions;
 
@@ -24,7 +24,9 @@ public class NoFallDamageMobEffect extends MobEffect {
 
 	@Override
 	public void applyEffectTick(LivingEntity entity, int amplifier) {
-		NoFallDamageOnEffectActiveTickProcedure.execute(entity);
+		entity.fallDistance = 0;
+		if (entity.onGround())
+			entity.removeEffect(SololevelingModMobEffects.NO_FALL_DAMAGE.get());
 	}
 
 	@Override

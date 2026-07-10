@@ -61,7 +61,7 @@ public class OrcEntity extends Monster implements GeoEntity {
 
 	public OrcEntity(EntityType<OrcEntity> type, Level world) {
 		super(type, world);
-		xpReward = 10;
+		xpReward = 5;
 		setNoAi(false);
 		setPersistenceRequired();
 	}
@@ -71,7 +71,7 @@ public class OrcEntity extends Monster implements GeoEntity {
 		super.defineSynchedData();
 		this.entityData.define(SHOOT, false);
 		this.entityData.define(ANIMATION, "undefined");
-		this.entityData.define(TEXTURE, "orctext");
+		this.entityData.define(TEXTURE, "orc_green");
 	}
 
 	public void setTexture(String texture) {
@@ -84,7 +84,7 @@ public class OrcEntity extends Monster implements GeoEntity {
 
 	@Override
 	protected float getStandingEyeHeight(Pose poseIn, EntityDimensions sizeIn) {
-		return 3.5F;
+		return super.getStandingEyeHeight(poseIn, sizeIn);
 	}
 
 	@Override
@@ -95,17 +95,21 @@ public class OrcEntity extends Monster implements GeoEntity {
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 2, false) {
+		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
-				return 9;
+				return 4;
 			}
 		});
-		this.goalSelector.addGoal(2, new RandomStrollGoal(this, 1));
-		this.targetSelector.addGoal(3, new NearestAttackableTargetGoal(this, Player.class, false, false));
-		this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
-		this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
-		this.goalSelector.addGoal(7, new FloatGoal(this));
+		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal(this, Player.class, false, false));
+		this.targetSelector.addGoal(3, new NearestAttackableTargetGoal(this, HunterEntity.class, false, false));
+		this.targetSelector.addGoal(4, new NearestAttackableTargetGoal(this, ChaHaeInEntity.class, false, false));
+		this.targetSelector.addGoal(5, new NearestAttackableTargetGoal(this, BaekYoonhoEntity.class, false, false));
+		this.targetSelector.addGoal(6, new NearestAttackableTargetGoal(this, ChoijongEntity.class, false, false));
+		this.goalSelector.addGoal(7, new RandomStrollGoal(this, 1));
+		this.targetSelector.addGoal(8, new HurtByTargetGoal(this));
+		this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+		this.goalSelector.addGoal(10, new FloatGoal(this));
 	}
 
 	@Override
@@ -130,9 +134,6 @@ public class OrcEntity extends Monster implements GeoEntity {
 
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
-		OrcEntityIsHurtProcedure.execute(this.level(), this, source.getEntity());
-		if (source.is(DamageTypes.IN_FIRE))
-			return false;
 		return super.hurt(source, amount);
 	}
 
@@ -157,7 +158,7 @@ public class OrcEntity extends Monster implements GeoEntity {
 
 	@Override
 	public EntityDimensions getDimensions(Pose p_33597_) {
-		return super.getDimensions(p_33597_).scale((float) 1);
+		return super.getDimensions(p_33597_).scale((float) 0.7);
 	}
 
 	public static void init() {
@@ -165,11 +166,12 @@ public class OrcEntity extends Monster implements GeoEntity {
 
 	public static AttributeSupplier.Builder createAttributes() {
 		AttributeSupplier.Builder builder = Mob.createMobAttributes();
-		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.1);
+		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.2);
 		builder = builder.add(Attributes.MAX_HEALTH, 40);
-		builder = builder.add(Attributes.ARMOR, 20);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, 12);
-		builder = builder.add(Attributes.FOLLOW_RANGE, 64);
+		builder = builder.add(Attributes.ARMOR, 2);
+		builder = builder.add(Attributes.ATTACK_DAMAGE, 4);
+		builder = builder.add(Attributes.FOLLOW_RANGE, 16);
+		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.2);
 		return builder;
 	}
 
@@ -219,7 +221,7 @@ public class OrcEntity extends Monster implements GeoEntity {
 	@Override
 	protected void tickDeath() {
 		++this.deathTime;
-		if (this.deathTime == 10) {
+		if (this.deathTime == 14) {
 			this.remove(OrcEntity.RemovalReason.KILLED);
 			this.dropExperience();
 		}

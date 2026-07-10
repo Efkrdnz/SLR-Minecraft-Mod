@@ -56,9 +56,11 @@ public class InstanceDungeonKeyLoggerOnBlockRightClickedProcedure {
 					_player.getInventory().clearOrCountMatchingItems(p -> _stktoremove.getItem() == p.getItem(), 1, _player.inventoryMenu.getCraftSlots());
 				}
 				{
-					double _setval = entity.getX();
+					double _setval = x;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.DunX = _setval;
+						capability.instancecomplete = false;
+						capability.tpd = false;
 						capability.syncPlayerVariables(entity);
 					});
 				}
@@ -70,7 +72,7 @@ public class InstanceDungeonKeyLoggerOnBlockRightClickedProcedure {
 					});
 				}
 				{
-					double _setval = entity.getZ();
+					double _setval = z;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.DunZ = _setval;
 						capability.syncPlayerVariables(entity);
@@ -133,6 +135,7 @@ public class InstanceDungeonKeyLoggerOnBlockRightClickedProcedure {
 												new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 														_ent.getDisplayName(), _ent.level().getServer(), _ent),
 												"execute in sololeveling:dungeon_dimension_kasaka as @s at @s unless entity @e[type=sololeveling:portal_12,distance=..100] run spawninstance");
+										SololevelingMod.queueServerWork(30, () -> DunKasakaTeleportAndSpawnProcedure.execute(_ent.level(), _ent));
 									}
 								}
 							});

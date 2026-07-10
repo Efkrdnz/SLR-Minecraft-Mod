@@ -1,10 +1,7 @@
-
-/*
- *    MCreator note: This file will be REGENERATED on each build.
- */
 package net.solocraft.init;
 
 import net.solocraft.client.renderer.WhiteFlameRenderer;
+import net.solocraft.client.renderer.VulcanRenderer;
 import net.solocraft.client.renderer.TuskShadowRenderer;
 import net.solocraft.client.renderer.TrainingBotRenderer;
 import net.solocraft.client.renderer.ThomasAndreRenderer;
@@ -17,9 +14,11 @@ import net.solocraft.client.renderer.StatueswordRenderer;
 import net.solocraft.client.renderer.StatuehammerRenderer;
 import net.solocraft.client.renderer.StatueaxeRenderer;
 import net.solocraft.client.renderer.StatueOfGodRenderer;
+import net.solocraft.client.renderer.SwordBeamProjectileRenderer;
 import net.solocraft.client.renderer.SpiderBossRenderer;
 import net.solocraft.client.renderer.SpawnerPortalRenderer;
 import net.solocraft.client.renderer.SlasheffectswordRenderer;
+import net.solocraft.client.renderer.SlashEffectRenderer;
 import net.solocraft.client.renderer.SlashRenderer;
 import net.solocraft.client.renderer.Slash6Renderer;
 import net.solocraft.client.renderer.Slash5Renderer;
@@ -40,6 +39,7 @@ import net.solocraft.client.renderer.SecretaryRenderer;
 import net.solocraft.client.renderer.RedGateRenderer;
 import net.solocraft.client.renderer.RedAntsRenderer;
 import net.solocraft.client.renderer.RandomCaveLargeRenderer;
+import net.solocraft.client.renderer.QuickSlashesRenderer;
 import net.solocraft.client.renderer.PortalSewersRenderer;
 import net.solocraft.client.renderer.PortalSRenderer;
 import net.solocraft.client.renderer.PortalRenderer;
@@ -66,6 +66,7 @@ import net.solocraft.client.renderer.MagicEyeRenderer;
 import net.solocraft.client.renderer.LightBallRenderer;
 import net.solocraft.client.renderer.KasakaRenderer;
 import net.solocraft.client.renderer.KargalganRenderer;
+import net.solocraft.client.renderer.KaiselinRenderer;
 import net.solocraft.client.renderer.KangTaeshikRenderer;
 import net.solocraft.client.renderer.KamishShadowRenderer;
 import net.solocraft.client.renderer.KamishRenderer;
@@ -105,14 +106,19 @@ import net.solocraft.client.renderer.DummyPortalNormalRenderer;
 import net.solocraft.client.renderer.DragonheadRenderer;
 import net.solocraft.client.renderer.DragonFireballRenderer;
 import net.solocraft.client.renderer.DetectEyeInvRenderer;
+import net.solocraft.client.renderer.DemonKnightRenderer;
+import net.solocraft.client.renderer.DemonRenderer;
 import net.solocraft.client.renderer.DaggerSlashRenderer;
+import net.solocraft.client.renderer.DualWieldFlurryRenderer;
 import net.solocraft.client.renderer.DKnight3Renderer;
 import net.solocraft.client.renderer.DKnight2Renderer;
 import net.solocraft.client.renderer.DKnight1Renderer;
+import net.solocraft.client.renderer.CrossStrikeRenderer;
 import net.solocraft.client.renderer.CursedChainsRenderer;
 import net.solocraft.client.renderer.CurseMagicRenderer;
 import net.solocraft.client.renderer.ChoijongRenderer;
 import net.solocraft.client.renderer.ChaHaeInRenderer;
+import net.solocraft.client.renderer.CerberusRenderer;
 import net.solocraft.client.renderer.CentipedeRenderer;
 import net.solocraft.client.renderer.BloodRedComIgrisRenderer;
 import net.solocraft.client.renderer.BeruShadowRenderer;
@@ -121,6 +127,7 @@ import net.solocraft.client.renderer.BeruBossRenderer;
 import net.solocraft.client.renderer.BellOfHealingRenderer;
 import net.solocraft.client.renderer.BearTrapRenderer;
 import net.solocraft.client.renderer.BarukaRenderer;
+import net.solocraft.client.renderer.BaranRenderer;
 import net.solocraft.client.renderer.BaekYoonhoRenderer;
 import net.solocraft.client.renderer.AttackshardRenderer;
 import net.solocraft.client.renderer.ArrowSplashRenderer;
@@ -129,6 +136,7 @@ import net.solocraft.client.renderer.AncientGolemRenderer;
 import net.solocraft.client.renderer.AfterImageRenderer;
 import net.solocraft.client.renderer.AfterImage2Renderer;
 import net.solocraft.client.renderer.AfterImage1Renderer;
+import net.solocraft.client.renderer.BasicAttackSlashRenderer;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -262,6 +270,12 @@ public class SololevelingModEntityRenderers {
 		event.registerEntityRenderer(SololevelingModEntities.SLASH_4.get(), Slash4Renderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SLASH_5.get(), Slash5Renderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SLASH_6.get(), Slash6Renderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.SLASH_EFFECT.get(), SlashEffectRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.BASIC_ATTACK_SLASH.get(), BasicAttackSlashRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.DUAL_WIELD_FLURRY.get(), DualWieldFlurryRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.CROSS_STRIKE.get(), CrossStrikeRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.QUICK_SLASHES.get(), QuickSlashesRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.SWORD_BEAM_PROJECTILE.get(), SwordBeamProjectileRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.DRAGON_BREATHE.get(), ThrownItemRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.MANA_BULLET.get(), ManaBulletRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.DIVINE_ARROW.get(), ThrownItemRenderer::new);
@@ -274,5 +288,12 @@ public class SololevelingModEntityRenderers {
 		event.registerEntityRenderer(SololevelingModEntities.MAGIC_MISSILE.get(), MagicMissileRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.NECRO_BLAST.get(), NecroBlastRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.FIRE_ARROW.get(), FireArrowRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.DEMON.get(), DemonRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.DEMON_KNIGHT.get(), DemonKnightRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.CERBERUS.get(), CerberusRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.VULCAN.get(), VulcanRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.BARAN.get(), BaranRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.KAISELIN.get(), KaiselinRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.SHADOW_KAISELIN.get(), KaiselinRenderer::new);
 	}
 }

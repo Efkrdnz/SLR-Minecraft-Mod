@@ -23,6 +23,7 @@ import net.minecraft.commands.CommandSource;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class CastIceChunkProcedure {
 	public static void execute(LevelAccessor world, double y, Entity entity) {
@@ -32,10 +33,9 @@ public class CastIceChunkProcedure {
 		double z = 0;
 		double yaw = 0;
 		if (!world.isClientSide()) {
-			if (!(entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(SololevelingModMobEffects.JOB_COOLDOWN_2.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "job_2")) {
 				if (entity.onGround()) {
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.JOB_COOLDOWN_2.get(), 140, 1, false, false));
+					CooldownManager.set(entity, "job_2", 140);
 					x = entity.getX() + 8 * entity.getLookAngle().x;
 					z = entity.getZ() + 8 * entity.getLookAngle().z;
 					yaw = entity.getYRot();

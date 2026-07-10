@@ -1,24 +1,22 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.network.chat.Component;
+import net.solocraft.util.CooldownManager;
 
 public class SnowScreenCastProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
 		if (entity == null)
 			return;
 		if (!world.isClientSide()) {
-			if (!(entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(SololevelingModMobEffects.JOB_COOLDOWN_4.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "job_4")) {
 				if (!entity.getPersistentData().getBoolean("snowscreen")) {
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.JOB_COOLDOWN_4.get(), 800, 1, false, false));
+					CooldownManager.set(entity, "job_4", 800);
 					entity.getPersistentData().putBoolean("snowscreen", true);
 					entity.getPersistentData().putDouble("SnowX", (entity.getX()));
 					entity.getPersistentData().putDouble("SnowY", (entity.getY()));

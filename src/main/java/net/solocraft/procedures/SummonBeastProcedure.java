@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -16,7 +15,6 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
@@ -28,13 +26,14 @@ import net.minecraft.commands.CommandFunction;
 import java.util.Optional;
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class SummonBeastProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 2500) {
-			if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.ELDER_BEAST_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "Light Golem")) {
 				{
 					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 2500;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -42,10 +41,8 @@ public class SummonBeastProcedure {
 						capability.syncPlayerVariables(entity);
 					});
 				}
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 200, 1, false, false));
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ELDER_BEAST_COOLDOWN.get(), 3600, 1, false, false));
+				CooldownManager.set(entity, "mana_refresh", 200);
+				CooldownManager.set(entity, "Light Golem", 3600);
 				if (world.getLevelData().getGameRules().getBoolean(GameRules.RULE_SENDCOMMANDFEEDBACK) == true) {
 					world.getLevelData().getGameRules().getRule(GameRules.RULE_SENDCOMMANDFEEDBACK).set(false, world.getServer());
 					{

@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.SteelFangWolfShadowEntity;
+import net.solocraft.entity.ShadowKaiselinEntity;
 import net.solocraft.entity.KamishShadowEntity;
 import net.solocraft.entity.IgrisShadowEntity;
 import net.solocraft.entity.BeruShadowEntity;
@@ -19,5 +20,7 @@ public class DomainBoostEffectExpiresProcedure {
 			animatable.setTexture("beru_shadow");
 		if (entity instanceof KamishShadowEntity animatable)
 			animatable.setTexture("dragonshadow");
+		if (entity instanceof ShadowKaiselinEntity animatable)
+			animatable.setTexture("shadow_kaiselin");
 	}
 }

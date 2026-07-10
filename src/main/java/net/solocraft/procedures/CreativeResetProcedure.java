@@ -17,6 +17,8 @@ import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber
 public class CreativeResetProcedure {
+	private static final double CREATIVE_MANA = 1000000.0D;
+
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
 		if (event.phase == TickEvent.Phase.END) {
@@ -49,9 +51,9 @@ public class CreativeResetProcedure {
 				});
 			}
 			{
-				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Mana;
 				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.MP = _setval;
+					capability.Mana = CREATIVE_MANA;
+					capability.MP = CREATIVE_MANA;
 					capability.syncPlayerVariables(entity);
 				});
 			}

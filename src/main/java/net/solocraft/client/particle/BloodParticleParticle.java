@@ -1,7 +1,7 @@
 
 package net.solocraft.client.particle;
 
-import net.solocraft.procedures.BloodParticleAdditionalParticleExpiryConditionProcedure;
+import net.solocraft.init.SololevelingModParticleTypes;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
@@ -58,7 +58,9 @@ public class BloodParticleParticle extends TextureSheetParticle {
 	public void tick() {
 		super.tick();
 		Level world = this.level;
-		if (BloodParticleAdditionalParticleExpiryConditionProcedure.execute(world, x, y, z, onGround))
+		if (onGround) {
+			world.addParticle(SololevelingModParticleTypes.BLOOD_PARTICLE_LAND.get(), x, y, z, 0, 0, 0);
 			this.remove();
+		}
 	}
 }

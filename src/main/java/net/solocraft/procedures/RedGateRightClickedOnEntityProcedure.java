@@ -42,6 +42,8 @@ public class RedGateRightClickedOnEntityProcedure {
 			return;
 		double rand = 0;
 		if (!((sourceentity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MAGIC_READER.get())) {
+			if (net.solocraft.guild.GuildGateHelper.prepareGateEntry(world, entity, sourceentity))
+				return;
 			if (!(entity instanceof RedGateEntity _datEntL2 && _datEntL2.getEntityData().get(RedGateEntity.DATA_usedbefore))) {
 				if (entity instanceof RedGateEntity _datEntSetL)
 					_datEntSetL.getEntityData().set(RedGateEntity.DATA_usedbefore, true);

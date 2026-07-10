@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.entity.TuskShadowEntity;
 import net.solocraft.entity.SteelFangWolfShadowEntity;
 import net.solocraft.entity.ShadowSold1Entity;
@@ -23,9 +22,9 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 
 import javax.annotation.Nullable;
+import net.solocraft.util.CooldownManager;
 
 @Mod.EventBusSubscriber
 public class ShadowDeathReviveProcedure {
@@ -63,7 +62,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -108,7 +107,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -153,7 +152,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -198,7 +197,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -243,7 +242,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -288,7 +287,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -333,7 +332,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -378,7 +377,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -423,7 +422,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 200, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 200);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -452,7 +451,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -481,7 +480,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -510,7 +509,7 @@ public class ShadowDeathReviveProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 					if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 40);
 				} else {
 					{
 						double _setval = ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)

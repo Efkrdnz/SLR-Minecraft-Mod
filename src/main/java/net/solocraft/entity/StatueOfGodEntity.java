@@ -194,9 +194,19 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 
 	private PlayState movementPredicate(AnimationState event) {
 		if (this.animationprocedure.equals("empty")) {
+			if ((this.entityData.get(DATA_state)).equals("aggresive")) {
+				if (isActuallyMoving()) {
+					return event.setAndContinue(RawAnimation.begin().thenLoop("walk"));
+				}
+				return event.setAndContinue(RawAnimation.begin().thenLoop("idle"));
+			}
 			return event.setAndContinue(RawAnimation.begin().thenLoop("sitting"));
 		}
 		return PlayState.STOP;
+	}
+
+	private boolean isActuallyMoving() {
+		return this.getDeltaMovement().horizontalDistanceSqr() > 1.0E-5D;
 	}
 
 	private PlayState procedurePredicate(AnimationState event) {

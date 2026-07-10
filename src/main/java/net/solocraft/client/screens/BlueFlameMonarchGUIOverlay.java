@@ -3,7 +3,7 @@ package net.solocraft.client.screens;
 
 import org.checkerframework.checker.units.qual.h;
 
-import net.solocraft.procedures.ShadowSoldDisplay1Procedure;
+import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.ReturnJobCD4Procedure;
 import net.solocraft.procedures.ReturnJobCD3Procedure;
 import net.solocraft.procedures.ReturnJobCD2Procedure;
@@ -56,8 +56,8 @@ public class BlueFlameMonarchGUIOverlay {
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		if (BlueFlameMonarchGUIDisplayOverlayIngameProcedure.execute(entity)) {
-			if (ShadowSoldDisplay1Procedure.execute(entity)) {
+		if (false && BlueFlameMonarchGUIDisplayOverlayIngameProcedure.execute(entity)) {
+			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).ShadowSelect == 1) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbaranstormburst.png"), w - 24, h - 70, 0, 0, 20, 20, 20, 20);
 			}
 			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbaranlaser.png"), w - 24, h - 24, 0, 0, 20, 20, 20, 20);

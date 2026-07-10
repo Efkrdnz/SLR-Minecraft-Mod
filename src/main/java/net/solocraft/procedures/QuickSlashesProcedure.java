@@ -2,7 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModParticleTypes;
-import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.entity.QuickSlashesEntity;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -29,6 +29,7 @@ import net.minecraft.core.BlockPos;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class QuickSlashesProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -37,10 +38,8 @@ public class QuickSlashesProcedure {
 		double delay = 0;
 		if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 			_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1, false, false));
-		if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-			_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 150, 1, false, false));
-		if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-			_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.QUICK_SLASHES_COOLDOWN.get(), 300, 1, false, false));
+		CooldownManager.set(entity, "mana_refresh", 150);
+		CooldownManager.set(entity, "Quickslashes", 300);
 		{
 			final Vec3 _center = new Vec3(x, y, z);
 			List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(12 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
@@ -55,6 +54,8 @@ public class QuickSlashesProcedure {
 								|| (entity instanceof LivingEntity _teamEnt && _teamEnt.level().getScoreboard().getPlayersTeam(_teamEnt.getStringUUID()) != null
 										? _teamEnt.level().getScoreboard().getPlayersTeam(_teamEnt instanceof Player _pl ? _pl.getGameProfile().getName() : _teamEnt.getStringUUID()).getName()
 										: "").equals(""))) {
+					if (entity instanceof LivingEntity livingEntity)
+						QuickSlashesEntity.spawn(world, livingEntity, entityiterator);
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles(ParticleTypes.SWEEP_ATTACK, (entityiterator.getX()), (entityiterator.getY()), (entityiterator.getZ()), 6, 0.5, 1, 0.5, 0);
 					if (world instanceof ServerLevel _level)

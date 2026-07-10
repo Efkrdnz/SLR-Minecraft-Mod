@@ -1,0 +1,13 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "sololeveling:block/cobbled_deepslate",
+    "up": "sololeveling:block/cobbled_deepslate",
+    "north": "sololeveling:block/demonlock",
+    "east": "sololeveling:block/cobbled_deepslate",
+    "south": "sololeveling:block/cobbled_deepslate",
+    "west": "sololeveling:block/cobbled_deepslate",
+    "particle": "sololeveling:block/cobbled_deepslate"
+  },
+  "render_type": "solid"
+}

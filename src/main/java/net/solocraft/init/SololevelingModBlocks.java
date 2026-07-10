@@ -1,9 +1,6 @@
-
-/*
- *    MCreator note: This file will be REGENERATED on each build.
- */
 package net.solocraft.init;
 
+import net.solocraft.block.GuildComputerBlock;
 import net.solocraft.block.WoodenPassageOpenBlock;
 import net.solocraft.block.UnbreakableDeepslateBlock;
 import net.solocraft.block.SkeletonBlock;
@@ -27,6 +24,7 @@ import net.solocraft.block.DungeonBlock2Block;
 import net.solocraft.block.DungeonBarrelBlock;
 import net.solocraft.block.DisappearingBlockBlock;
 import net.solocraft.block.DeepslateKeyblockRedBlock;
+import net.solocraft.block.DeepslateKeyblockDKCBlock;
 import net.solocraft.block.DeepslateKeyblockBlueBlock;
 import net.solocraft.block.DeepslateKeyblockBlock;
 import net.solocraft.block.CustomPortalBlock;
@@ -72,4 +70,8 @@ public class SololevelingModBlocks {
 	public static final RegistryObject<Block> EVALUATOR_TEST = REGISTRY.register("evaluator_test", () -> new EvaluatorTestBlock());
 	public static final RegistryObject<Block> CUSTOM_PORTAL = REGISTRY.register("custom_portal", () -> new CustomPortalBlock());
 	public static final RegistryObject<Block> SHADOW = REGISTRY.register("shadow", () -> new ShadowBlock());
+	public static final RegistryObject<Block> DEEPSLATE_KEYBLOCK_DKC = REGISTRY.register("deepslate_keyblock_dkc", () -> new DeepslateKeyblockDKCBlock());
+
+	// â”€â”€ Guild System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+	public static final RegistryObject<Block> GUILD_COMPUTER = REGISTRY.register("guild_computer", GuildComputerBlock::new);
 }

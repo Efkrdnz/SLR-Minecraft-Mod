@@ -1,20 +1,6 @@
-/**
- * The code of this mod element is always locked.
- *
- * You can register new events in this class too.
- *
- * If you want to make a plain independent class, create it using
- * Project Browser -> New... and make sure to make the class
- * outside net.solocraft as this package is managed by MCreator.
- *
- * If you change workspace package, modid or prefix, you will need
- * to manually adapt this file to these changes or remake it.
- *
- * This class will be added in the mod root package.
-*/
 package net.solocraft;
 
-import net.solocraft.procedures.ScreenShakeProcedureProcedure;
+import net.solocraft.init.SololevelingModMobEffects;
 
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -54,7 +40,7 @@ public class ScreenShakeCe {
 		public static void CameraShake(ViewportEvent.ComputeCameraAngles event) {
 			LocalPlayer player = Minecraft.getInstance().player;
 			if (player != null) {
-				if (ScreenShakeProcedureProcedure.execute(player)) {
+				if (player.hasEffect(SololevelingModMobEffects.SCREEN_SHAKE.get())) {
 					if (Math.random() < 0.5) {
 						{
 							event.setPitch((float) (event.getPitch() + (Math.random() * 2)));

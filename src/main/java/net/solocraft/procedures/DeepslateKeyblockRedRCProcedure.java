@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModBlocks;
+import net.solocraft.item.RedkeyItem;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -21,6 +22,12 @@ public class DeepslateKeyblockRedRCProcedure {
 		if (entity == null)
 			return;
 		if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.REDKEY.get()) {
+			ItemStack heldKey = entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY;
+			if (entity instanceof Player _player && !RedkeyItem.bindOrVerifyOwner(heldKey, _player)) {
+				if (!_player.level().isClientSide())
+					_player.displayClientMessage(Component.literal("\u00A74The key rejects your hand. It belongs to " + RedkeyItem.getOwnerName(heldKey) + "."), true);
+				return;
+			}
 			if (entity instanceof Player _player) {
 				ItemStack _stktoremove = new ItemStack(SololevelingModItems.REDKEY.get());
 				_player.getInventory().clearOrCountMatchingItems(p -> _stktoremove.getItem() == p.getItem(), 1, _player.inventoryMenu.getCraftSlots());

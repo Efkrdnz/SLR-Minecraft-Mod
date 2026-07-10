@@ -1,10 +1,7 @@
-
-/*
- *    MCreator note: This file will be REGENERATED on each build.
- */
 package net.solocraft.init;
 
 import net.solocraft.entity.WhiteFlameEntity;
+import net.solocraft.entity.VulcanEntity;
 import net.solocraft.entity.TuskShadowEntity;
 import net.solocraft.entity.TrainingBotEntity;
 import net.solocraft.entity.ThomasAndreEntity;
@@ -17,10 +14,12 @@ import net.solocraft.entity.StatueswordEntity;
 import net.solocraft.entity.StatuehammerEntity;
 import net.solocraft.entity.StatueaxeEntity;
 import net.solocraft.entity.StatueOfGodEntity;
+import net.solocraft.entity.SwordBeamProjectileEntity;
 import net.solocraft.entity.SpiderWebEntity;
 import net.solocraft.entity.SpiderBossEntity;
 import net.solocraft.entity.SpawnerPortalEntity;
 import net.solocraft.entity.SlasheffectswordEntity;
+import net.solocraft.entity.SlashEffectEntity;
 import net.solocraft.entity.SlashEntity;
 import net.solocraft.entity.Slash6Entity;
 import net.solocraft.entity.Slash5Entity;
@@ -44,6 +43,7 @@ import net.solocraft.entity.RedGateEntity;
 import net.solocraft.entity.RedAntsEntity;
 import net.solocraft.entity.RangerProjectileEntity;
 import net.solocraft.entity.RandomCaveLargeEntity;
+import net.solocraft.entity.QuickSlashesEntity;
 import net.solocraft.entity.PortalSewersEntity;
 import net.solocraft.entity.PortalSEntity;
 import net.solocraft.entity.PortalLushEntity;
@@ -70,6 +70,8 @@ import net.solocraft.entity.MagicEyeEntity;
 import net.solocraft.entity.LightBallEntity;
 import net.solocraft.entity.KasakaEntity;
 import net.solocraft.entity.KargalganEntity;
+import net.solocraft.entity.KaiselinEntity;
+import net.solocraft.entity.ShadowKaiselinEntity;
 import net.solocraft.entity.KangTaeshikEntity;
 import net.solocraft.entity.KamishShadowEntity;
 import net.solocraft.entity.KamishEntity;
@@ -113,14 +115,19 @@ import net.solocraft.entity.DragonFireballEntity;
 import net.solocraft.entity.DragonBreatheEntity;
 import net.solocraft.entity.DivineArrowEntity;
 import net.solocraft.entity.DetectEyeInvEntity;
+import net.solocraft.entity.DemonKnightEntity;
+import net.solocraft.entity.DemonEntity;
 import net.solocraft.entity.DaggerSlashEntity;
+import net.solocraft.entity.DualWieldFlurryEntity;
 import net.solocraft.entity.DKnight3Entity;
 import net.solocraft.entity.DKnight2Entity;
 import net.solocraft.entity.DKnight1Entity;
+import net.solocraft.entity.CrossStrikeEntity;
 import net.solocraft.entity.CursedChainsEntity;
 import net.solocraft.entity.CurseMagicEntity;
 import net.solocraft.entity.ChoijongEntity;
 import net.solocraft.entity.ChaHaeInEntity;
+import net.solocraft.entity.CerberusEntity;
 import net.solocraft.entity.CentipedeEntity;
 import net.solocraft.entity.BloodRedComIgrisEntity;
 import net.solocraft.entity.BeruShadowEntity;
@@ -129,6 +136,7 @@ import net.solocraft.entity.BeruBossEntity;
 import net.solocraft.entity.BellOfHealingEntity;
 import net.solocraft.entity.BearTrapEntity;
 import net.solocraft.entity.BarukaEntity;
+import net.solocraft.entity.BaranEntity;
 import net.solocraft.entity.BaekYoonhoEntity;
 import net.solocraft.entity.AttackshardEntity;
 import net.solocraft.entity.ArrowSplashEntity;
@@ -137,6 +145,7 @@ import net.solocraft.entity.AncientGolemEntity;
 import net.solocraft.entity.AfterImageEntity;
 import net.solocraft.entity.AfterImage2Entity;
 import net.solocraft.entity.AfterImage1Entity;
+import net.solocraft.entity.BasicAttackSlashEntity;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.registries.RegistryObject;
@@ -333,7 +342,7 @@ public class SololevelingModEntities {
 	public static final RegistryObject<EntityType<SteelFangedLycanEntity>> STEEL_FANGED_LYCAN = register("steel_fanged_lycan",
 			EntityType.Builder.<SteelFangedLycanEntity>of(SteelFangedLycanEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(SteelFangedLycanEntity::new)
 
-					.sized(0.6f, 0.7f));
+					.sized(0.9f, 1.8f));
 	public static final RegistryObject<EntityType<DummyPortalNormalEntity>> DUMMY_PORTAL_NORMAL = register("dummy_portal_normal", EntityType.Builder.<DummyPortalNormalEntity>of(DummyPortalNormalEntity::new, MobCategory.CREATURE)
 			.setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(DummyPortalNormalEntity::new).fireImmune().sized(3f, 3f));
 	public static final RegistryObject<EntityType<DummyPortalRedEntity>> DUMMY_PORTAL_RED = register("dummy_portal_red", EntityType.Builder.<DummyPortalRedEntity>of(DummyPortalRedEntity::new, MobCategory.CREATURE)
@@ -501,6 +510,18 @@ public class SololevelingModEntities {
 			EntityType.Builder.<Slash5Entity>of(Slash5Entity::new, MobCategory.MISC).setCustomClientFactory(Slash5Entity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<Slash6Entity>> SLASH_6 = register("projectile_slash_6",
 			EntityType.Builder.<Slash6Entity>of(Slash6Entity::new, MobCategory.MISC).setCustomClientFactory(Slash6Entity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
+	public static final RegistryObject<EntityType<SlashEffectEntity>> SLASH_EFFECT = register("slash_effect",
+			EntityType.Builder.<SlashEffectEntity>of(SlashEffectEntity::new, MobCategory.MISC).setCustomClientFactory(SlashEffectEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(2.8f, 1.6f));
+	public static final RegistryObject<EntityType<BasicAttackSlashEntity>> BASIC_ATTACK_SLASH = register("basic_attack_slash",
+			EntityType.Builder.<BasicAttackSlashEntity>of(BasicAttackSlashEntity::new, MobCategory.MISC).setCustomClientFactory(BasicAttackSlashEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(2.6f, 1.3f));
+	public static final RegistryObject<EntityType<DualWieldFlurryEntity>> DUAL_WIELD_FLURRY = register("dual_wield_flurry",
+			EntityType.Builder.<DualWieldFlurryEntity>of(DualWieldFlurryEntity::new, MobCategory.MISC).setCustomClientFactory(DualWieldFlurryEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(6.0f, 3.0f));
+	public static final RegistryObject<EntityType<CrossStrikeEntity>> CROSS_STRIKE = register("cross_strike",
+			EntityType.Builder.<CrossStrikeEntity>of(CrossStrikeEntity::new, MobCategory.MISC).setCustomClientFactory(CrossStrikeEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(4.8f, 2.8f));
+	public static final RegistryObject<EntityType<QuickSlashesEntity>> QUICK_SLASHES = register("quick_slashes",
+			EntityType.Builder.<QuickSlashesEntity>of(QuickSlashesEntity::new, MobCategory.MISC).setCustomClientFactory(QuickSlashesEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(11.0f, 4.0f));
+	public static final RegistryObject<EntityType<SwordBeamProjectileEntity>> SWORD_BEAM_PROJECTILE = register("projectile_sword_beam",
+			EntityType.Builder.<SwordBeamProjectileEntity>of(SwordBeamProjectileEntity::new, MobCategory.MISC).setCustomClientFactory(SwordBeamProjectileEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(1.8f, 1.0f));
 	public static final RegistryObject<EntityType<DragonBreatheEntity>> DRAGON_BREATHE = register("projectile_dragon_breathe",
 			EntityType.Builder.<DragonBreatheEntity>of(DragonBreatheEntity::new, MobCategory.MISC).setCustomClientFactory(DragonBreatheEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<ManaBulletEntity>> MANA_BULLET = register("projectile_mana_bullet",
@@ -525,6 +546,21 @@ public class SololevelingModEntities {
 			EntityType.Builder.<NecroBlastEntity>of(NecroBlastEntity::new, MobCategory.MISC).setCustomClientFactory(NecroBlastEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<FireArrowEntity>> FIRE_ARROW = register("projectile_fire_arrow",
 			EntityType.Builder.<FireArrowEntity>of(FireArrowEntity::new, MobCategory.MISC).setCustomClientFactory(FireArrowEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
+	public static final RegistryObject<EntityType<DemonEntity>> DEMON = register("demon",
+			EntityType.Builder.<DemonEntity>of(DemonEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(DemonEntity::new).fireImmune().sized(0.6f, 2.5f));
+	public static final RegistryObject<EntityType<DemonKnightEntity>> DEMON_KNIGHT = register("demon_knight",
+			EntityType.Builder.<DemonKnightEntity>of(DemonKnightEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(DemonKnightEntity::new).fireImmune().sized(0.7f, 2.6f));
+	public static final RegistryObject<EntityType<CerberusEntity>> CERBERUS = register("cerberus",
+			EntityType.Builder.<CerberusEntity>of(CerberusEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(CerberusEntity::new).fireImmune().sized(3f, 3.5f));
+	public static final RegistryObject<EntityType<VulcanEntity>> VULCAN = register("vulcan",
+			EntityType.Builder.<VulcanEntity>of(VulcanEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(VulcanEntity::new).fireImmune().sized(2f, 5f));
+	public static final RegistryObject<EntityType<BaranEntity>> BARAN = register("baran",
+			EntityType.Builder.<BaranEntity>of(BaranEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(128).setUpdateInterval(3).setCustomClientFactory(BaranEntity::new).fireImmune().sized(1.0f, 3.0f));
+	public static final RegistryObject<EntityType<KaiselinEntity>> KAISELIN = register("kaiselin",
+			EntityType.Builder.<KaiselinEntity>of(KaiselinEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(128).setUpdateInterval(3).setCustomClientFactory(KaiselinEntity::new).fireImmune().sized(3.25f, 2.6f));
+	public static final RegistryObject<EntityType<ShadowKaiselinEntity>> SHADOW_KAISELIN = register("shadow_kaiselin",
+			EntityType.Builder.<ShadowKaiselinEntity>of(ShadowKaiselinEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(128).setUpdateInterval(3).setCustomClientFactory(ShadowKaiselinEntity::new).fireImmune()
+					.sized(3.25f, 2.6f));
 
 	private static <T extends Entity> RegistryObject<EntityType<T>> register(String registryname, EntityType.Builder<T> entityTypeBuilder) {
 		return REGISTRY.register(registryname, () -> (EntityType<T>) entityTypeBuilder.build(registryname));
@@ -641,6 +677,13 @@ public class SololevelingModEntities {
 			TuskShadowEntity.init();
 			SkeletonSummonerEntity.init();
 			MagicalSkullEntity.init();
+			DemonEntity.init();
+			DemonKnightEntity.init();
+			CerberusEntity.init();
+			VulcanEntity.init();
+			BaranEntity.init();
+			KaiselinEntity.init();
+			ShadowKaiselinEntity.init();
 		});
 	}
 
@@ -754,5 +797,12 @@ public class SololevelingModEntities {
 		event.put(TUSK_SHADOW.get(), TuskShadowEntity.createAttributes().build());
 		event.put(SKELETON_SUMMONER.get(), SkeletonSummonerEntity.createAttributes().build());
 		event.put(MAGICAL_SKULL.get(), MagicalSkullEntity.createAttributes().build());
+		event.put(DEMON.get(), DemonEntity.createAttributes().build());
+		event.put(DEMON_KNIGHT.get(), DemonKnightEntity.createAttributes().build());
+		event.put(CERBERUS.get(), CerberusEntity.createAttributes().build());
+		event.put(VULCAN.get(), VulcanEntity.createAttributes().build());
+		event.put(BARAN.get(), BaranEntity.createAttributes().build());
+		event.put(KAISELIN.get(), KaiselinEntity.createAttributes().build());
+		event.put(SHADOW_KAISELIN.get(), ShadowKaiselinEntity.createAttributes().build());
 	}
 }

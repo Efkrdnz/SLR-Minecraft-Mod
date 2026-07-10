@@ -1,7 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.util.CooldownManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -37,7 +37,7 @@ public class AssassinStealthDodgeProcedure {
 			return;
 		double scale_opp = 0;
 		double scale_self = 0;
-		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.STEALTH_COOLDOWN.get()) && entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(MobEffects.INVISIBILITY)) {
+		if (CooldownManager.isOnCooldown(entity, "Stealth") && entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(MobEffects.INVISIBILITY)) {
 			if (sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("hunters"))) || sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("dm")))) {
 				scale_opp = sourceentity.getPersistentData().getDouble("Level");
 			} else if (sourceentity instanceof Player) {

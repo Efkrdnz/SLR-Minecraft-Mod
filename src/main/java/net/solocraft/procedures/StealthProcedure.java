@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraft.world.phys.Vec3;
@@ -21,12 +20,13 @@ import net.minecraft.core.BlockPos;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class StealthProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.STEALTH_COOLDOWN.get()))) {
+		if (!CooldownManager.isOnCooldown(entity, "Stealth")) {
 			{
 				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_assassin + 1;
 				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -34,8 +34,7 @@ public class StealthProcedure {
 					capability.syncPlayerVariables(entity);
 				});
 			}
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.STEALTH_COOLDOWN.get(), 400, 1, false, false));
+			CooldownManager.set(entity, "Stealth", 400);
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 160, 1, false, false));
 			if (world instanceof ServerLevel _level)
@@ -57,7 +56,8 @@ public class StealthProcedure {
 					if (!(entity == entityiterator)) {
 						if (entityiterator instanceof Mob) {
 							try {
-								((Mob) entityiterator).setTarget(null);
+								if (!StealthBossDetectionHelper.seesThroughStealth(entityiterator))
+									((Mob) entityiterator).setTarget(null);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}

@@ -14,16 +14,20 @@ public class InstanceRandomProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
 		if (entity == null)
 			return;
+		execute(world, entity.getX(), entity.getY(), entity.getZ());
+	}
+
+	public static void execute(LevelAccessor world, double x, double y, double z) {
 		double Xoff = 0;
 		double Zoff = 0;
 		double component = 0;
 		double Yoff = 0;
 		double rand1 = 0;
-		Xoff = entity.getX() + -5;
-		Yoff = entity.getY() - 2;
-		Zoff = entity.getZ() + -5;
+		Xoff = x + -5;
+		Yoff = y - 2;
+		Zoff = z + -5;
 		if (world instanceof ServerLevel _serverworld) {
-			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "instancestart"));
+			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "instance_first_room"));
 			if (template != null) {
 				template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
 						_serverworld.random, 3);

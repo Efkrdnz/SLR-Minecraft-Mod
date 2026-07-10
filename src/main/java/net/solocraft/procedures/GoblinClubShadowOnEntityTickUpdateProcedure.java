@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.entity.GoblinClubShadowEntity;
+import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -65,13 +66,17 @@ public class GoblinClubShadowOnEntityTickUpdateProcedure {
 				if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).isAlive())) {
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles(ParticleTypes.SMOKE, (entity.getX()), (entity.getY()), (entity.getZ()), 30, 0.05, 0.05, 0.05, 1);
-					if (!entity.level().isClientSide())
+					if (!entity.level().isClientSide()) {
+						ShadowMonarchManager.dropStoredShadowInventory(entity);
 						entity.discard();
+					}
 				}
 			}
 			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
-				if (!entity.level().isClientSide())
+				if (!entity.level().isClientSide()) {
+					ShadowMonarchManager.dropStoredShadowInventory(entity);
 					entity.discard();
+				}
 			}
 			hei = entity.getBbHeight();
 			if (world instanceof ServerLevel _level)

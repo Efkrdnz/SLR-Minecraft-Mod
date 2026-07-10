@@ -1,120 +1,80 @@
 package net.solocraft.client.gui;
 
 import net.solocraft.world.inventory.FoodGuiMenu;
-import net.solocraft.procedures.GoldTextProcedure;
+import net.solocraft.client.gui.system.SystemContainerScreen;
+import net.solocraft.client.gui.system.SystemScreen;
 import net.solocraft.network.FoodGuiButtonMessage;
 import net.solocraft.SololevelingMod;
 
-import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.PlainTextButton;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
-
-import java.util.HashMap;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
-public class FoodGuiScreen extends AbstractContainerScreen<FoodGuiMenu> {
-	private final static HashMap<String, Object> guistate = FoodGuiMenu.guistate;
-	private final Level world;
+public class FoodGuiScreen extends SystemContainerScreen<FoodGuiMenu> {
 	private final int x, y, z;
 	private final Player entity;
-	Button button_empty;
-	Button button_empty1;
-	Button button_empty2;
+
+	// shop slots mirror FoodGuiMenu: index 0 = top, 1 = mid, 2 = bottom
+	private static final int SLOT_X = -53;
+	private static final int[] SLOT_Y = { -84, -57, -30 };
 
 	public FoodGuiScreen(FoodGuiMenu container, Inventory inventory, Component text) {
 		super(container, inventory, text);
-		this.world = container.world;
 		this.x = container.x;
 		this.y = container.y;
 		this.z = container.z;
 		this.entity = container.entity;
-		this.imageWidth = 1;
-		this.imageHeight = 1;
+		this.imageWidth = 0;
+		this.imageHeight = 0;
+		this.pRelX = -92;
+		this.pRelY = -100;
+		this.pW = 184;
+		this.pH = 196;
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		this.renderTooltip(guiGraphics, mouseX, mouseY);
-	}
-
-	@Override
-	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int gx, int gy) {
-		RenderSystem.setShaderColor(1, 1, 1, 1);
+	protected void renderBg(GuiGraphics g, float partialTicks, int gx, int gy) {
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
-
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/panel_rework_vertical2.png"), this.leftPos + -105, this.topPos + -119, 0, 0, 200, 225, 200, 225);
-
+		ShopStyle.panel(g, leftPos + pRelX, topPos + pRelY, pW, pH);
+		ShopStyle.titleBar(g, this.font, leftPos + pRelX, topPos + pRelY, pW, "FOOD SHOP");
+		for (int sy : SLOT_Y)
+			ShopStyle.slot(g, leftPos + SLOT_X, topPos + sy);
+		for (int si = 0; si < 3; ++si)
+			for (int sj = 0; sj < 9; ++sj)
+				ShopStyle.slot(g, leftPos + -79 + sj * 18, topPos + 1 + si * 18);
+		for (int si = 0; si < 9; ++si)
+			ShopStyle.slot(g, leftPos + -79 + si * 18, topPos + 59);
 		RenderSystem.disableBlend();
 	}
 
 	@Override
-	public boolean keyPressed(int key, int b, int c) {
-		if (key == 256) {
-			this.minecraft.player.closeContainer();
-			return true;
-		}
-		return super.keyPressed(key, b, c);
-	}
-
-	@Override
-	public void containerTick() {
-		super.containerTick();
-	}
-
-	@Override
-	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_25g_x16"), -27, -85, -26266, false);
-		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_x16"), -27, -76, -26266, false);
-		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_40g"), -27, -58, -26266, false);
-		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_x8"), -27, -49, -26266, false);
-		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_80g"), -27, -31, -26266, false);
-		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_x1"), -27, -22, -26266, false);
-		guiGraphics.drawString(this.font,
-
-				GoldTextProcedure.execute(entity), 96, -108, -26317, false);
-	}
-
-	@Override
-	public void onClose() {
-		super.onClose();
+	protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+		g.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_25g_x16"), -30, SLOT_Y[0] + 1, ShopStyle.GOLD, false);
+		g.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_x16"), -30, SLOT_Y[0] + 10, ShopStyle.TEXT_SUB, false);
+		g.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_40g"), -30, SLOT_Y[1] + 1, ShopStyle.GOLD, false);
+		g.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_x8"), -30, SLOT_Y[1] + 10, ShopStyle.TEXT_SUB, false);
+		g.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_80g"), -30, SLOT_Y[2] + 1, ShopStyle.GOLD, false);
+		g.drawString(this.font, Component.translatable("gui.sololeveling.food_gui.label_x1"), -30, SLOT_Y[2] + 10, ShopStyle.TEXT_SUB, false);
+		ShopStyle.gold(g, this.font, entity, pRelX + 6, pRelY + pH - 12);
 	}
 
 	@Override
 	public void init() {
 		super.init();
-		button_empty = new PlainTextButton(this.leftPos + -54, this.topPos + -85, 25, 20, Component.translatable("gui.sololeveling.food_gui.button_empty"), e -> {
-			if (true) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new FoodGuiButtonMessage(0, x, y, z));
-				FoodGuiButtonMessage.handleButtonAction(entity, 0, x, y, z);
-			}
-		}, this.font);
-		guistate.put("button:button_empty", button_empty);
-		this.addRenderableWidget(button_empty);
-		button_empty1 = new PlainTextButton(this.leftPos + -54, this.topPos + -58, 25, 20, Component.translatable("gui.sololeveling.food_gui.button_empty1"), e -> {
-			if (true) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new FoodGuiButtonMessage(1, x, y, z));
-				FoodGuiButtonMessage.handleButtonAction(entity, 1, x, y, z);
-			}
-		}, this.font);
-		guistate.put("button:button_empty1", button_empty1);
-		this.addRenderableWidget(button_empty1);
-		button_empty2 = new PlainTextButton(this.leftPos + -54, this.topPos + -31, 25, 20, Component.translatable("gui.sololeveling.food_gui.button_empty2"), e -> {
-			if (true) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new FoodGuiButtonMessage(2, x, y, z));
-				FoodGuiButtonMessage.handleButtonAction(entity, 2, x, y, z);
-			}
-		}, this.font);
-		guistate.put("button:button_empty2", button_empty2);
-		this.addRenderableWidget(button_empty2);
+		for (int i = 0; i < 3; i++) {
+			final int id = i;
+			PlainTextButton buy = new PlainTextButton(this.leftPos + SLOT_X - 1, this.topPos + SLOT_Y[i] - 1, 18, 18, Component.literal(""), e -> {
+				SololevelingMod.PACKET_HANDLER.sendToServer(new FoodGuiButtonMessage(id, x, y, z));
+			}, this.font);
+			this.addRenderableWidget(buy);
+		}
+		this.addRenderableWidget(new SystemScreen.SystemButton(this.leftPos + pRelX + 3, this.topPos + pRelY + 2, 40, 12, Component.literal("< Back"), b -> {
+			SololevelingMod.PACKET_HANDLER.sendToServer(new FoodGuiButtonMessage(3, x, y, z));
+		}));
 	}
 }

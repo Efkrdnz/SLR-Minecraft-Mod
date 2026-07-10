@@ -54,7 +54,7 @@ public class HunterOnInitialEntitySpawnProcedure {
 					if (Math.random() < (1) / ((float) 4)) {
 						if (entity instanceof HunterEntity _datEntSetS)
 							_datEntSetS.getEntityData().set(HunterEntity.DATA_Rank, "S");
-						rnk = 5;
+						rnk = 4.25;
 					} else {
 						if (entity instanceof HunterEntity _datEntSetS)
 							_datEntSetS.getEntityData().set(HunterEntity.DATA_Rank, "D");

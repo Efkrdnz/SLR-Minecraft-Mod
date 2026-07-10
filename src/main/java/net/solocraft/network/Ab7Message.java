@@ -1,7 +1,6 @@
 
 package net.solocraft.network;
 
-import net.solocraft.procedures.Ab7OnKeyPressedProcedure;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -44,15 +43,17 @@ public class Ab7Message {
 
 	public static void pressAction(Player entity, int type, int pressedms) {
 		Level world = entity.level();
-		double x = entity.getX();
-		double y = entity.getY();
-		double z = entity.getZ();
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(entity.blockPosition()))
 			return;
 		if (type == 0) {
-
-			Ab7OnKeyPressedProcedure.execute(entity);
+			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+				if (capability.combatmode) {
+					capability.PselectedPower = capability.Pslot7;
+					capability.Skillcycle = 7;
+					capability.syncPlayerVariables(entity);
+				}
+			});
 		}
 	}
 

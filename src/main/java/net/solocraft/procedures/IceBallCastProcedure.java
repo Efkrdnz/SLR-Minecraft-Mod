@@ -1,6 +1,5 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.IceBallEntity;
 
@@ -21,13 +20,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class IceBallCastProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
 		if (!world.isClientSide()) {
-			if (!(entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(SololevelingModMobEffects.JOB_COOLDOWN_1.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "job_1")) {
 				if (entity.getPersistentData().getBoolean("UsingIceBall") == true) {
 					if (entity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal("ability already in use"), true);

@@ -2,8 +2,6 @@ package net.solocraft.client.gui;
 
 import net.solocraft.world.inventory.RewardPanelMenu;
 import net.solocraft.procedures.RewardNameReturnProcedure;
-import net.solocraft.procedures.RewardNameReturn3Procedure;
-import net.solocraft.procedures.RewardNameReturn2Procedure;
 import net.solocraft.network.RewardPanelButtonMessage;
 import net.solocraft.SololevelingMod;
 
@@ -88,10 +86,10 @@ public class RewardPanelScreen extends AbstractContainerScreen<RewardPanelMenu> 
 				RewardNameReturnProcedure.execute(entity), -43, 4, -1, false);
 		guiGraphics.drawString(this.font,
 
-				RewardNameReturn2Procedure.execute(entity), -43, 30, -1, false);
+				RewardNameReturnProcedure.execute(entity, 2), -43, 30, -1, false);
 		guiGraphics.drawString(this.font,
 
-				RewardNameReturn3Procedure.execute(entity), -43, 56, -1, false);
+				RewardNameReturnProcedure.execute(entity, 3), -43, 56, -1, false);
 	}
 
 	@Override

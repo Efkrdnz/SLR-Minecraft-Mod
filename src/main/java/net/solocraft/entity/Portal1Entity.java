@@ -187,7 +187,7 @@ public class Portal1Entity extends PathfinderMob implements GeoEntity {
 		Entity entity = this;
 		Level world = this.level();
 
-		Portal1RightClickedOnEntityProcedure.execute(world, x, y, z, sourceentity);
+		Portal1RightClickedOnEntityProcedure.execute(world, x, y, z, entity, sourceentity);
 		return retval;
 	}
 

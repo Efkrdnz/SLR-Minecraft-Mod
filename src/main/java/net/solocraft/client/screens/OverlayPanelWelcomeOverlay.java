@@ -26,6 +26,8 @@ import com.mojang.blaze3d.platform.GlStateManager;
 public class OverlayPanelWelcomeOverlay {
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public static void eventHandler(RenderGuiEvent.Pre event) {
+		if (legacyWelcomeOverlayDisabled())
+			return;
 		int w = event.getWindow().getGuiScaledWidth();
 		int h = event.getWindow().getGuiScaledHeight();
 		Level world = null;
@@ -56,5 +58,9 @@ public class OverlayPanelWelcomeOverlay {
 		RenderSystem.enableDepthTest();
 		RenderSystem.disableBlend();
 		RenderSystem.setShaderColor(1, 1, 1, (float) (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).overlay_alpha_welcome);
+	}
+
+	private static boolean legacyWelcomeOverlayDisabled() {
+		return true;
 	}
 }

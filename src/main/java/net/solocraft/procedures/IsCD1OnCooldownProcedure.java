@@ -1,17 +1,11 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
-
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
+import net.solocraft.util.CooldownManager;
 
 public class IsCD1OnCooldownProcedure {
 	public static boolean execute(Entity entity) {
-		if (entity == null)
-			return false;
-		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.JOB_COOLDOWN_1.get())) {
-			return true;
-		}
-		return false;
+		if (entity == null) return false;
+		return CooldownManager.isOnCooldown(entity, "job_1");
 	}
 }

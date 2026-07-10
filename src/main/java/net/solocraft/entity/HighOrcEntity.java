@@ -212,7 +212,7 @@ public class HighOrcEntity extends Monster implements GeoEntity {
 	@Override
 	protected void tickDeath() {
 		++this.deathTime;
-		if (this.deathTime == 14) {
+		if (this.deathTime == 9) {
 			this.remove(HighOrcEntity.RemovalReason.KILLED);
 			this.dropExperience();
 		}

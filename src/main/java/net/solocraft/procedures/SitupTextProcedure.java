@@ -8,6 +8,6 @@ public class SitupTextProcedure {
 	public static String execute(Entity entity) {
 		if (entity == null)
 			return "";
-		return "[" + Math.round((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).situp) + "/25]";
+		return "[" + Math.round((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).situp) + "/" + Math.round(DailyQuestHelper.visibleTrainingTarget(entity)) + "]";
 	}
 }

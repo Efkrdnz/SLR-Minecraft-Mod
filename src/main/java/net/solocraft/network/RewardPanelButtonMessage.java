@@ -2,9 +2,7 @@
 package net.solocraft.network;
 
 import net.solocraft.world.inventory.RewardPanelMenu;
-import net.solocraft.procedures.RewardCollectButton3Procedure;
-import net.solocraft.procedures.RewardCollectButton2Procedure;
-import net.solocraft.procedures.RewardCollectButton1Procedure;
+import net.solocraft.procedures.RewardCollectButtonProcedure;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -64,17 +62,21 @@ public class RewardPanelButtonMessage {
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
+		if (buttonID >= 100) {
+			RewardCollectButtonProcedure.execute(entity, buttonID - 99);
+			return;
+		}
 		if (buttonID == 0) {
 
-			RewardCollectButton2Procedure.execute(entity);
+			RewardCollectButtonProcedure.execute(entity, 2);
 		}
 		if (buttonID == 1) {
 
-			RewardCollectButton1Procedure.execute(entity);
+			RewardCollectButtonProcedure.execute(entity, 1);
 		}
 		if (buttonID == 2) {
 
-			RewardCollectButton3Procedure.execute(entity);
+			RewardCollectButtonProcedure.execute(entity, 3);
 		}
 	}
 

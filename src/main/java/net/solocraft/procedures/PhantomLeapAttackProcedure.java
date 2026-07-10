@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -27,6 +26,7 @@ import net.minecraft.commands.arguments.EntityAnchorArgument;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class PhantomLeapAttackProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -35,7 +35,7 @@ public class PhantomLeapAttackProcedure {
 		double rand = 0;
 		double X = 0;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 800) {
-			if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.BACKSTAB_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "Backstab")) {
 				{
 					final Vec3 _center = new Vec3(x, y, z);
 					List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(32 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
@@ -43,10 +43,8 @@ public class PhantomLeapAttackProcedure {
 						if ((entityiterator.getPersistentData().getString("target")).equals(entity.getDisplayName().getString()) && !(entity == entityiterator)) {
 							if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 								_entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 20, 1, false, false));
-							if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 100, 1, false, false));
-							if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.BACKSTAB_COOLDOWN.get(), 240, 1, false, false));
+							CooldownManager.set(entity, "mana_refresh", 100);
+							CooldownManager.set(entity, "Backstab", 240);
 							{
 								double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 800;
 								entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {

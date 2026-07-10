@@ -1,5 +1,7 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.ShadowMonarchManager;
+
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -30,8 +32,10 @@ public class ShadowEntTickProcedure {
 		if (entity == null)
 			return;
 		if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows"))) && !(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false)) {
-			if (!entity.level().isClientSide())
+			if (!entity.level().isClientSide()) {
+				ShadowMonarchManager.dropStoredShadowInventory(entity);
 				entity.discard();
+			}
 		}
 	}
 }

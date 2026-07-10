@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.world.inventory.ShadowExchangeSaveMenu;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.SystemNotifications;
 
 import net.minecraftforge.network.NetworkHooks;
 
@@ -15,6 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.core.BlockPos;
+import net.minecraft.ChatFormatting;
 
 import io.netty.buffer.Unpooled;
 
@@ -38,8 +40,10 @@ public class OpenShadowExchange1Procedure {
 				}, _bpos);
 			}
 		} else {
-			if (entity instanceof Player _player && !_player.level().isClientSide())
-				_player.displayClientMessage(Component.literal("You can't place a shadow in this dimension!"), false);
+			if (entity instanceof ServerPlayer player)
+				SystemNotifications.showNegativeTitleUnder(player, 0xFFFF3D3D, 80,
+						Component.literal("EXCHANGE LOCKED").withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
+						Component.literal("You cannot set an anchor in this dimension.").withStyle(ChatFormatting.RED));
 		}
 	}
 }

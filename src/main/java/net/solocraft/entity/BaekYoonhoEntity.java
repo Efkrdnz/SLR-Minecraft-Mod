@@ -46,7 +46,7 @@ public class BaekYoonhoEntity extends PathfinderMob {
 		setMaxUpStep(1f);
 		xpReward = 40;
 		setNoAi(false);
-		setCustomName(Component.literal("White Tiger Guild: Guild Master"));
+		setCustomName(Component.literal("Baek Yoonho"));
 		setCustomNameVisible(true);
 		setPersistenceRequired();
 		refreshDimensions();

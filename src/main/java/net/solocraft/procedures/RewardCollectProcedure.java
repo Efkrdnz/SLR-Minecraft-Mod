@@ -148,6 +148,15 @@ public class RewardCollectProcedure {
 				return;
 			}
 		}
+		if (reward.startsWith("XP")) {
+			try {
+				int amount = Integer.parseInt(reward.substring(2));
+				if (entity instanceof Player player)
+					XPGainProcedure.awardBaseXp(entity.level(), player, amount);
+			} catch (NumberFormatException e) {
+				return;
+			}
+		}
 		if (reward.startsWith("ITEM:")) {
 			String itemResourceLocation = reward.substring(5); // Remove "ITEM:" prefix
 			try {

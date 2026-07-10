@@ -1,22 +1,8 @@
 package net.solocraft.client.gui;
 
+import net.solocraft.procedures.PlistReturnProcedure;
+import net.solocraft.procedures.PlistButtonConProcedure;
 import net.solocraft.world.inventory.UnlockedSkillsTab2Menu;
-import net.solocraft.procedures.PlistReturn9Procedure;
-import net.solocraft.procedures.PlistReturn16Procedure;
-import net.solocraft.procedures.PlistReturn15Procedure;
-import net.solocraft.procedures.PlistReturn14Procedure;
-import net.solocraft.procedures.PlistReturn13Procedure;
-import net.solocraft.procedures.PlistReturn12Procedure;
-import net.solocraft.procedures.PlistReturn11Procedure;
-import net.solocraft.procedures.PlistReturn10Procedure;
-import net.solocraft.procedures.PlistButtonCon9Procedure;
-import net.solocraft.procedures.PlistButtonCon16Procedure;
-import net.solocraft.procedures.PlistButtonCon15Procedure;
-import net.solocraft.procedures.PlistButtonCon14Procedure;
-import net.solocraft.procedures.PlistButtonCon13Procedure;
-import net.solocraft.procedures.PlistButtonCon12Procedure;
-import net.solocraft.procedures.PlistButtonCon11Procedure;
-import net.solocraft.procedures.PlistButtonCon10Procedure;
 import net.solocraft.network.UnlockedSkillsTab2ButtonMessage;
 import net.solocraft.SololevelingMod;
 
@@ -100,28 +86,28 @@ public class UnlockedSkillsTab2Screen extends AbstractContainerScreen<UnlockedSk
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 		guiGraphics.drawString(this.font,
 
-				PlistReturn9Procedure.execute(entity), -61, -88, -1, false);
+				PlistReturnProcedure.execute(entity, 9), -61, -88, -1, false);
 		guiGraphics.drawString(this.font,
 
-				PlistReturn10Procedure.execute(entity), -61, -69, -1, false);
+				PlistReturnProcedure.execute(entity, 10), -61, -69, -1, false);
 		guiGraphics.drawString(this.font,
 
-				PlistReturn11Procedure.execute(entity), -61, -50, -1, false);
+				PlistReturnProcedure.execute(entity, 11), -61, -50, -1, false);
 		guiGraphics.drawString(this.font,
 
-				PlistReturn12Procedure.execute(entity), -61, -31, -1, false);
+				PlistReturnProcedure.execute(entity, 12), -61, -31, -1, false);
 		guiGraphics.drawString(this.font,
 
-				PlistReturn13Procedure.execute(entity), -61, -12, -1, false);
+				PlistReturnProcedure.execute(entity, 13), -61, -12, -1, false);
 		guiGraphics.drawString(this.font,
 
-				PlistReturn14Procedure.execute(entity), -61, 7, -1, false);
+				PlistReturnProcedure.execute(entity, 14), -61, 7, -1, false);
 		guiGraphics.drawString(this.font,
 
-				PlistReturn15Procedure.execute(entity), -61, 26, -1, false);
+				PlistReturnProcedure.execute(entity, 15), -61, 26, -1, false);
 		guiGraphics.drawString(this.font,
 
-				PlistReturn16Procedure.execute(entity), -61, 44, -1, false);
+				PlistReturnProcedure.execute(entity, 16), -61, 44, -1, false);
 		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.unlocked_skills_tab_2.label_empty"), -120, -22, -1, false);
 		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.unlocked_skills_tab_2.label_empty1"), 89, -22, -1, false);
 	}
@@ -135,112 +121,112 @@ public class UnlockedSkillsTab2Screen extends AbstractContainerScreen<UnlockedSk
 	public void init() {
 		super.init();
 		button_equip = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_2.button_equip"), e -> {
-			if (PlistButtonCon9Procedure.execute(entity)) {
+			if (PlistButtonConProcedure.execute(entity, 9)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab2ButtonMessage(0, x, y, z));
 				UnlockedSkillsTab2ButtonMessage.handleButtonAction(entity, 0, x, y, z);
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -95, 51, 20).build(builder -> new Button(builder) {
 			@Override
 			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon9Procedure.execute(entity))
+				if (PlistButtonConProcedure.execute(entity, 9))
 					super.render(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip", button_equip);
 		this.addRenderableWidget(button_equip);
 		button_equip1 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_2.button_equip1"), e -> {
-			if (PlistButtonCon10Procedure.execute(entity)) {
+			if (PlistButtonConProcedure.execute(entity, 10)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab2ButtonMessage(1, x, y, z));
 				UnlockedSkillsTab2ButtonMessage.handleButtonAction(entity, 1, x, y, z);
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -76, 51, 20).build(builder -> new Button(builder) {
 			@Override
 			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon10Procedure.execute(entity))
+				if (PlistButtonConProcedure.execute(entity, 10))
 					super.render(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip1", button_equip1);
 		this.addRenderableWidget(button_equip1);
 		button_equip2 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_2.button_equip2"), e -> {
-			if (PlistButtonCon11Procedure.execute(entity)) {
+			if (PlistButtonConProcedure.execute(entity, 11)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab2ButtonMessage(2, x, y, z));
 				UnlockedSkillsTab2ButtonMessage.handleButtonAction(entity, 2, x, y, z);
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -57, 51, 20).build(builder -> new Button(builder) {
 			@Override
 			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon11Procedure.execute(entity))
+				if (PlistButtonConProcedure.execute(entity, 11))
 					super.render(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip2", button_equip2);
 		this.addRenderableWidget(button_equip2);
 		button_equip3 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_2.button_equip3"), e -> {
-			if (PlistButtonCon12Procedure.execute(entity)) {
+			if (PlistButtonConProcedure.execute(entity, 12)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab2ButtonMessage(3, x, y, z));
 				UnlockedSkillsTab2ButtonMessage.handleButtonAction(entity, 3, x, y, z);
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -38, 51, 20).build(builder -> new Button(builder) {
 			@Override
 			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon12Procedure.execute(entity))
+				if (PlistButtonConProcedure.execute(entity, 12))
 					super.render(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip3", button_equip3);
 		this.addRenderableWidget(button_equip3);
 		button_equip4 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_2.button_equip4"), e -> {
-			if (PlistButtonCon13Procedure.execute(entity)) {
+			if (PlistButtonConProcedure.execute(entity, 13)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab2ButtonMessage(4, x, y, z));
 				UnlockedSkillsTab2ButtonMessage.handleButtonAction(entity, 4, x, y, z);
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -19, 51, 20).build(builder -> new Button(builder) {
 			@Override
 			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon13Procedure.execute(entity))
+				if (PlistButtonConProcedure.execute(entity, 13))
 					super.render(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip4", button_equip4);
 		this.addRenderableWidget(button_equip4);
 		button_equip5 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_2.button_equip5"), e -> {
-			if (PlistButtonCon14Procedure.execute(entity)) {
+			if (PlistButtonConProcedure.execute(entity, 14)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab2ButtonMessage(5, x, y, z));
 				UnlockedSkillsTab2ButtonMessage.handleButtonAction(entity, 5, x, y, z);
 			}
 		}).bounds(this.leftPos + 18, this.topPos + 0, 51, 20).build(builder -> new Button(builder) {
 			@Override
 			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon14Procedure.execute(entity))
+				if (PlistButtonConProcedure.execute(entity, 14))
 					super.render(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip5", button_equip5);
 		this.addRenderableWidget(button_equip5);
 		button_equip6 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_2.button_equip6"), e -> {
-			if (PlistButtonCon15Procedure.execute(entity)) {
+			if (PlistButtonConProcedure.execute(entity, 15)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab2ButtonMessage(6, x, y, z));
 				UnlockedSkillsTab2ButtonMessage.handleButtonAction(entity, 6, x, y, z);
 			}
 		}).bounds(this.leftPos + 18, this.topPos + 19, 51, 20).build(builder -> new Button(builder) {
 			@Override
 			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon15Procedure.execute(entity))
+				if (PlistButtonConProcedure.execute(entity, 15))
 					super.render(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip6", button_equip6);
 		this.addRenderableWidget(button_equip6);
 		button_equip7 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_2.button_equip7"), e -> {
-			if (PlistButtonCon16Procedure.execute(entity)) {
+			if (PlistButtonConProcedure.execute(entity, 16)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab2ButtonMessage(7, x, y, z));
 				UnlockedSkillsTab2ButtonMessage.handleButtonAction(entity, 7, x, y, z);
 			}
 		}).bounds(this.leftPos + 18, this.topPos + 38, 51, 20).build(builder -> new Button(builder) {
 			@Override
 			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon16Procedure.execute(entity))
+				if (PlistButtonConProcedure.execute(entity, 16))
 					super.render(guiGraphics, gx, gy, ticks);
 			}
 		});

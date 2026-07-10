@@ -1,8 +1,10 @@
 
 package net.solocraft.network;
 
+import net.solocraft.procedures.SkillSlotHelper;
 import net.solocraft.procedures.UseSkillOnKeyReleasedProcedure;
 import net.solocraft.procedures.UseSkillOnKeyPressedProcedure;
+import net.solocraft.util.MageQTEHelper;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -44,6 +46,8 @@ public class UseSkillMessage {
 	}
 
 	public static void pressAction(Player entity, int type, int pressedms) {
+		if (entity == null)
+			return;
 		Level world = entity.level();
 		double x = entity.getX();
 		double y = entity.getY();
@@ -52,13 +56,51 @@ public class UseSkillMessage {
 		if (!world.hasChunkAt(entity.blockPosition()))
 			return;
 		if (type == 0) {
-
-			UseSkillOnKeyPressedProcedure.execute(world, x, y, z, entity);
+			toggleSkillPage(entity);
 		}
-		if (type == 1) {
-
-			UseSkillOnKeyReleasedProcedure.execute(world, entity);
+		if (type >= 10 && type <= 17) {
+			pressHotbarSlot(entity, type - 9);
 		}
+		if (type >= 20 && type <= 27) {
+			releaseHotbarSlot(entity, pressedms);
+		}
+	}
+
+	private static void toggleSkillPage(Player entity) {
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			capability.PskillPage = capability.PskillPage >= 2 ? 1 : 2;
+			capability.syncPlayerVariables(entity);
+		});
+	}
+
+	private static void pressHotbarSlot(Player entity, int hotbarSlot) {
+		Level world = entity.level();
+		double x = entity.getX();
+		double y = entity.getY();
+		double z = entity.getZ();
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			if (!capability.combatmode)
+				return;
+			int slot = SkillSlotHelper.activeSlot(entity, hotbarSlot);
+			capability.PselectedPower = SkillSlotHelper.getSlot(capability, slot);
+			capability.Skillcycle = hotbarSlot;
+			capability.syncPlayerVariables(entity);
+		});
+		SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
+		if (!vars.combatmode || vars.PselectedPower.isEmpty())
+			return;
+		if (world.isClientSide() && !MageQTEHelper.MAGE_SKILLS.contains(vars.PselectedPower))
+			return;
+		UseSkillOnKeyPressedProcedure.execute(world, x, y, z, entity);
+	}
+
+	private static void releaseHotbarSlot(Player entity, int pressedms) {
+		SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
+		if (!vars.combatmode || vars.PselectedPower.isEmpty())
+			return;
+		if (entity.level().isClientSide() && !MageQTEHelper.MAGE_SKILLS.contains(vars.PselectedPower))
+			return;
+		UseSkillOnKeyReleasedProcedure.execute(entity.level(), entity, pressedms);
 	}
 
 	@SubscribeEvent

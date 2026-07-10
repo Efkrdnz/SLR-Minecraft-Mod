@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.entity.StoneGolemEntity;
 import net.solocraft.entity.SteelFangWolfEntity;
+import net.solocraft.entity.SteelFangedLycanEntity;
 import net.solocraft.entity.SpiderBossEntity;
 import net.solocraft.entity.RedAntsEntity;
 import net.solocraft.entity.MutatedEntity;
@@ -80,7 +81,7 @@ public class DungeonMobLootDropProcedure {
 					}
 				}
 			}
-		} else if (entity instanceof SteelFangWolfEntity) {
+		} else if (entity instanceof SteelFangWolfEntity || entity instanceof SteelFangedLycanEntity) {
 			if (Math.random() < (1) / ((float) 2)) {
 				if (world instanceof ServerLevel _level) {
 					ItemEntity entityToSpawn = new ItemEntity(_level, x, y, z, new ItemStack(SololevelingModItems.MANA_CRYSTAL_D.get()));

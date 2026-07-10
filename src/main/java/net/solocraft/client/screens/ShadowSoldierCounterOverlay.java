@@ -49,7 +49,7 @@ public class ShadowSoldierCounterOverlay {
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		if (SMonTextProcedure.execute(entity)) {
+		if (false && SMonTextProcedure.execute(entity)) {
 			if (DoesHaveExchangeProcedure.execute(entity)) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newshadowimgknight.png"), w - 24, h - 70, 0, 0, 20, 20, 20, 20);
 			}

@@ -24,6 +24,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandSource;
 
 public class PortalJobChangeRightClickedOnEntityProcedure {
+	private static final double PLAYER_PORTAL_ENTRY_X_OFFSET = 3.0D;
+
 	public static void execute(LevelAccessor world, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
@@ -33,6 +35,7 @@ public class PortalJobChangeRightClickedOnEntityProcedure {
 					double _setval = entity.getX();
 					sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.DunX = _setval;
+						capability.tpd = false;
 						capability.syncPlayerVariables(sourceentity);
 					});
 				}
@@ -91,11 +94,11 @@ public class PortalJobChangeRightClickedOnEntityProcedure {
 						SololevelingMod.queueServerWork(10, () -> {
 							{
 								Entity _ent = sourceentity;
-								_ent.teleportTo(((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayerx),
+								_ent.teleportTo(((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayerx + PLAYER_PORTAL_ENTRY_X_OFFSET),
 										((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayery),
 										((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayerz));
 								if (_ent instanceof ServerPlayer _serverPlayer)
-									_serverPlayer.connection.teleport(((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayerx),
+									_serverPlayer.connection.teleport(((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayerx + PLAYER_PORTAL_ENTRY_X_OFFSET),
 											((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayery),
 											((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayerz), _ent.getYRot(), _ent.getXRot());
 							}

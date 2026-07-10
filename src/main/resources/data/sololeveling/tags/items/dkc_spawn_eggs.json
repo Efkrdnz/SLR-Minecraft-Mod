@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:demon_spawn_egg",
+    "sololeveling:cerberus_spawn_egg",
+    "sololeveling:vulcan_spawn_egg",
+    "sololeveling:baran_spawn_egg",
+    "sololeveling:kaiselin_spawn_egg"
+  ]
+}

@@ -1,7 +1,3 @@
-
-/*
- *    MCreator note: This file will be REGENERATED on each build.
- */
 package net.solocraft.init;
 
 import net.solocraft.item.YellowkeyItem;
@@ -53,6 +49,7 @@ import net.solocraft.item.RunestoneProximityTrapItem;
 import net.solocraft.item.RunestoneProtectionMarkItem;
 import net.solocraft.item.RunestonePhysicalItem;
 import net.solocraft.item.RunestoneOverhealItem;
+import net.solocraft.item.RunestoneMonarchsDomainItem;
 import net.solocraft.item.RunestoneMutilationItem;
 import net.solocraft.item.RunestoneMagicMissilesItem;
 import net.solocraft.item.RunestoneLightballItem;
@@ -133,6 +130,7 @@ import net.solocraft.item.GgItem;
 import net.solocraft.item.FrostBladeItem;
 import net.solocraft.item.FighterStarterpackItem;
 import net.solocraft.item.FighterMasteryItemItem;
+import net.solocraft.item.EntryPermitItem;
 import net.solocraft.item.EmeraldDaggerItem;
 import net.solocraft.item.ETierSwordItem;
 import net.solocraft.item.DungeonSpawnerItem;
@@ -147,6 +145,7 @@ import net.solocraft.item.DaggerGoldenBItem;
 import net.solocraft.item.DaggerDuolityAItem;
 import net.solocraft.item.DaggerChainCItem;
 import net.solocraft.item.DTierSwordItem;
+import net.solocraft.item.DKCTravelItem;
 import net.solocraft.item.DKCLevelItemItem;
 import net.solocraft.item.CreativetabitemItem;
 import net.solocraft.item.CoinItemItem;
@@ -215,7 +214,7 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> STORM_GRIAMORE = REGISTRY.register("storm_griamore", () -> new StormGriamoreItem());
 	public static final RegistryObject<Item> SPIRIT_BOW = REGISTRY.register("spirit_bow", () -> new SpiritBowItem());
 	public static final RegistryObject<Item> SUNG_JIN_WOO_SPAWN_EGG = REGISTRY.register("sung_jin_woo_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.SUNG_JIN_WOO, -1, -1, new Item.Properties()));
-	public static final RegistryObject<Item> ORC_SPAWN_EGG = REGISTRY.register("orc_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.ORC, -14610944, -15448576, new Item.Properties()));
+	public static final RegistryObject<Item> ORC_SPAWN_EGG = REGISTRY.register("orc_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.GREEN_ORC, -16764109, -16751104, new Item.Properties()));
 	public static final RegistryObject<Item> GEM_GOLEM_SPAWN_EGG = REGISTRY.register("gem_golem_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.GEM_GOLEM, -16777114, -39169, new Item.Properties()));
 	public static final RegistryObject<Item> BERU_BOSS_SPAWN_EGG = REGISTRY.register("beru_boss_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.BERU_BOSS, -13421773, -26215, new Item.Properties()));
 	public static final RegistryObject<Item> CENTIPEDE_SPAWN_EGG = REGISTRY.register("centipede_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.CENTIPEDE, -6737152, -26368, new Item.Properties()));
@@ -261,6 +260,7 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> INSTANCE_DUNGEON_KEY = REGISTRY.register("instance_dungeon_key", () -> new InstanceDungeonKeyItem());
 	public static final RegistryObject<Item> PORTAL_BERU_SPAWN_EGG = REGISTRY.register("portal_beru_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_BERU, -34304, -6400, new Item.Properties()));
 	public static final RegistryObject<Item> RED_GATE_SPAWN_EGG = REGISTRY.register("red_gate_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.RED_GATE, -10092544, -3407770, new Item.Properties()));
+	public static final RegistryObject<Item> PORTAL_1_SPAWN_EGG = REGISTRY.register("portal_1_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_1, -35072, -16711681, new Item.Properties()));
 	public static final RegistryObject<Item> PORTAL_LUSH_SPAWN_EGG = REGISTRY.register("portal_lush_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_LUSH, -35072, -65536, new Item.Properties()));
 	public static final RegistryObject<Item> PORTAL_KARGALGANS_THRONE_ROOM_SPAWN_EGG = REGISTRY.register("portal_kargalgans_throne_room_spawn_egg",
 			() -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_KARGALGANS_THRONE_ROOM, -6684673, -10066330, new Item.Properties()));
@@ -332,6 +332,7 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> GIVE_TUSK = REGISTRY.register("give_tusk", () -> new GiveTuskItem());
 	public static final RegistryObject<Item> RUNESTONE_SHADOW_EXCHANGE = REGISTRY.register("runestone_shadow_exchange", () -> new RunestoneShadowExchangeItem());
 	public static final RegistryObject<Item> RUNESTONE_SHADOW_SPIRITUAL_BODY_MANIFESTATION = REGISTRY.register("runestone_shadow_spiritual_body_manifestation", () -> new RunestoneShadowSpiritualBodyManifestationItem());
+	public static final RegistryObject<Item> RUNESTONE_MONARCHS_DOMAIN = REGISTRY.register("runestone_monarchs_domain", () -> new RunestoneMonarchsDomainItem());
 	public static final RegistryObject<Item> MURDERIOUS_INTENT_STONE = REGISTRY.register("murderious_intent_stone", () -> new MurderiousIntentStoneItem());
 	public static final RegistryObject<Item> TELEKINESIS_STONE = REGISTRY.register("telekinesis_stone", () -> new TelekinesisStoneItem());
 	public static final RegistryObject<Item> STEALTH_STONE = REGISTRY.register("stealth_stone", () -> new StealthStoneItem());
@@ -434,6 +435,17 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> RUNESTONE_MUTILATION = REGISTRY.register("runestone_mutilation", () -> new RunestoneMutilationItem());
 	public static final RegistryObject<Item> RUNESTONE_SWORD_BEAM = REGISTRY.register("runestone_sword_beam", () -> new RunestoneSwordBeamItem());
 	public static final RegistryObject<Item> DKC_LEVEL_ITEM = REGISTRY.register("dkc_level_item", () -> new DKCLevelItemItem());
+	public static final RegistryObject<Item> DEMON_SPAWN_EGG = REGISTRY.register("demon_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.DEMON, -13434880, -39322, new Item.Properties()));
+	public static final RegistryObject<Item> CERBERUS_SPAWN_EGG = REGISTRY.register("cerberus_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.CERBERUS, -6724096, -13434880, new Item.Properties()));
+	public static final RegistryObject<Item> VULCAN_SPAWN_EGG = REGISTRY.register("vulcan_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.VULCAN, -16777216, -26215, new Item.Properties()));
+	public static final RegistryObject<Item> BARAN_SPAWN_EGG = REGISTRY.register("baran_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.BARAN, -16764109, -6684673, new Item.Properties()));
+	public static final RegistryObject<Item> KAISELIN_SPAWN_EGG = REGISTRY.register("kaiselin_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.KAISELIN, -16777114, -16711681, new Item.Properties()));
+	public static final RegistryObject<Item> DEEPSLATE_KEYBLOCK_DKC = block(SololevelingModBlocks.DEEPSLATE_KEYBLOCK_DKC);
+	public static final RegistryObject<Item> ENTRY_PERMIT = REGISTRY.register("entry_permit", () -> new EntryPermitItem());
+	public static final RegistryObject<Item> DKC_TRAVEL = REGISTRY.register("dkc_travel", () -> new DKCTravelItem());
+
+	// â”€â”€ Guild System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+	public static final RegistryObject<Item> GUILD_COMPUTER = block(SololevelingModBlocks.GUILD_COMPUTER);
 
 	private static RegistryObject<Item> block(RegistryObject<Block> block) {
 		return REGISTRY.register(block.getId().getPath(), () -> new BlockItem(block.get(), new Item.Properties()));

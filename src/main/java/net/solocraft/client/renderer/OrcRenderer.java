@@ -18,7 +18,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 public class OrcRenderer extends GeoEntityRenderer<OrcEntity> {
 	public OrcRenderer(EntityRendererProvider.Context renderManager) {
 		super(renderManager, new OrcModel());
-		this.shadowRadius = 0.7f;
+		this.shadowRadius = 0.5f;
 	}
 
 	@Override
@@ -29,7 +29,7 @@ public class OrcRenderer extends GeoEntityRenderer<OrcEntity> {
 	@Override
 	public void preRender(PoseStack poseStack, OrcEntity entity, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green,
 			float blue, float alpha) {
-		float scale = 1f;
+		float scale = 0.7f;
 		this.scaleHeight = scale;
 		this.scaleWidth = scale;
 		super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);

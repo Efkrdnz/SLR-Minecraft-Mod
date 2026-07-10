@@ -17,7 +17,6 @@ import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.server.level.ServerLevel;
@@ -26,13 +25,14 @@ import net.minecraft.core.BlockPos;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class DemonKingsLongSwordEntitySwingsItemProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
 		double delay = 0;
-		if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.COOLDOWN_SOFF.get()))
+		if (!CooldownManager.isOnCooldown(entity, "soff")
 				&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Player) {
 			if (!(entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get()))) {
 				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 100) {
@@ -61,8 +61,7 @@ public class DemonKingsLongSwordEntitySwingsItemProcedure {
 							}
 						}
 					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.COOLDOWN_SOFF.get(), 20, 1, false, false));
+					CooldownManager.set(entity, "soff", 20);
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 100;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -74,8 +73,7 @@ public class DemonKingsLongSwordEntitySwingsItemProcedure {
 			} else {
 				entity.getPersistentData().putDouble("range", 60);
 				entity.getPersistentData().putDouble("sx", (entity.getX()));
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.COOLDOWN_SOFF.get(), 100, 1, false, false));
+				CooldownManager.set(entity, "soff", 100);
 				entity.getPersistentData().putDouble("sy", (entity.getY() + 1.2));
 				entity.getPersistentData().putDouble("sz", (entity.getZ()));
 				entity.getPersistentData().putDouble("tx",

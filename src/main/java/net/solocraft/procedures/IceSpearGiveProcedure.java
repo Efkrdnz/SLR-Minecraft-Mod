@@ -1,6 +1,6 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
+
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.SololevelingMod;
 
@@ -13,12 +13,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.particles.ParticleTypes;
+import net.solocraft.util.CooldownManager;
 
 public class IceSpearGiveProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -31,10 +31,9 @@ public class IceSpearGiveProcedure {
 		double deltaY = 0;
 		double motionX = 0;
 		double speed = 0;
-		if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SPEAR_CREATION_COOLDOWN.get()))) {
+		if (!CooldownManager.isOnCooldown(entity, "spear_creation")) {
 			if (!(entity instanceof Player _playerHasItem ? _playerHasItem.getInventory().contains(new ItemStack(SololevelingModItems.ICE_SPEAR.get())) : false)) {
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SPEAR_CREATION_COOLDOWN.get(), 3000, 1, false, false));
+				CooldownManager.set(entity, "spear_creation", 3000);
 				if (world instanceof ServerLevel _level)
 					_level.sendParticles(ParticleTypes.SNOWFLAKE, x, y, z, 5, 1, 1, 1, 0);
 				if (world instanceof Level _level) {
@@ -50,14 +49,11 @@ public class IceSpearGiveProcedure {
 			}
 		} else {
 			if (entity instanceof Player _player && !_player.level().isClientSide())
-				_player.displayClientMessage(Component.literal((Math
-						.round((entity instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.SPEAR_CREATION_COOLDOWN.get()) ? _livEnt.getEffect(SololevelingModMobEffects.SPEAR_CREATION_COOLDOWN.get()).getDuration() : 0) / 20)
-						+ " Seconds Left!")), true);
+				_player.displayClientMessage(Component.literal(CooldownManager.getRemainingSeconds(entity, "spear_creation") + " Seconds Left!"), true);
 		}
-		if (!(entity instanceof LivingEntity _livEnt8 && _livEnt8.hasEffect(SololevelingModMobEffects.JOB_COOLDOWN_3.get()))) {
+		if (!CooldownManager.isOnCooldown(entity, "job_3")) {
 			if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.ICE_SPEAR.get()) {
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.JOB_COOLDOWN_3.get(), 160, 1, false, false));
+				CooldownManager.set(entity, "job_3", 160);
 				if (!world.isClientSide()) {
 					entity.getPersistentData().putString("icedash", "move");
 				}

@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModGameRules;
 
 import net.minecraftforge.fml.common.Mod;
@@ -14,7 +13,6 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,6 +22,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.client.Minecraft;
 
 import javax.annotation.Nullable;
+import net.solocraft.util.CooldownManager;
 
 @Mod.EventBusSubscriber
 public class FatigueProcedure {
@@ -43,7 +42,7 @@ public class FatigueProcedure {
 		if (damagesource == null || entity == null)
 			return;
 		if (world.getLevelData().getGameRules().getBoolean(SololevelingModGameRules.SOLO_FATIGUE)) {
-			if (!(entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(SololevelingModMobEffects.FATIGUE_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "fatigue")) {
 				if (new Object() {
 					public boolean checkGamemode(Entity _ent) {
 						if (_ent instanceof ServerPlayer _serverPlayer) {
@@ -65,8 +64,7 @@ public class FatigueProcedure {
 								capability.syncPlayerVariables(entity);
 							});
 						}
-						if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FATIGUE_COOLDOWN.get(), 20, 1, false, false));
+						CooldownManager.set(entity, "fatigue", 20);
 					}
 				}
 			}

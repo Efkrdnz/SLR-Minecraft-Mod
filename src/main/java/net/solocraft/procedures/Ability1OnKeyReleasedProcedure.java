@@ -6,7 +6,7 @@ import net.solocraft.init.SololevelingModMobEffects;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
+import net.solocraft.util.CooldownManager;
 
 public class Ability1OnKeyReleasedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -21,8 +21,7 @@ public class Ability1OnKeyReleasedProcedure {
 		}
 		if (entity instanceof LivingEntity _entity)
 			_entity.removeEffect(SololevelingModMobEffects.USING_FIRE.get());
-		if (entity instanceof LivingEntity _entity)
-			_entity.removeEffect(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get());
+		CooldownManager.clear(entity, "mana_refresh");
 		{
 			boolean _setval = false;
 			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -31,13 +30,11 @@ public class Ability1OnKeyReleasedProcedure {
 			});
 		}
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 2) {
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.JOB_COOLDOWN_1.get(), 20, 1, false, false));
+			CooldownManager.set(entity, "job_1", 20);
 			FireChargeInitialReleaseProcedure.execute(world, x, y, z, entity);
 		}
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.JOB_COOLDOWN_1.get(), 60, 1, false, false));
+			CooldownManager.set(entity, "job_1", 60);
 		}
 	}
 }

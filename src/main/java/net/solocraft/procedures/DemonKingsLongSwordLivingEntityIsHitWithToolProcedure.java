@@ -35,7 +35,7 @@ public class DemonKingsLongSwordLivingEntityIsHitWithToolProcedure {
 				max = 3;
 			}
 			if (sourceentity instanceof Player _player)
-				_player.getCooldowns().addCooldown(itemstack.getItem(), 60);
+				_player.getCooldowns().addCooldown(itemstack.getItem(), _player.isCreative() ? 10 : 60);
 			{
 				final Vec3 _center = new Vec3(x, y, z);
 				List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(15 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();

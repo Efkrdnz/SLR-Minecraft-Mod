@@ -4,6 +4,7 @@ import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.ShamanMagicEntity;
 import net.solocraft.entity.GoblinMageShadowEntity;
+import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -38,12 +39,16 @@ public class GoblinMageShadowOnEntityTickUpdateProcedure {
 			if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).isAlive())) {
 				if (world instanceof ServerLevel _level)
 					_level.sendParticles(ParticleTypes.SMOKE, (entity.getX()), (entity.getY()), (entity.getZ()), 30, 0.05, 0.05, 0.05, 1);
-				if (!entity.level().isClientSide())
+				if (!entity.level().isClientSide()) {
+					ShadowMonarchManager.dropStoredShadowInventory(entity);
 					entity.discard();
+				}
 			}
 			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
-				if (!entity.level().isClientSide())
+				if (!entity.level().isClientSide()) {
+					ShadowMonarchManager.dropStoredShadowInventory(entity);
 					entity.discard();
+				}
 			}
 			hei = entity.getBbHeight();
 			if (world instanceof ServerLevel _level)

@@ -9,17 +9,21 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.client.Minecraft;
 
 public class TripleJumpOnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
+		execute(world, x, y, z, entity, 0, 0);
+	}
+
+	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, double clientMotionX, double clientMotionZ) {
 		if (entity == null)
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).tjonoff == true) {
@@ -29,9 +33,6 @@ public class TripleJumpOnKeyPressedProcedure {
 					public boolean checkGamemode(Entity _ent) {
 						if (_ent instanceof ServerPlayer _serverPlayer) {
 							return _serverPlayer.gameMode.getGameModeForPlayer() == GameType.SURVIVAL;
-						} else if (_ent.level().isClientSide() && _ent instanceof Player _player) {
-							return Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()) != null
-									&& Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()).getGameMode() == GameType.SURVIVAL;
 						}
 						return false;
 					}
@@ -44,11 +45,29 @@ public class TripleJumpOnKeyPressedProcedure {
 								capability.syncPlayerVariables(entity);
 							});
 						}
-						entity.setDeltaMovement(new Vec3((entity.getDeltaMovement().x() + entity.getLookAngle().x * 0.25), 0.5, (entity.getDeltaMovement().z() + entity.getLookAngle().z * 0.25)));
+						Vec3 serverMotion = entity.getDeltaMovement();
+						Vec3 horizontal = new Vec3(serverMotion.x(), 0, serverMotion.z());
+						Vec3 clientHorizontal = new Vec3(clientMotionX, 0, clientMotionZ);
+						if (clientHorizontal.lengthSqr() > horizontal.lengthSqr() && clientHorizontal.lengthSqr() < 16) {
+							horizontal = clientHorizontal;
+						}
+						double oldSpeedSqr = horizontal.lengthSqr();
+						Vec3 look = new Vec3(entity.getLookAngle().x, 0, entity.getLookAngle().z);
+						if (look.lengthSqr() > 0.0001) {
+							Vec3 boosted = horizontal.add(look.normalize().scale(0.25));
+							if (boosted.lengthSqr() >= oldSpeedSqr) {
+								horizontal = boosted;
+							}
+						}
+						Vec3 jumpMotion = new Vec3(horizontal.x(), 0.5, horizontal.z());
+						entity.setDeltaMovement(jumpMotion);
+						entity.hasImpulse = true;
+						if (entity instanceof ServerPlayer _serverPlayer)
+							_serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(_serverPlayer));
 						entity.fallDistance = 0;
 						if (world instanceof Level _level) {
-							if (_level.isClientSide()) {
-								_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.end_portal_frame.fill")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
+							if (!_level.isClientSide()) {
+								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.end_portal_frame.fill")), SoundSource.NEUTRAL, (float) 0.5, 1);
 							}
 						}
 						if (world instanceof ServerLevel _level)

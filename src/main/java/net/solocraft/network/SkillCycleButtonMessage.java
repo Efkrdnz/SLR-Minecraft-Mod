@@ -1,7 +1,6 @@
 
 package net.solocraft.network;
 
-import net.solocraft.procedures.CyclePressed2Procedure;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -51,8 +50,10 @@ public class SkillCycleButtonMessage {
 		if (!world.hasChunkAt(entity.blockPosition()))
 			return;
 		if (type == 0) {
-
-			CyclePressed2Procedure.execute(entity);
+			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+				capability.combatmode = !capability.combatmode;
+				capability.syncPlayerVariables(entity);
+			});
 		}
 	}
 

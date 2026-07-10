@@ -2,7 +2,7 @@
 package net.solocraft.item;
 
 import net.solocraft.procedures.TestItemEntitySwingsItemProcedure;
-import net.solocraft.procedures.GetRandomPlayerProcedure;
+import net.solocraft.util.GateSpawnerUtil;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.TooltipFlag;
@@ -30,7 +30,7 @@ public class TestItem extends Item {
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
 		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		GetRandomPlayerProcedure.execute(world);
+		GateSpawnerUtil.spawnNearRandomOverworldPlayer(world);
 		return ar;
 	}
 

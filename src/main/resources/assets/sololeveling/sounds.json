@@ -42,6 +42,15 @@
       }
     ]
   },
+  "basic_slash": {
+    "subtitle": "subtitles.basic_slash",
+    "sounds": [
+      {
+        "name": "sololeveling:slashsfx",
+        "stream": false
+      }
+    ]
+  },
   "impact1": {
     "subtitle": "subtitles.impact1",
     "sounds": [
@@ -78,11 +87,29 @@
       }
     ]
   },
+  "system_negative": {
+    "subtitle": "subtitles.system_negative",
+    "sounds": [
+      {
+        "name": "sololeveling:system_negative",
+        "stream": false
+      }
+    ]
+  },
   "swordclash": {
     "subtitle": "subtitles.swordclash",
     "sounds": [
       {
         "name": "sololeveling:sword-clash-241729",
+        "stream": false
+      }
+    ]
+  },
+  "arise": {
+    "subtitle": "subtitles.arise",
+    "sounds": [
+      {
+        "name": "sololeveling:arise",
         "stream": false
       }
     ]

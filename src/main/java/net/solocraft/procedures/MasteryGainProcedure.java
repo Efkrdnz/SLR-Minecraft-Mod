@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -10,13 +9,13 @@ import net.minecraftforge.event.entity.living.LivingAttackEvent;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.registries.Registries;
 
 import javax.annotation.Nullable;
+import net.solocraft.util.CooldownManager;
 
 @Mod.EventBusSubscriber
 public class MasteryGainProcedure {
@@ -39,7 +38,7 @@ public class MasteryGainProcedure {
 		if (!(entity == sourceentity)) {
 			if (amount >= 1) {
 				if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin")))) {
-					if (!(sourceentity instanceof LivingEntity _livEnt3 && _livEnt3.hasEffect(SololevelingModMobEffects.MASTERY_COOLDOWN.get()))) {
+					if (!CooldownManager.isOnCooldown(sourceentity, "mastery")) {
 						{
 							double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_assassin + 1;
 							sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -47,11 +46,10 @@ public class MasteryGainProcedure {
 								capability.syncPlayerVariables(sourceentity);
 							});
 						}
-						if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MASTERY_COOLDOWN.get(), 10, 1, false, false));
+						CooldownManager.set(sourceentity, "mastery", 10);
 					}
 				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:fighter")))) {
-					if (!(sourceentity instanceof LivingEntity _livEnt7 && _livEnt7.hasEffect(SololevelingModMobEffects.MASTERY_COOLDOWN.get()))) {
+					if (!CooldownManager.isOnCooldown(sourceentity, "mastery")) {
 						{
 							double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_fighter + 1;
 							sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -59,11 +57,10 @@ public class MasteryGainProcedure {
 								capability.syncPlayerVariables(sourceentity);
 							});
 						}
-						if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MASTERY_COOLDOWN.get(), 10, 1, false, false));
+						CooldownManager.set(sourceentity, "mastery", 10);
 					}
 				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:mage")))) {
-					if (!(sourceentity instanceof LivingEntity _livEnt11 && _livEnt11.hasEffect(SololevelingModMobEffects.MASTERY_COOLDOWN.get()))) {
+					if (!CooldownManager.isOnCooldown(sourceentity, "mastery")) {
 						{
 							double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_mage + 1;
 							sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -71,11 +68,10 @@ public class MasteryGainProcedure {
 								capability.syncPlayerVariables(sourceentity);
 							});
 						}
-						if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MASTERY_COOLDOWN.get(), 10, 1, false, false));
+						CooldownManager.set(sourceentity, "mastery", 10);
 					}
 				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:tanker")))) {
-					if (!(sourceentity instanceof LivingEntity _livEnt15 && _livEnt15.hasEffect(SololevelingModMobEffects.MASTERY_COOLDOWN.get()))) {
+					if (!CooldownManager.isOnCooldown(sourceentity, "mastery")) {
 						{
 							double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_tanker + 1;
 							sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -83,11 +79,10 @@ public class MasteryGainProcedure {
 								capability.syncPlayerVariables(sourceentity);
 							});
 						}
-						if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MASTERY_COOLDOWN.get(), 10, 1, false, false));
+						CooldownManager.set(sourceentity, "mastery", 10);
 					}
 				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:ranger")))) {
-					if (!(sourceentity instanceof LivingEntity _livEnt19 && _livEnt19.hasEffect(SololevelingModMobEffects.MASTERY_COOLDOWN.get()))) {
+					if (!CooldownManager.isOnCooldown(sourceentity, "mastery")) {
 						{
 							double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_ranger + 1;
 							sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -95,8 +90,7 @@ public class MasteryGainProcedure {
 								capability.syncPlayerVariables(sourceentity);
 							});
 						}
-						if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MASTERY_COOLDOWN.get(), 10, 1, false, false));
+						CooldownManager.set(sourceentity, "mastery", 10);
 					}
 				}
 			}

@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.util.CooldownManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -9,7 +10,6 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 
 import javax.annotation.Nullable;
 
@@ -31,9 +31,8 @@ public class SwordDanceOnKillProcedure {
 			return;
 		double rand = 0;
 		if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get())) {
-			if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.DANCE_COOLDOWN.get(),
-						(int) ((entity instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get()) ? _livEnt.getEffect(SololevelingModMobEffects.SWORD_DANCE.get()).getDuration() : 0) + 20), 1, false, false));
+			CooldownManager.set(sourceentity, "dance",
+					(int) ((entity instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get()) ? _livEnt.getEffect(SololevelingModMobEffects.SWORD_DANCE.get()).getDuration() : 0) + 20));
 		}
 	}
 }

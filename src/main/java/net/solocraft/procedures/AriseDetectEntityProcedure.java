@@ -1,9 +1,11 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.SteelFangWolfEntity;
+import net.solocraft.entity.SteelFangedLycanEntity;
 import net.solocraft.entity.PolarBearEntity;
 import net.solocraft.entity.KargalganEntity;
 import net.solocraft.entity.HighOrcEntity;
@@ -21,7 +23,6 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.monster.ZombieVillager;
 import net.minecraft.world.entity.monster.Zombie;
@@ -35,10 +36,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.registries.Registries;
 
 import javax.annotation.Nullable;
 
@@ -58,104 +56,60 @@ public class AriseDetectEntityProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
-		if (!((sourceentity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.FEET) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_BOOTS.get())
-				&& !((sourceentity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.LEGS) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_LEGGINGS.get())
-				&& !((sourceentity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.CHEST) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_CHESTPLATE.get())
-				&& !((sourceentity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.HEAD) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_HELMET.get())) {
-			if ((entity instanceof Zombie || entity instanceof Husk || entity instanceof Villager || entity instanceof ZombieVillager || entity instanceof Skeleton || entity instanceof Pillager || entity instanceof WitherSkeleton
-					|| entity instanceof DKnight3Entity || entity instanceof DKnight2Entity || entity instanceof DKnight1Entity || entity instanceof Drowned)
-					&& ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1
-							|| sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows"))))) {
-				if (world instanceof ServerLevel _level) {
-					Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(_level);
-					_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
-					if (_entityToSpawn instanceof Mob _mobToSpawn) {
-						_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
-					}
-					(_entityToSpawn).getPersistentData().putString("soultype", "soldier");
-					_level.addFreshEntity(_entityToSpawn);
-				}
-			} else if (entity instanceof GoblinClubEntity && (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
-				if (world instanceof ServerLevel _level) {
-					Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(_level);
-					_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
-					if (_entityToSpawn instanceof Mob _mobToSpawn) {
-						_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
-					}
-					(_entityToSpawn).getPersistentData().putString("soultype", "goblin");
-					_level.addFreshEntity(_entityToSpawn);
-				}
-			} else if (entity instanceof GoblinArcherEntity && (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
-				if (world instanceof ServerLevel _level) {
-					Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(_level);
-					_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
-					if (_entityToSpawn instanceof Mob _mobToSpawn) {
-						_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
-					}
-					(_entityToSpawn).getPersistentData().putString("soultype", "goblinarc");
-					_level.addFreshEntity(_entityToSpawn);
-				}
-			} else if (entity instanceof GoblinMageEntity && (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
-				if (world instanceof ServerLevel _level) {
-					Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(_level);
-					_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
-					if (_entityToSpawn instanceof Mob _mobToSpawn) {
-						_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
-					}
-					(_entityToSpawn).getPersistentData().putString("soultype", "goblinmage");
-					_level.addFreshEntity(_entityToSpawn);
-				}
-			} else if (entity instanceof SteelFangWolfEntity && (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
-				if (world instanceof ServerLevel _level) {
-					Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(_level);
-					_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
-					if (_entityToSpawn instanceof Mob _mobToSpawn) {
-						_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
-					}
-					(_entityToSpawn).getPersistentData().putString("soultype", "wolf");
-					_level.addFreshEntity(_entityToSpawn);
-				}
-			} else if (entity instanceof GreenOrcEntity && (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
-				if (world instanceof ServerLevel _level) {
-					Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(_level);
-					_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
-					if (_entityToSpawn instanceof Mob _mobToSpawn) {
-						_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
-					}
-					(_entityToSpawn).getPersistentData().putString("soultype", "orc");
-					_level.addFreshEntity(_entityToSpawn);
-				}
-			} else if (entity instanceof PolarBearEntity && (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
-				if (world instanceof ServerLevel _level) {
-					Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(_level);
-					_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
-					if (_entityToSpawn instanceof Mob _mobToSpawn) {
-						_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
-					}
-					(_entityToSpawn).getPersistentData().putString("soultype", "bear");
-					_level.addFreshEntity(_entityToSpawn);
-				}
-			} else if (entity instanceof HighOrcEntity && (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
-				if (world instanceof ServerLevel _level) {
-					Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(_level);
-					_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
-					if (_entityToSpawn instanceof Mob _mobToSpawn) {
-						_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
-					}
-					(_entityToSpawn).getPersistentData().putString("soultype", "highorc");
-					_level.addFreshEntity(_entityToSpawn);
-				}
-			} else if (entity instanceof KargalganEntity && (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
-				if (world instanceof ServerLevel _level) {
-					Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(_level);
-					_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
-					if (_entityToSpawn instanceof Mob _mobToSpawn) {
-						_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
-					}
-					(_entityToSpawn).getPersistentData().putString("soultype", "tusk");
-					_level.addFreshEntity(_entityToSpawn);
-				}
-			}
-		}
+		Entity creditedKiller = ShadowKillCreditHelper.creditedPlayer(world, sourceentity);
+		Entity armorEntity = creditedKiller != null ? creditedKiller : sourceentity;
+		boolean sourceIsShadow = ShadowMonarchManager.isShadowEntity(sourceentity);
+		boolean canCreateSoul = sourceIsShadow || (creditedKiller == sourceentity && isShadowMonarch(sourceentity));
+		if (hasShadowArmor(armorEntity) || !canCreateSoul)
+			return;
+		String soulType = soulTypeFor(entity);
+		if (soulType.isEmpty() || !(world instanceof ServerLevel level))
+			return;
+		spawnSoul(level, world, x, y, z, soulType);
+	}
+
+	private static String soulTypeFor(Entity entity) {
+		if (entity instanceof Zombie || entity instanceof Husk || entity instanceof Villager || entity instanceof ZombieVillager || entity instanceof Skeleton || entity instanceof Pillager || entity instanceof WitherSkeleton
+				|| entity instanceof DKnight3Entity || entity instanceof DKnight2Entity || entity instanceof DKnight1Entity || entity instanceof Drowned)
+			return "soldier";
+		if (entity instanceof GoblinClubEntity)
+			return "goblin";
+		if (entity instanceof GoblinArcherEntity)
+			return "goblinarc";
+		if (entity instanceof GoblinMageEntity)
+			return "goblinmage";
+		if (entity instanceof SteelFangWolfEntity || entity instanceof SteelFangedLycanEntity)
+			return "wolf";
+		if (entity instanceof GreenOrcEntity)
+			return "orc";
+		if (entity instanceof PolarBearEntity)
+			return "bear";
+		if (entity instanceof HighOrcEntity)
+			return "highorc";
+		if (entity instanceof KargalganEntity)
+			return "tusk";
+		return "";
+	}
+
+	private static void spawnSoul(ServerLevel level, LevelAccessor world, double x, double y, double z, String soulType) {
+		Entity entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(level);
+		if (entityToSpawn == null)
+			return;
+		entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
+		if (entityToSpawn instanceof Mob mobToSpawn)
+			mobToSpawn.finalizeSpawn(level, level.getCurrentDifficultyAt(entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+		entityToSpawn.getPersistentData().putString("soultype", soulType);
+		level.addFreshEntity(entityToSpawn);
+	}
+
+	private static boolean isShadowMonarch(Entity entity) {
+		return entity != null && (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1;
+	}
+
+	private static boolean hasShadowArmor(Entity entity) {
+		return entity instanceof LivingEntity living && (living.getItemBySlot(EquipmentSlot.FEET).getItem() == SololevelingModItems.SHADOW_ARMOR_BOOTS.get()
+				|| living.getItemBySlot(EquipmentSlot.LEGS).getItem() == SololevelingModItems.SHADOW_ARMOR_LEGGINGS.get()
+				|| living.getItemBySlot(EquipmentSlot.CHEST).getItem() == SololevelingModItems.SHADOW_ARMOR_CHESTPLATE.get()
+				|| living.getItemBySlot(EquipmentSlot.HEAD).getItem() == SololevelingModItems.SHADOW_ARMOR_HELMET.get());
 	}
 }

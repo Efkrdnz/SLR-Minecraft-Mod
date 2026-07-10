@@ -1,16 +1,21 @@
 package net.solocraft.client.gui;
 
 import net.solocraft.world.inventory.QuestsMenu;
+import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.network.QuestsButtonMessage;
+import net.solocraft.util.JobChangeQuestManager;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.HashMap;
@@ -18,12 +23,14 @@ import java.util.HashMap;
 import com.mojang.blaze3d.systems.RenderSystem;
 
 public class QuestsScreen extends AbstractContainerScreen<QuestsMenu> {
+	private static final ResourceKey<Level> DKC_DIMENSION = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling", "dungeon_dimension_dkc"));
 	private final static HashMap<String, Object> guistate = QuestsMenu.guistate;
 	private final Level world;
 	private final int x, y, z;
 	private final Player entity;
 	ImageButton imagebutton_panel_rework_quests_daily;
 	ImageButton imagebutton_panel_rework_quests_path;
+	Button jobChangeButton;
 
 	public QuestsScreen(QuestsMenu container, Inventory inventory, Component text) {
 		super(container, inventory, text);
@@ -51,14 +58,21 @@ public class QuestsScreen extends AbstractContainerScreen<QuestsMenu> {
 			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.quests.tooltip_daily_quests2"), mouseX, mouseY);
 		if (mouseX > leftPos + -7 && mouseX < leftPos + 17 && mouseY > topPos + -31 && mouseY < topPos + -7)
 			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.quests.tooltip_daily_quests3"), mouseX, mouseY);
-		if (mouseX > leftPos + -19 && mouseX < leftPos + 5 && mouseY > topPos + 2 && mouseY < topPos + 26)
-			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.quests.tooltip_path"), mouseX, mouseY);
-		if (mouseX > leftPos + -7 && mouseX < leftPos + 17 && mouseY > topPos + 2 && mouseY < topPos + 26)
-			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.quests.tooltip_path1"), mouseX, mouseY);
-		if (mouseX > leftPos + -19 && mouseX < leftPos + 5 && mouseY > topPos + 14 && mouseY < topPos + 38)
-			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.quests.tooltip_path2"), mouseX, mouseY);
-		if (mouseX > leftPos + -7 && mouseX < leftPos + 17 && mouseY > topPos + 14 && mouseY < topPos + 38)
-			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.quests.tooltip_path3"), mouseX, mouseY);
+		if (mouseX > leftPos + -19 && mouseX < leftPos + 17 && mouseY > topPos + 2 && mouseY < topPos + 38)
+			guiGraphics.renderTooltip(font, dkcButtonTooltip(), mouseX, mouseY);
+		if (jobChangeButton != null && jobChangeButton.visible && jobChangeButton.isHovered())
+			guiGraphics.renderTooltip(font, Component.literal("Enter the Job Change Quest"), mouseX, mouseY);
+	}
+
+	private Component dkcButtonTooltip() {
+		if (entity != null && entity.level().dimension().equals(DKC_DIMENSION)) {
+			return Component.literal("Return to the Overworld");
+		}
+		double cleared = entity == null ? 0 : entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).dkc_cleared;
+		if (cleared >= 20) {
+			return Component.literal("Demon King's Castle conquered");
+		}
+		return Component.literal("Demon King's Castle Path");
 	}
 
 	@Override
@@ -85,6 +99,7 @@ public class QuestsScreen extends AbstractContainerScreen<QuestsMenu> {
 	@Override
 	public void containerTick() {
 		super.containerTick();
+		updateJobChangeButton();
 	}
 
 	@Override
@@ -116,5 +131,20 @@ public class QuestsScreen extends AbstractContainerScreen<QuestsMenu> {
 		});
 		guistate.put("button:imagebutton_panel_rework_quests_path", imagebutton_panel_rework_quests_path);
 		this.addRenderableWidget(imagebutton_panel_rework_quests_path);
+		jobChangeButton = Button.builder(Component.literal("Job Change"), e -> {
+			SololevelingMod.PACKET_HANDLER.sendToServer(new QuestsButtonMessage(2, x, y, z));
+			QuestsButtonMessage.handleButtonAction(entity, 2, x, y, z);
+		}).bounds(this.leftPos + -47, this.topPos + 47, 94, 20).build();
+		guistate.put("button:job_change_quest", jobChangeButton);
+		this.addRenderableWidget(jobChangeButton);
+		updateJobChangeButton();
+	}
+
+	private void updateJobChangeButton() {
+		if (jobChangeButton == null)
+			return;
+		boolean show = JobChangeQuestManager.isVisible(entity);
+		jobChangeButton.visible = show;
+		jobChangeButton.active = show;
 	}
 }

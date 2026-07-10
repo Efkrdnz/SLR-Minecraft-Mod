@@ -4,6 +4,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.BeruShadowEntity;
 import net.solocraft.entity.BeruDeadBodyEntity;
+import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -53,6 +54,8 @@ public class BeruDeadBodyRightClickedOnEntityProcedure {
 								Entity entityToSpawn = SololevelingModEntities.BERU_SHADOW.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 								if (entityToSpawn != null) {
 									entityToSpawn.setYRot(world.getRandom().nextFloat() * 360F);
+									if (sourceentity instanceof Player _owner)
+										ShadowMonarchManager.tagExistingSummon(_owner, entityToSpawn, "beru");
 								}
 							}
 							if (world instanceof ServerLevel _level) {

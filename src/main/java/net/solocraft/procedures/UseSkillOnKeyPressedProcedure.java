@@ -1,18 +1,33 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.entity.ShadowStepEntity;
+import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.util.CooldownManager;
+import net.solocraft.util.ClassPassiveManager;
+import net.solocraft.util.JobSkillManager;
+import net.solocraft.util.MageQTEHelper;
+import net.solocraft.util.MageQTEState;
+import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.UrgentQuestManager;
 
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
+
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
@@ -25,9 +40,36 @@ public class UseSkillOnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+
+		// ── Mage QTE: intercept and start ring animation ──────────────────────
+		// Mage spells are NOT cast on key press. Instead the client shows the
+		// rotating needle overlay; the spell fires when the key is released
+		// (UseSkillOnKeyReleasedProcedure) with a mana discount based on timing.
+		String _selectedPower = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower;
+		UrgentQuestManager.onSkillUsed(entity, _selectedPower);
+		if (ShadowMonarchManager.isFormationSkill(_selectedPower)) {
+			ShadowFormationCastProcedure.execute(world, x, y, z, entity, _selectedPower);
+			return;
+		}
+		if (JobSkillManager.cast(world, x, y, z, entity, _selectedPower)) {
+			return;
+		}
+		if (MageQTEHelper.MAGE_SKILLS.contains(_selectedPower)) {
+			float qteZoneStart = MageQTEHelper.computeZoneStart(entity);
+			if (world instanceof Level _lvl && !_lvl.isClientSide()) {
+				entity.getPersistentData().putBoolean("mage_casting", true);
+				entity.getPersistentData().putFloat("mage_qte_zone_start", qteZoneStart);
+			}
+			DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+					MageQTEState.INSTANCE.startQTE(qteZoneStart));
+			return;
+		}
+		// ─────────────────────────────────────────────────────────────────────
+
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Stealth")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.STEALTH_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Stealth")) {
 					StealthProcedure.execute(world, x, y, z, entity);
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
@@ -46,7 +88,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Murderious Intent")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!(entity instanceof LivingEntity _livEnt3 && _livEnt3.hasEffect(SololevelingModMobEffects.BLOODLUST_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Murderious Intent")) {
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -55,8 +97,7 @@ public class UseSkillOnKeyPressedProcedure {
 						});
 					}
 					BloodLustProcedure.execute(world, x, y, z, entity);
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
+					CooldownManager.set(entity, "mana_refresh", 60);
 					if (entity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal("\u00A71Using Murderious Intent"), true);
 				}
@@ -69,13 +110,13 @@ public class UseSkillOnKeyPressedProcedure {
 			PhantomLeapAttackProcedure.execute(world, x, y, z, entity);
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Shadowstep")) {
-			LllRightclickedProcedure.execute(world, x, y, z, entity);
+			castShadowstep(world, x, y, z, entity);
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Dualwield")) {
 			DualWieldProcedure.execute(world, x, y, z, entity);
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Quickslashes")) {
-			if (!(entity instanceof LivingEntity _livEnt7 && _livEnt7.hasEffect(SololevelingModMobEffects.QUICK_SLASHES_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "Quickslashes")) {
 				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP > 1000) {
 					QuickSlashesProcedure.execute(world, x, y, z, entity);
 					{
@@ -90,121 +131,6 @@ public class UseSkillOnKeyPressedProcedure {
 				}
 			}
 		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Fireball")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 300) {
-				if (!(entity instanceof LivingEntity _livEnt9 && _livEnt9.hasEffect(SololevelingModMobEffects.FIREBALL_COOLDOWN.get()))) {
-					FireballProcedure.execute(entity);
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A74Using Fireball"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Fire Rain")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 1000) {
-				if (!(entity instanceof LivingEntity _livEnt12 && _livEnt12.hasEffect(SololevelingModMobEffects.FIRE_RAIN_COOLDOWN.get()))) {
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 1000;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					FireArrowCastProcedure.execute(world, entity);
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A74Using Fire Rain"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Heavy Flame")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 550) {
-				if (!(entity instanceof LivingEntity _livEnt15 && _livEnt15.hasEffect(SololevelingModMobEffects.HEAVY_FLAME_COOLDOWN.get()))) {
-					HeavyFlameCastProcedure.execute(entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 550;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.HEAVY_FLAME_COOLDOWN.get(), 80, 1, false, false));
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A74Using Heavy Flame"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Flame Tornado")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 500) {
-				if (!(entity instanceof LivingEntity _livEnt19 && _livEnt19.hasEffect(SololevelingModMobEffects.FIRE_TORNADO_COOLDOWN.get()))) {
-					FireTornadoShootProcedure.execute(world, entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 550;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FIRE_TORNADO_COOLDOWN.get(), 50, 1, false, false));
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A74Using Flame Tornado"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Flame Vortex")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 500) {
-				if (!(entity instanceof LivingEntity _livEnt23 && _livEnt23.hasEffect(SololevelingModMobEffects.FLAME_VORTEX_COOLDOWN.get()))) {
-					FlameVortexShootProcedure.execute(entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 500;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FLAME_VORTEX_COOLDOWN.get(), 50, 1, false, false));
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A74Using Flame Vortex"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Water Slash")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!(entity instanceof LivingEntity _livEnt27 && _livEnt27.hasEffect(SololevelingModMobEffects.WATER_BULLET_COOLDOWN.get()))) {
-					WaterBulletProcedure.execute(world, entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A74Using Water Slash"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Lightball")) {
 			LightBallThrowProcedure.execute(entity);
 		}
@@ -214,90 +140,9 @@ public class UseSkillOnKeyPressedProcedure {
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Detection")) {
 			DetectEyeSpawnProcedure.execute(world, x, y, z, entity);
 		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Curse Sphere")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP > 600
-					+ (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 4) {
-				AirVacuumsProcedure.execute(world, entity);
-				{
-					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP
-							- (600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 4);
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.MP = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A74Using Curse Sphere"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Curse Smoke")) {
-			if (!(entity instanceof LivingEntity _livEnt33 && _livEnt33.hasEffect(SololevelingModMobEffects.CURSE_SMOKE_COOLDOWN.get()))) {
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP > 600) {
-					CurseSmokeCastProcedure.execute(world, x, y, z, entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.CURSE_SMOKE_COOLDOWN.get(), 150, 0, false, false));
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A74Using Curse Smoke"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Ability on cooldown"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Curse Chains")) {
-			if (!(entity instanceof LivingEntity _livEnt37 && _livEnt37.hasEffect(SololevelingModMobEffects.CURSED_CHAINS_COOLDOWN.get()))) {
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP > 300) {
-					CursedChainsCastProcedure.execute(world, entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 300;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.CURSED_CHAINS_COOLDOWN.get(), 150, 0, false, false));
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A74Using Curse Smoke"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Ability on cooldown"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Magic Missiles")) {
-			if (!(entity instanceof LivingEntity _livEnt41 && _livEnt41.hasEffect(SololevelingModMobEffects.CURSED_CHAINS_COOLDOWN.get()))) {
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP > 500) {
-					MagicMissilesShootProcedure.execute(world, entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 500;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.CURSED_CHAINS_COOLDOWN.get(), 150, 0, false, false));
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A7dUsing Magic Missiles"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Ability on cooldown"), true);
-			}
-		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Slash Dash")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!(entity instanceof LivingEntity _livEnt45 && _livEnt45.hasEffect(SololevelingModMobEffects.HEAVY_IMPACT_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Slash Dash")) {
 					if (!(entity instanceof LivingEntity _livEnt46 && _livEnt46.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get()))
 							&& !(entity instanceof LivingEntity _livEnt47 && _livEnt47.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT.get()))) {
 						{
@@ -308,8 +153,7 @@ public class UseSkillOnKeyPressedProcedure {
 							});
 						}
 						HeavyImpactProcedure.execute(world, entity);
-						if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
+						CooldownManager.set(entity, "mana_refresh", 60);
 						if (entity instanceof Player _player && !_player.level().isClientSide())
 							_player.displayClientMessage(Component.literal("\u00A7l\u00A77Using Slash Dash"), true);
 					} else {
@@ -329,9 +173,9 @@ public class UseSkillOnKeyPressedProcedure {
 					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
 			}
 		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Critical Strike")) {
+		if (_selectedPower.equals("Cross Strike") || _selectedPower.equals("Critical Strike")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 1000) {
-				if (!(entity instanceof LivingEntity _livEnt53 && _livEnt53.hasEffect(SololevelingModMobEffects.CROSS_ATTACK_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Cross Strike") && !CooldownManager.isOnCooldown(entity, "Critical Strike")) {
 					if (!(entity instanceof LivingEntity _livEnt54 && _livEnt54.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get()))
 							&& !(entity instanceof LivingEntity _livEnt55 && _livEnt55.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT.get()))) {
 						{
@@ -341,9 +185,9 @@ public class UseSkillOnKeyPressedProcedure {
 								capability.syncPlayerVariables(entity);
 							});
 						}
-						CrossAttackProcedure.execute(world, x, y, z, entity);
+						CrossStrikeProcedure.execute(world, x, y, z, entity);
 						if (entity instanceof Player _player && !_player.level().isClientSide())
-							_player.displayClientMessage(Component.literal("\u00A7l\u00A77Using Critical Slash"), true);
+							_player.displayClientMessage(Component.literal("\u00A7l\u00A77Using Cross Strike"), true);
 					} else {
 						if (entity instanceof Player _player && !_player.level().isClientSide())
 							_player.displayClientMessage(Component.literal("\u00A76Can't Use skill while Sword Dance is active!"), true);
@@ -384,7 +228,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Slash Fury")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 300) {
-				if (!(entity instanceof LivingEntity _livEnt64 && _livEnt64.hasEffect(SololevelingModMobEffects.IMPACT_RUSH_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Slash Fury")) {
 					if (!(entity instanceof LivingEntity _livEnt65 && _livEnt65.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get()))
 							&& !(entity instanceof LivingEntity _livEnt66 && _livEnt66.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT.get()))) {
 						SlashFurryTestRightclickedProcedure.execute(entity);
@@ -395,8 +239,7 @@ public class UseSkillOnKeyPressedProcedure {
 								capability.syncPlayerVariables(entity);
 							});
 						}
-						if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
+						CooldownManager.set(entity, "mana_refresh", 60);
 						if (entity instanceof Player _player && !_player.level().isClientSide())
 							_player.displayClientMessage(Component.literal("\u00A7l\u00A77Using Slash Fury"), true);
 					} else {
@@ -418,7 +261,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Heal Beam")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!(entity instanceof LivingEntity _livEnt72 && _livEnt72.hasEffect(SololevelingModMobEffects.HEALING_BEAM_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Heal Beam")) {
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -427,8 +270,9 @@ public class UseSkillOnKeyPressedProcedure {
 						});
 					}
 					HealingBeamProcedure.execute(world, entity);
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
+					if (world instanceof Level _lvl && !_lvl.isClientSide() && entity instanceof ServerPlayer _sp)
+						ClassPassiveManager.onHealerCast(_sp);
+					CooldownManager.set(entity, "mana_refresh", 60);
 					if (entity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal("\u00A7a\u00A7lUsing Healing"), true);
 				}
@@ -439,8 +283,10 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Blessing Mark")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 1500) {
-				if (!(entity instanceof LivingEntity _livEnt76 && _livEnt76.hasEffect(SololevelingModMobEffects.BELL_OF_HEALING_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Blessing Mark")) {
 					BellOfHealingSummonProcedure.execute(world, x, y, z, entity);
+					if (world instanceof Level _lvl && !_lvl.isClientSide() && entity instanceof ServerPlayer _sp)
+						ClassPassiveManager.onHealerCast(_sp);
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 1500;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -448,8 +294,7 @@ public class UseSkillOnKeyPressedProcedure {
 							capability.syncPlayerVariables(entity);
 						});
 					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
+					CooldownManager.set(entity, "mana_refresh", 60);
 					if (entity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal("\u00A7a\u00A7lUsing Bell Of Healing"), true);
 				}
@@ -480,7 +325,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Overheal")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!(entity instanceof LivingEntity _livEnt81 && _livEnt81.hasEffect(SololevelingModMobEffects.OVER_HEAL_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Overheal")) {
 					OverhealProcedure.execute(world, x, y, z, entity);
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
@@ -489,10 +334,8 @@ public class UseSkillOnKeyPressedProcedure {
 							capability.syncPlayerVariables(entity);
 						});
 					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.OVER_HEAL_COOLDOWN.get(), 300, 0, false, false));
+					CooldownManager.set(entity, "mana_refresh", 60);
+					CooldownManager.set(entity, "Overheal", 300);
 					if (entity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal("\u00A7a\u00A7lUsing Over Effect"), true);
 				}
@@ -503,7 +346,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Tank Leap")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 300) {
-				if (!(entity instanceof LivingEntity _livEnt86 && _livEnt86.hasEffect(SololevelingModMobEffects.LEAP_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Tank Leap")) {
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 300;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -512,8 +355,7 @@ public class UseSkillOnKeyPressedProcedure {
 						});
 					}
 					TankLeapProcedure.execute(world, x, y, z, entity);
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
+					CooldownManager.set(entity, "mana_refresh", 60);
 					if (entity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal("\u00A76Using Leap Strike"), true);
 				}
@@ -524,7 +366,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Reinforcement")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 500) {
-				if (!(entity instanceof LivingEntity _livEnt90 && _livEnt90.hasEffect(SololevelingModMobEffects.TANK_INV_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Reinforcement")) {
 					TankInvincibilityAvtivateProcedure.execute(entity);
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 500;
@@ -533,8 +375,7 @@ public class UseSkillOnKeyPressedProcedure {
 							capability.syncPlayerVariables(entity);
 						});
 					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
+					CooldownManager.set(entity, "mana_refresh", 60);
 					if (entity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal("\u00A76Using Reinforcement"), true);
 					if (world instanceof ServerLevel _level)
@@ -547,7 +388,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Protection Mark")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 1500) {
-				if (!(entity instanceof LivingEntity _livEnt95 && _livEnt95.hasEffect(SololevelingModMobEffects.FRAG_OF_PROTECTION_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Protection Mark")) {
 					FlagOfProtectionSummonProcedure.execute(world, x, y, z, entity);
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 1500;
@@ -575,7 +416,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Sharpshooter")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!(entity instanceof LivingEntity _livEnt98 && _livEnt98.hasEffect(SololevelingModMobEffects.HOMING_FLAME_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Sharpshooter")) {
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -584,10 +425,11 @@ public class UseSkillOnKeyPressedProcedure {
 						});
 					}
 					HomingArrowProcedure.execute(entity);
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 20, 0, false, false));
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.HOMING_FLAME_COOLDOWN.get(), 120, 0, false, false));
+					// Ranger Focus bonus: consume 100% charge for Strength II burst
+					if (world instanceof Level _lvl && !_lvl.isClientSide() && entity instanceof ServerPlayer _sp)
+						ClassPassiveManager.consumeRangerFocus(_sp);
+					CooldownManager.set(entity, "mana_refresh", 20);
+					CooldownManager.set(entity, "Sharpshooter", 120);
 				}
 			} else {
 				if (entity instanceof Player _player && !_player.level().isClientSide())
@@ -596,7 +438,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Proximity Trap")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!(entity instanceof LivingEntity _livEnt102 && _livEnt102.hasEffect(SololevelingModMobEffects.TRAP_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "Proximity Trap")) {
 					DeployTrapProcedure.execute(world, x, y, z, entity);
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
@@ -605,10 +447,8 @@ public class UseSkillOnKeyPressedProcedure {
 							capability.syncPlayerVariables(entity);
 						});
 					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 0, false, false));
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.TRAP_COOLDOWN.get(), 400, 0, false, false));
+					CooldownManager.set(entity, "mana_refresh", 40);
+					CooldownManager.set(entity, "Proximity Trap", 400);
 				}
 			} else {
 				if (entity instanceof Player _player && !_player.level().isClientSide())
@@ -617,8 +457,7 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Back Step")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 200) {
-				BackStepProcedure.execute(entity);
-				{
+				if (BackStepProcedure.execute(entity)) {
 					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 200;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.MP = _setval;
@@ -631,11 +470,13 @@ public class UseSkillOnKeyPressedProcedure {
 			}
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("High Value Target")) {
-			if (!(entity instanceof LivingEntity _livEnt107 && _livEnt107.hasEffect(SololevelingModMobEffects.ARROW_RAIN_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "High Value Target")) {
 				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 1000) {
 					ArrowRainSprayProcedure.execute(world, x, y, z, entity);
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARROW_RAIN_COOLDOWN.get(), 120, 1, false, false));
+					// Ranger Focus bonus: consume 100% charge for Strength II burst
+					if (world instanceof Level _lvl && !_lvl.isClientSide() && entity instanceof ServerPlayer _sp)
+						ClassPassiveManager.consumeRangerFocus(_sp);
+					CooldownManager.set(entity, "High Value Target", 120);
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 1000;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -665,11 +506,10 @@ public class UseSkillOnKeyPressedProcedure {
 			}
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Hyper Focus")) {
-			if (!(entity instanceof LivingEntity _livEnt111 && _livEnt111.hasEffect(SololevelingModMobEffects.FOCUS_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "Hyper Focus")) {
 				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
 					IntenseFocusProcedure.execute(world, x, y, z, entity);
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FOCUS_COOLDOWN.get(), 200, 1, false, false));
+					CooldownManager.set(entity, "Hyper Focus", 200);
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -714,5 +554,46 @@ public class UseSkillOnKeyPressedProcedure {
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Sword Beam")) {
 			SwordBeamAttackProcedure.execute(world, x, y, z, entity);
 		}
+	}
+
+	private static void castShadowstep(LevelAccessor world, double x, double y, double z, Entity entity) {
+		SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
+		if (vars.MP < 100) {
+			if (entity instanceof Player player && !player.level().isClientSide())
+				player.displayClientMessage(Component.literal("Not enough MP!"), true);
+			return;
+		}
+		if (CooldownManager.isOnCooldown(entity, "Shadowstep"))
+			return;
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			capability.MP -= 100;
+			capability.progression_assassin += 1;
+			capability.syncPlayerVariables(entity);
+		});
+		if (world instanceof ServerLevel level) {
+			Entity afterImage = SololevelingModEntities.AFTER_IMAGE.get().spawn(level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
+			if (afterImage != null)
+				afterImage.setYRot(world.getRandom().nextFloat() * 360.0F);
+		}
+		if (world instanceof Level level) {
+			if (!level.isClientSide()) {
+				level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.shoot")), SoundSource.NEUTRAL, 1, 1.5F);
+			} else {
+				level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.shoot")), SoundSource.NEUTRAL, 1, 1.5F, false);
+			}
+		}
+		if (entity instanceof LivingEntity living) {
+			if (!living.level().isClientSide()) {
+				living.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 5, 1, false, false));
+				living.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 9999, 1, false, false));
+			}
+			if (!living.level().isClientSide()) {
+				ShadowStepEntity projectile = ShadowStepEntity.shoot(living.level(), living, living.getRandom(), 1.5F,
+						1 + vars.Intelligence / 45, 0);
+				projectile.setPos(living.getX(), living.getEyeY() - 0.1D, living.getZ());
+			}
+		}
+		CooldownManager.set(entity, "mana_refresh", 40);
+		CooldownManager.set(entity, "Shadowstep", 40);
 	}
 }

@@ -26,6 +26,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 
 import javax.annotation.Nullable;
+import net.solocraft.util.CooldownManager;
 
 @Mod.EventBusSubscriber
 public class MythicDaggerToolInHandTickProcedure {
@@ -44,7 +45,7 @@ public class MythicDaggerToolInHandTickProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
-		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get()) && !(entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(SololevelingModMobEffects.COUNTER_COOLDOWN.get()))
+		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get()) && !CooldownManager.isOnCooldown(entity, "counter")
 				&& (entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MYTHIC_DAGGER.get()) {
 			if (world instanceof ServerLevel _level)
 				_level.sendParticles(ParticleTypes.DRAGON_BREATH, x, y, z, 5, 2, 2, 2, 0.2);
@@ -53,8 +54,7 @@ public class MythicDaggerToolInHandTickProcedure {
 						(sourceentity.getZ() + (-3) * sourceentity.getLookAngle().z), 5, 2, 2, 2, 0.2);
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20, 1));
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.COUNTER_COOLDOWN.get(), 260, 1));
+			CooldownManager.set(entity, "counter", 260);
 			if (event != null && event.isCancelable()) {
 				event.setCanceled(true);
 			}

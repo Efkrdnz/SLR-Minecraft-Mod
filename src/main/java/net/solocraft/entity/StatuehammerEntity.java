@@ -186,14 +186,16 @@ public class StatuehammerEntity extends Monster implements GeoEntity {
 
 	private PlayState movementPredicate(AnimationState event) {
 		if (this.animationprocedure.equals("empty")) {
-			if ((event.isMoving() || !(event.getLimbSwingAmount() > -0.15F && event.getLimbSwingAmount() < 0.15F))
-
-			) {
+			if (isActuallyMoving()) {
 				return event.setAndContinue(RawAnimation.begin().thenLoop("walk"));
 			}
 			return event.setAndContinue(RawAnimation.begin().thenLoop("idle"));
 		}
 		return PlayState.STOP;
+	}
+
+	private boolean isActuallyMoving() {
+		return this.getDeltaMovement().horizontalDistanceSqr() > 1.0E-5D;
 	}
 
 	private PlayState procedurePredicate(AnimationState event) {

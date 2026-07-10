@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "sololeveling:block/guild_computer" },
+    "facing=east": { "model": "sololeveling:block/guild_computer", "y": 90 },
+    "facing=south": { "model": "sololeveling:block/guild_computer", "y": 180 },
+    "facing=west": { "model": "sololeveling:block/guild_computer", "y": 270 }
+  }
+}

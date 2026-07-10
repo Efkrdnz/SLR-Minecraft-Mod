@@ -1,10 +1,9 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
+import net.solocraft.util.CooldownManager;
 
 public class IceBallRightClickedOnEntityProcedure {
 	public static void execute(Entity entity, Entity sourceentity) {
@@ -19,8 +18,7 @@ public class IceBallRightClickedOnEntityProcedure {
 		double speed = 0;
 		if ((entity.getPersistentData().getString("caster")).equals(sourceentity.getDisplayName().getString())) {
 			entity.getPersistentData().putString("state", "move");
-			if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.JOB_COOLDOWN_1.get(), 100, 1, false, false));
+			CooldownManager.set(sourceentity, "job_1", 100);
 			deltaX = -Math.sin((sourceentity.getYRot() / 180) * (float) Math.PI);
 			deltaY = -Math.sin((sourceentity.getXRot() / 180) * (float) Math.PI);
 			deltaZ = Math.cos((sourceentity.getYRot() / 180) * (float) Math.PI);

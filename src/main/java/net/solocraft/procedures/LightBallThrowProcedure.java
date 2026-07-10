@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.LightBallEntity;
 
@@ -11,8 +10,8 @@ import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.network.chat.Component;
+import net.solocraft.util.CooldownManager;
 
 public class LightBallThrowProcedure {
 	public static void execute(Entity entity) {
@@ -21,7 +20,7 @@ public class LightBallThrowProcedure {
 		double rand = 0;
 		double X = 0;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 900) {
-			if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.LIGHTBALL_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "Lightball")) {
 				{
 					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 900;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -49,10 +48,8 @@ public class LightBallThrowProcedure {
 						projectileLevel.addFreshEntity(_entityToSpawn);
 					}
 				}
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.LIGHTBALL_COOLDOWN.get(), 200, 1, false, false));
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+				CooldownManager.set(entity, "Lightball", 200);
+				CooldownManager.set(entity, "mana_refresh", 40);
 			}
 		} else {
 			if (entity instanceof Player _player && !_player.level().isClientSide())

@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "sololeveling:block/guild_computer_side",
+    "down": "sololeveling:block/guild_computer_bottom",
+    "up": "sololeveling:block/guild_computer_top",
+    "north": "sololeveling:block/guild_computer_front",
+    "east": "sololeveling:block/guild_computer_side",
+    "south": "sololeveling:block/guild_computer_side",
+    "west": "sololeveling:block/guild_computer_side"
+  }
+}

@@ -2,7 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
-import net.solocraft.entity.PortalKargalgansThroneRoomEntity;
+import net.solocraft.entity.PortalCemeteryEntity;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.phys.Vec3;
@@ -41,6 +41,8 @@ public class PortalCemeteryRightClickedOnEntityProcedure {
 			return;
 		double rand = 0;
 		if (!((sourceentity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MAGIC_READER.get())) {
+			if (net.solocraft.guild.GuildGateHelper.prepareGateEntry(world, entity, sourceentity))
+				return;
 			{
 				final Vec3 _center = new Vec3(x, y, z);
 				List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(500 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
@@ -95,6 +97,7 @@ public class PortalCemeteryRightClickedOnEntityProcedure {
 					}
 				}
 				sourceentity.getPersistentData().putString("dungeon_tag", (entity.getStringUUID()));
+				net.solocraft.util.UrgentQuestManager.markDungeonId(sourceentity, "cemetery");
 				SololevelingMod.queueServerWork(5, () -> {
 					{
 						Entity _ent = sourceentity;
@@ -104,9 +107,9 @@ public class PortalCemeteryRightClickedOnEntityProcedure {
 					}
 					sourceentity.getPersistentData().putString("dungeon_tag", (entity.getStringUUID()));
 					SololevelingMod.queueServerWork(10, () -> {
-						if ((entity instanceof PortalKargalgansThroneRoomEntity _datEntL26 && _datEntL26.getEntityData().get(PortalKargalgansThroneRoomEntity.DATA_usedbefore)) == false) {
-							if (entity instanceof PortalKargalgansThroneRoomEntity _datEntSetL)
-								_datEntSetL.getEntityData().set(PortalKargalgansThroneRoomEntity.DATA_usedbefore, true);
+						if ((entity instanceof PortalCemeteryEntity _datEntL26 && _datEntL26.getEntityData().get(PortalCemeteryEntity.DATA_usedbefore)) == false) {
+							if (entity instanceof PortalCemeteryEntity _datEntSetL)
+								_datEntSetL.getEntityData().set(PortalCemeteryEntity.DATA_usedbefore, true);
 							{
 								Entity _ent = sourceentity;
 								if (!_ent.level().isClientSide() && _ent.getServer() != null) {

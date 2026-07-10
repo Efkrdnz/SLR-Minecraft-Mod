@@ -1,53 +1,38 @@
 package net.solocraft.client.gui;
 
-import net.solocraft.world.inventory.UnlockedSkillsTab1Menu;
-import net.solocraft.procedures.PlistReturn8Procedure;
-import net.solocraft.procedures.PlistReturn7Procedure;
-import net.solocraft.procedures.PlistReturn6Procedure;
-import net.solocraft.procedures.PlistReturn5Procedure;
-import net.solocraft.procedures.PlistReturn4Procedure;
-import net.solocraft.procedures.PlistReturn3Procedure;
-import net.solocraft.procedures.PlistReturn2Procedure;
-import net.solocraft.procedures.PlistReturn1Procedure;
-import net.solocraft.procedures.PlistButtonCon8Procedure;
-import net.solocraft.procedures.PlistButtonCon7Procedure;
-import net.solocraft.procedures.PlistButtonCon6Procedure;
-import net.solocraft.procedures.PlistButtonCon5Procedure;
-import net.solocraft.procedures.PlistButtonCon4Procedure;
-import net.solocraft.procedures.PlistButtonCon3Procedure;
-import net.solocraft.procedures.PlistButtonCon2Procedure;
-import net.solocraft.procedures.PlistButtonCon1Procedure;
-import net.solocraft.network.UnlockedSkillsTab1ButtonMessage;
 import net.solocraft.SololevelingMod;
+import net.solocraft.client.gui.system.SystemContainerScreen;
+import net.solocraft.client.gui.system.SystemScreen;
+import net.solocraft.client.gui.system.SystemTooltip;
+import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.network.UnlockedSkillsTab1ButtonMessage;
+import net.solocraft.procedures.SkillSlotHelper;
+import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.SkillListHelper;
+import net.solocraft.world.inventory.UnlockedSkillsTab1Menu;
 
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.components.ImageButton;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
-
-import java.util.HashMap;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
-public class UnlockedSkillsTab1Screen extends AbstractContainerScreen<UnlockedSkillsTab1Menu> {
-	private final static HashMap<String, Object> guistate = UnlockedSkillsTab1Menu.guistate;
+import java.util.List;
+
+public class UnlockedSkillsTab1Screen extends SystemContainerScreen<UnlockedSkillsTab1Menu> {
+	private static final int ROWS = 8;
+	private static final int ROW_H = 23;
+
 	private final Level world;
 	private final int x, y, z;
 	private final Player entity;
-	Button button_equip;
-	Button button_equip1;
-	Button button_equip2;
-	Button button_equip3;
-	Button button_equip4;
-	Button button_equip5;
-	Button button_equip6;
-	Button button_equip7;
-	ImageButton imagebutton_button1;
+	private final SystemScreen.SystemButton[] equipButtons = new SystemScreen.SystemButton[ROWS];
+	private final SystemScreen.SystemButton[] removeButtons = new SystemScreen.SystemButton[ROWS];
+	private SystemScreen.SystemButton previousButton;
+	private SystemScreen.SystemButton nextButton;
+	private int page = 0;
 
 	public UnlockedSkillsTab1Screen(UnlockedSkillsTab1Menu container, Inventory inventory, Component text) {
 		super(container, inventory, text);
@@ -58,199 +43,151 @@ public class UnlockedSkillsTab1Screen extends AbstractContainerScreen<UnlockedSk
 		this.entity = container.entity;
 		this.imageWidth = 0;
 		this.imageHeight = 0;
-	}
-
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/unlocked_skills_tab_1.png");
-
-	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		this.renderTooltip(guiGraphics, mouseX, mouseY);
+		this.pRelX = -124;
+		this.pRelY = -126;
+		this.pW = 248;
+		this.pH = 252;
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int gx, int gy) {
-		RenderSystem.setShaderColor(1, 1, 1, 1);
+	protected void renderBg(GuiGraphics g, float partialTicks, int gx, int gy) {
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
-		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
+		ShopStyle.panel(g, leftPos + pRelX, topPos + pRelY, pW, pH);
+		ShopStyle.titleBar(g, this.font, leftPos + pRelX, topPos + pRelY, pW, "SKILL LIST");
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/big_frame2.png"), this.leftPos + -75, this.topPos + -108, 0, 0, 150, 200, 150, 200);
-
+		int startY = topPos + pRelY + 42;
+		for (int i = 0; i < ROWS; i++) {
+			int y0 = startY + i * ROW_H;
+			int fill = i % 2 == 0 ? 0x33102338 : 0x22102338;
+			g.fill(leftPos + pRelX + 10, y0, leftPos + pRelX + pW - 10, y0 + 20, fill);
+			g.fill(leftPos + pRelX + 10, y0 + 20, leftPos + pRelX + pW - 10, y0 + 21, ShopStyle.ACCENT_SOFT);
+		}
 		RenderSystem.disableBlend();
 	}
 
 	@Override
-	public boolean keyPressed(int key, int b, int c) {
-		if (key == 256) {
-			this.minecraft.player.closeContainer();
-			return true;
+	protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+		clampPage();
+		SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
+		int selectedSlot = (int) vars.PslotSelecting;
+		String current = selectedSlot > 0 ? SkillSlotHelper.getSlot(vars, selectedSlot) : "";
+		String target = selectedSlot > 0 ? "TARGET SLOT " + selectedSlot : "TARGET SLOT";
+		g.drawString(this.font, target, pRelX + 12, pRelY + 22, ShopStyle.ACCENT, false);
+		g.drawString(this.font, current == null || current.isBlank() ? "Empty" : ShadowMonarchManager.displaySkillName(entity, current), pRelX + 12, pRelY + 33, ShopStyle.TEXT_SUB, false);
+
+		int pageCount = SkillListHelper.pageCount(entity, ROWS);
+		for (int i = 0; i < ROWS; i++) {
+			int index = page * ROWS + i + 1;
+			String raw = SkillListHelper.rawSkillAt(entity, index);
+			String label = SkillListHelper.displaySkillAt(entity, index);
+			if (label.length() > 24)
+				label = label.substring(0, 23) + "...";
+			int color = SkillListHelper.colorAt(entity, index);
+			int rowY = pRelY + 47 + i * ROW_H;
+			g.drawString(this.font, index < 10 ? "0" + index : String.valueOf(index), pRelX + 16, rowY, 0xFF8FB8D8, false);
+			g.drawString(this.font, "empty".equals(raw) ? "-" : label, pRelX + 44, rowY, "empty".equals(raw) ? 0xFF566A7A : color, false);
 		}
-		return super.keyPressed(key, b, c);
+		String pageText = "Page " + (page + 1) + "/" + pageCount;
+		g.drawString(this.font, pageText, pRelX + (pW - this.font.width(pageText)) / 2, pRelY + pH - 19, ShopStyle.TEXT_SUB, false);
+	}
+
+	@Override
+	protected void renderExtras(GuiGraphics g, int mouseX, int mouseY) {
+		for (int i = 0; i < ROWS; i++) {
+			int index = page * ROWS + i + 1;
+			String raw = SkillListHelper.rawSkillAt(entity, index);
+			if ("empty".equals(raw))
+				continue;
+			int y0 = topPos + pRelY + 42 + i * ROW_H;
+			if (mouseX >= leftPos + pRelX + 10 && mouseX < leftPos + pRelX + pW - 10 && mouseY >= y0 && mouseY < y0 + 20) {
+				SystemTooltip.render(g, this.font, List.of(Component.literal(SkillListHelper.displaySkillAt(entity, index)), Component.literal(raw)), mouseX, mouseY, this.width, this.height);
+				return;
+			}
+		}
 	}
 
 	@Override
 	public void containerTick() {
 		super.containerTick();
-	}
-
-	@Override
-	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(this.font,
-
-				PlistReturn1Procedure.execute(entity), -61, -88, -1, false);
-		guiGraphics.drawString(this.font,
-
-				PlistReturn2Procedure.execute(entity), -61, -69, -1, false);
-		guiGraphics.drawString(this.font,
-
-				PlistReturn3Procedure.execute(entity), -61, -50, -1, false);
-		guiGraphics.drawString(this.font,
-
-				PlistReturn4Procedure.execute(entity), -61, -31, -1, false);
-		guiGraphics.drawString(this.font,
-
-				PlistReturn5Procedure.execute(entity), -61, -12, -1, false);
-		guiGraphics.drawString(this.font,
-
-				PlistReturn6Procedure.execute(entity), -61, 7, -1, false);
-		guiGraphics.drawString(this.font,
-
-				PlistReturn7Procedure.execute(entity), -61, 26, -1, false);
-		guiGraphics.drawString(this.font,
-
-				PlistReturn8Procedure.execute(entity), -61, 44, -1, false);
-		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.unlocked_skills_tab_1.label_empty"), 88, -21, -1, false);
-	}
-
-	@Override
-	public void onClose() {
-		super.onClose();
+		refreshButtons();
 	}
 
 	@Override
 	public void init() {
 		super.init();
-		button_equip = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_1.button_equip"), e -> {
-			if (PlistButtonCon1Procedure.execute(entity)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(0, x, y, z));
-				UnlockedSkillsTab1ButtonMessage.handleButtonAction(entity, 0, x, y, z);
-			}
-		}).bounds(this.leftPos + 18, this.topPos + -95, 51, 20).build(builder -> new Button(builder) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon1Procedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
+		this.addRenderableWidget(new SystemScreen.SystemButton(leftPos + pRelX + 3, topPos + pRelY + 2, 40, 12, Component.literal("< Back"), b -> openSlotScreen()));
+
+		int startY = topPos + pRelY + 43;
+		for (int i = 0; i < ROWS; i++) {
+			final int row = i;
+			int by = startY + i * ROW_H;
+			removeButtons[i] = new SystemScreen.SystemButton(leftPos + pRelX + pW - 88, by, 28, 18, Component.literal("X"), b -> removeFormation(row));
+			equipButtons[i] = new SystemScreen.SystemButton(leftPos + pRelX + pW - 56, by, 44, 18, Component.literal("Equip"), b -> equip(row));
+			this.addRenderableWidget(removeButtons[i]);
+			this.addRenderableWidget(equipButtons[i]);
+		}
+
+		previousButton = new SystemScreen.SystemButton(leftPos + pRelX + 12, topPos + pRelY + pH - 27, 42, 18, Component.literal("<"), b -> {
+			if (page > 0)
+				page--;
+			refreshButtons();
 		});
-		guistate.put("button:button_equip", button_equip);
-		this.addRenderableWidget(button_equip);
-		button_equip1 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_1.button_equip1"), e -> {
-			if (PlistButtonCon2Procedure.execute(entity)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(1, x, y, z));
-				UnlockedSkillsTab1ButtonMessage.handleButtonAction(entity, 1, x, y, z);
-			}
-		}).bounds(this.leftPos + 18, this.topPos + -76, 51, 20).build(builder -> new Button(builder) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon2Procedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
+		nextButton = new SystemScreen.SystemButton(leftPos + pRelX + pW - 54, topPos + pRelY + pH - 27, 42, 18, Component.literal(">"), b -> {
+			int maxPage = SkillListHelper.pageCount(entity, ROWS) - 1;
+			if (page < maxPage)
+				page++;
+			refreshButtons();
 		});
-		guistate.put("button:button_equip1", button_equip1);
-		this.addRenderableWidget(button_equip1);
-		button_equip2 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_1.button_equip2"), e -> {
-			if (PlistButtonCon3Procedure.execute(entity)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(2, x, y, z));
-				UnlockedSkillsTab1ButtonMessage.handleButtonAction(entity, 2, x, y, z);
+		this.addRenderableWidget(previousButton);
+		this.addRenderableWidget(nextButton);
+		refreshButtons();
+	}
+
+	private void openSlotScreen() {
+		SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(101, x, y, z, 0));
+	}
+
+	private void equip(int row) {
+		int index = page * ROWS + row + 1;
+		if (!"empty".equals(SkillListHelper.rawSkillAt(entity, index)))
+			SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(row, x, y, z, index));
+	}
+
+	private void removeFormation(int row) {
+		int index = page * ROWS + row + 1;
+		if (ShadowMonarchManager.isFormationSkill(SkillListHelper.rawSkillAt(entity, index)))
+			SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(100, x, y, z, index));
+	}
+
+	private void refreshButtons() {
+		clampPage();
+		int pageCount = SkillListHelper.pageCount(entity, ROWS);
+		if (previousButton != null)
+			previousButton.visible = isOpen() && page > 0;
+		if (nextButton != null)
+			nextButton.visible = isOpen() && page + 1 < pageCount;
+		for (int i = 0; i < ROWS; i++) {
+			int index = page * ROWS + i + 1;
+			String raw = SkillListHelper.rawSkillAt(entity, index);
+			boolean hasSkill = !"empty".equals(raw);
+			boolean formation = ShadowMonarchManager.isFormationSkill(raw);
+			if (equipButtons[i] != null) {
+				equipButtons[i].visible = isOpen() && hasSkill;
+				equipButtons[i].active = hasSkill;
 			}
-		}).bounds(this.leftPos + 18, this.topPos + -57, 51, 20).build(builder -> new Button(builder) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon3Procedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
+			if (removeButtons[i] != null) {
+				removeButtons[i].visible = isOpen() && formation;
+				removeButtons[i].active = formation;
 			}
-		});
-		guistate.put("button:button_equip2", button_equip2);
-		this.addRenderableWidget(button_equip2);
-		button_equip3 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_1.button_equip3"), e -> {
-			if (PlistButtonCon4Procedure.execute(entity)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(3, x, y, z));
-				UnlockedSkillsTab1ButtonMessage.handleButtonAction(entity, 3, x, y, z);
-			}
-		}).bounds(this.leftPos + 18, this.topPos + -38, 51, 20).build(builder -> new Button(builder) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon4Procedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		});
-		guistate.put("button:button_equip3", button_equip3);
-		this.addRenderableWidget(button_equip3);
-		button_equip4 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_1.button_equip4"), e -> {
-			if (PlistButtonCon5Procedure.execute(entity)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(4, x, y, z));
-				UnlockedSkillsTab1ButtonMessage.handleButtonAction(entity, 4, x, y, z);
-			}
-		}).bounds(this.leftPos + 18, this.topPos + -19, 51, 20).build(builder -> new Button(builder) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon5Procedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		});
-		guistate.put("button:button_equip4", button_equip4);
-		this.addRenderableWidget(button_equip4);
-		button_equip5 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_1.button_equip5"), e -> {
-			if (PlistButtonCon6Procedure.execute(entity)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(5, x, y, z));
-				UnlockedSkillsTab1ButtonMessage.handleButtonAction(entity, 5, x, y, z);
-			}
-		}).bounds(this.leftPos + 18, this.topPos + 0, 51, 20).build(builder -> new Button(builder) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon6Procedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		});
-		guistate.put("button:button_equip5", button_equip5);
-		this.addRenderableWidget(button_equip5);
-		button_equip6 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_1.button_equip6"), e -> {
-			if (PlistButtonCon7Procedure.execute(entity)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(6, x, y, z));
-				UnlockedSkillsTab1ButtonMessage.handleButtonAction(entity, 6, x, y, z);
-			}
-		}).bounds(this.leftPos + 18, this.topPos + 19, 51, 20).build(builder -> new Button(builder) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon7Procedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		});
-		guistate.put("button:button_equip6", button_equip6);
-		this.addRenderableWidget(button_equip6);
-		button_equip7 = Button.builder(Component.translatable("gui.sololeveling.unlocked_skills_tab_1.button_equip7"), e -> {
-			if (PlistButtonCon8Procedure.execute(entity)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(7, x, y, z));
-				UnlockedSkillsTab1ButtonMessage.handleButtonAction(entity, 7, x, y, z);
-			}
-		}).bounds(this.leftPos + 18, this.topPos + 38, 51, 20).build(builder -> new Button(builder) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (PlistButtonCon8Procedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		});
-		guistate.put("button:button_equip7", button_equip7);
-		this.addRenderableWidget(button_equip7);
-		imagebutton_button1 = new ImageButton(this.leftPos + 80, this.topPos + -26, 48, 22, 0, 0, 22, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_button1.png"), 48, 44, e -> {
-			if (true) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(8, x, y, z));
-				UnlockedSkillsTab1ButtonMessage.handleButtonAction(entity, 8, x, y, z);
-			}
-		});
-		guistate.put("button:imagebutton_button1", imagebutton_button1);
-		this.addRenderableWidget(imagebutton_button1);
+		}
+	}
+
+	private void clampPage() {
+		int pageCount = SkillListHelper.pageCount(entity, ROWS);
+		if (page >= pageCount)
+			page = pageCount - 1;
+		if (page < 0)
+			page = 0;
 	}
 }

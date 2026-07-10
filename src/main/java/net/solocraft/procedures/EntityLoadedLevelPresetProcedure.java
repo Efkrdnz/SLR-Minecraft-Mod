@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.entity.ThomasAndreEntity;
 import net.solocraft.entity.StoneGolemEntity;
 import net.solocraft.entity.SteelFangWolfEntity;
+import net.solocraft.entity.SteelFangedLycanEntity;
 import net.solocraft.entity.SpiderBossEntity;
 import net.solocraft.entity.SkeletonWarriorEntity;
 import net.solocraft.entity.SkeletonSummonerEntity;
@@ -112,7 +113,7 @@ public class EntityLoadedLevelPresetProcedure {
 				if (entity instanceof LivingEntity _entity)
 					_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 			}
-			if (entity instanceof SteelFangWolfEntity) {
+			if (entity instanceof SteelFangWolfEntity || entity instanceof SteelFangedLycanEntity) {
 				rand = Mth.nextInt(RandomSource.create(), (int) (rank_addition + 3), (int) (rank_addition + 10));
 				entity.setCustomName(Component.literal((entity.getDisplayName().getString() + " (Level: " + new java.text.DecimalFormat("##").format(rand) + ")")));
 				entity.getPersistentData().putDouble("Level", rand);

@@ -9,6 +9,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.solocraft.util.CooldownManager;
 
 public class KasakasVenomFangsLivingEntityIsHitWithToolProcedure {
 	public static void execute(LevelAccessor world, Entity entity, Entity sourceentity) {
@@ -23,8 +24,7 @@ public class KasakasVenomFangsLivingEntityIsHitWithToolProcedure {
 				_entity.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 80, 10));
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.GLOWING, 80, 10));
-			if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.PARALYZE_COOLDOWN.get(), 200, 0));
+			CooldownManager.set(sourceentity, "paralyze", 200);
 			if (sourceentity instanceof LivingEntity _entity)
 				_entity.removeEffect(SololevelingModMobEffects.SWORD_ENHANCE.get());
 			{

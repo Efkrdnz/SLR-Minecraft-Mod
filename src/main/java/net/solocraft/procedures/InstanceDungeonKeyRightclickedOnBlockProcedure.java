@@ -23,6 +23,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
 
 public class InstanceDungeonKeyRightclickedOnBlockProcedure {
+    private static final double PLAYER_PORTAL_ENTRY_X_OFFSET = 3.0D;
+
     public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
         if (!(entity instanceof ServerPlayer player)) return;
 
@@ -44,9 +46,11 @@ public class InstanceDungeonKeyRightclickedOnBlockProcedure {
 
         // Store previous location
         entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-            capability.DunX = entity.getX();
+            capability.DunX = x;
             capability.DunY = entity.getY();
-            capability.DunZ = entity.getZ();
+            capability.DunZ = z;
+            capability.instancecomplete = false;
+            capability.tpd = false;
             capability.syncPlayerVariables(entity);
         });
 
@@ -77,12 +81,12 @@ public class InstanceDungeonKeyRightclickedOnBlockProcedure {
         // First, teleport the player to the dungeon dimension
         SololevelingMod.queueServerWork(10, () -> {
             if (player.level().dimension() != dungeonDimension) {
-                player.teleportTo(targetWorld, randX, safeRandY, randZ, player.getYRot(), player.getXRot());
+                player.teleportTo(targetWorld, randX + PLAYER_PORTAL_ENTRY_X_OFFSET, safeRandY, randZ, player.getYRot(), player.getXRot());
             }
 
             // Wait a bit, then move the player to the correct location
             SololevelingMod.queueServerWork(10, () -> {
-                player.teleportTo(randX, safeRandY, randZ);
+                player.teleportTo(randX + PLAYER_PORTAL_ENTRY_X_OFFSET, safeRandY, randZ);
 
                 // Spawn the dungeon structure in the correct dimension
                 SololevelingMod.queueServerWork(10, () -> {
@@ -101,6 +105,7 @@ public class InstanceDungeonKeyRightclickedOnBlockProcedure {
                                 ),
                                 "execute in sololeveling:dungeon_dimension_kasaka run spawninstance"
                         );
+                        SololevelingMod.queueServerWork(30, () -> DunKasakaTeleportAndSpawnProcedure.execute(player.level(), player));
                     }
                 });
             });

@@ -2,12 +2,7 @@
 package net.solocraft.network;
 
 import net.solocraft.world.inventory.ShadowExchangeSaveMenu;
-import net.solocraft.procedures.PolarBearExchangeSaveProcedure;
-import net.solocraft.procedures.LycanExchangeSaveProcedure;
-import net.solocraft.procedures.KnightExchangeSaveProcedure;
-import net.solocraft.procedures.GoblinMageExchangeSaveProcedure;
-import net.solocraft.procedures.GoblinClubExchangeSaveProcedure;
-import net.solocraft.procedures.GoblinArcherExchangeSaveProcedure;
+import net.solocraft.util.ShadowExchangeManager;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -67,30 +62,26 @@ public class ShadowExchangeSaveButtonMessage {
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
-		if (buttonID == 0) {
-
-			KnightExchangeSaveProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 1) {
-
-			GoblinClubExchangeSaveProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 2) {
-
-			GoblinArcherExchangeSaveProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 3) {
-
-			GoblinMageExchangeSaveProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 4) {
-
-			LycanExchangeSaveProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 5) {
-
-			PolarBearExchangeSaveProcedure.execute(world, x, y, z, entity);
-		}
+		String type = switch (buttonID) {
+			case 0 -> "knight";
+			case 1 -> "goblin_club";
+			case 2 -> "goblin_archer";
+			case 3 -> "goblin_mage";
+			case 4 -> "wolf";
+			case 5 -> "polar_bear";
+			default -> "";
+		};
+		String name = switch (buttonID) {
+			case 0 -> "Knight Anchor";
+			case 1 -> "Goblin Fighter Anchor";
+			case 2 -> "Goblin Archer Anchor";
+			case 3 -> "Goblin Mage Anchor";
+			case 4 -> "Lycan Anchor";
+			case 5 -> "Polar Bear Anchor";
+			default -> "Shadow Anchor";
+		};
+		if (!type.isEmpty())
+			ShadowExchangeManager.saveAnchor(world, entity, type, name);
 	}
 
 	@SubscribeEvent

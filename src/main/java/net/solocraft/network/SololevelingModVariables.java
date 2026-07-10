@@ -10,6 +10,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.common.util.FakePlayer;
@@ -62,28 +63,28 @@ public class SololevelingModVariables {
 		@SubscribeEvent
 		public static void onPlayerLoggedInSyncPlayerVariables(PlayerEvent.PlayerLoggedInEvent event) {
 			if (!event.getEntity().level().isClientSide()) {
-				for (Entity entityiterator : new ArrayList<>(event.getEntity().level().players())) {
-					((PlayerVariables) entityiterator.getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables())).syncPlayerVariables(entityiterator);
-				}
+				((PlayerVariables) event.getEntity().getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables())).syncPlayerVariables(event.getEntity());
 			}
 		}
 
 		@SubscribeEvent
 		public static void onPlayerRespawnedSyncPlayerVariables(PlayerEvent.PlayerRespawnEvent event) {
 			if (!event.getEntity().level().isClientSide()) {
-				for (Entity entityiterator : new ArrayList<>(event.getEntity().level().players())) {
-					((PlayerVariables) entityiterator.getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables())).syncPlayerVariables(entityiterator);
-				}
+				((PlayerVariables) event.getEntity().getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables())).syncPlayerVariables(event.getEntity());
 			}
 		}
 
 		@SubscribeEvent
 		public static void onPlayerChangedDimensionSyncPlayerVariables(PlayerEvent.PlayerChangedDimensionEvent event) {
 			if (!event.getEntity().level().isClientSide()) {
-				for (Entity entityiterator : new ArrayList<>(event.getEntity().level().players())) {
-					((PlayerVariables) entityiterator.getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables())).syncPlayerVariables(entityiterator);
-				}
+				((PlayerVariables) event.getEntity().getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables())).syncPlayerVariables(event.getEntity());
 			}
+		}
+
+		@SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+		public static void flushPlayerVariablesSyncs(TickEvent.PlayerTickEvent event) {
+			if (event.phase != TickEvent.Phase.END) return;
+			event.player.getCapability(PLAYER_VARIABLES_CAPABILITY, null).ifPresent(cap -> cap.flushSyncIfPending(event.player));
 		}
 
 		@SubscribeEvent
@@ -203,6 +204,8 @@ public class SololevelingModVariables {
 			clone.prevLevel = original.prevLevel;
 			clone.idcd = original.idcd;
 			clone.title = original.title;
+			clone.unlockedTitles = original.unlockedTitles;
+			clone.wolfAssassinKills = original.wolfAssassinKills;
 			clone.Plist = original.Plist;
 			clone.Pslot1 = original.Pslot1;
 			clone.Pslot2 = original.Pslot2;
@@ -212,6 +215,15 @@ public class SololevelingModVariables {
 			clone.Pslot6 = original.Pslot6;
 			clone.Pslot7 = original.Pslot7;
 			clone.Pslot8 = original.Pslot8;
+			clone.Pslot9 = original.Pslot9;
+			clone.Pslot10 = original.Pslot10;
+			clone.Pslot11 = original.Pslot11;
+			clone.Pslot12 = original.Pslot12;
+			clone.Pslot13 = original.Pslot13;
+			clone.Pslot14 = original.Pslot14;
+			clone.Pslot15 = original.Pslot15;
+			clone.Pslot16 = original.Pslot16;
+			clone.PskillPage = original.PskillPage;
 			clone.PselectedPower = original.PselectedPower;
 			clone.progression_assassin = original.progression_assassin;
 			clone.progression_mage = original.progression_mage;
@@ -240,10 +252,17 @@ public class SololevelingModVariables {
 			clone.highorcspawned = original.highorcspawned;
 			clone.tuskmax = original.tuskmax;
 			clone.tuskspawned = original.tuskspawned;
+			clone.Kaisel = original.Kaisel;
+			clone.KaiselSpawned = original.KaiselSpawned;
 			clone.reward_1 = original.reward_1;
 			clone.reward_2 = original.reward_2;
 			clone.reward_3 = original.reward_3;
+			clone.reward_extra = original.reward_extra;
 			clone.dkc_cleared = original.dkc_cleared;
+			clone.dkc_x = original.dkc_x;
+			clone.dkc_y = original.dkc_y;
+			clone.dkc_z = original.dkc_z;
+			clone.dkc_started = original.dkc_started;
 			if (!event.isWasDeath()) {
 				clone.LoreAccurateRankStart = original.LoreAccurateRankStart;
 				clone.ariset = original.ariset;
@@ -381,8 +400,10 @@ public class SololevelingModVariables {
 		public double gatetimer = 0;
 		public double shmlimit = 0;
 		public boolean portalreset = false;
+		public boolean firstNaturalGateSpawned = false;
 		public String GatesCleared = "";
 		public String ActiveGateInstances = "\"\"";
+		public String GateBreakMemory = "";
 
 		public static MapVariables load(CompoundTag tag) {
 			MapVariables data = new MapVariables();
@@ -398,8 +419,10 @@ public class SololevelingModVariables {
 			gatetimer = nbt.getDouble("gatetimer");
 			shmlimit = nbt.getDouble("shmlimit");
 			portalreset = nbt.getBoolean("portalreset");
+			firstNaturalGateSpawned = nbt.getBoolean("firstNaturalGateSpawned");
 			GatesCleared = nbt.getString("GatesCleared");
 			ActiveGateInstances = nbt.getString("ActiveGateInstances");
+			GateBreakMemory = nbt.getString("GateBreakMemory");
 		}
 
 		@Override
@@ -408,8 +431,10 @@ public class SololevelingModVariables {
 			nbt.putDouble("gatetimer", gatetimer);
 			nbt.putDouble("shmlimit", shmlimit);
 			nbt.putBoolean("portalreset", portalreset);
+			nbt.putBoolean("firstNaturalGateSpawned", firstNaturalGateSpawned);
 			nbt.putString("GatesCleared", GatesCleared);
 			nbt.putString("ActiveGateInstances", ActiveGateInstances);
+			nbt.putString("GateBreakMemory", GateBreakMemory);
 			return nbt;
 		}
 
@@ -678,6 +703,8 @@ public class SololevelingModVariables {
 		public double prevLevel = 0;
 		public double idcd = 0;
 		public double title = 0;
+		public String unlockedTitles = "";
+		public double wolfAssassinKills = 0;
 		public String Plist = ".";
 		public String Pslot1 = "";
 		public String Pslot2 = "";
@@ -687,6 +714,15 @@ public class SololevelingModVariables {
 		public String Pslot6 = "";
 		public String Pslot7 = "";
 		public String Pslot8 = "";
+		public String Pslot9 = "";
+		public String Pslot10 = "";
+		public String Pslot11 = "";
+		public String Pslot12 = "";
+		public String Pslot13 = "";
+		public String Pslot14 = "";
+		public String Pslot15 = "";
+		public String Pslot16 = "";
+		public double PskillPage = 1;
 		public double PslotSelecting = 0;
 		public String PselectedPower = "";
 		public double progression_assassin = 0;
@@ -716,15 +752,42 @@ public class SololevelingModVariables {
 		public double highorcspawned = 0;
 		public double tuskmax = 0;
 		public double tuskspawned = 0;
+		public double Kaisel = 0;
+		public double KaiselSpawned = 0;
 		public double FireRingTimer = 0;
 		public String reward_1 = "\"\"";
 		public String reward_2 = "\"\"";
 		public String reward_3 = "\"\"";
+		public String reward_extra = "";
 		public double dkc_cleared = 0;
+		public double dkc_x = 0;
+		public double dkc_y = 0;
+		public double dkc_z = 0;
+		public boolean dkc_started = false;
+		/** Compact cooldown snapshot synced to client: "key1:expiry1;key2:expiry2" */
+		public String cooldownData = "";
+
+		// transient: not saved to NBT, only lives in memory
+		private transient long lastSyncTick = -1L;
+		private transient boolean pendingSync = false;
 
 		public void syncPlayerVariables(Entity entity) {
-			if (entity instanceof ServerPlayer serverPlayer)
-				SololevelingMod.PACKET_HANDLER.send(PacketDistributor.DIMENSION.with(entity.level()::dimension), new PlayerVariablesSyncMessage(this, entity.getId()));
+			if (!(entity instanceof ServerPlayer serverPlayer)) return;
+			long currentTick = serverPlayer.level().getGameTime();
+			if (currentTick == lastSyncTick) {
+				pendingSync = true; // will be sent at end of tick by flushSyncIfPending
+				return;
+			}
+			lastSyncTick = currentTick;
+			pendingSync = false;
+			SololevelingMod.PACKET_HANDLER.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new PlayerVariablesSyncMessage(this, serverPlayer.getId()));
+		}
+
+		public void flushSyncIfPending(Entity entity) {
+			if (!pendingSync || !(entity instanceof ServerPlayer serverPlayer)) return;
+			pendingSync = false;
+			lastSyncTick = serverPlayer.level().getGameTime();
+			SololevelingMod.PACKET_HANDLER.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new PlayerVariablesSyncMessage(this, serverPlayer.getId()));
 		}
 
 		public Tag writeNBT() {
@@ -905,6 +968,8 @@ public class SololevelingModVariables {
 			nbt.putDouble("prevLevel", prevLevel);
 			nbt.putDouble("idcd", idcd);
 			nbt.putDouble("title", title);
+			nbt.putString("unlockedTitles", unlockedTitles);
+			nbt.putDouble("wolfAssassinKills", wolfAssassinKills);
 			nbt.putString("Plist", Plist);
 			nbt.putString("Pslot1", Pslot1);
 			nbt.putString("Pslot2", Pslot2);
@@ -914,6 +979,15 @@ public class SololevelingModVariables {
 			nbt.putString("Pslot6", Pslot6);
 			nbt.putString("Pslot7", Pslot7);
 			nbt.putString("Pslot8", Pslot8);
+			nbt.putString("Pslot9", Pslot9);
+			nbt.putString("Pslot10", Pslot10);
+			nbt.putString("Pslot11", Pslot11);
+			nbt.putString("Pslot12", Pslot12);
+			nbt.putString("Pslot13", Pslot13);
+			nbt.putString("Pslot14", Pslot14);
+			nbt.putString("Pslot15", Pslot15);
+			nbt.putString("Pslot16", Pslot16);
+			nbt.putDouble("PskillPage", PskillPage);
 			nbt.putDouble("PslotSelecting", PslotSelecting);
 			nbt.putString("PselectedPower", PselectedPower);
 			nbt.putDouble("progression_assassin", progression_assassin);
@@ -943,11 +1017,19 @@ public class SololevelingModVariables {
 			nbt.putDouble("highorcspawned", highorcspawned);
 			nbt.putDouble("tuskmax", tuskmax);
 			nbt.putDouble("tuskspawned", tuskspawned);
+			nbt.putDouble("Kaisel", Kaisel);
+			nbt.putDouble("KaiselSpawned", KaiselSpawned);
 			nbt.putDouble("FireRingTimer", FireRingTimer);
 			nbt.putString("reward_1", reward_1);
 			nbt.putString("reward_2", reward_2);
 			nbt.putString("reward_3", reward_3);
+			nbt.putString("reward_extra", reward_extra);
 			nbt.putDouble("dkc_cleared", dkc_cleared);
+			nbt.putDouble("dkc_x", dkc_x);
+			nbt.putDouble("dkc_y", dkc_y);
+			nbt.putDouble("dkc_z", dkc_z);
+			nbt.putBoolean("dkc_started", dkc_started);
+			nbt.putString("cooldownData", cooldownData);
 			return nbt;
 		}
 
@@ -1042,7 +1124,7 @@ public class SololevelingModVariables {
 			combatmode = nbt.getBoolean("combatmode");
 			commanddeath = nbt.getBoolean("commanddeath");
 			dailykilltyppe = nbt.getDouble("dailykilltyppe");
-			dailysecrettrans = nbt.getDouble("dailysecrettrans");
+			dailysecrettrans = nbt.contains("dailysecrettrans") ? nbt.getDouble("dailysecrettrans") : 1.0;
 			dailytasks = nbt.getDouble("dailytasks");
 			dailytimer = nbt.getDouble("dailytimer");
 			DeathX = nbt.getDouble("DeathX");
@@ -1135,6 +1217,11 @@ public class SololevelingModVariables {
 			prevLevel = nbt.getDouble("prevLevel");
 			idcd = nbt.getDouble("idcd");
 			title = nbt.getDouble("title");
+			unlockedTitles = nbt.getString("unlockedTitles");
+			wolfAssassinKills = nbt.getDouble("wolfAssassinKills");
+			if (title == 1 && !unlockedTitles.contains("wolf_assassin")) {
+				unlockedTitles = unlockedTitles.isEmpty() ? "wolf_assassin" : unlockedTitles + ",wolf_assassin";
+			}
 			Plist = nbt.getString("Plist");
 			Pslot1 = nbt.getString("Pslot1");
 			Pslot2 = nbt.getString("Pslot2");
@@ -1144,6 +1231,15 @@ public class SololevelingModVariables {
 			Pslot6 = nbt.getString("Pslot6");
 			Pslot7 = nbt.getString("Pslot7");
 			Pslot8 = nbt.getString("Pslot8");
+			Pslot9 = nbt.getString("Pslot9");
+			Pslot10 = nbt.getString("Pslot10");
+			Pslot11 = nbt.getString("Pslot11");
+			Pslot12 = nbt.getString("Pslot12");
+			Pslot13 = nbt.getString("Pslot13");
+			Pslot14 = nbt.getString("Pslot14");
+			Pslot15 = nbt.getString("Pslot15");
+			Pslot16 = nbt.getString("Pslot16");
+			PskillPage = nbt.contains("PskillPage") ? nbt.getDouble("PskillPage") : 1;
 			PslotSelecting = nbt.getDouble("PslotSelecting");
 			PselectedPower = nbt.getString("PselectedPower");
 			progression_assassin = nbt.getDouble("progression_assassin");
@@ -1173,11 +1269,19 @@ public class SololevelingModVariables {
 			highorcspawned = nbt.getDouble("highorcspawned");
 			tuskmax = nbt.getDouble("tuskmax");
 			tuskspawned = nbt.getDouble("tuskspawned");
+			Kaisel = nbt.getDouble("Kaisel");
+			KaiselSpawned = nbt.getDouble("KaiselSpawned");
 			FireRingTimer = nbt.getDouble("FireRingTimer");
 			reward_1 = nbt.getString("reward_1");
 			reward_2 = nbt.getString("reward_2");
 			reward_3 = nbt.getString("reward_3");
+			reward_extra = nbt.getString("reward_extra");
 			dkc_cleared = nbt.getDouble("dkc_cleared");
+			dkc_x = nbt.getDouble("dkc_x");
+			dkc_y = nbt.getDouble("dkc_y");
+			dkc_z = nbt.getDouble("dkc_z");
+			dkc_started = nbt.getBoolean("dkc_started");
+			cooldownData = nbt.getString("cooldownData");
 		}
 	}
 
@@ -1387,6 +1491,8 @@ public class SololevelingModVariables {
 					variables.prevLevel = message.data.prevLevel;
 					variables.idcd = message.data.idcd;
 					variables.title = message.data.title;
+					variables.unlockedTitles = message.data.unlockedTitles;
+					variables.wolfAssassinKills = message.data.wolfAssassinKills;
 					variables.Plist = message.data.Plist;
 					variables.Pslot1 = message.data.Pslot1;
 					variables.Pslot2 = message.data.Pslot2;
@@ -1396,6 +1502,15 @@ public class SololevelingModVariables {
 					variables.Pslot6 = message.data.Pslot6;
 					variables.Pslot7 = message.data.Pslot7;
 					variables.Pslot8 = message.data.Pslot8;
+					variables.Pslot9 = message.data.Pslot9;
+					variables.Pslot10 = message.data.Pslot10;
+					variables.Pslot11 = message.data.Pslot11;
+					variables.Pslot12 = message.data.Pslot12;
+					variables.Pslot13 = message.data.Pslot13;
+					variables.Pslot14 = message.data.Pslot14;
+					variables.Pslot15 = message.data.Pslot15;
+					variables.Pslot16 = message.data.Pslot16;
+					variables.PskillPage = message.data.PskillPage;
 					variables.PslotSelecting = message.data.PslotSelecting;
 					variables.PselectedPower = message.data.PselectedPower;
 					variables.progression_assassin = message.data.progression_assassin;
@@ -1425,11 +1540,19 @@ public class SololevelingModVariables {
 					variables.highorcspawned = message.data.highorcspawned;
 					variables.tuskmax = message.data.tuskmax;
 					variables.tuskspawned = message.data.tuskspawned;
+					variables.Kaisel = message.data.Kaisel;
+					variables.KaiselSpawned = message.data.KaiselSpawned;
 					variables.FireRingTimer = message.data.FireRingTimer;
 					variables.reward_1 = message.data.reward_1;
 					variables.reward_2 = message.data.reward_2;
 					variables.reward_3 = message.data.reward_3;
+					variables.reward_extra = message.data.reward_extra;
 					variables.dkc_cleared = message.data.dkc_cleared;
+					variables.dkc_x = message.data.dkc_x;
+					variables.dkc_y = message.data.dkc_y;
+					variables.dkc_z = message.data.dkc_z;
+					variables.dkc_started = message.data.dkc_started;
+					variables.cooldownData = message.data.cooldownData;
 				}
 			});
 			context.setPacketHandled(true);

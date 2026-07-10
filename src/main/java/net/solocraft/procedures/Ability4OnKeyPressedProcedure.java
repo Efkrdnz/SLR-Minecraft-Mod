@@ -23,6 +23,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
+import net.solocraft.util.CooldownManager;
 
 public class Ability4OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -33,9 +34,8 @@ public class Ability4OnKeyPressedProcedure {
 		ItemStack leg = ItemStack.EMPTY;
 		ItemStack feet = ItemStack.EMPTY;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).combatmode) {
-			if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.AURA_COOLDOWN.get()))) {
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.AURA_COOLDOWN.get(), 7200, 1, false, false));
+			if (!CooldownManager.isOnCooldown(entity, "aura")) {
+				CooldownManager.set(entity, "aura", 7200);
 				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.AURA.get(), 3600, 1, false, false));
 				if (world instanceof Level _level) {

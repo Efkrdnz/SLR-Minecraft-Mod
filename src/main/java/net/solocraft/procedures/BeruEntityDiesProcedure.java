@@ -47,7 +47,7 @@ public class BeruEntityDiesProcedure {
 								_ent.getServer().getCommands().performPrefixedCommand(
 										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p title {\"text\":\"Boss Slain\",\"color\":\"#DF9607\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+										"/slnotify both &6&lBoss Slain | &eDungeon Cleared!");
 							}
 						}
 						{
@@ -56,7 +56,7 @@ public class BeruEntityDiesProcedure {
 								_ent.getServer().getCommands().performPrefixedCommand(
 										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p subtitle {\"text\":\"Dungeon Cleared!\",\"color\":\"gold\",\"bold\":false,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+										"/title @p clear");
 							}
 						}
 						{
@@ -96,7 +96,7 @@ public class BeruEntityDiesProcedure {
 								_ent.getServer().getCommands().performPrefixedCommand(
 										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p title {\"text\":\"Boss Slain\",\"color\":\"#DF9607\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+										"/slnotify both &6&lBoss Slain | &eDungeon Cleared!");
 							}
 						}
 						{
@@ -105,7 +105,7 @@ public class BeruEntityDiesProcedure {
 								_ent.getServer().getCommands().performPrefixedCommand(
 										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p subtitle {\"text\":\"Dungeon Cleared!\",\"color\":\"gold\",\"bold\":false,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+										"/title @p clear");
 							}
 						}
 						{
@@ -147,7 +147,7 @@ public class BeruEntityDiesProcedure {
 											_ent.getServer().getCommands().performPrefixedCommand(
 													new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 															_ent.getDisplayName(), _ent.level().getServer(), _ent),
-													"/title @p title {\"text\":\"Boss Slain\",\"color\":\"#DF9607\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+													"/slnotify both &6&lBoss Slain | &eDungeon Cleared!");
 										}
 									}
 									{
@@ -156,7 +156,7 @@ public class BeruEntityDiesProcedure {
 											_ent.getServer().getCommands().performPrefixedCommand(
 													new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 															_ent.getDisplayName(), _ent.level().getServer(), _ent),
-													"/title @p subtitle {\"text\":\"Dungeon Cleared!\",\"color\":\"gold\",\"bold\":false,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+													"/title @p clear");
 										}
 									}
 									{

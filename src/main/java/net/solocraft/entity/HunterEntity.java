@@ -21,6 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -156,8 +157,8 @@ public class HunterEntity extends TamableAnimal {
 				return super.canContinueToUse() && IsNotInCombatProcedure.execute(entity);
 			}
 		});
-		this.goalSelector.addGoal(5, new OwnerHurtByTargetGoal(this));
-		this.goalSelector.addGoal(6, new OwnerHurtByTargetGoal(this));
+		this.targetSelector.addGoal(3, new OwnerHurtByTargetGoal(this));
+		this.targetSelector.addGoal(4, new OwnerHurtTargetGoal(this));
 		this.goalSelector.addGoal(7, new RandomStrollGoal(this, 1));
 		this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(9, new FloatGoal(this));
@@ -302,7 +303,9 @@ public class HunterEntity extends TamableAnimal {
 	@Override
 	public void baseTick() {
 		super.baseTick();
-		HunterOnEntityTickUpdateProcedure.execute(this.level(), this.getX(), this.getY(), this.getZ(), this);
+		if (!this.level().isClientSide()) {
+			HunterOnEntityTickUpdateProcedure.execute(this.level(), this.getX(), this.getY(), this.getZ(), this);
+		}
 	}
 
 	@Override

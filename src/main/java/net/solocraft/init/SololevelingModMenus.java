@@ -1,9 +1,6 @@
-
-/*
- *	MCreator note: This file will be REGENERATED on each build.
- */
 package net.solocraft.init;
 
+import net.solocraft.world.inventory.GuildComputerMenu;
 import net.solocraft.world.inventory.WTJoinMenu;
 import net.solocraft.world.inventory.UnlockedSkillsTab7Menu;
 import net.solocraft.world.inventory.UnlockedSkillsTab6Menu;
@@ -21,6 +18,8 @@ import net.solocraft.world.inventory.StoreGUIMenu;
 import net.solocraft.world.inventory.SpecialCraftingGUIMenu;
 import net.solocraft.world.inventory.ShopMenu;
 import net.solocraft.world.inventory.ShadowSummonGUIMenu;
+import net.solocraft.world.inventory.ShadowDismissMenu;
+import net.solocraft.world.inventory.ShadowCommandMenu;
 import net.solocraft.world.inventory.ShadowGUIMenu;
 import net.solocraft.world.inventory.ShadowExchangeSaveMenu;
 import net.solocraft.world.inventory.ShadowExchangeSETMenu;
@@ -75,6 +74,8 @@ public class SololevelingModMenus {
 	public static final RegistryObject<MenuType<ShopMenu>> SHOP = REGISTRY.register("shop", () -> IForgeMenuType.create(ShopMenu::new));
 	public static final RegistryObject<MenuType<FoodGuiMenu>> FOOD_GUI = REGISTRY.register("food_gui", () -> IForgeMenuType.create(FoodGuiMenu::new));
 	public static final RegistryObject<MenuType<ShadowSummonGUIMenu>> SHADOW_SUMMON_GUI = REGISTRY.register("shadow_summon_gui", () -> IForgeMenuType.create(ShadowSummonGUIMenu::new));
+	public static final RegistryObject<MenuType<ShadowDismissMenu>> SHADOW_DISMISS = REGISTRY.register("shadow_dismiss", () -> IForgeMenuType.create(ShadowDismissMenu::new));
+	public static final RegistryObject<MenuType<ShadowCommandMenu>> SHADOW_COMMAND = REGISTRY.register("shadow_command", () -> IForgeMenuType.create(ShadowCommandMenu::new));
 	public static final RegistryObject<MenuType<ReaderGUIMenu>> READER_GUI = REGISTRY.register("reader_gui", () -> IForgeMenuType.create(ReaderGUIMenu::new));
 	public static final RegistryObject<MenuType<HunterIDGuiMenu>> HUNTER_ID_GUI = REGISTRY.register("hunter_id_gui", () -> IForgeMenuType.create(HunterIDGuiMenu::new));
 	public static final RegistryObject<MenuType<MiscItemsMenu>> MISC_ITEMS = REGISTRY.register("misc_items", () -> IForgeMenuType.create(MiscItemsMenu::new));
@@ -95,4 +96,7 @@ public class SololevelingModMenus {
 	public static final RegistryObject<MenuType<UnlockedSkillsTab7Menu>> UNLOCKED_SKILLS_TAB_7 = REGISTRY.register("unlocked_skills_tab_7", () -> IForgeMenuType.create(UnlockedSkillsTab7Menu::new));
 	public static final RegistryObject<MenuType<PathMenu>> PATH = REGISTRY.register("path", () -> IForgeMenuType.create(PathMenu::new));
 	public static final RegistryObject<MenuType<QuestsMenu>> QUESTS = REGISTRY.register("quests", () -> IForgeMenuType.create(QuestsMenu::new));
+
+	// â”€â”€ Guild System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+	public static final RegistryObject<MenuType<GuildComputerMenu>> GUILD_COMPUTER = REGISTRY.register("guild_computer", () -> IForgeMenuType.create(GuildComputerMenu::new));
 }

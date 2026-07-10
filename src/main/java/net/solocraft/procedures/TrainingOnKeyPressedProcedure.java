@@ -48,14 +48,17 @@ public class TrainingOnKeyPressedProcedure {
 				}
 			});
 			if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).traintype).equals("Pushup")) {
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).pushup < 25) {
+				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).pushup < DailyQuestHelper.trainingTarget(entity)) {
+					double previousValue = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).pushup;
+					double newValue = previousValue + 1;
 					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).pushup + 1;
+						double _setval = newValue;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 							capability.pushup = _setval;
 							capability.syncPlayerVariables(entity);
 						});
 					}
+					DailyQuestHelper.checkSecretTransition(entity, previousValue, newValue, DailyQuestHelper.NORMAL_TRAINING_TARGET);
 					if (world.isClientSide()) {
 						if (entity instanceof AbstractClientPlayer player) {
 							var animation = (ModifierLayer<IAnimation>) PlayerAnimationAccess.getPlayerAssociatedData(player).get(new ResourceLocation("sololeveling", "player_animation"));
@@ -80,14 +83,17 @@ public class TrainingOnKeyPressedProcedure {
 				}
 			}
 			if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).traintype).equals("Situp")) {
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).situp < 25) {
+				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).situp < DailyQuestHelper.trainingTarget(entity)) {
+					double previousValue = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).situp;
+					double newValue = previousValue + 1;
 					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).situp + 1;
+						double _setval = newValue;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 							capability.situp = _setval;
 							capability.syncPlayerVariables(entity);
 						});
 					}
+					DailyQuestHelper.checkSecretTransition(entity, previousValue, newValue, DailyQuestHelper.NORMAL_TRAINING_TARGET);
 					if (world.isClientSide()) {
 						if (entity instanceof AbstractClientPlayer player) {
 							var animation = (ModifierLayer<IAnimation>) PlayerAnimationAccess.getPlayerAssociatedData(player).get(new ResourceLocation("sololeveling", "player_animation"));
@@ -112,14 +118,17 @@ public class TrainingOnKeyPressedProcedure {
 				}
 			}
 			if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).traintype).equals("Squat")) {
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).squat < 25) {
+				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).squat < DailyQuestHelper.trainingTarget(entity)) {
+					double previousValue = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).squat;
+					double newValue = previousValue + 1;
 					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).squat + 1;
+						double _setval = newValue;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 							capability.squat = _setval;
 							capability.syncPlayerVariables(entity);
 						});
 					}
+					DailyQuestHelper.checkSecretTransition(entity, previousValue, newValue, DailyQuestHelper.NORMAL_TRAINING_TARGET);
 					if (world.isClientSide()) {
 						if (entity instanceof AbstractClientPlayer player) {
 							var animation = (ModifierLayer<IAnimation>) PlayerAnimationAccess.getPlayerAssociatedData(player).get(new ResourceLocation("sololeveling", "player_animation"));

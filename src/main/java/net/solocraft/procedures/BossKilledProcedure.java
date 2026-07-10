@@ -37,19 +37,21 @@ public class BossKilledProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
+		sourceentity = ShadowKillCreditHelper.creditedSource(world, sourceentity);
+		final Entity creditedSourceentity = sourceentity;
 		if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dungeoning == true || !((entity.level().dimension()) == Level.OVERWORLD)) {
 			if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("soloboss")))) {
+				// Guild XP is handled by GuildBossKillProcedure (separate event subscriber)
 				if (sourceentity instanceof Player) {
 					if (((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party).equals("")) {
 						{
 							boolean _setval = true;
 							sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 								capability.BossKilled = _setval;
-								capability.syncPlayerVariables(sourceentity);
+								capability.syncPlayerVariables(creditedSourceentity);
 							});
 						}
-						SololevelingModVariables.MapVariables.get(world).GatesCleared = SololevelingModVariables.MapVariables.get(world).GatesCleared + "" + sourceentity.getPersistentData().getString("dungeon_tag") + ",";
-						SololevelingModVariables.MapVariables.get(world).syncData(world);
+						markGateCleared(world, resolveDungeonTag(world, entity, sourceentity));
 					} else {
 						for (Entity entityiterator : new ArrayList<>(world.players())) {
 							if (((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party)
@@ -62,8 +64,7 @@ public class BossKilledProcedure {
 											capability.syncPlayerVariables(entityiterator);
 										});
 									}
-									SololevelingModVariables.MapVariables.get(world).GatesCleared = SololevelingModVariables.MapVariables.get(world).GatesCleared + "" + entityiterator.getPersistentData().getString("dungeon_tag") + ",";
-									SololevelingModVariables.MapVariables.get(world).syncData(world);
+									markGateCleared(world, resolveDungeonTag(world, entity, entityiterator));
 								}
 							}
 						}
@@ -76,12 +77,10 @@ public class BossKilledProcedure {
 								boolean _setval = true;
 								(sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 									capability.BossKilled = _setval;
-									capability.syncPlayerVariables((sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null));
+									capability.syncPlayerVariables((creditedSourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null));
 								});
 							}
-							SololevelingModVariables.MapVariables.get(world).GatesCleared = SololevelingModVariables.MapVariables.get(world).GatesCleared + ""
-									+ ((sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getPersistentData().getString("dungeon_tag")) + ",";
-							SololevelingModVariables.MapVariables.get(world).syncData(world);
+							markGateCleared(world, resolveDungeonTag(world, entity, (sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null)));
 						} else {
 							for (Entity entityiterator : new ArrayList<>(world.players())) {
 								if ((((sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -95,16 +94,14 @@ public class BossKilledProcedure {
 												capability.syncPlayerVariables(entityiterator);
 											});
 										}
-										SololevelingModVariables.MapVariables.get(world).GatesCleared = SololevelingModVariables.MapVariables.get(world).GatesCleared + "" + entityiterator.getPersistentData().getString("dungeon_tag") + ",";
-										SololevelingModVariables.MapVariables.get(world).syncData(world);
+										markGateCleared(world, resolveDungeonTag(world, entity, entityiterator));
 									}
 								}
 							}
 						}
 					}
 				} else {
-					SololevelingModVariables.MapVariables.get(world).GatesCleared = SololevelingModVariables.MapVariables.get(world).GatesCleared + "" + entity.getPersistentData().getString("dungeon_tag") + ",";
-					SololevelingModVariables.MapVariables.get(world).syncData(world);
+					markGateCleared(world, resolveDungeonTag(world, entity, sourceentity));
 				}
 			} else if (entity instanceof FangedKasakaEntity) {
 				if (((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party).equals("")) {
@@ -112,7 +109,7 @@ public class BossKilledProcedure {
 						boolean _setval = true;
 						sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 							capability.instancecomplete = _setval;
-							capability.syncPlayerVariables(sourceentity);
+							capability.syncPlayerVariables(creditedSourceentity);
 						});
 					}
 				} else {
@@ -133,5 +130,44 @@ public class BossKilledProcedure {
 				}
 			}
 		}
+	}
+
+	private static void markGateCleared(LevelAccessor world, String dungeonTag) {
+		if (dungeonTag == null || dungeonTag.isEmpty())
+			return;
+		String token = dungeonTag + ",";
+		if (!SololevelingModVariables.MapVariables.get(world).GatesCleared.contains(token)) {
+			SololevelingModVariables.MapVariables.get(world).GatesCleared = SololevelingModVariables.MapVariables.get(world).GatesCleared + token;
+			SololevelingModVariables.MapVariables.get(world).syncData(world);
+		}
+	}
+
+	private static String resolveDungeonTag(LevelAccessor world, Entity boss, Entity sourceentity) {
+		String tag = dungeonTag(sourceentity);
+		if (!tag.isEmpty())
+			return tag;
+		if (sourceentity instanceof TamableAnimal tame && tame.getOwner() != null) {
+			tag = dungeonTag(tame.getOwner());
+			if (!tag.isEmpty())
+				return tag;
+		}
+		tag = dungeonTag(boss);
+		if (!tag.isEmpty())
+			return tag;
+		for (Entity player : new ArrayList<>(world.players())) {
+			if ((boss.level().dimension()) == (player.level().dimension())) {
+				tag = dungeonTag(player);
+				if (!tag.isEmpty())
+					return tag;
+			}
+		}
+		return "";
+	}
+
+	private static String dungeonTag(Entity entity) {
+		if (entity == null)
+			return "";
+		String tag = entity.getPersistentData().getString("dungeon_tag");
+		return tag == null ? "" : tag;
 	}
 }

@@ -1,17 +1,10 @@
 
 package net.solocraft.network;
 
+import net.solocraft.procedures.AbilityAppendButtonProcedure;
 import net.solocraft.world.inventory.UnlockedSkillsTab5Menu;
 import net.solocraft.procedures.OpenAbilitylist6Procedure;
 import net.solocraft.procedures.OpenAbilitylist4Procedure;
-import net.solocraft.procedures.AbilityAppendButton40Procedure;
-import net.solocraft.procedures.AbilityAppendButton39Procedure;
-import net.solocraft.procedures.AbilityAppendButton38Procedure;
-import net.solocraft.procedures.AbilityAppendButton37Procedure;
-import net.solocraft.procedures.AbilityAppendButton36Procedure;
-import net.solocraft.procedures.AbilityAppendButton35Procedure;
-import net.solocraft.procedures.AbilityAppendButton34Procedure;
-import net.solocraft.procedures.AbilityAppendButton33Procedure;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -73,35 +66,35 @@ public class UnlockedSkillsTab5ButtonMessage {
 			return;
 		if (buttonID == 0) {
 
-			AbilityAppendButton33Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 33, true);
 		}
 		if (buttonID == 1) {
 
-			AbilityAppendButton34Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 34, true);
 		}
 		if (buttonID == 2) {
 
-			AbilityAppendButton35Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 35, true);
 		}
 		if (buttonID == 3) {
 
-			AbilityAppendButton36Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 36, true);
 		}
 		if (buttonID == 4) {
 
-			AbilityAppendButton37Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 37, true);
 		}
 		if (buttonID == 5) {
 
-			AbilityAppendButton38Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 38, true);
 		}
 		if (buttonID == 6) {
 
-			AbilityAppendButton39Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 39, true);
 		}
 		if (buttonID == 7) {
 
-			AbilityAppendButton40Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 40, true);
 		}
 		if (buttonID == 8) {
 

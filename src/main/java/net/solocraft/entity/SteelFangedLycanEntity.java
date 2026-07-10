@@ -24,6 +24,7 @@ import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.Pose;
@@ -40,6 +41,9 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.nbt.CompoundTag;
 
 public class SteelFangedLycanEntity extends Monster implements GeoEntity {
+	private static final String DEFAULT_TEXTURE = "lycan_normal";
+	private static final String LEGACY_TEXTURE = "lycantext";
+	private static final String DEFAULTS_FIXED_TAG = "slr_steel_fanged_lycan_defaults_fixed";
 	public static final EntityDataAccessor<Boolean> SHOOT = SynchedEntityData.defineId(SteelFangedLycanEntity.class, EntityDataSerializers.BOOLEAN);
 	public static final EntityDataAccessor<String> ANIMATION = SynchedEntityData.defineId(SteelFangedLycanEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> TEXTURE = SynchedEntityData.defineId(SteelFangedLycanEntity.class, EntityDataSerializers.STRING);
@@ -65,11 +69,11 @@ public class SteelFangedLycanEntity extends Monster implements GeoEntity {
 		super.defineSynchedData();
 		this.entityData.define(SHOOT, false);
 		this.entityData.define(ANIMATION, "undefined");
-		this.entityData.define(TEXTURE, "lycan_normal");
+		this.entityData.define(TEXTURE, DEFAULT_TEXTURE);
 	}
 
 	public void setTexture(String texture) {
-		this.entityData.set(TEXTURE, texture);
+		this.entityData.set(TEXTURE, normalizeTexture(texture));
 	}
 
 	public String getTexture() {
@@ -123,6 +127,7 @@ public class SteelFangedLycanEntity extends Monster implements GeoEntity {
 	@Override
 	public void baseTick() {
 		super.baseTick();
+		repairLegacyStructureData();
 		this.refreshDimensions();
 	}
 
@@ -142,6 +147,26 @@ public class SteelFangedLycanEntity extends Monster implements GeoEntity {
 		builder = builder.add(Attributes.ATTACK_DAMAGE, 8);
 		builder = builder.add(Attributes.FOLLOW_RANGE, 16);
 		return builder;
+	}
+
+	private void repairLegacyStructureData() {
+		if (this.level().isClientSide() || this.getPersistentData().getBoolean(DEFAULTS_FIXED_TAG))
+			return;
+		this.getPersistentData().putBoolean(DEFAULTS_FIXED_TAG, true);
+		this.setTexture(this.getTexture());
+		double level = Math.max(0.0D, this.getPersistentData().getDouble("Level"));
+		double expectedMaxHealth = 30.0D + level * 0.4D;
+		AttributeInstance maxHealth = this.getAttribute(Attributes.MAX_HEALTH);
+		if (maxHealth != null && maxHealth.getBaseValue() < expectedMaxHealth)
+			maxHealth.setBaseValue(expectedMaxHealth);
+		if (this.getHealth() < this.getMaxHealth())
+			this.setHealth(this.getMaxHealth());
+	}
+
+	private static String normalizeTexture(String texture) {
+		if (texture == null || texture.isBlank() || LEGACY_TEXTURE.equals(texture))
+			return DEFAULT_TEXTURE;
+		return texture;
 	}
 
 	private PlayState movementPredicate(AnimationState event) {

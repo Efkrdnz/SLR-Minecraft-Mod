@@ -26,8 +26,6 @@ public class BuyPotionHP1Procedure {
 				_setstack.setCount(1);
 				ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
 			}
-			if (entity instanceof Player _player)
-				_player.closeContainer();
 		}
 	}
 }

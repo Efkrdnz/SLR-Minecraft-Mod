@@ -10,7 +10,6 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.GeoEntity;
 
-import net.solocraft.procedures.BeruShadowEntityIsHurtProcedure;
 import net.solocraft.procedures.BeruEntityDiesProcedure;
 import net.solocraft.procedures.BeruBossOnEntityTickUpdateProcedure;
 import net.solocraft.procedures.BeruBossDeathTimeIsReachedProcedure;
@@ -167,7 +166,9 @@ public class BeruBossEntity extends Monster implements GeoEntity {
 
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
-		BeruShadowEntityIsHurtProcedure.execute(this.level(), this.getX(), this.getY(), this.getZ(), this, source.getEntity());
+		this.entityData.set(DATA_recovery, 5);
+		if (!this.level().isClientSide && this.random.nextInt(3) == 2)
+			this.setAnimation("attack2");
 		if (source.is(DamageTypes.FALL))
 			return false;
 		if (source.is(DamageTypes.DROWN))

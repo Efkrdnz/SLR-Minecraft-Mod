@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.entity.SteelFangWolfEntity;
+import net.solocraft.entity.SteelFangedLycanEntity;
 import net.solocraft.entity.PolarBearEntity;
 import net.solocraft.entity.HighOrcEntity;
 import net.solocraft.entity.GreenOrcEntity;
@@ -217,7 +218,8 @@ public class AutoAriseProcedure {
 							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.spawn")), SoundSource.NEUTRAL, 1, 1, false);
 						}
 					}
-				} else if (entity instanceof SteelFangWolfEntity && (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
+				} else if ((entity instanceof SteelFangWolfEntity || entity instanceof SteelFangedLycanEntity)
+						&& (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
 					{
 						double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).WolfShadowMax + 1;
 						sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {

@@ -445,7 +445,7 @@ public class TuskShadowEntity extends TamableAnimal implements GeoEntity {
 				double z = TuskShadowEntity.this.getZ();
 				Entity entity = TuskShadowEntity.this;
 				Level world = TuskShadowEntity.this.level();
-				return super.canUse() && IsBerserkProcedure.execute(entity);
+				return super.canUse() && IsBerserkProcedure.execute(entity) && !net.solocraft.util.ShadowMonarchManager.isShadowEntity(this.target);
 			}
 
 			@Override
@@ -455,7 +455,7 @@ public class TuskShadowEntity extends TamableAnimal implements GeoEntity {
 				double z = TuskShadowEntity.this.getZ();
 				Entity entity = TuskShadowEntity.this;
 				Level world = TuskShadowEntity.this.level();
-				return super.canContinueToUse() && IsBerserkProcedure.execute(entity);
+				return super.canContinueToUse() && IsBerserkProcedure.execute(entity) && !net.solocraft.util.ShadowMonarchManager.isShadowEntity(this.target);
 			}
 		});
 		this.targetSelector.addGoal(18, new OwnerHurtTargetGoal(this));

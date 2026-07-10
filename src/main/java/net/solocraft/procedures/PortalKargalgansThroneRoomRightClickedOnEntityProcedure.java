@@ -41,6 +41,8 @@ public class PortalKargalgansThroneRoomRightClickedOnEntityProcedure {
 			return;
 		double rand = 0;
 		if (!((sourceentity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MAGIC_READER.get())) {
+			if (net.solocraft.guild.GuildGateHelper.prepareGateEntry(world, entity, sourceentity))
+				return;
 			{
 				final Vec3 _center = new Vec3(x, y, z);
 				List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(500 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
@@ -95,6 +97,7 @@ public class PortalKargalgansThroneRoomRightClickedOnEntityProcedure {
 					}
 				}
 				sourceentity.getPersistentData().putString("dungeon_tag", (entity.getStringUUID()));
+				net.solocraft.util.UrgentQuestManager.markDungeonId(sourceentity, "kargalgan_throne");
 				SololevelingMod.queueServerWork(5, () -> {
 					{
 						Entity _ent = sourceentity;

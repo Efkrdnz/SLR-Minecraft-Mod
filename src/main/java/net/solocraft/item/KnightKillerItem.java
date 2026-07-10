@@ -1,7 +1,6 @@
 
 package net.solocraft.item;
 
-import net.solocraft.procedures.KnightKillerEntitySwingsItemProcedure;
 import net.solocraft.procedures.DemonKingsLongSwordHasItemGlowingEffectProcedure;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -62,7 +61,6 @@ public class KnightKillerItem extends SwordItem {
 	@Override
 	public boolean onEntitySwing(ItemStack itemstack, LivingEntity entity) {
 		boolean retval = super.onEntitySwing(itemstack, entity);
-		KnightKillerEntitySwingsItemProcedure.execute();
 		return retval;
 	}
 

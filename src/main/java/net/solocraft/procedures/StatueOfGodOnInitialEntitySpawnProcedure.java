@@ -10,6 +10,8 @@ public class StatueOfGodOnInitialEntitySpawnProcedure {
 		if (entity == null)
 			return;
 		entity.getPersistentData().putString("state", "throne");
+		if (entity instanceof StatueOfGodEntity _datEntSetS)
+			_datEntSetS.getEntityData().set(StatueOfGodEntity.DATA_state, "throne");
 		if (entity instanceof StatueOfGodEntity _datEntSetI)
 			_datEntSetI.getEntityData().set(StatueOfGodEntity.DATA_default_x, (int) entity.getX());
 		if (entity instanceof StatueOfGodEntity _datEntSetI)

@@ -434,7 +434,7 @@ public class IgrisShadowEntity extends TamableAnimal implements GeoEntity {
 				double z = IgrisShadowEntity.this.getZ();
 				Entity entity = IgrisShadowEntity.this;
 				Level world = IgrisShadowEntity.this.level();
-				return super.canUse() && IsBerserkProcedure.execute(entity);
+				return super.canUse() && IsBerserkProcedure.execute(entity) && !net.solocraft.util.ShadowMonarchManager.isShadowEntity(this.target);
 			}
 
 			@Override
@@ -444,7 +444,7 @@ public class IgrisShadowEntity extends TamableAnimal implements GeoEntity {
 				double z = IgrisShadowEntity.this.getZ();
 				Entity entity = IgrisShadowEntity.this;
 				Level world = IgrisShadowEntity.this.level();
-				return super.canContinueToUse() && IsBerserkProcedure.execute(entity);
+				return super.canContinueToUse() && IsBerserkProcedure.execute(entity) && !net.solocraft.util.ShadowMonarchManager.isShadowEntity(this.target);
 			}
 		});
 		this.targetSelector.addGoal(18, new OwnerHurtTargetGoal(this));

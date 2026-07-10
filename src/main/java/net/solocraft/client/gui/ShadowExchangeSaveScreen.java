@@ -1,203 +1,134 @@
 package net.solocraft.client.gui;
 
-import net.solocraft.world.inventory.ShadowExchangeSaveMenu;
-import net.solocraft.procedures.DoesHaveWolfProcedure;
-import net.solocraft.procedures.DoesHavePolarBearProcedure;
-import net.solocraft.procedures.DoesHaveKnightsProcedure;
-import net.solocraft.procedures.DoesHaveGoblinProcedure;
-import net.solocraft.procedures.DoesHaveGoblinMageProcedure;
-import net.solocraft.procedures.DoesHaveGoblinArcherProcedure;
-import net.solocraft.network.ShadowExchangeSaveButtonMessage;
 import net.solocraft.SololevelingMod;
+import net.solocraft.network.ShadowExchangeSaveButtonMessage;
+import net.solocraft.procedures.DoesHaveGoblinArcherProcedure;
+import net.solocraft.procedures.DoesHaveGoblinMageProcedure;
+import net.solocraft.procedures.DoesHaveGoblinProcedure;
+import net.solocraft.procedures.DoesHaveKnightsProcedure;
+import net.solocraft.procedures.DoesHavePolarBearProcedure;
+import net.solocraft.procedures.DoesHaveWolfProcedure;
+import net.solocraft.world.inventory.ShadowExchangeSaveMenu;
 
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-
-public class ShadowExchangeSaveScreen extends AbstractContainerScreen<ShadowExchangeSaveMenu> {
+public class ShadowExchangeSaveScreen extends ShadowStyledScreen<ShadowExchangeSaveMenu> {
 	private final static HashMap<String, Object> guistate = ShadowExchangeSaveMenu.guistate;
+	private static final SaveEntry[] ENTRIES = {
+			new SaveEntry(0, "Knight"),
+			new SaveEntry(1, "Goblin Fighter"),
+			new SaveEntry(2, "Goblin Archer"),
+			new SaveEntry(3, "Goblin Mage"),
+			new SaveEntry(4, "Lycan"),
+			new SaveEntry(5, "Polar Bear")
+	};
+
 	private final Level world;
-	private final int x, y, z;
+	private final int x;
+	private final int y;
+	private final int z;
 	private final Player entity;
-	ImageButton imagebutton_panel_rework_rewardbutton_purple;
-	ImageButton imagebutton_panel_rework_rewardbutton_purple1;
-	ImageButton imagebutton_panel_rework_rewardbutton_purple2;
-	ImageButton imagebutton_panel_rework_rewardbutton2_purpl;
-	ImageButton imagebutton_panel_rework_rewardbutton_purple3;
-	ImageButton imagebutton_panel_rework_rewardbutton2_purpl1;
+	private final ShadowButton[] buttons = new ShadowButton[ENTRIES.length];
 
 	public ShadowExchangeSaveScreen(ShadowExchangeSaveMenu container, Inventory inventory, Component text) {
-		super(container, inventory, text);
+		super(container, inventory, text, 360, 212);
 		this.world = container.world;
 		this.x = container.x;
 		this.y = container.y;
 		this.z = container.z;
 		this.entity = container.entity;
-		this.imageWidth = 0;
-		this.imageHeight = 0;
 	}
 
 	@Override
-	public boolean isPauseScreen() {
-		return true;
-	}
-
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/shadow_exchange_save.png");
-
-	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		this.renderTooltip(guiGraphics, mouseX, mouseY);
+	protected String shadowTitle() {
+		return "SET EXCHANGE SHADOW";
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int gx, int gy) {
-		RenderSystem.setShaderColor(1, 1, 1, 1);
-		RenderSystem.enableBlend();
-		RenderSystem.defaultBlendFunc();
-		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
-
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/panel_rework_vertical2_purple.png"), this.leftPos + -100, this.topPos + -112, 0, 0, 200, 225, 200, 225);
-
-		RenderSystem.disableBlend();
-	}
-
-	@Override
-	public boolean keyPressed(int key, int b, int c) {
-		if (key == 256) {
-			this.minecraft.player.closeContainer();
-			return true;
+	protected void initShadowWidgets() {
+		for (int i = 0; i < ENTRIES.length; i++) {
+			SaveEntry entry = ENTRIES[i];
+			ShadowButton button = new ShadowButton(0, 0, 150, 27, Component.literal(entry.label), entry.id % 2 == 1, b -> sendButton(entry.id));
+			buttons[i] = button;
+			guistate.put("button:shadow_exchange_save_" + entry.id, button);
+			this.addRenderableWidget(button);
 		}
-		return super.keyPressed(key, b, c);
+		layoutButtons();
 	}
 
 	@Override
 	public void containerTick() {
 		super.containerTick();
+		layoutButtons();
+	}
+
+	@Override
+	protected void renderShadowSections(GuiGraphics guiGraphics) {
+		int x = leftPos;
+		int y = topPos;
+		outline(guiGraphics, x + 12, y + 32, 336, 160, 0x7743C8FF);
+		guiGraphics.fill(x + 13, y + 33, x + 347, y + 47, 0x33124B76);
 	}
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		if (DoesHaveKnightsProcedure.execute(entity))
-			guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.shadow_exchange_save.label_knight"), -16, -65, -1, false);
-		if (DoesHaveGoblinProcedure.execute(entity))
-			guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.shadow_exchange_save.label_goblin_club"), -28, -39, -1, false);
-		if (DoesHaveGoblinArcherProcedure.execute(entity))
-			guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.shadow_exchange_save.label_goblin_archer"), -34, -15, -1, false);
-		if (DoesHaveGoblinMageProcedure.execute(entity))
-			guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.shadow_exchange_save.label_goblin_mage"), -28, 11, -1, false);
-		if (DoesHaveWolfProcedure.execute(entity))
-			guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.shadow_exchange_save.label_lycan"), -14, 36, -1, false);
-		if (DoesHavePolarBearProcedure.execute(entity))
-			guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.shadow_exchange_save.label_polar_bear"), -26, 60, -1, false);
+		guiGraphics.drawString(this.font, "AVAILABLE SHADOWS", 18, 37, ACCENT_BLUE, false);
+		if (visibleCount() == 0)
+			guiGraphics.drawCenteredString(this.font, Component.literal("No summonable shadows available."), imageWidth / 2, 105, TEXT_SUB);
 	}
 
-	@Override
-	public void onClose() {
-		super.onClose();
+	private void layoutButtons() {
+		int visible = 0;
+		for (int i = 0; i < ENTRIES.length; i++) {
+			ShadowButton button = buttons[i];
+			if (button == null)
+				continue;
+			boolean show = hasShadow(ENTRIES[i].id);
+			button.visible = show;
+			button.active = show;
+			if (!show)
+				continue;
+			int col = visible % 2;
+			int row = visible / 2;
+			button.setPosition(leftPos + 24 + col * 162, topPos + 58 + row * 38);
+			visible++;
+		}
 	}
 
-	@Override
-	public void init() {
-		super.init();
-		imagebutton_panel_rework_rewardbutton_purple = new ImageButton(this.leftPos + -32, this.topPos + -71, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton_purple.png"), 64, 42,
-				e -> {
-					if (DoesHaveKnightsProcedure.execute(entity)) {
-						SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowExchangeSaveButtonMessage(0, x, y, z));
-						ShadowExchangeSaveButtonMessage.handleButtonAction(entity, 0, x, y, z);
-					}
-				}) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (DoesHaveKnightsProcedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
+	private int visibleCount() {
+		int count = 0;
+		for (SaveEntry entry : ENTRIES) {
+			if (hasShadow(entry.id))
+				count++;
+		}
+		return count;
+	}
+
+	private boolean hasShadow(int id) {
+		return switch (id) {
+			case 0 -> DoesHaveKnightsProcedure.execute(entity);
+			case 1 -> DoesHaveGoblinProcedure.execute(entity);
+			case 2 -> DoesHaveGoblinArcherProcedure.execute(entity);
+			case 3 -> DoesHaveGoblinMageProcedure.execute(entity);
+			case 4 -> DoesHaveWolfProcedure.execute(entity);
+			case 5 -> DoesHavePolarBearProcedure.execute(entity);
+			default -> false;
 		};
-		guistate.put("button:imagebutton_panel_rework_rewardbutton_purple", imagebutton_panel_rework_rewardbutton_purple);
-		this.addRenderableWidget(imagebutton_panel_rework_rewardbutton_purple);
-		imagebutton_panel_rework_rewardbutton_purple1 = new ImageButton(this.leftPos + -32, this.topPos + -46, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton_purple1.png"), 64, 42,
-				e -> {
-					if (DoesHaveGoblinProcedure.execute(entity)) {
-						SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowExchangeSaveButtonMessage(1, x, y, z));
-						ShadowExchangeSaveButtonMessage.handleButtonAction(entity, 1, x, y, z);
-					}
-				}) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (DoesHaveGoblinProcedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		};
-		guistate.put("button:imagebutton_panel_rework_rewardbutton_purple1", imagebutton_panel_rework_rewardbutton_purple1);
-		this.addRenderableWidget(imagebutton_panel_rework_rewardbutton_purple1);
-		imagebutton_panel_rework_rewardbutton_purple2 = new ImageButton(this.leftPos + -48, this.topPos + -21, 96, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton_purple2.png"), 96, 42,
-				e -> {
-					if (DoesHaveGoblinArcherProcedure.execute(entity)) {
-						SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowExchangeSaveButtonMessage(2, x, y, z));
-						ShadowExchangeSaveButtonMessage.handleButtonAction(entity, 2, x, y, z);
-					}
-				}) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (DoesHaveGoblinArcherProcedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		};
-		guistate.put("button:imagebutton_panel_rework_rewardbutton_purple2", imagebutton_panel_rework_rewardbutton_purple2);
-		this.addRenderableWidget(imagebutton_panel_rework_rewardbutton_purple2);
-		imagebutton_panel_rework_rewardbutton2_purpl = new ImageButton(this.leftPos + -32, this.topPos + 4, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton2_purpl.png"), 64, 42, e -> {
-			if (DoesHaveGoblinMageProcedure.execute(entity)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowExchangeSaveButtonMessage(3, x, y, z));
-				ShadowExchangeSaveButtonMessage.handleButtonAction(entity, 3, x, y, z);
-			}
-		}) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (DoesHaveGoblinMageProcedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		};
-		guistate.put("button:imagebutton_panel_rework_rewardbutton2_purpl", imagebutton_panel_rework_rewardbutton2_purpl);
-		this.addRenderableWidget(imagebutton_panel_rework_rewardbutton2_purpl);
-		imagebutton_panel_rework_rewardbutton_purple3 = new ImageButton(this.leftPos + -32, this.topPos + 29, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton_purple3.png"), 64, 42,
-				e -> {
-					if (DoesHaveWolfProcedure.execute(entity)) {
-						SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowExchangeSaveButtonMessage(4, x, y, z));
-						ShadowExchangeSaveButtonMessage.handleButtonAction(entity, 4, x, y, z);
-					}
-				}) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (DoesHaveWolfProcedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		};
-		guistate.put("button:imagebutton_panel_rework_rewardbutton_purple3", imagebutton_panel_rework_rewardbutton_purple3);
-		this.addRenderableWidget(imagebutton_panel_rework_rewardbutton_purple3);
-		imagebutton_panel_rework_rewardbutton2_purpl1 = new ImageButton(this.leftPos + -32, this.topPos + 53, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton2_purpl1.png"), 64, 42,
-				e -> {
-					if (DoesHavePolarBearProcedure.execute(entity)) {
-						SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowExchangeSaveButtonMessage(5, x, y, z));
-						ShadowExchangeSaveButtonMessage.handleButtonAction(entity, 5, x, y, z);
-					}
-				}) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (DoesHavePolarBearProcedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		};
-		guistate.put("button:imagebutton_panel_rework_rewardbutton2_purpl1", imagebutton_panel_rework_rewardbutton2_purpl1);
-		this.addRenderableWidget(imagebutton_panel_rework_rewardbutton2_purpl1);
+	}
+
+	private void sendButton(int buttonId) {
+		if (!hasShadow(buttonId))
+			return;
+		SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowExchangeSaveButtonMessage(buttonId, x, y, z));
+		ShadowExchangeSaveButtonMessage.handleButtonAction(entity, buttonId, x, y, z);
+	}
+
+	private record SaveEntry(int id, String label) {
 	}
 }

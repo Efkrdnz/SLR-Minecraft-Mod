@@ -79,7 +79,7 @@ public class SpecialCraftingGUIMenu extends AbstractContainerMenu implements Sup
 					});
 			}
 		}
-		this.customSlots.put(0, this.addSlot(new SlotItemHandler(internal, 0, 50, -14) {
+		this.customSlots.put(0, this.addSlot(new SlotItemHandler(internal, 0, -8, -120) {
 			private final int slot = 0;
 
 			@Override
@@ -87,7 +87,7 @@ public class SpecialCraftingGUIMenu extends AbstractContainerMenu implements Sup
 				return stack.is(ItemTags.create(new ResourceLocation("minecraft:slot_1")));
 			}
 		}));
-		this.customSlots.put(1, this.addSlot(new SlotItemHandler(internal, 1, 115, 0) {
+		this.customSlots.put(1, this.addSlot(new SlotItemHandler(internal, 1, 42, -48) {
 			private final int slot = 1;
 
 			@Override
@@ -95,7 +95,7 @@ public class SpecialCraftingGUIMenu extends AbstractContainerMenu implements Sup
 				return stack.is(ItemTags.create(new ResourceLocation("minecraft:slot_2")));
 			}
 		}));
-		this.customSlots.put(2, this.addSlot(new SlotItemHandler(internal, 2, 68, 45) {
+		this.customSlots.put(2, this.addSlot(new SlotItemHandler(internal, 2, -58, -48) {
 			private final int slot = 2;
 
 			@Override
@@ -103,7 +103,7 @@ public class SpecialCraftingGUIMenu extends AbstractContainerMenu implements Sup
 				return stack.is(ItemTags.create(new ResourceLocation("minecraft:slot_3")));
 			}
 		}));
-		this.customSlots.put(3, this.addSlot(new SlotItemHandler(internal, 3, 77, 12) {
+		this.customSlots.put(3, this.addSlot(new SlotItemHandler(internal, 3, -8, -74) {
 			private final int slot = 3;
 
 			@Override
@@ -113,9 +113,9 @@ public class SpecialCraftingGUIMenu extends AbstractContainerMenu implements Sup
 		}));
 		for (int si = 0; si < 3; ++si)
 			for (int sj = 0; sj < 9; ++sj)
-				this.addSlot(new Slot(inv, sj + (si + 1) * 9, -3 + 8 + sj * 18, -4 + 84 + si * 18));
+				this.addSlot(new Slot(inv, sj + (si + 1) * 9, -81 + sj * 18, 28 + si * 18));
 		for (int si = 0; si < 9; ++si)
-			this.addSlot(new Slot(inv, si, -3 + 8 + si * 18, -4 + 142));
+			this.addSlot(new Slot(inv, si, -81 + si * 18, 86));
 	}
 
 	@Override

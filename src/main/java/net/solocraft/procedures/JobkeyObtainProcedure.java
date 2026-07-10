@@ -1,8 +1,8 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModGameRules;
+import net.solocraft.util.JobChangeQuestManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -10,10 +10,7 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.TickEvent;
 
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerLevel;
 
 import javax.annotation.Nullable;
 
@@ -36,21 +33,7 @@ public class JobkeyObtainProcedure {
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Player) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level >= (world.getLevelData().getGameRules()
 					.getInt(SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL))) {
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).jobkey == false) {
-					{
-						boolean _setval = true;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.jobkey = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					if (world instanceof ServerLevel _level) {
-						ItemEntity entityToSpawn = new ItemEntity(_level, x, y, z, new ItemStack(SololevelingModItems.JOB_KEY.get()));
-						entityToSpawn.setPickUpDelay(10);
-						entityToSpawn.setUnlimitedLifetime();
-						_level.addFreshEntity(entityToSpawn);
-					}
-				}
+				JobChangeQuestManager.unlockIfEligible(world, entity, world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL));
 			}
 		}
 	}

@@ -1,7 +1,3 @@
-
-/*
- *    MCreator note: This file will be REGENERATED on each build.
- */
 package net.solocraft.init;
 
 import net.solocraft.SololevelingMod;
@@ -66,7 +62,7 @@ public class SololevelingModTabs {
 	public static final RegistryObject<CreativeModeTab> SOLO_LEVELING_MOBS = REGISTRY.register("solo_leveling_mobs",
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.solo_leveling_mobs")).icon(() -> new ItemStack(SololevelingModItems.BLOOD_RED_COM_IGRIS_SPAWN_EGG.get())).displayItems((parameters, tabData) -> {
 				tabData.accept(SololevelingModItems.SUNG_JIN_WOO_SPAWN_EGG.get());
-				tabData.accept(SololevelingModItems.ORC_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.GREEN_ORC_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.GEM_GOLEM_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.BERU_BOSS_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.CENTIPEDE_SPAWN_EGG.get());
@@ -74,7 +70,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.D_KNIGHT_2_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.D_KNIGHT_3_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.MINI_GEM_GOLEM_SPAWN_EGG.get());
-				tabData.accept(SololevelingModItems.STEEL_FANG_WOLF_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.STEEL_FANGED_LYCAN_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.ANCIENT_SAMURAI_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.STONE_GOLEM_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.SPIDER_BOSS_SPAWN_EGG.get());
@@ -102,6 +98,11 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.KARGALGAN_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.SKELETON_WARRIOR_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.SKELETON_BRUTE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.DEMON_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.CERBERUS_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.VULCAN_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.BARAN_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.KAISELIN_SPAWN_EGG.get());
 			})
 
 					.build());
@@ -154,6 +155,8 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.HOLY_WATER_OF_LIFE.get());
 				tabData.accept(SololevelingModItems.GIVE_TUSK.get());
 				tabData.accept(SololevelingModItems.DKC_LEVEL_ITEM.get());
+				tabData.accept(SololevelingModItems.ENTRY_PERMIT.get());
+				tabData.accept(SololevelingModItems.DKC_TRAVEL.get());
 			})
 
 					.build());
@@ -170,6 +173,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModBlocks.INSTANCE_DUNGEON_KEY_LOGGER.get().asItem());
 				tabData.accept(SololevelingModBlocks.INSTANCE_COVER.get().asItem());
 				tabData.accept(SololevelingModBlocks.HUNTER_RANK_EVALUATOR.get().asItem());
+				tabData.accept(SololevelingModBlocks.GUILD_COMPUTER.get().asItem());
 				tabData.accept(SololevelingModBlocks.WOODEN_PASSAGE_OPEN.get().asItem());
 				tabData.accept(SololevelingModBlocks.CELL_DOOR_CLOSED.get().asItem());
 				tabData.accept(SololevelingModBlocks.DUNGEON_FLOOR.get().asItem());
@@ -184,6 +188,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModBlocks.PASSAGE_WALL.get().asItem());
 				tabData.accept(SololevelingModBlocks.DUNGEON_WALL.get().asItem());
 				tabData.accept(SololevelingModBlocks.EVALUATOR_TEST.get().asItem());
+				tabData.accept(SololevelingModBlocks.DEEPSLATE_KEYBLOCK_DKC.get().asItem());
 			})
 
 					.build());
@@ -193,6 +198,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.INSTANCE_DUNGEON_KEY.get());
 				tabData.accept(SololevelingModItems.PORTAL_BERU_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.RED_GATE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.PORTAL_1_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.PORTAL_LUSH_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.PORTAL_KARGALGANS_THRONE_ROOM_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.RANDOM_CAVE_LARGE_SPAWN_EGG.get());
@@ -209,7 +215,6 @@ public class SololevelingModTabs {
 	public static final RegistryObject<CreativeModeTab> EXPERIMENTAL = REGISTRY.register("experimental",
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.experimental")).icon(() -> new ItemStack(SololevelingModItems.PURIFIED_BLOOD_OF_THE_DEMON_KING.get())).displayItems((parameters, tabData) -> {
 				tabData.accept(SololevelingModItems.KAMISH_SPAWN_EGG.get());
-				tabData.accept(SololevelingModItems.STEEL_FANGED_LYCAN_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.DUMMY_PORTAL_NORMAL_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.DUMMY_PORTAL_RED_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.DUMMY_PORTAL_PURPLE_SPAWN_EGG.get());
@@ -221,6 +226,7 @@ public class SololevelingModTabs {
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.runestones")).icon(() -> new ItemStack(SololevelingModItems.RUNESTONE_SHADOW_EXCHANGE.get())).displayItems((parameters, tabData) -> {
 				tabData.accept(SololevelingModItems.RUNESTONE_SHADOW_EXCHANGE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SHADOW_SPIRITUAL_BODY_MANIFESTATION.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_MONARCHS_DOMAIN.get());
 				tabData.accept(SololevelingModItems.MURDERIOUS_INTENT_STONE.get());
 				tabData.accept(SololevelingModItems.TELEKINESIS_STONE.get());
 				tabData.accept(SololevelingModItems.STEALTH_STONE.get());
@@ -247,6 +253,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.RUNESTONE_SWORDOF_LIGHT.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SLAM.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SWORD_DANCE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_SWORD_BEAM.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_HEAL_BEAM.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_BLESSING_MARK.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_PURIFICATION.get());

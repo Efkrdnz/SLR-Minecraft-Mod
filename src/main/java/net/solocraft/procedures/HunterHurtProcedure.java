@@ -52,6 +52,7 @@ public class HunterHurtProcedure {
 						_datEntSetS.getEntityData().set(HunterEntity.DATA_Enemies, ((entity instanceof HunterEntity _datEntS ? _datEntS.getEntityData().get(HunterEntity.DATA_Enemies) : "") + "," + sourceentity.getStringUUID()));
 				}
 			}
+			HunterAIHelper.tryDefensiveReaction(event, entity, sourceentity);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.util.CooldownManager;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.KangTaeshikEntity;
 
@@ -41,8 +41,8 @@ public class AfterImagesStealthProcedure {
 		double rand2 = 0;
 		double rand3 = 0;
 		double rand4 = 0;
-		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.STEALTH_COOLDOWN.get()) && entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(MobEffects.INVISIBILITY)
-				&& (entity instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.STEALTH_COOLDOWN.get()) ? _livEnt.getEffect(SololevelingModMobEffects.STEALTH_COOLDOWN.get()).getDuration() : 0) % 5 == 0) {
+		if (CooldownManager.isOnCooldown(entity, "Stealth") && entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(MobEffects.INVISIBILITY)
+				&& CooldownManager.getRemainingTicks(entity, "Stealth") % 5 == 0) {
 			if (Math.random() < 0.125) {
 				rand2 = -2;
 				rand3 = -2;

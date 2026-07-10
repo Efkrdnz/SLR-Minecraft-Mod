@@ -32,8 +32,8 @@ public class RunestoneCriticalstrikeItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Criticalstrike\""));
-		list.add(Component.literal("User can use \"Criticalstrike\" which will unleash X shaped slash with massive knockback"));
+		list.add(Component.literal("Right click this rune to obtain \"Cross Strike\""));
+		list.add(Component.literal("User can use \"Cross Strike\" to unleash two merging diagonal slashes"));
 	}
 
 	@Override

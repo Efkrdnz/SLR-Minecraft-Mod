@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.FireArrowEntity;
 import net.solocraft.SololevelingMod;
@@ -12,10 +11,10 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerLevel;
+import net.solocraft.util.CooldownManager;
 
 public class FireArrowCastProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
@@ -25,8 +24,7 @@ public class FireArrowCastProcedure {
 		double delay = 0;
 		if (!world.isClientSide()) {
 			if (!entity.isShiftKeyDown()) {
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FIRE_RAIN_COOLDOWN.get(), 100, 1, false, false));
+				CooldownManager.set(entity, "Fire Rain", 100);
 				inteligence = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence;
 				entity.getPersistentData().putDouble("RainOfFire", 0);
 				entity.getPersistentData().putDouble("RainOfFireX", (entity.getLookAngle().x));

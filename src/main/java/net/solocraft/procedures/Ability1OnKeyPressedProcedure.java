@@ -24,6 +24,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.core.BlockPos;
 
 import io.netty.buffer.Unpooled;
+import net.solocraft.util.CooldownManager;
 
 public class Ability1OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -68,13 +69,12 @@ public class Ability1OnKeyPressedProcedure {
 					} else {
 						if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.USING_FIRE.get(), 999, 1, false, false));
-						if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 999, 1, false, false));
+						CooldownManager.set(entity, "mana_refresh", 999);
 					}
 				} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 3) {
 					IceBallCastProcedure.execute(world, x, y, z, entity);
 				} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
-					if (!(entity instanceof LivingEntity _livEnt8 && _livEnt8.hasEffect(SololevelingModMobEffects.JOB_COOLDOWN_1.get()))) {
+					if (!CooldownManager.isOnCooldown(entity, "job_1")) {
 						{
 							boolean _setval = true;
 							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {

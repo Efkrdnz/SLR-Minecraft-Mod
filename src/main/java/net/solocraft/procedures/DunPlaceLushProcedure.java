@@ -39,7 +39,7 @@ public class DunPlaceLushProcedure {
 				StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "lushcave"));
 				if (template != null) {
 					template.placeInWorld(_serverworld, BlockPos.containing(x - 15, y, z - 150), BlockPos.containing(x - 15, y, z - 150), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-							_serverworld.random, 3);
+							_serverworld.random, 2);
 				}
 			}
 		});

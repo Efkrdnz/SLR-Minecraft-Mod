@@ -47,7 +47,7 @@ public class FrostMonarchGUIOverlay {
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		if (FMonTextProcedure.execute(entity)) {
+		if (false && FMonTextProcedure.execute(entity)) {
 			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newfrostmonarchspear.png"), w - 24, h - 72, 0, 0, 20, 20, 20, 20);
 
 			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newfrostmonarchiceball.png"), w - 24, h - 24, 0, 0, 20, 20, 20, 20);

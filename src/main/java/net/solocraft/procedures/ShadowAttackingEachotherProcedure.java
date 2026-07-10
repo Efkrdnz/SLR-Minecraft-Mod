@@ -1,5 +1,7 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.ShadowMonarchManager;
+
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.Entity;
@@ -11,9 +13,9 @@ public class ShadowAttackingEachotherProcedure {
 	public static boolean execute(Entity entity) {
 		if (entity == null)
 			return false;
-		if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
-			if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) == ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null)
-					|| (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals")))) {
+		if (ShadowMonarchManager.isShadowEntity(entity) && entity instanceof Mob mob) {
+			Entity target = mob.getTarget();
+			if (target != null && (ShadowMonarchManager.haveSameShadowOwner(entity, target) || target.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals"))))) {
 				return false;
 			}
 		}

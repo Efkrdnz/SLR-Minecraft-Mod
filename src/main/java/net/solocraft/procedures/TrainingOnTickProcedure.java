@@ -1,6 +1,8 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.SystemNotifications;
+import net.solocraft.util.DkcQuestManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -9,10 +11,10 @@ import net.minecraftforge.event.TickEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.CommandSource;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.player.AbstractClientPlayer;
 
 import javax.annotation.Nullable;
@@ -72,10 +74,11 @@ public class TrainingOnTickProcedure {
 					}
 				}
 			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).squat == 25
-					&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).pushup == 25
-					&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).situp == 25
-					&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).RUN == 500) {
+			boolean secretQuest = DailyQuestHelper.isSecretQuest(entity);
+			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).squat >= DailyQuestHelper.trainingTarget(entity)
+					&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).pushup >= DailyQuestHelper.trainingTarget(entity)
+					&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).situp >= DailyQuestHelper.trainingTarget(entity)
+					&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).RUN >= DailyQuestHelper.runTarget(entity)) {
 				{
 					boolean _setval = false;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -90,12 +93,20 @@ public class TrainingOnTickProcedure {
 						capability.syncPlayerVariables(entity);
 					});
 				}
-				r1 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_1;
-				r2 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_2;
-				r3 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_3;
-				RewardCollectProcedure.execute(entity, r1);
-				RewardCollectProcedure.execute(entity, r2);
-				RewardCollectProcedure.execute(entity, r3);
+				if (secretQuest) {
+					DkcQuestManager.unlock(entity);
+					RewardCollectProcedure.execute(entity, "FR");
+					RewardCollectProcedure.execute(entity, "SP20");
+					RewardCollectProcedure.execute(entity, "ITEM:sololeveling:redkey");
+					DailyQuestHelper.completeSecretQuest(entity);
+				} else {
+					r1 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_1;
+					r2 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_2;
+					r3 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_3;
+					RewardCollectProcedure.execute(entity, r1);
+					RewardCollectProcedure.execute(entity, r2);
+					RewardCollectProcedure.execute(entity, r3);
+				}
 				{
 					String _setval = "FR";
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -117,24 +128,15 @@ public class TrainingOnTickProcedure {
 						capability.syncPlayerVariables(entity);
 					});
 				}
-				{
-					Entity _ent = entity;
-					if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-						_ent.getServer().getCommands()
-								.performPrefixedCommand(
-										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
-												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p title {\"text\":\"Daily Mission Complete!\",\"color\":\"#D67223\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
-					}
-				}
-				{
-					Entity _ent = entity;
-					if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-						_ent.getServer().getCommands()
-								.performPrefixedCommand(
-										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
-												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p subtitle {\"text\":\"LEVEL UP\",\"color\":\"#873260\",\"bold\":false,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+				if (entity instanceof ServerPlayer player && !player.level().isClientSide()) {
+					if (secretQuest) {
+						SystemNotifications.showTitleUnder(player, 0xFFFF3D8D, 120,
+								Component.literal("SECRET QUEST COMPLETE").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
+								Component.literal("DKC Key\n20 Skill Points\nFull Recovery").withStyle(ChatFormatting.LIGHT_PURPLE));
+					} else {
+						SystemNotifications.showTitleUnder(player, 0xFFFF9A3D, 100,
+								Component.literal("DAILY QUEST COMPLETE").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+								Component.literal("Rewards received.\nCheck your inventory and stats.").withStyle(ChatFormatting.GRAY));
 					}
 				}
 				{

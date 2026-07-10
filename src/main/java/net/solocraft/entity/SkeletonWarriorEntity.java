@@ -34,6 +34,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.damagesource.DamageSource;
@@ -157,7 +158,30 @@ public class SkeletonWarriorEntity extends Monster implements GeoEntity {
 	@Override
 	public void baseTick() {
 		super.baseTick();
+		if (isDeathLocked())
+			stopDeathLockedActions();
 		this.refreshDimensions();
+	}
+
+	@Override
+	public void aiStep() {
+		if (isDeathLocked())
+			stopDeathLockedActions();
+		super.aiStep();
+		if (isDeathLocked())
+			stopDeathLockedActions();
+	}
+
+	@Override
+	public boolean canAttack(LivingEntity target) {
+		return !isDeathLocked() && super.canAttack(target);
+	}
+
+	@Override
+	public boolean doHurtTarget(Entity target) {
+		if (isDeathLocked())
+			return false;
+		return super.doHurtTarget(target);
 	}
 
 	@Override
@@ -179,14 +203,14 @@ public class SkeletonWarriorEntity extends Monster implements GeoEntity {
 	}
 
 	private PlayState movementPredicate(AnimationState event) {
+		if (isDeathLocked()) {
+			return event.setAndContinue(RawAnimation.begin().thenPlay("death"));
+		}
 		if (this.animationprocedure.equals("empty")) {
 			if ((event.isMoving() || !(event.getLimbSwingAmount() > -0.15F && event.getLimbSwingAmount() < 0.15F))
 
 			) {
 				return event.setAndContinue(RawAnimation.begin().thenLoop("walk"));
-			}
-			if (this.isDeadOrDying()) {
-				return event.setAndContinue(RawAnimation.begin().thenPlay("death"));
 			}
 			return event.setAndContinue(RawAnimation.begin().thenLoop("idle"));
 		}
@@ -194,6 +218,10 @@ public class SkeletonWarriorEntity extends Monster implements GeoEntity {
 	}
 
 	private PlayState attackingPredicate(AnimationState event) {
+		if (isDeathLocked()) {
+			this.swinging = false;
+			return PlayState.STOP;
+		}
 		double d1 = this.getX() - this.xOld;
 		double d0 = this.getZ() - this.zOld;
 		float velocity = (float) Math.sqrt(d1 * d1 + d0 * d0);
@@ -212,6 +240,10 @@ public class SkeletonWarriorEntity extends Monster implements GeoEntity {
 	}
 
 	private PlayState procedurePredicate(AnimationState event) {
+		if (isDeathLocked()) {
+			this.animationprocedure = "empty";
+			return PlayState.STOP;
+		}
 		if (!animationprocedure.equals("empty") && event.getController().getAnimationState() == AnimationController.State.STOPPED) {
 			event.getController().setAnimation(RawAnimation.begin().thenPlay(this.animationprocedure));
 			if (event.getController().getAnimationState() == AnimationController.State.STOPPED) {
@@ -226,11 +258,24 @@ public class SkeletonWarriorEntity extends Monster implements GeoEntity {
 
 	@Override
 	protected void tickDeath() {
+		stopDeathLockedActions();
 		++this.deathTime;
-		if (this.deathTime == 40) {
+		if (this.deathTime == 25) {
 			this.remove(SkeletonWarriorEntity.RemovalReason.KILLED);
 			this.dropExperience();
 		}
+	}
+
+	private boolean isDeathLocked() {
+		return this.isDeadOrDying() || this.deathTime > 0 || this.getHealth() <= 0.0F;
+	}
+
+	private void stopDeathLockedActions() {
+		this.getNavigation().stop();
+		this.setTarget(null);
+		this.setAggressive(false);
+		this.swinging = false;
+		this.animationprocedure = "empty";
 	}
 
 	public String getSyncedAnimation() {

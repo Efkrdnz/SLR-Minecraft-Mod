@@ -4,15 +4,17 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
 
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.network.chat.Component;
 
 public class BackStepProcedure {
-	public static void execute(Entity entity) {
+	public static boolean execute(Entity entity) {
 		if (entity == null)
-			return;
+			return false;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).rangerleapnum > 0) {
 			{
 				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).rangerleapnum - 1;
@@ -30,6 +32,10 @@ public class BackStepProcedure {
 			} else {
 				entity.setDeltaMovement(new Vec3(((-1.5) * entity.getLookAngle().x), 0.1, ((-1.5) * entity.getLookAngle().z)));
 			}
+			return true;
 		}
+		if (entity instanceof Player _player && !_player.level().isClientSide())
+			_player.displayClientMessage(Component.literal("Back Step has no charges"), true);
+		return false;
 	}
 }

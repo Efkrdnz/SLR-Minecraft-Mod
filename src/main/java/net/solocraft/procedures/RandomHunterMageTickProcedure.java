@@ -32,6 +32,7 @@ public class RandomHunterMageTickProcedure {
 			dmg_modifier = 5;
 		}
 		if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
+			HunterAIHelper.casterBacklineTick(entity);
 			entity.lookAt(EntityAnchorArgument.Anchor.EYES,
 					new Vec3(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()),
 							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY() + (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getBbHeight()),
@@ -42,11 +43,12 @@ public class RandomHunterMageTickProcedure {
 			}
 			distance = Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
 					+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2));
-			if (distance <= 5) {
+			if (distance <= 3.25) {
 				if ((entity instanceof HunterEntity _datEntI ? _datEntI.getEntityData().get(HunterEntity.DATA_backoff) : 0) == 0) {
-					entity.setDeltaMovement(new Vec3((entity.getLookAngle().x * (-2)), 0.3, (entity.getLookAngle().z * (-2))));
+					entity.setDeltaMovement(new Vec3((entity.getLookAngle().x * (-0.65)), 0.1, (entity.getLookAngle().z * (-0.65))));
+					entity.hasImpulse = true;
 					if (entity instanceof HunterEntity _datEntSetI)
-						_datEntSetI.getEntityData().set(HunterEntity.DATA_backoff, 50);
+						_datEntSetI.getEntityData().set(HunterEntity.DATA_backoff, 100);
 				}
 			}
 			if ((entity instanceof HunterEntity _datEntI ? _datEntI.getEntityData().get(HunterEntity.DATA_IA) : 0) <= 45) {

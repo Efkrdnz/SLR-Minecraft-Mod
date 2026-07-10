@@ -5,6 +5,7 @@ import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.IgrisShadowEntity;
 import net.solocraft.entity.IgrisDeadBodyEntity;
+import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -66,6 +67,8 @@ public class IgrisDeadBodyRightClickedOnEntityProcedure {
 					if (world instanceof ServerLevel _level) {
 						Entity entityToSpawn = SololevelingModEntities.IGRIS_SHADOW.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 						if (entityToSpawn != null) {
+							if (sourceentity instanceof Player _owner)
+								ShadowMonarchManager.tagExistingSummon(_owner, entityToSpawn, "igris");
 						}
 					}
 					if (!world.getEntitiesOfClass(IgrisShadowEntity.class, AABB.ofSize(new Vec3(x, y, z), 4, 4, 4), e -> true).isEmpty()) {

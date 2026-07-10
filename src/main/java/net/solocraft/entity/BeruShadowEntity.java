@@ -14,7 +14,6 @@ import net.solocraft.procedures.IsNotBerserkProcedure;
 import net.solocraft.procedures.IsBerserkProcedure;
 import net.solocraft.procedures.CommandCallProcedureProcedure;
 import net.solocraft.procedures.BeruShadowOnInitialEntitySpawnProcedure;
-import net.solocraft.procedures.BeruShadowEntityIsHurtProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -86,6 +85,7 @@ public class BeruShadowEntity extends TamableAnimal implements GeoEntity {
 	public static final EntityDataAccessor<Integer> DATA_phase = SynchedEntityData.defineId(BeruShadowEntity.class, EntityDataSerializers.INT);
 	public static final EntityDataAccessor<Integer> DATA_SlamTimer = SynchedEntityData.defineId(BeruShadowEntity.class, EntityDataSerializers.INT);
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+	private static final EntityDimensions SHADOW_BERU_DIMENSIONS = EntityDimensions.scalable(0.72F, 2.25F);
 	private boolean swinging;
 	private boolean lastloop;
 	private long lastSwing;
@@ -131,7 +131,7 @@ public class BeruShadowEntity extends TamableAnimal implements GeoEntity {
 
 	@Override
 	protected float getStandingEyeHeight(Pose poseIn, EntityDimensions sizeIn) {
-		return 4F;
+		return Math.min(1.95F, sizeIn.height * 0.86F);
 	}
 
 	@Override
@@ -409,7 +409,7 @@ public class BeruShadowEntity extends TamableAnimal implements GeoEntity {
 				double z = BeruShadowEntity.this.getZ();
 				Entity entity = BeruShadowEntity.this;
 				Level world = BeruShadowEntity.this.level();
-				return super.canUse() && IsBerserkProcedure.execute(entity);
+				return super.canUse() && IsBerserkProcedure.execute(entity) && !net.solocraft.util.ShadowMonarchManager.isShadowEntity(this.target);
 			}
 
 			@Override
@@ -419,7 +419,7 @@ public class BeruShadowEntity extends TamableAnimal implements GeoEntity {
 				double z = BeruShadowEntity.this.getZ();
 				Entity entity = BeruShadowEntity.this;
 				Level world = BeruShadowEntity.this.level();
-				return super.canContinueToUse() && IsBerserkProcedure.execute(entity);
+				return super.canContinueToUse() && IsBerserkProcedure.execute(entity) && !net.solocraft.util.ShadowMonarchManager.isShadowEntity(this.target);
 			}
 		});
 		this.targetSelector.addGoal(16, new OwnerHurtTargetGoal(this));
@@ -468,7 +468,6 @@ public class BeruShadowEntity extends TamableAnimal implements GeoEntity {
 
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
-		BeruShadowEntityIsHurtProcedure.execute(this.level(), this.getX(), this.getY(), this.getZ(), this, source.getEntity());
 		if (source.is(DamageTypes.FALL))
 			return false;
 		if (source.is(DamageTypes.CACTUS))
@@ -583,7 +582,7 @@ public class BeruShadowEntity extends TamableAnimal implements GeoEntity {
 
 	@Override
 	public EntityDimensions getDimensions(Pose p_33597_) {
-		return super.getDimensions(p_33597_).scale((float) 0.8);
+		return SHADOW_BERU_DIMENSIONS;
 	}
 
 	@Override

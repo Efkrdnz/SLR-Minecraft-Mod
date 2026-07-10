@@ -19,6 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
+import net.solocraft.util.CooldownManager;
 
 public class ShieldBashProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -33,7 +34,7 @@ public class ShieldBashProcedure {
 		double motionX = 0;
 		double speed = 0;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 300) {
-			if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SHIELD_BASH_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "Shield Bash")) {
 				if ((entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).getItem() == Items.SHIELD
 						|| (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("minecraft:shields")))) {
 					{
@@ -43,10 +44,8 @@ public class ShieldBashProcedure {
 							capability.syncPlayerVariables(entity);
 						});
 					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SHIELD_BASH_COOLDOWN.get(), 200, 1, false, false));
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 1, false, false));
+					CooldownManager.set(entity, "Shield Bash", 200);
+					CooldownManager.set(entity, "mana_refresh", 40);
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
 							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:dash")), SoundSource.NEUTRAL, (float) 0.5, 2);

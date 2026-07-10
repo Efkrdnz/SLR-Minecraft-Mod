@@ -14,13 +14,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.commands.CommandFunction;
 
 import java.util.Optional;
+import net.solocraft.util.CooldownManager;
 
 public class SwordOfLightGiveProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
 		if (entity == null)
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 1200) {
-			if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SO_LCOOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "Sword of Light")) {
 				{
 					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 1200;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -28,10 +29,8 @@ public class SwordOfLightGiveProcedure {
 						capability.syncPlayerVariables(entity);
 					});
 				}
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SO_LCOOLDOWN.get(), 400, 1, false, false));
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 50, 1, false, false));
+				CooldownManager.set(entity, "Sword of Light", 400);
+				CooldownManager.set(entity, "mana_refresh", 50);
 				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SWORD_OF_LIGHT.get(), 220, 1, false, false));
 				if (world.getLevelData().getGameRules().getBoolean(GameRules.RULE_SENDCOMMANDFEEDBACK)) {

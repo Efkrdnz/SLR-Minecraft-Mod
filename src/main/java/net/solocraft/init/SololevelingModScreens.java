@@ -1,9 +1,6 @@
-
-/*
- *	MCreator note: This file will be REGENERATED on each build.
- */
 package net.solocraft.init;
 
+import net.solocraft.client.gui.GuildComputerScreen;
 import net.solocraft.client.gui.WTJoinScreen;
 import net.solocraft.client.gui.UnlockedSkillsTab7Screen;
 import net.solocraft.client.gui.UnlockedSkillsTab6Screen;
@@ -21,6 +18,8 @@ import net.solocraft.client.gui.StoreGUIScreen;
 import net.solocraft.client.gui.SpecialCraftingGUIScreen;
 import net.solocraft.client.gui.ShopScreen;
 import net.solocraft.client.gui.ShadowSummonGUIScreen;
+import net.solocraft.client.gui.ShadowDismissScreen;
+import net.solocraft.client.gui.ShadowCommandScreen;
 import net.solocraft.client.gui.ShadowGUIScreen;
 import net.solocraft.client.gui.ShadowExchangeSaveScreen;
 import net.solocraft.client.gui.ShadowExchangeSETScreen;
@@ -77,6 +76,8 @@ public class SololevelingModScreens {
 			MenuScreens.register(SololevelingModMenus.SHOP.get(), ShopScreen::new);
 			MenuScreens.register(SololevelingModMenus.FOOD_GUI.get(), FoodGuiScreen::new);
 			MenuScreens.register(SololevelingModMenus.SHADOW_SUMMON_GUI.get(), ShadowSummonGUIScreen::new);
+			MenuScreens.register(SololevelingModMenus.SHADOW_DISMISS.get(), ShadowDismissScreen::new);
+			MenuScreens.register(SololevelingModMenus.SHADOW_COMMAND.get(), ShadowCommandScreen::new);
 			MenuScreens.register(SololevelingModMenus.READER_GUI.get(), ReaderGUIScreen::new);
 			MenuScreens.register(SololevelingModMenus.HUNTER_ID_GUI.get(), HunterIDGuiScreen::new);
 			MenuScreens.register(SololevelingModMenus.MISC_ITEMS.get(), MiscItemsScreen::new);
@@ -97,6 +98,8 @@ public class SololevelingModScreens {
 			MenuScreens.register(SololevelingModMenus.UNLOCKED_SKILLS_TAB_7.get(), UnlockedSkillsTab7Screen::new);
 			MenuScreens.register(SololevelingModMenus.PATH.get(), PathScreen::new);
 			MenuScreens.register(SololevelingModMenus.QUESTS.get(), QuestsScreen::new);
+			// Guild System
+			MenuScreens.register(SololevelingModMenus.GUILD_COMPUTER.get(), GuildComputerScreen::new);
 		});
 	}
 }

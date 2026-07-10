@@ -1,8 +1,9 @@
 package net.solocraft.procedures;
 
+import net.solocraft.entity.SlashEffectEntity;
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -10,11 +11,17 @@ import net.minecraftforge.event.TickEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.BlockPos;
 
 import javax.annotation.Nullable;
+import net.solocraft.util.CooldownManager;
 
 @Mod.EventBusSubscriber
 public class SlashFurryProcProcedure {
@@ -33,8 +40,6 @@ public class SlashFurryProcProcedure {
 		if (entity == null)
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfur) {
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.IMPACT_RUSH_COOLDOWN.get(), 120, 1, false, false));
 			entity.setDeltaMovement(new Vec3(0, 0, 0));
 			{
 				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer + 1;
@@ -43,50 +48,12 @@ public class SlashFurryProcProcedure {
 					capability.syncPlayerVariables(entity);
 				});
 			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 3) {
-				SlashFurry1Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 5) {
-				SlashFurry2Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 7) {
-				SlashFurry22Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 9) {
-				SLashFurry3Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 11) {
-				SlashFurry4Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 13) {
-				SlashFurry5Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 15) {
-				SlashFurry6Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 17) {
-				SlashFurry7Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 19) {
-				SlashFurry8Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 21) {
-				SlashFurry9Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 23) {
-				SlashFurry10Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 25) {
-				SlashFurry11Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 27) {
-				SlashFurry12Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 29) {
-				SlashFurry13Procedure.execute(world, x, y, z, entity);
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer == 31) {
-				SlashFurry14Procedure.execute(world, x, y, z, entity);
+			int slashTimer = (int) (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer;
+			if (slashTimer >= 3 && slashTimer <= 31 && slashTimer % 2 == 1) {
+				spawnSlash(world, x, y, z, entity, (slashTimer - 3) / 2);
+				if (slashTimer == 31) {
+					CooldownManager.set(entity, "Slash Fury", 120);
+				}
 			}
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).slashfurtimer >= 32) {
 				{
@@ -103,6 +70,32 @@ public class SlashFurryProcProcedure {
 						capability.syncPlayerVariables(entity);
 					});
 				}
+			}
+		}
+	}
+
+	private static void spawnSlash(LevelAccessor world, double x, double y, double z, Entity entity, int index) {
+		if (!(entity instanceof LivingEntity livingEntity))
+			return;
+		livingEntity.swing(InteractionHand.MAIN_HAND, true);
+		float yawOffset = ((index % 5) - 2) * 7.5F;
+		float roll = (index % 2 == 0 ? -1.0F : 1.0F) * (28.0F + (index % 3) * 12.0F);
+		float sequence = Math.min(index, 14) / 14.0F;
+		float scale = 0.9F + sequence * 0.85F + (index % 3) * 0.05F;
+		float damage = (float) (livingEntity.getAttribute(Attributes.ATTACK_DAMAGE).getValue() * 0.16D);
+		Vec3 look = entity.getLookAngle();
+		double forwardDistance = 1.25D + index * 0.28D;
+		double side = ((index % 3) - 1) * (0.22D + sequence * 0.28D);
+		Vec3 right = new Vec3(-look.z, 0.0D, look.x).normalize();
+		double slashX = x + look.x * forwardDistance + right.x * side;
+		double slashY = y + 1.2D + sequence * 0.35D + ((index % 4) - 1.5D) * 0.12D;
+		double slashZ = z + look.z * forwardDistance + right.z * side;
+		SlashEffectEntity.spawn(world, livingEntity, slashX, slashY, slashZ, entity.getYRot() + yawOffset, entity.getXRot() * 0.35F, roll, scale, damage, index);
+		if (world instanceof Level level) {
+			if (!level.isClientSide()) {
+				level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL, 0.8F, 0.85F + (index % 4) * 0.08F);
+			} else {
+				level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL, 0.8F, 0.85F + (index % 4) * 0.08F, false);
 			}
 		}
 	}

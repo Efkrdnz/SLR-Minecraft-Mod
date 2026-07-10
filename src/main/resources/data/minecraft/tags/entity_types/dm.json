@@ -2,7 +2,6 @@
   "replace": false,
   "values": [
     "sololeveling:igris",
-    "sololeveling:orc",
     "sololeveling:beru_boss",
     "sololeveling:gem_golem",
     "sololeveling:d_knight_1",
@@ -10,7 +9,7 @@
     "sololeveling:d_knight_3",
     "sololeveling:mini_gem_golem",
     "sololeveling:kasaka",
-    "sololeveling:steel_fang_wolf",
+    "sololeveling:steel_fanged_lycan",
     "sololeveling:ancient_samurai",
     "sololeveling:baruka",
     "sololeveling:centipede",
@@ -28,6 +27,11 @@
     "sololeveling:green_orc",
     "sololeveling:high_orc",
     "sololeveling:skeleton_brute",
-    "sololeveling:skeleton_warrior"
+    "sololeveling:skeleton_warrior",
+    "sololeveling:demon",
+    "sololeveling:demon_knight",
+    "sololeveling:cerberus",
+    "sololeveling:vulcan",
+    "sololeveling:baran"
   ]
 }

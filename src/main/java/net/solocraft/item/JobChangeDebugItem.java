@@ -1,8 +1,6 @@
 
 package net.solocraft.item;
 
-import net.solocraft.procedures.JobChangeDebugRightclickedProcedure;
-
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
 
@@ -37,7 +35,6 @@ public class JobChangeDebugItem extends Item {
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
 		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		JobChangeDebugRightclickedProcedure.execute();
 		return ar;
 	}
 }

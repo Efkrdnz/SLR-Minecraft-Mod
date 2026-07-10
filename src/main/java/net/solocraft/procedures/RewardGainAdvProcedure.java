@@ -1,8 +1,10 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.SystemNotifications;
 import net.solocraft.entity.KamishEntity;
 import net.solocraft.entity.GoblinKingEntity;
+import net.solocraft.entity.GemGolemEntity;
 import net.solocraft.entity.FuturisticGolemEntity;
 import net.solocraft.entity.FangedKasakaEntity;
 import net.solocraft.entity.BloodRedComIgrisEntity;
@@ -15,7 +17,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,6 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.ChatFormatting;
 
 import javax.annotation.Nullable;
 
@@ -91,8 +93,7 @@ public class RewardGainAdvProcedure {
 						capability.syncPlayerVariables(ent);
 					});
 				}
-				if (ent instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A76You have rewards to collect!"), false);
+				notifyRewardsAvailable(ent);
 				if (ent instanceof ServerPlayer _player) {
 					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:kasakas_domain"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
@@ -130,8 +131,7 @@ public class RewardGainAdvProcedure {
 						capability.syncPlayerVariables(ent);
 					});
 				}
-				if (ent instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A76You have rewards to collect!"), false);
+				notifyRewardsAvailable(ent);
 				if (ent instanceof ServerPlayer _player) {
 					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:blood_red_commander_igris"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
@@ -168,8 +168,7 @@ public class RewardGainAdvProcedure {
 						capability.syncPlayerVariables(ent);
 					});
 				}
-				if (ent instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A76You have rewards to collect!"), false);
+				notifyRewardsAvailable(ent);
 				if (ent instanceof ServerPlayer _player) {
 					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:ant_king"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
@@ -207,8 +206,7 @@ public class RewardGainAdvProcedure {
 						capability.syncPlayerVariables(ent);
 					});
 				}
-				if (ent instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A76You have rewards to collect!"), false);
+				notifyRewardsAvailable(ent);
 				if (ent instanceof ServerPlayer _player) {
 					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:goblin_king_adv"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
@@ -219,7 +217,7 @@ public class RewardGainAdvProcedure {
 				}
 			}
 		}
-		if (entity instanceof AncientGolemEntity) {
+		if (entity instanceof GemGolemEntity) {
 			if (!(ent instanceof ServerPlayer _plr33 && _plr33.level() instanceof ServerLevel
 					&& _plr33.getAdvancements().getOrStartProgress(_plr33.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:ancient_golem_adv"))).isDone())) {
 				RewardCollectProcedure.execute(ent, r1);
@@ -246,8 +244,7 @@ public class RewardGainAdvProcedure {
 						capability.syncPlayerVariables(ent);
 					});
 				}
-				if (ent instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A76You have rewards to collect!"), false);
+				notifyRewardsAvailable(ent);
 				if (ent instanceof ServerPlayer _player) {
 					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:ancient_golem_adv"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
@@ -285,8 +282,7 @@ public class RewardGainAdvProcedure {
 						capability.syncPlayerVariables(ent);
 					});
 				}
-				if (ent instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A76You have rewards to collect!"), false);
+				notifyRewardsAvailable(ent);
 				if (ent instanceof ServerPlayer _player) {
 					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:gem_golem_adv"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
@@ -324,8 +320,7 @@ public class RewardGainAdvProcedure {
 						capability.syncPlayerVariables(ent);
 					});
 				}
-				if (ent instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A76You have rewards to collect!"), false);
+				notifyRewardsAvailable(ent);
 				if (ent instanceof ServerPlayer _player) {
 					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:futuristic_golem_adv"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
@@ -362,8 +357,7 @@ public class RewardGainAdvProcedure {
 						capability.syncPlayerVariables(ent);
 					});
 				}
-				if (ent instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A76You have rewards to collect!"), false);
+				notifyRewardsAvailable(ent);
 				if (ent instanceof ServerPlayer _player) {
 					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:baruka_adv"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
@@ -400,8 +394,7 @@ public class RewardGainAdvProcedure {
 						capability.syncPlayerVariables(ent);
 					});
 				}
-				if (ent instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("\u00A76You have rewards to collect!"), false);
+				notifyRewardsAvailable(ent);
 				if (ent instanceof ServerPlayer _player) {
 					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:kamish_adv"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
@@ -411,6 +404,14 @@ public class RewardGainAdvProcedure {
 					}
 				}
 			}
+		}
+	}
+
+	private static void notifyRewardsAvailable(Entity entity) {
+		if (entity instanceof ServerPlayer player) {
+			SystemNotifications.showTitleUnder(player, 0xFFFFB83D, 90,
+					Component.literal("REWARDS AVAILABLE").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+					Component.literal("Open Rewards to collect them.").withStyle(ChatFormatting.GRAY));
 		}
 	}
 }

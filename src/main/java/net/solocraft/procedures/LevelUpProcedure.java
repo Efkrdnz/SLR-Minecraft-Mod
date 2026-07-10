@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.SystemNotifications;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.fml.common.Mod;
@@ -15,11 +16,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.CommandSource;
+import net.minecraft.ChatFormatting;
 
 import javax.annotation.Nullable;
 
@@ -76,19 +77,20 @@ public class LevelUpProcedure {
 				playerVars.syncPlayerVariables(entity);
 				// Client-side effects
 				if (!world.isClientSide()) {
-					// Level up message
-					String titleCommand = String.format("/title @p title [\"\",{\"text\":\"Leveled Up\",\"color\":\"yellow\",\"bold\":true}]");
-					String subtitleCommand = String.format("/title @p subtitle [\"\",{\"text\":\"%d → %d\",\"color\":\"yellow\",\"bold\":true}]", initialLevel, newLevel);
-					CommandSourceStack source = new CommandSourceStack(CommandSource.NULL, entity.position(), entity.getRotationVector(), world instanceof ServerLevel ? (ServerLevel) world : null, 4, entity.getName().getString(),
-							entity.getDisplayName(), world.getServer(), entity);
-					entity.getServer().getCommands().performPrefixedCommand(source, titleCommand);
-					entity.getServer().getCommands().performPrefixedCommand(source, subtitleCommand);
+					if (entity instanceof ServerPlayer player) {
+						SystemNotifications.showTitleUnder(player, SystemNotifications.ACCENT, 80,
+								Component.literal("LEVEL UP").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
+								Component.literal("Lv " + initialLevel + " -> " + newLevel).withStyle(ChatFormatting.YELLOW));
+					}
 					// Play sound
 					((Level) world).playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 2, 1);
 					// If rank increased, show additional message
 					if (playerVars.HunterRank > initialRank) {
-						String rankUpCommand = String.format("/title @p title [\"\",{\"text\":\"Rank Up!\",\"color\":\"gold\",\"bold\":true}]");
-						entity.getServer().getCommands().performPrefixedCommand(source, rankUpCommand);
+						if (entity instanceof ServerPlayer player) {
+							SystemNotifications.showTitleUnder(player, 0xFFFFB83D, 80,
+									Component.literal("RANK UP").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+									Component.literal("Hunter Rank " + Math.round(initialRank) + " -> " + Math.round(playerVars.HunterRank)).withStyle(ChatFormatting.GOLD));
+						}
 					}
 				}
 				// Apply regeneration effects

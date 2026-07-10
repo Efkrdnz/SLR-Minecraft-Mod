@@ -7,13 +7,10 @@ import net.solocraft.procedures.WeaponAbCooldownSymbolProcedure;
 import net.solocraft.procedures.TelekinesisAbilityCooldownProcedure;
 import net.solocraft.procedures.SlectedCon8Procedure;
 import net.solocraft.procedures.SlectedCon7Procedure;
+import net.solocraft.procedures.SkillTextColorProcedure;
 import net.solocraft.procedures.SkillTextProcedure;
-import net.solocraft.procedures.SelectedCon6Procedure;
-import net.solocraft.procedures.SelectedCon5Procedure;
-import net.solocraft.procedures.SelectedCon4Procedure;
-import net.solocraft.procedures.SelectedCon3Procedure;
-import net.solocraft.procedures.SelectedCon2Procedure;
-import net.solocraft.procedures.SelectedCon1Procedure;
+import net.solocraft.procedures.SkillSlotHelper;
+import net.solocraft.procedures.SelectedConProcedure;
 import net.solocraft.procedures.ReturnCooldownAmountProcedure;
 import net.solocraft.procedures.MeleeAbilityCooldownProcedure;
 import net.solocraft.procedures.IsUsingDashProcedure;
@@ -27,6 +24,8 @@ import net.solocraft.procedures.Ability1ReturnProcedure;
 import net.solocraft.procedures.Ab9CooldownProcedure;
 import net.solocraft.procedures.Ab2CooldownProcedure;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.JobSkillManager;
+import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -46,6 +45,8 @@ import com.mojang.blaze3d.platform.GlStateManager;
 @Mod.EventBusSubscriber({Dist.CLIENT})
 public class DisplayOverlay {
 	private static ResourceLocation getSkillTexture(String skillName) {
+		if (ShadowMonarchManager.isFormationSkill(skillName))
+			return new ResourceLocation("sololeveling:textures/screens/newshadowformation.png");
 		return switch (skillName) {
 			// goofy ahh mapping
 			case "Fireball" -> new ResourceLocation("sololeveling:textures/screens/icon_new_fireball.png");
@@ -61,7 +62,7 @@ public class DisplayOverlay {
 			case "Detection" -> new ResourceLocation("sololeveling:textures/screens/icon_detection.png");
 			case "Curse Sphere" -> new ResourceLocation("sololeveling:textures/screens/icon_cursesphere.png");
 			case "Slash Dash" -> new ResourceLocation("sololeveling:textures/screens/icon_slashdash.png");
-			case "Critical Strike" -> new ResourceLocation("sololeveling:textures/screens/icon_criticalstrike.png");
+			case "Cross Strike", "Critical Strike" -> new ResourceLocation("sololeveling:textures/screens/icon_criticalstrike.png");
 			case "Sword of Light" -> new ResourceLocation("sololeveling:textures/screens/icon_swordoflight.png");
 			case "Ground Slam" -> new ResourceLocation("sololeveling:textures/screens/icon_groundslam.png");
 			case "Sword Dance" -> new ResourceLocation("sololeveling:textures/screens/icon_sworddance.png");
@@ -94,6 +95,22 @@ public class DisplayOverlay {
 			case "Sword Beam" -> new ResourceLocation("sololeveling:textures/screens/icon_swordbeam.png");
 			case "Magic Missiles" -> new ResourceLocation("sololeveling:textures/screens/icon_magicmissiles.png");
 			case "Fire Rain" -> new ResourceLocation("sololeveling:textures/screens/icon_firearrows.png");
+			case JobSkillManager.ARISE -> new ResourceLocation("sololeveling:textures/screens/newshadowarise.png");
+			case JobSkillManager.SHADOW_SUMMON -> new ResourceLocation("sololeveling:textures/screens/newshadowsummon.png");
+			case JobSkillManager.DISMISS_SHADOWS -> new ResourceLocation("sololeveling:textures/screens/newshadowdismiss.png");
+			case JobSkillManager.SHADOW_COMMAND -> new ResourceLocation("sololeveling:textures/screens/icon_shadowcommand.png");
+			case JobSkillManager.SHADOW_EXCHANGE -> new ResourceLocation("sololeveling:textures/screens/newshadowexchange.png");
+			case JobSkillManager.SHADOW_MANIFESTATION -> new ResourceLocation("sololeveling:textures/screens/newshadowarmor.png");
+			case JobSkillManager.FIRE_CHARGE -> new ResourceLocation("sololeveling:textures/screens/griamorefire.png");
+			case JobSkillManager.METEOR_RAIN -> new ResourceLocation("sololeveling:textures/screens/icon_firearrows.png");
+			case JobSkillManager.FIREFLIES -> new ResourceLocation("sololeveling:textures/screens/newmagesummoning.png");
+			case JobSkillManager.ICE_BALL -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchiceball.png");
+			case JobSkillManager.ICE_CHUNK -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchchunk.png");
+			case JobSkillManager.ICE_SPEAR -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchspear.png");
+			case JobSkillManager.SNOW_SCREEN -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchsnowscreen.png");
+			case JobSkillManager.MONARCH_BEAM -> new ResourceLocation("sololeveling:textures/screens/newbaranlaser.png");
+			case JobSkillManager.LIGHTNING_STORM -> new ResourceLocation("sololeveling:textures/screens/newbaranlightningstrike.png");
+			case JobSkillManager.STORM_BURST -> new ResourceLocation("sololeveling:textures/screens/newbaranstormburst.png");
 			default -> new ResourceLocation("sololeveling:textures/screens/icon_template.png");
 		};
 	}
@@ -145,28 +162,9 @@ public class DisplayOverlay {
 			}
 			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_background.png"), w / 2 + -90, h - 22, 0, 0, 162, 22, 162, 22);
 			int[] slotXOffsets = {-89, -69, -49, -29, -9, 11, 31, 51};
+			SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 			for (int i = 0; i < 8; i++) {
-				String skillName = "";
-				// Get capability safely
-				SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
-				// Use explicit if-else for better debugging
-				if (i == 0) {
-					skillName = vars.Pslot1;
-				} else if (i == 1) {
-					skillName = vars.Pslot2;
-				} else if (i == 2) {
-					skillName = vars.Pslot3;
-				} else if (i == 3) {
-					skillName = vars.Pslot4;
-				} else if (i == 4) {
-					skillName = vars.Pslot5;
-				} else if (i == 5) {
-					skillName = vars.Pslot6;
-				} else if (i == 6) {
-					skillName = vars.Pslot7;
-				} else if (i == 7) {
-					skillName = vars.Pslot8;
-				}
+				String skillName = SkillSlotHelper.getSlot(vars, vars.PskillPage >= 2 ? i + 9 : i + 1);
 				/*
 				if (skillName.isEmpty()) {
 					Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Slot " + (i + 1) + " is empty!"));
@@ -175,22 +173,22 @@ public class DisplayOverlay {
 				ResourceLocation icon = getSkillTexture(skillName);
 				event.getGuiGraphics().blit(icon, w / 2 + slotXOffsets[i], h - 21, 0, 0, 20, 20, 20, 20);
 			}
-			if (SelectedCon1Procedure.execute(entity)) {
+			if (SelectedConProcedure.execute(entity, 1)) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_frame.png"), w / 2 + -90, h - 22, 0, 0, 22, 22, 22, 22);
 			}
-			if (SelectedCon2Procedure.execute(entity)) {
+			if (SelectedConProcedure.execute(entity, 2)) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_frame.png"), w / 2 + -70, h - 22, 0, 0, 22, 22, 22, 22);
 			}
-			if (SelectedCon3Procedure.execute(entity)) {
+			if (SelectedConProcedure.execute(entity, 3)) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_frame.png"), w / 2 + -50, h - 22, 0, 0, 22, 22, 22, 22);
 			}
-			if (SelectedCon4Procedure.execute(entity)) {
+			if (SelectedConProcedure.execute(entity, 4)) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_frame.png"), w / 2 + -30, h - 22, 0, 0, 22, 22, 22, 22);
 			}
-			if (SelectedCon5Procedure.execute(entity)) {
+			if (SelectedConProcedure.execute(entity, 5)) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_frame.png"), w / 2 + -10, h - 22, 0, 0, 22, 22, 22, 22);
 			}
-			if (SelectedCon6Procedure.execute(entity)) {
+			if (SelectedConProcedure.execute(entity, 6)) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_frame.png"), w / 2 + 10, h - 22, 0, 0, 22, 22, 22, 22);
 			}
 			if (SlectedCon7Procedure.execute(entity)) {
@@ -200,7 +198,7 @@ public class DisplayOverlay {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_frame.png"), w / 2 + 50, h - 22, 0, 0, 22, 22, 22, 22);
 			}
 			event.getGuiGraphics().drawString(Minecraft.getInstance().font, ReturnCooldownAmountProcedure.execute(entity), w / 2 + 74, h - 12, -26266, false);
-			event.getGuiGraphics().drawString(Minecraft.getInstance().font, SkillTextProcedure.execute(entity), w / 2 + 74, h - 22, -26266, false);
+			event.getGuiGraphics().drawString(Minecraft.getInstance().font, SkillTextProcedure.execute(entity), w / 2 + 74, h - 22, SkillTextColorProcedure.execute(entity), false);
 			event.getGuiGraphics().drawString(Minecraft.getInstance().font, Ability3ReturnProcedure.execute(), w - 28, h - 64, -1, false);
 			event.getGuiGraphics().drawString(Minecraft.getInstance().font, Ability1ReturnProcedure.execute(), w - 28, h - 18, -1, false);
 			event.getGuiGraphics().drawString(Minecraft.getInstance().font, Ability2ReturnProcedure.execute(), w - 28, h - 41, -1, false);

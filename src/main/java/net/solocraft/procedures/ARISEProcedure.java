@@ -2,8 +2,8 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModParticleTypes;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -18,7 +18,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
@@ -27,6 +26,7 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.CommandSource;
+import net.solocraft.util.CooldownManager;
 
 public class ARISEProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
@@ -35,7 +35,7 @@ public class ARISEProcedure {
 		double rand = 0;
 		if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
 			if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 500) {
-				if (!(sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.ARISE_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(sourceentity, "arise")) {
 					if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shadowstorageusage < (sourceentity
 							.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shadowstorage) {
 						world.addParticle((SimpleParticleType) (SololevelingModParticleTypes.SHADOW_REVIVE.get()), x, (y + 2), z, 0, 0, 0);
@@ -47,8 +47,7 @@ public class ARISEProcedure {
 									capability.syncPlayerVariables(sourceentity);
 								});
 							}
-							if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+							CooldownManager.set(sourceentity, "arise", 10);
 							if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 								_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
 							if (!entity.level().isClientSide())
@@ -89,6 +88,8 @@ public class ARISEProcedure {
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
 								_level.addFreshEntity(_entityToSpawn);
+								if (sourceentity instanceof Player _owner)
+									ShadowMonarchManager.tagExistingSummon(_owner, _entityToSpawn, "knight");
 							}
 						} else if ((entity.getPersistentData().getString("soultype")).equals("goblin")) {
 							{
@@ -107,8 +108,7 @@ public class ARISEProcedure {
 							}
 							if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 								_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
-							if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+							CooldownManager.set(sourceentity, "arise", 10);
 							if (!entity.level().isClientSide())
 								entity.discard();
 							{
@@ -140,6 +140,8 @@ public class ARISEProcedure {
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
 								_level.addFreshEntity(_entityToSpawn);
+								if (sourceentity instanceof Player _owner)
+									ShadowMonarchManager.tagExistingSummon(_owner, _entityToSpawn, "goblin_club");
 							}
 						} else if ((entity.getPersistentData().getString("soultype")).equals("goblinarc")) {
 							{
@@ -158,8 +160,7 @@ public class ARISEProcedure {
 							}
 							if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 								_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
-							if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+							CooldownManager.set(sourceentity, "arise", 10);
 							if (!entity.level().isClientSide())
 								entity.discard();
 							{
@@ -198,6 +199,8 @@ public class ARISEProcedure {
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
 								_level.addFreshEntity(_entityToSpawn);
+								if (sourceentity instanceof Player _owner)
+									ShadowMonarchManager.tagExistingSummon(_owner, _entityToSpawn, "goblin_archer");
 							}
 						} else if ((entity.getPersistentData().getString("soultype")).equals("goblinmage")) {
 							{
@@ -216,8 +219,7 @@ public class ARISEProcedure {
 							}
 							if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 								_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
-							if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+							CooldownManager.set(sourceentity, "arise", 10);
 							if (!entity.level().isClientSide())
 								entity.discard();
 							{
@@ -249,6 +251,8 @@ public class ARISEProcedure {
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
 								_level.addFreshEntity(_entityToSpawn);
+								if (sourceentity instanceof Player _owner)
+									ShadowMonarchManager.tagExistingSummon(_owner, _entityToSpawn, "goblin_mage");
 							}
 						} else if ((entity.getPersistentData().getString("soultype")).equals("wolf")) {
 							{
@@ -267,8 +271,7 @@ public class ARISEProcedure {
 							}
 							if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 								_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
-							if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+							CooldownManager.set(sourceentity, "arise", 10);
 							if (!entity.level().isClientSide())
 								entity.discard();
 							{
@@ -307,6 +310,8 @@ public class ARISEProcedure {
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
 								_level.addFreshEntity(_entityToSpawn);
+								if (sourceentity instanceof Player _owner)
+									ShadowMonarchManager.tagExistingSummon(_owner, _entityToSpawn, "wolf");
 							}
 						} else if ((entity.getPersistentData().getString("soultype")).equals("orc")) {
 							if (Math.random() < ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level) / ((float) 40)) {
@@ -324,8 +329,7 @@ public class ARISEProcedure {
 										capability.syncPlayerVariables(sourceentity);
 									});
 								}
-								if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+								CooldownManager.set(sourceentity, "arise", 10);
 								if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 									_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
 								{
@@ -366,6 +370,8 @@ public class ARISEProcedure {
 									if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 										_toTame.tame(_owner);
 									_level.addFreshEntity(_entityToSpawn);
+									if (sourceentity instanceof Player _owner)
+										ShadowMonarchManager.tagExistingSummon(_owner, _entityToSpawn, "orc");
 								}
 							} else {
 								{
@@ -377,8 +383,7 @@ public class ARISEProcedure {
 												"/title @p title {\"text\":\"Failed\",\"color\":\"red\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
 									}
 								}
-								if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+								CooldownManager.set(sourceentity, "arise", 10);
 								entity.getPersistentData().putDouble("ariset", (entity.getPersistentData().getDouble("ariset") + 1));
 							}
 						} else if ((entity.getPersistentData().getString("soultype")).equals("bear")) {
@@ -397,8 +402,7 @@ public class ARISEProcedure {
 										capability.syncPlayerVariables(sourceentity);
 									});
 								}
-								if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+								CooldownManager.set(sourceentity, "arise", 10);
 								if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 									_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
 								if (!entity.level().isClientSide())
@@ -439,6 +443,8 @@ public class ARISEProcedure {
 									if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 										_toTame.tame(_owner);
 									_level.addFreshEntity(_entityToSpawn);
+									if (sourceentity instanceof Player _owner)
+										ShadowMonarchManager.tagExistingSummon(_owner, _entityToSpawn, "polar_bear");
 								}
 							} else {
 								{
@@ -450,8 +456,7 @@ public class ARISEProcedure {
 												"/title @p title {\"text\":\"Failed\",\"color\":\"red\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
 									}
 								}
-								if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+								CooldownManager.set(sourceentity, "arise", 10);
 								entity.getPersistentData().putDouble("ariset", (entity.getPersistentData().getDouble("ariset") + 1));
 							}
 						} else if ((entity.getPersistentData().getString("soultype")).equals("highorc")) {
@@ -470,8 +475,7 @@ public class ARISEProcedure {
 										capability.syncPlayerVariables(sourceentity);
 									});
 								}
-								if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+								CooldownManager.set(sourceentity, "arise", 10);
 								if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 									_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
 								{
@@ -512,6 +516,8 @@ public class ARISEProcedure {
 									if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 										_toTame.tame(_owner);
 									_level.addFreshEntity(_entityToSpawn);
+									if (sourceentity instanceof Player _owner)
+										ShadowMonarchManager.tagExistingSummon(_owner, _entityToSpawn, "high_orc");
 								}
 							} else {
 								{
@@ -523,8 +529,7 @@ public class ARISEProcedure {
 												"/title @p title {\"text\":\"Failed\",\"color\":\"red\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
 									}
 								}
-								if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+								CooldownManager.set(sourceentity, "arise", 10);
 								entity.getPersistentData().putDouble("ariset", (entity.getPersistentData().getDouble("ariset") + 1));
 							}
 						} else if ((entity.getPersistentData().getString("soultype")).equals("tusk")) {
@@ -536,8 +541,7 @@ public class ARISEProcedure {
 										capability.syncPlayerVariables(sourceentity);
 									});
 								}
-								if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+								CooldownManager.set(sourceentity, "arise", 10);
 								if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 									_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
 								{
@@ -572,6 +576,8 @@ public class ARISEProcedure {
 										if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 											_toTame.tame(_owner);
 										_level.addFreshEntity(_entityToSpawn);
+										if (sourceentity instanceof Player _owner)
+											ShadowMonarchManager.tagExistingSummon(_owner, _entityToSpawn, "tusk");
 									}
 								}
 							} else {
@@ -584,8 +590,45 @@ public class ARISEProcedure {
 												"/title @p title {\"text\":\"Failed\",\"color\":\"red\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
 									}
 								}
-								if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.ARISE_COOLDOWN.get(), 10, 1, false, false));
+								CooldownManager.set(sourceentity, "arise", 10);
+								entity.getPersistentData().putDouble("ariset", (entity.getPersistentData().getDouble("ariset") + 1));
+							}
+						}
+						else if ((entity.getPersistentData().getString("soultype")).equals("kaisel")) {
+							if (Math.random() < ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level) / ((float) 70)) {
+								{
+									double _setval = Math.max(1, (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Kaisel);
+									sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+										capability.Kaisel = _setval;
+										capability.syncPlayerVariables(sourceentity);
+									});
+								}
+								CooldownManager.set(sourceentity, "arise", 10);
+								if (sourceentity instanceof Player _player && !_player.level().isClientSide())
+									_player.displayClientMessage(Component.literal(("\u00A75" + "ARISE")), true);
+								{
+									double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 500;
+									sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+										capability.MP = _setval;
+										capability.syncPlayerVariables(sourceentity);
+									});
+								}
+								if (!entity.level().isClientSide())
+									entity.discard();
+								if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).KaiselSpawned == 0) {
+									ShadowMonarchManager.summonType(world, x, y, z, sourceentity, "kaisel");
+								}
+							} else {
+								{
+									Entity _ent = sourceentity;
+									if (!_ent.level().isClientSide() && _ent.getServer() != null) {
+										_ent.getServer().getCommands().performPrefixedCommand(
+												new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
+														_ent.getDisplayName(), _ent.level().getServer(), _ent),
+												"/title @p title {\"text\":\"Failed\",\"color\":\"red\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+									}
+								}
+								CooldownManager.set(sourceentity, "arise", 10);
 								entity.getPersistentData().putDouble("ariset", (entity.getPersistentData().getDouble("ariset") + 1));
 							}
 						}

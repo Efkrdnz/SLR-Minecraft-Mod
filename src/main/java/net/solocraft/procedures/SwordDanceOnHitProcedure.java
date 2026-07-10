@@ -18,6 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 
 import javax.annotation.Nullable;
+import net.solocraft.util.CooldownManager;
 
 @Mod.EventBusSubscriber
 public class SwordDanceOnHitProcedure {
@@ -42,7 +43,7 @@ public class SwordDanceOnHitProcedure {
 		double YTeleport = 0;
 		double XTeleport = 0;
 		if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get())) {
-			if (!(sourceentity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(SololevelingModMobEffects.DANCE_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(sourceentity, "dance")) {
 				rand = Mth.nextInt(RandomSource.create(), 1, 2);
 				if (rand == 1) {
 					{
@@ -53,8 +54,7 @@ public class SwordDanceOnHitProcedure {
 									_ent.getXRot());
 					}
 					sourceentity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3((entity.getX()), (entity.getY() + 1.6), (entity.getZ())));
-					if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.DANCE_COOLDOWN.get(), 15, 1, false, false));
+					CooldownManager.set(sourceentity, "dance", 15);
 				} else if (rand == 2) {
 					{
 						Entity _ent = sourceentity;
@@ -67,8 +67,7 @@ public class SwordDanceOnHitProcedure {
 						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 30, 1, false, false));
 					if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 30, 1, false, false));
-					if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.DANCE_COOLDOWN.get(), 15, 1, false, false));
+					CooldownManager.set(sourceentity, "dance", 15);
 				}
 			}
 		}

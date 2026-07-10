@@ -374,7 +374,7 @@ public class ShadowHighOrcEntity extends TamableAnimal implements GeoEntity {
 				double z = ShadowHighOrcEntity.this.getZ();
 				Entity entity = ShadowHighOrcEntity.this;
 				Level world = ShadowHighOrcEntity.this.level();
-				return super.canUse() && IsBerserkProcedure.execute(entity);
+				return super.canUse() && IsBerserkProcedure.execute(entity) && !net.solocraft.util.ShadowMonarchManager.isShadowEntity(this.target);
 			}
 
 			@Override
@@ -384,7 +384,7 @@ public class ShadowHighOrcEntity extends TamableAnimal implements GeoEntity {
 				double z = ShadowHighOrcEntity.this.getZ();
 				Entity entity = ShadowHighOrcEntity.this;
 				Level world = ShadowHighOrcEntity.this.level();
-				return super.canContinueToUse() && IsBerserkProcedure.execute(entity);
+				return super.canContinueToUse() && IsBerserkProcedure.execute(entity) && !net.solocraft.util.ShadowMonarchManager.isShadowEntity(this.target);
 			}
 		});
 		this.targetSelector.addGoal(16, new OwnerHurtTargetGoal(this));

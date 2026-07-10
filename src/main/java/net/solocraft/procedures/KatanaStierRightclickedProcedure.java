@@ -34,7 +34,7 @@ public class KatanaStierRightclickedProcedure {
 		double yaw = 0;
 		if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.KATANA_STIER.get()) {
 			if (entity instanceof Player _player)
-				_player.getCooldowns().addCooldown(itemstack.getItem(), 100);
+				_player.getCooldowns().addCooldown(itemstack.getItem(), _player.isCreative() ? 10 : 100);
 			entity.setDeltaMovement(new Vec3(0, 0, 0));
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 99, false, false));

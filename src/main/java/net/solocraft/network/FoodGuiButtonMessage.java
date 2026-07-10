@@ -2,6 +2,7 @@
 package net.solocraft.network;
 
 import net.solocraft.world.inventory.FoodGuiMenu;
+import net.solocraft.procedures.OpenStoreGUIProcedure;
 import net.solocraft.procedures.Food3BoughtProcedure;
 import net.solocraft.procedures.Food2BoughtProcedure;
 import net.solocraft.procedures.Food1BoughtProcedure;
@@ -75,6 +76,10 @@ public class FoodGuiButtonMessage {
 		if (buttonID == 2) {
 
 			Food3BoughtProcedure.execute(entity);
+		}
+		if (buttonID == 3) {
+
+			OpenStoreGUIProcedure.execute(world, x, y, z, entity);
 		}
 	}
 

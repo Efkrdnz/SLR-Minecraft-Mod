@@ -1,14 +1,10 @@
 
 package net.solocraft.network;
 
+import net.solocraft.procedures.AbilityAppendButtonProcedure;
+import net.solocraft.procedures.PlistButtonConProcedure;
 import net.solocraft.world.inventory.UnlockedSkillsTab7Menu;
-import net.solocraft.procedures.PlistButtonCon54Procedure;
 import net.solocraft.procedures.OpenAbilitylist6Procedure;
-import net.solocraft.procedures.AbilityAppendButton53Procedure;
-import net.solocraft.procedures.AbilityAppendButton52Procedure;
-import net.solocraft.procedures.AbilityAppendButton51Procedure;
-import net.solocraft.procedures.AbilityAppendButton50Procedure;
-import net.solocraft.procedures.AbilityAppendButton49Procedure;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -70,27 +66,27 @@ public class UnlockedSkillsTab7ButtonMessage {
 			return;
 		if (buttonID == 0) {
 
-			AbilityAppendButton49Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 49, true);
 		}
 		if (buttonID == 1) {
 
-			AbilityAppendButton50Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 50, true);
 		}
 		if (buttonID == 2) {
 
-			AbilityAppendButton51Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 51, true);
 		}
 		if (buttonID == 3) {
 
-			AbilityAppendButton52Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 52, true);
 		}
 		if (buttonID == 4) {
 
-			AbilityAppendButton53Procedure.execute(world, x, y, z, entity);
+			AbilityAppendButtonProcedure.execute(world, x, y, z, entity, 53, true);
 		}
 		if (buttonID == 5) {
 
-			PlistButtonCon54Procedure.execute(entity);
+			PlistButtonConProcedure.execute(entity, 54);
 		}
 		if (buttonID == 6) {
 

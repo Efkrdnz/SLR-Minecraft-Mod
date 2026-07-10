@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -17,6 +16,7 @@ import net.minecraft.core.registries.Registries;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class Ability2OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -24,7 +24,7 @@ public class Ability2OnKeyPressedProcedure {
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).combatmode) {
 			if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).abilities).contains("telekinesis")) {
-				if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.TELEKINESIS_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "telekinesis")) {
 					TelekinesisProcedure.execute(world, x, y, z, entity);
 				} else {
 					if (entity instanceof Player _player && !_player.level().isClientSide())
@@ -150,7 +150,7 @@ public class Ability2OnKeyPressedProcedure {
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 3) {
 				CastIceChunkProcedure.execute(world, y, entity);
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
-				if (!(entity instanceof LivingEntity _livEnt7 && _livEnt7.hasEffect(SololevelingModMobEffects.JOB_COOLDOWN_2.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "job_2")) {
 					LightningStormActivationProcedure.execute(entity);
 				}
 			}

@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:mana_crystal_e",
+    "sololeveling:mana_crystal_d",
+    "sololeveling:mana_crystal_c",
+    "sololeveling:mana_crystal_b",
+    "sololeveling:mana_crystal_a",
+    "sololeveling:mana_crystal_s"
+  ]
+}

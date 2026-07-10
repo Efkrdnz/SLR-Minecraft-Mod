@@ -1,30 +1,28 @@
 
 package net.solocraft.network;
 
+import net.solocraft.world.inventory.ShadowDismissMenu;
 import net.solocraft.world.inventory.ShadowSummonGUIMenu;
-import net.solocraft.procedures.SummonWolfProcedure;
-import net.solocraft.procedures.SummonTuskProcedure;
-import net.solocraft.procedures.SummonPolarBearProcedure;
-import net.solocraft.procedures.SummonOrcProcedure;
-import net.solocraft.procedures.SummonKnightProcedure;
-import net.solocraft.procedures.SummonKamishProcedure;
-import net.solocraft.procedures.SummonIgrisProcedure;
-import net.solocraft.procedures.SummonHighOrcProcedure;
-import net.solocraft.procedures.SummonGoblinMageProcedure;
-import net.solocraft.procedures.SummonGoblinClubProcedure;
-import net.solocraft.procedures.SummonGoblinArcherProcedure;
-import net.solocraft.procedures.SummonBeruProcedure;
+import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import net.minecraft.world.level.Level;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
+
+import io.netty.buffer.Unpooled;
 
 import java.util.function.Supplier;
 import java.util.HashMap;
@@ -32,19 +30,26 @@ import java.util.HashMap;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ShadowSummonGUIButtonMessage {
 	private final int buttonID, x, y, z;
+	private final String payload;
 
 	public ShadowSummonGUIButtonMessage(FriendlyByteBuf buffer) {
 		this.buttonID = buffer.readInt();
 		this.x = buffer.readInt();
 		this.y = buffer.readInt();
 		this.z = buffer.readInt();
+		this.payload = buffer.readUtf(64);
 	}
 
 	public ShadowSummonGUIButtonMessage(int buttonID, int x, int y, int z) {
+		this(buttonID, x, y, z, "");
+	}
+
+	public ShadowSummonGUIButtonMessage(int buttonID, int x, int y, int z, String payload) {
 		this.buttonID = buttonID;
 		this.x = x;
 		this.y = y;
 		this.z = z;
+		this.payload = payload == null ? "" : payload;
 	}
 
 	public static void buffer(ShadowSummonGUIButtonMessage message, FriendlyByteBuf buffer) {
@@ -52,6 +57,7 @@ public class ShadowSummonGUIButtonMessage {
 		buffer.writeInt(message.x);
 		buffer.writeInt(message.y);
 		buffer.writeInt(message.z);
+		buffer.writeUtf(message.payload, 64);
 	}
 
 	public static void handler(ShadowSummonGUIButtonMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -62,65 +68,72 @@ public class ShadowSummonGUIButtonMessage {
 			int x = message.x;
 			int y = message.y;
 			int z = message.z;
-			handleButtonAction(entity, buttonID, x, y, z);
+			handleButtonAction(entity, buttonID, x, y, z, message.payload);
 		});
 		context.setPacketHandled(true);
 	}
 
 	public static void handleButtonAction(Player entity, int buttonID, int x, int y, int z) {
+		handleButtonAction(entity, buttonID, x, y, z, "");
+	}
+
+	public static void handleButtonAction(Player entity, int buttonID, int x, int y, int z, String payload) {
+		if (entity == null)
+			return;
 		Level world = entity.level();
 		HashMap guistate = ShadowSummonGUIMenu.guistate;
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
-		if (buttonID == 0) {
-
-			SummonGoblinClubProcedure.execute(world, x, y, z, entity);
+		if (buttonID == 100) {
+			String name = ShadowMonarchManager.saveFormationFromSummoned(entity, payload);
+			if (!name.isEmpty() && !entity.level().isClientSide())
+				entity.displayClientMessage(Component.literal("Saved formation: " + name), true);
+			return;
 		}
-		if (buttonID == 1) {
-
-			SummonGoblinArcherProcedure.execute(world, x, y, z, entity);
+		if (buttonID == 101) {
+			openDismiss(entity, x, y, z);
+			return;
 		}
-		if (buttonID == 2) {
-
-			SummonGoblinMageProcedure.execute(world, x, y, z, entity);
+		String type = switch (buttonID) {
+			case 0 -> "goblin_club";
+			case 1 -> "goblin_archer";
+			case 2 -> "goblin_mage";
+			case 3 -> "wolf";
+			case 4 -> "knight";
+			case 5 -> "polar_bear";
+			case 6 -> "orc";
+			case 7 -> "igris";
+			case 8 -> "beru";
+			case 9 -> "kamish";
+			case 10 -> "high_orc";
+			case 11 -> "tusk";
+			case 12 -> "kaisel";
+			default -> "";
+		};
+		if (!type.isEmpty()) {
+			if ("all".equalsIgnoreCase(payload))
+				ShadowMonarchManager.summonAllOfType(world, x, y, z, entity, type);
+			else
+				ShadowMonarchManager.summonType(world, x, y, z, entity, type);
 		}
-		if (buttonID == 3) {
+	}
 
-			SummonWolfProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 4) {
+	private static void openDismiss(Player entity, int x, int y, int z) {
+		if (!(entity instanceof ServerPlayer serverPlayer))
+			return;
+		BlockPos pos = new BlockPos(x, y, z);
+		NetworkHooks.openScreen(serverPlayer, new MenuProvider() {
+			@Override
+			public Component getDisplayName() {
+				return Component.literal("Shadow Dismiss");
+			}
 
-			SummonKnightProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 5) {
-
-			SummonPolarBearProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 6) {
-
-			SummonOrcProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 7) {
-
-			SummonIgrisProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 8) {
-
-			SummonBeruProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 9) {
-
-			SummonKamishProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 10) {
-
-			SummonHighOrcProcedure.execute(world, x, y, z, entity);
-		}
-		if (buttonID == 11) {
-
-			SummonTuskProcedure.execute(world, x, y, z, entity);
-		}
+			@Override
+			public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
+				return new ShadowDismissMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(pos));
+			}
+		}, pos);
 	}
 
 	@SubscribeEvent

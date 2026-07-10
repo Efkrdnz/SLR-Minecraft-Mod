@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.entity.GoblinArcherShadowEntity;
+import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -91,13 +92,17 @@ public class GoblinArcherShadowOnEntityTickUpdateProcedure {
 				if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).isAlive())) {
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles(ParticleTypes.SMOKE, (entity.getX()), (entity.getY()), (entity.getZ()), 30, 0.05, 0.05, 0.05, 1);
-					if (!entity.level().isClientSide())
+					if (!entity.level().isClientSide()) {
+						ShadowMonarchManager.dropStoredShadowInventory(entity);
 						entity.discard();
+					}
 				}
 			}
 			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
-				if (!entity.level().isClientSide())
+				if (!entity.level().isClientSide()) {
+					ShadowMonarchManager.dropStoredShadowInventory(entity);
 					entity.discard();
+				}
 			}
 			hei = entity.getBbHeight();
 			if (world instanceof ServerLevel _level)
@@ -107,8 +112,10 @@ public class GoblinArcherShadowOnEntityTickUpdateProcedure {
 			if (world instanceof ServerLevel _level)
 				_level.sendParticles(ParticleTypes.LARGE_SMOKE, (entity.getX()), (entity.getY() + hei / 2), (entity.getZ()), 2, (entity.getBbWidth() * 0.75), (hei / 2), (entity.getBbWidth() * 0.75), 0.05);
 		} else {
-			if (!entity.level().isClientSide())
+			if (!entity.level().isClientSide()) {
+				ShadowMonarchManager.dropStoredShadowInventory(entity);
 				entity.discard();
+			}
 		}
 	}
 }

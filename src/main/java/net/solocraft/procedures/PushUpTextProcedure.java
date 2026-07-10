@@ -8,6 +8,6 @@ public class PushUpTextProcedure {
 	public static String execute(Entity entity) {
 		if (entity == null)
 			return "";
-		return "[" + Math.round((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).pushup) + "/25]";
+		return "[" + Math.round((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).pushup) + "/" + Math.round(DailyQuestHelper.visibleTrainingTarget(entity)) + "]";
 	}
 }

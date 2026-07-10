@@ -1,137 +1,70 @@
 package net.solocraft.client.gui;
 
 import net.solocraft.world.inventory.StoreGUIMenu;
-import net.solocraft.procedures.IsMiscEnabledProcedure;
+import net.solocraft.client.gui.system.SystemContainerScreen;
+import net.solocraft.client.gui.system.SystemPanelScreen;
+import net.solocraft.client.gui.system.SystemScreen;
 import net.solocraft.network.StoreGUIButtonMessage;
 import net.solocraft.SololevelingMod;
 
-import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.GuiGraphics;
-
-import java.util.HashMap;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
-public class StoreGUIScreen extends AbstractContainerScreen<StoreGUIMenu> {
-	private final static HashMap<String, Object> guistate = StoreGUIMenu.guistate;
-	private final Level world;
+/** System-themed shop category selector (Weapons / Foods / Potions). */
+public class StoreGUIScreen extends SystemContainerScreen<StoreGUIMenu> {
 	private final int x, y, z;
 	private final Player entity;
-	ImageButton imagebutton_invb50;
-	ImageButton imagebutton_invb501;
-	ImageButton imagebutton_invb502;
-	ImageButton imagebutton_storeaccecories;
 
 	public StoreGUIScreen(StoreGUIMenu container, Inventory inventory, Component text) {
 		super(container, inventory, text);
-		this.world = container.world;
 		this.x = container.x;
 		this.y = container.y;
 		this.z = container.z;
 		this.entity = container.entity;
 		this.imageWidth = 0;
 		this.imageHeight = 0;
-	}
-
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/store_gui.png");
-
-	@Override
-	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
-		this.renderTooltip(guiGraphics, mouseX, mouseY);
-		if (mouseX > leftPos + -44 && mouseX < leftPos + -20 && mouseY > topPos + -22 && mouseY < topPos + 2)
-			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.store_gui.tooltip_weapons"), mouseX, mouseY);
-		if (mouseX > leftPos + -1 && mouseX < leftPos + 23 && mouseY > topPos + -22 && mouseY < topPos + 2)
-			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.store_gui.tooltip_potions"), mouseX, mouseY);
-		if (mouseX > leftPos + -44 && mouseX < leftPos + -20 && mouseY > topPos + 23 && mouseY < topPos + 47)
-			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.store_gui.tooltip_foods"), mouseX, mouseY);
-		if (mouseX > leftPos + -1 && mouseX < leftPos + 23 && mouseY > topPos + 23 && mouseY < topPos + 47)
-			guiGraphics.renderTooltip(font, Component.translatable("gui.sololeveling.store_gui.tooltip_misc"), mouseX, mouseY);
+		this.pRelX = -74;
+		this.pRelY = -78;
+		this.pW = 148;
+		this.pH = 156;
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int gx, int gy) {
-		RenderSystem.setShaderColor(1, 1, 1, 1);
+	protected void renderBg(GuiGraphics g, float partialTicks, int gx, int gy) {
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
-		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
-
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/panel_rework_vertical2.png"), this.leftPos + -109, this.topPos + -114, 0, 0, 200, 225, 200, 225);
-
+		ShopStyle.panel(g, leftPos + pRelX, topPos + pRelY, pW, pH);
+		ShopStyle.titleBar(g, this.font, leftPos + pRelX, topPos + pRelY, pW, "SHOP");
 		RenderSystem.disableBlend();
 	}
 
 	@Override
-	public boolean keyPressed(int key, int b, int c) {
-		if (key == 256) {
-			this.minecraft.player.closeContainer();
-			return true;
-		}
-		return super.keyPressed(key, b, c);
+	protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+		ShopStyle.gold(g, this.font, entity, pRelX + 6, pRelY + pH - 12);
 	}
 
-	@Override
-	public void containerTick() {
-		super.containerTick();
-	}
-
-	@Override
-	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(this.font, Component.translatable("gui.sololeveling.store_gui.label_sslshop"), -23, -57, -1, false);
-	}
-
-	@Override
-	public void onClose() {
-		super.onClose();
+	private void category(int id) {
+		SololevelingMod.PACKET_HANDLER.sendToServer(new StoreGUIButtonMessage(id, x, y, z));
 	}
 
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_invb50 = new ImageButton(this.leftPos + -50, this.topPos + -28, 36, 36, 0, 0, 36, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_invb50.png"), 36, 72, e -> {
-			if (true) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreGUIButtonMessage(0, x, y, z));
-				StoreGUIButtonMessage.handleButtonAction(entity, 0, x, y, z);
+		int bw = 116, bh = 26;
+		int bx = this.leftPos + pRelX + (pW - bw) / 2;
+		// StoreGUIButtonMessage: 0 = Weapons, 1 = Foods, 2 = Potions
+		this.addRenderableWidget(new SystemScreen.SystemButton(bx, this.topPos + pRelY + 30, bw, bh, Component.literal("Weapons"), b -> category(0)));
+		this.addRenderableWidget(new SystemScreen.SystemButton(bx, this.topPos + pRelY + 64, bw, bh, Component.literal("Foods"), b -> category(1)));
+		this.addRenderableWidget(new SystemScreen.SystemButton(bx, this.topPos + pRelY + 98, bw, bh, Component.literal("Potions"), b -> category(2)));
+		this.addRenderableWidget(new SystemScreen.SystemButton(this.leftPos + pRelX + 3, this.topPos + pRelY + 2, 40, 12, Component.literal("< Back"), b -> {
+			if (this.minecraft != null && this.minecraft.player != null) {
+				this.minecraft.player.closeContainer();
+				openSystemScreen(new SystemPanelScreen());
 			}
-		});
-		guistate.put("button:imagebutton_invb50", imagebutton_invb50);
-		this.addRenderableWidget(imagebutton_invb50);
-		imagebutton_invb501 = new ImageButton(this.leftPos + -50, this.topPos + 17, 36, 36, 0, 0, 36, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_invb501.png"), 36, 72, e -> {
-			if (true) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreGUIButtonMessage(1, x, y, z));
-				StoreGUIButtonMessage.handleButtonAction(entity, 1, x, y, z);
-			}
-		});
-		guistate.put("button:imagebutton_invb501", imagebutton_invb501);
-		this.addRenderableWidget(imagebutton_invb501);
-		imagebutton_invb502 = new ImageButton(this.leftPos + -7, this.topPos + -28, 36, 36, 0, 0, 36, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_invb502.png"), 36, 72, e -> {
-			if (true) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreGUIButtonMessage(2, x, y, z));
-				StoreGUIButtonMessage.handleButtonAction(entity, 2, x, y, z);
-			}
-		});
-		guistate.put("button:imagebutton_invb502", imagebutton_invb502);
-		this.addRenderableWidget(imagebutton_invb502);
-		imagebutton_storeaccecories = new ImageButton(this.leftPos + -7, this.topPos + 17, 36, 36, 0, 0, 36, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_storeaccecories.png"), 36, 72, e -> {
-			if (IsMiscEnabledProcedure.execute(world)) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreGUIButtonMessage(3, x, y, z));
-				StoreGUIButtonMessage.handleButtonAction(entity, 3, x, y, z);
-			}
-		}) {
-			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
-				if (IsMiscEnabledProcedure.execute(world))
-					super.render(guiGraphics, gx, gy, ticks);
-			}
-		};
-		guistate.put("button:imagebutton_storeaccecories", imagebutton_storeaccecories);
-		this.addRenderableWidget(imagebutton_storeaccecories);
+		}));
 	}
 }

@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.entity.IceChunkEntity;
+import net.solocraft.entity.DualWieldFlurryEntity;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -35,6 +36,7 @@ import net.minecraft.commands.CommandSource;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class DualWieldProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -76,11 +78,10 @@ public class DualWieldProcedure {
 		double xpos = 0;
 		double zpos = 0;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 550) {
-			if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.DUAL_WIELDING_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "Dualwield")) {
 				if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("minecraft:dagger")))
 						&& (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("minecraft:dagger")))) {
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.DUAL_WIELDING_COOLDOWN.get(), 260, 1, false, false));
+					CooldownManager.set(entity, "Dualwield", 260);
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 999, 1, false, false));
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
@@ -98,13 +99,8 @@ public class DualWieldProcedure {
 					entity.getPersistentData().putDouble("SlashZ3", (entity.getZ() + 8 * entity.getLookAngle().z));
 					entity.getPersistentData().putDouble("SlashX4", (entity.getX() + 9 * entity.getLookAngle().x));
 					entity.getPersistentData().putDouble("SlashZ4", (entity.getZ() + 9 * entity.getLookAngle().z));
-					{
-						Entity _ent = entity;
-						if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-							_ent.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4,
-									_ent.getName().getString(), _ent.getDisplayName(), _ent.level().getServer(), _ent), ("summon sololeveling:dagger_slash " + xpos + " ~ " + zpos + " {Rotation:[" + yaw + "f,0f]}"));
-						}
-					}
+					if (entity instanceof LivingEntity livingEntity)
+						DualWieldFlurryEntity.spawn(world, livingEntity);
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
 							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.5, 2);

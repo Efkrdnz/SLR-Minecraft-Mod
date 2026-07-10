@@ -6,12 +6,15 @@ import net.solocraft.entity.SkeletonSummonerEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 
 public class SkeletonSummonerOnEntityTickUpdateProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
 		if (entity == null)
+			return;
+		if (entity instanceof LivingEntity livingEntity && livingEntity.isDeadOrDying())
 			return;
 		Entity target = null;
 		if (entity instanceof SkeletonSummonerEntity _datEntSetI)

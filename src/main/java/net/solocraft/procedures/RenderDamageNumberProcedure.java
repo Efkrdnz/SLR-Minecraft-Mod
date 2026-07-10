@@ -3,6 +3,8 @@ package net.solocraft.procedures;
 import org.joml.Vector3f;
 import org.joml.Matrix4f;
 
+import net.solocraft.util.SystemClientConfig;
+
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.Event;
@@ -41,6 +43,10 @@ import javax.annotation.Nullable;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -54,6 +60,39 @@ public class RenderDamageNumberProcedure {
 	private static float textHeight = 1.0F;
 	private static int textColor = -1;
 	private static int backColor = 0;
+	private static final List<DamageNumber> DAMAGE_NUMBERS = new ArrayList<>();
+	private static final long DAMAGE_NUMBER_LIFETIME_MS = 1050L;
+
+	private static class DamageNumber {
+		final double x;
+		final double y;
+		final double z;
+		final double offsetX;
+		final double offsetZ;
+		final float amount;
+		final int color;
+		final long createdAt;
+
+		DamageNumber(double x, double y, double z, float amount, int color) {
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.amount = amount;
+			this.color = color;
+			this.createdAt = System.currentTimeMillis();
+			this.offsetX = (Math.random() - 0.5D) * 0.55D;
+			this.offsetZ = (Math.random() - 0.5D) * 0.55D;
+		}
+	}
+
+	public static void addNumber(double x, double y, double z, float amount, int color) {
+		if (!SystemClientConfig.isDamageNumbersEnabled())
+			return;
+		DAMAGE_NUMBERS.add(new DamageNumber(x, y, z, amount, color));
+		if (DAMAGE_NUMBERS.size() > 80) {
+			DAMAGE_NUMBERS.remove(0);
+		}
+	}
 
 	public static void setBackColor(int color) {
 		RenderDamageNumberProcedure.backColor = color;
@@ -244,5 +283,66 @@ public class RenderDamageNumberProcedure {
 	}
 
 	private static void execute(@Nullable Event event) {
+		if (provider == null)
+			return;
+		if (!SystemClientConfig.isDamageNumbersEnabled()) {
+			DAMAGE_NUMBERS.clear();
+			return;
+		}
+		renderDamageNumbers();
+	}
+
+	private static void renderDamageNumbers() {
+		Minecraft minecraft = Minecraft.getInstance();
+		if (minecraft.level == null || minecraft.player == null)
+			return;
+		long now = System.currentTimeMillis();
+		MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
+		Vec3 cameraPos = provider.getCamera().getPosition();
+		PoseStack poseStack = provider.getPoseStack();
+		Font font = minecraft.font;
+
+		RenderSystem.enableBlend();
+		RenderSystem.defaultBlendFunc();
+		RenderSystem.disableDepthTest();
+		for (Iterator<DamageNumber> iterator = DAMAGE_NUMBERS.iterator(); iterator.hasNext();) {
+			DamageNumber number = iterator.next();
+			float age = (float) (now - number.createdAt) / (float) DAMAGE_NUMBER_LIFETIME_MS;
+			if (age >= 1.0F) {
+				iterator.remove();
+				continue;
+			}
+			float rise = age * 0.85F;
+			float alpha = 1.0F - age;
+			String text = formatDamage(number.amount);
+			int color = applyAlpha(number.color, alpha);
+			int shadow = applyAlpha(0xFF020814, alpha * 0.72F);
+
+			poseStack.pushPose();
+			poseStack.translate(number.x + number.offsetX - cameraPos.x(), number.y + rise - cameraPos.y(), number.z + number.offsetZ - cameraPos.z());
+			poseStack.mulPose(minecraft.getEntityRenderDispatcher().cameraOrientation());
+			float scale = 0.026F + age * 0.006F;
+			poseStack.scale(-scale, -scale, scale);
+			float width = font.width(text) / 2.0F;
+			Matrix4f matrix = poseStack.last().pose();
+			font.drawInBatch(text, -width + 1.0F, 1.0F, shadow, false, matrix, bufferSource, Font.DisplayMode.SEE_THROUGH, 0, LightTexture.FULL_BRIGHT);
+			font.drawInBatch(text, -width, 0.0F, color, false, matrix, bufferSource, Font.DisplayMode.SEE_THROUGH, 0, LightTexture.FULL_BRIGHT);
+			poseStack.popPose();
+		}
+		bufferSource.endBatch();
+		RenderSystem.enableDepthTest();
+		RenderSystem.disableBlend();
+	}
+
+	private static String formatDamage(float amount) {
+		if (amount < 10.0F && amount != Math.round(amount)) {
+			return String.format(Locale.US, "%.1f", amount);
+		}
+		return Integer.toString(Math.round(amount));
+	}
+
+	private static int applyAlpha(int color, float alpha) {
+		int a = Math.max(0, Math.min(255, Math.round(((color >>> 24) & 255) * alpha)));
+		return (color & 0x00FFFFFF) | (a << 24);
 	}
 }

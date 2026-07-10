@@ -72,6 +72,7 @@ public class BarukaEntity extends Monster implements GeoEntity {
 		setPersistenceRequired();
 		this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(SololevelingModItems.BARUKAS_DAGGER.get()));
 		this.setItemSlot(EquipmentSlot.OFFHAND, new ItemStack(SololevelingModItems.BARUKAS_DAGGER.get()));
+		suppressDaggerDrops();
 	}
 
 	@Override
@@ -139,7 +140,6 @@ public class BarukaEntity extends Monster implements GeoEntity {
 
 	protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHitIn) {
 		super.dropCustomDeathLoot(source, looting, recentlyHitIn);
-		this.spawnAtLocation(new ItemStack(SololevelingModItems.BARUKAS_DAGGER.get()));
 	}
 
 	@Override
@@ -181,6 +181,12 @@ public class BarukaEntity extends Monster implements GeoEntity {
 			this.setTexture(compound.getString("Texture"));
 		if (compound.contains("DataLevel"))
 			this.entityData.set(DATA_Level, compound.getInt("DataLevel"));
+		suppressDaggerDrops();
+	}
+
+	private void suppressDaggerDrops() {
+		this.setDropChance(EquipmentSlot.MAINHAND, 0.0F);
+		this.setDropChance(EquipmentSlot.OFFHAND, 0.0F);
 	}
 
 	@Override

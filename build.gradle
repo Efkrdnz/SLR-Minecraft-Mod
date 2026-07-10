@@ -18,14 +18,25 @@ minecraft {
     copyIdeResources = true
 
     runs {
+        all {
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            property 'net.minecraftforge.gradle.GradleStart.srg.srg-mcp', "${projectDir}/build/createSrgToMcp/output.srg"
+        }
+
         client {
             workingDirectory project.file('run')
 
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
+            jvmArgs '-Xms512M',
+                    '-Xmx2G',
+                    '-XX:ActiveProcessorCount=8',
+                    '-XX:CICompilerCount=2',
+                    '-XX:ReservedCodeCacheSize=128M'
 
             mods {
-                examplemod {
+                main {
                     source sourceSets.main
                 }
             }
@@ -36,9 +47,14 @@ minecraft {
 
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
+            jvmArgs '-Xms512M',
+                    '-Xmx2G',
+                    '-XX:ActiveProcessorCount=8',
+                    '-XX:CICompilerCount=2',
+                    '-XX:ReservedCodeCacheSize=128M'
 
             mods {
-                examplemod {
+                main {
                     source sourceSets.main
                 }
             }
@@ -46,9 +62,46 @@ minecraft {
     }
 }
 
+repositories {
+    maven {
+        url = 'https://cursemaven.com'
+        content {
+            includeGroup 'curse.maven'
+        }
+    }
+    maven {
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+    }
+    maven {
+        url = 'https://maven.kosmx.dev/'
+    }
+    maven {
+        name = 'Modding Legacy Maven'
+        url = 'https://maven.moddinglegacy.com/maven'
+    }
+}
+
 dependencies {
     minecraft 'net.minecraftforge:forge:1.20.1-47.2.0'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    implementation fg.deobf('curse.maven:kiwi-303657:5039878')
+    implementation fg.deobf('curse.maven:loquat-forge-885292:4925464')
+    implementation fg.deobf('curse.maven:jade-324717:4986594')
+    implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.20.1:4.4.2')
+    implementation fg.deobf('dev.kosmx.player-anim:player-animation-lib-forge:1.0.2-rc1+1.20')
+    implementation fg.deobf('curse.maven:world-preview-891429:4964102')
+    implementation fg.deobf('curse.maven:worldedit-225608:4586218')
+    implementation fg.deobf('curse.maven:cloth-config-348521:4973441')
+    implementation fg.deobf('com.legacy:structure-gel:1.20.1-2.16.0.7')
+    implementation fg.deobf('curse.maven:huge-structure-blocks-474114:4803547')
+
+    compileOnly fg.deobf('curse.maven:bettercombat-forge-639842:4823303')
+    runtimeOnly fg.deobf('curse.maven:bettercombat-forge-639842:4823303')
+    compileOnly fg.deobf('curse.maven:cloth-config-forge-348521:4633444')
+    runtimeOnly fg.deobf('curse.maven:cloth-config-forge-348521:4633444')
+    compileOnly fg.deobf('curse.maven:mpp-forge-986014:5262463')
+    runtimeOnly fg.deobf('curse.maven:mpp-forge-986014:5262463')
 }
 
 mixin {
@@ -67,4 +120,49 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
-apply from: 'mcreator.gradle'
+tasks.register('auditProcedureReferences') {
+    group = 'verification'
+    description = 'Fails the build when a Procedure.execute call points to a missing procedure source or class.'
+    dependsOn 'classes'
+
+    doLast {
+        def procedureSourceDir = file('src/main/java/net/solocraft/procedures')
+        def procedureClassDir = file("${buildDir}/classes/java/main/net/solocraft/procedures")
+        def references = [] as Set
+
+        fileTree('src/main/java') {
+            include '**/*.java'
+        }.each { javaFile ->
+            def matcher = javaFile.text =~ /\b([A-Za-z0-9_]+Procedure)\.execute\s*\(/
+            matcher.each { match ->
+                references << match[1]
+            }
+        }
+
+        def missingSources = references.findAll {
+            !file("${procedureSourceDir}/${it}.java").isFile()
+        }.sort()
+        def missingClasses = references.findAll {
+            !file("${procedureClassDir}/${it}.class").isFile()
+        }.sort()
+
+        if (!missingSources.isEmpty() || !missingClasses.isEmpty()) {
+            throw new GradleException(
+                    "Broken procedure references found.\n" +
+                            "Missing source files: ${missingSources.isEmpty() ? 'none' : missingSources.join(', ')}\n" +
+                            "Missing compiled classes: ${missingClasses.isEmpty() ? 'none' : missingClasses.join(', ')}"
+            )
+        }
+
+        logger.lifecycle("Procedure reference audit passed: ${references.size()} references checked.")
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'auditProcedureReferences'
+}
+
+tasks.named('jar') {
+    dependsOn 'auditProcedureReferences'
+    archiveFileName = 'SLR1.0.0.jar'
+}

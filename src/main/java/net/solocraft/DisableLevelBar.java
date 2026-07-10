@@ -1,6 +1,7 @@
 package net.solocraft;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.SystemClientConfig;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -19,7 +20,8 @@ public class DisableLevelBar {
 		if (entity == null)
 			return;
 			
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).CustomHUD) {
+		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).CustomHUD
+				&& SystemClientConfig.isLegacyOverlayEnabled()) {
 			if (VanillaGuiOverlay.EXPERIENCE_BAR.type() == event.getOverlay()) {
 				event.setCanceled(true);
 			}

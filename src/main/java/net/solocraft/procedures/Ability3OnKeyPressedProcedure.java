@@ -2,7 +2,6 @@ package net.solocraft.procedures;
 
 import net.solocraft.world.inventory.ShadowExchangeMainGUIMenu;
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.FireFlyEntity;
 
@@ -29,6 +28,7 @@ import java.util.List;
 import java.util.Comparator;
 
 import io.netty.buffer.Unpooled;
+import net.solocraft.util.CooldownManager;
 
 public class Ability3OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -108,7 +108,7 @@ public class Ability3OnKeyPressedProcedure {
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 3) {
 				IceSpearGiveProcedure.execute(world, x, y, z, entity);
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
-				if (!(entity instanceof LivingEntity _livEnt9 && _livEnt9.hasEffect(SololevelingModMobEffects.JOB_COOLDOWN_3.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "job_3")) {
 					StormBurstProcedure.execute(world, x, y, z, entity);
 				}
 			}

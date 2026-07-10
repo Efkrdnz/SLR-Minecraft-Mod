@@ -1,14 +1,13 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.network.chat.Component;
+import net.solocraft.util.CooldownManager;
 
 public class RulersHandProjectileHitsLivingEntityProcedure {
 	public static void execute(Entity entity, Entity sourceentity) {
@@ -28,10 +27,8 @@ public class RulersHandProjectileHitsLivingEntityProcedure {
 					capability.syncPlayerVariables(sourceentity);
 				});
 			}
-			if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 120, 1, false, false));
-			if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.TELEKINESIS_COOLDOWN.get(), 200, 1, false, false));
+			CooldownManager.set(sourceentity, "mana_refresh", 120);
+			CooldownManager.set(sourceentity, "telekinesis", 200);
 		} else {
 			if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 				_player.displayClientMessage(Component.literal(("\u00A74" + "Not enough mana to pull " + entity.getDisplayName().getString())), true);

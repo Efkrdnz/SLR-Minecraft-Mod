@@ -1,6 +1,5 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.entity.KangTaeshikEntity;
 import net.solocraft.SololevelingMod;
@@ -18,6 +17,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.solocraft.util.CooldownManager;
 
 public class KangTaeshikOnEntityTickUpdateProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
@@ -71,8 +71,7 @@ public class KangTaeshikOnEntityTickUpdateProcedure {
 			}
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 80, 1, false, false));
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.STEALTH_COOLDOWN.get(), 80, 1, false, false));
+			CooldownManager.set(entity, "Stealth", 80);
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 80, 1, false, false));
 			entity.setSprinting(true);

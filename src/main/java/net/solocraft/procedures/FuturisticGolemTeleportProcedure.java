@@ -1,6 +1,5 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.entity.FuturisticGolemEntity;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -27,13 +26,14 @@ import net.minecraft.core.BlockPos;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class FuturisticGolemTeleportProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
 		if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
-			if (!(entity instanceof LivingEntity _livEnt2 && _livEnt2.hasEffect(SololevelingModMobEffects.GOLEM_TELEPORT_COOLDOWN.get()))) {
+			if (!CooldownManager.isOnCooldown(entity, "golem_teleport")) {
 				if (entity.getPersistentData().getDouble("MF") == 1) {
 					if (entity instanceof FuturisticGolemEntity) {
 						((FuturisticGolemEntity) entity).setAnimation("tpattack");
@@ -64,8 +64,7 @@ public class FuturisticGolemTeleportProcedure {
 							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 1, 1, false);
 						}
 					}
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.GOLEM_TELEPORT_COOLDOWN.get(), 310, 1, false, false));
+					CooldownManager.set(entity, "golem_teleport", 310);
 					{
 						final Vec3 _center = new Vec3(x, y, z);
 						List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(8 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();

@@ -1,6 +1,5 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.entity.FuturisticGolemEntity;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -12,7 +11,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.sounds.SoundSource;
@@ -24,12 +22,13 @@ import net.minecraft.core.BlockPos;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class FuturisticGolemMeleeProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.GOLEM_KICK_COOLDOWN.get()))) {
+		if (!CooldownManager.isOnCooldown(entity, "golem_kick")) {
 			if (entity.getPersistentData().getDouble("AI") == 1) {
 				if (entity instanceof FuturisticGolemEntity) {
 					((FuturisticGolemEntity) entity).setAnimation("kick");
@@ -44,8 +43,7 @@ public class FuturisticGolemMeleeProcedure {
 						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
 					}
 				}
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.GOLEM_KICK_COOLDOWN.get(), 20, 1, false, false));
+				CooldownManager.set(entity, "golem_kick", 20);
 				{
 					final Vec3 _center = new Vec3((entity.getX() + 1.5 * entity.getLookAngle().x), (entity.getY() + 0.25), (entity.getZ() + 1.5 * entity.getLookAngle().z));
 					List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(3 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();

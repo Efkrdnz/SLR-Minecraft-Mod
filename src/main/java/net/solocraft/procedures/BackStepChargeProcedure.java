@@ -13,6 +13,10 @@ import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber
 public class BackStepChargeProcedure {
+	private static final int MAX_CHARGES = 3;
+	private static final int RECHARGE_TICKS = 180;
+	private static final String INITIALIZED = "slr_back_step_charges_initialized";
+
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
 		if (event.phase == TickEvent.Phase.END) {
@@ -27,49 +31,40 @@ public class BackStepChargeProcedure {
 	private static void execute(@Nullable Event event, Entity entity) {
 		if (entity == null)
 			return;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Classes == 6) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).rangerleapnum < 3) {
-				{
-					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).rangerleaptimer - 1;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.rangerleaptimer = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).rangerleaptimer <= 0) {
-					{
-						double _setval = 180;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.rangerleaptimer = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).rangerleapnum + 1;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.rangerleapnum = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-				}
-			}
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).rangerleapnum > 3) {
-				{
-					double _setval = 3;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.rangerleapnum = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).rangerleapnum < 0) {
-				{
-					double _setval = 0;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.rangerleapnum = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			}
+		if (entity.level().isClientSide())
+			return;
+		SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
+		if (!(vars.Classes == 6 || vars.Plist.contains("Back Step")))
+			return;
+		if (!entity.getPersistentData().getBoolean(INITIALIZED)) {
+			entity.getPersistentData().putBoolean(INITIALIZED, true);
+			setCharges(entity, MAX_CHARGES, 0);
+			return;
 		}
+		double charges = Math.max(0, Math.min(MAX_CHARGES, vars.rangerleapnum));
+		double timer = Math.max(0, vars.rangerleaptimer);
+		if (charges >= MAX_CHARGES) {
+			if (vars.rangerleapnum != MAX_CHARGES || vars.rangerleaptimer != 0)
+				setCharges(entity, MAX_CHARGES, 0);
+			return;
+		}
+		if (timer <= 0) {
+			timer = RECHARGE_TICKS;
+		} else {
+			timer--;
+		}
+		if (timer <= 0) {
+			charges = Math.min(MAX_CHARGES, charges + 1);
+			timer = charges >= MAX_CHARGES ? 0 : RECHARGE_TICKS;
+		}
+		setCharges(entity, charges, timer);
+	}
+
+	private static void setCharges(Entity entity, double charges, double timer) {
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			capability.rangerleapnum = charges;
+			capability.rangerleaptimer = timer;
+			capability.syncPlayerVariables(entity);
+		});
 	}
 }

@@ -21,6 +21,7 @@ import net.minecraft.core.particles.ParticleTypes;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class ConsecutiveSlashesOnEffectActiveTickProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -28,8 +29,7 @@ public class ConsecutiveSlashesOnEffectActiveTickProcedure {
 			return;
 		if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 			_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 5, false, false));
-		if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-			_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 40, 0, false, false));
+		CooldownManager.set(entity, "mana_refresh", 40);
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP > 100) {
 			{
 				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 5;
@@ -41,8 +41,7 @@ public class ConsecutiveSlashesOnEffectActiveTickProcedure {
 		} else {
 			if (entity instanceof LivingEntity _entity)
 				_entity.removeEffect(SololevelingModMobEffects.CONSECUTIVE_SLASHES.get());
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 60, 0, false, false));
+			CooldownManager.set(entity, "mana_refresh", 60);
 		}
 		if (world instanceof ServerLevel _level)
 			_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GOODSLASH_1.get()), x, y, z, 4, 5, 5, 5, 0);

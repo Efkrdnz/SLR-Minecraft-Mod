@@ -4,6 +4,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.entity.StoneGolemEntity;
 import net.solocraft.entity.SteelFangWolfEntity;
+import net.solocraft.entity.SteelFangedLycanEntity;
 import net.solocraft.entity.SpiderBossEntity;
 import net.solocraft.entity.SkeletonWarriorEntity;
 import net.solocraft.entity.SkeletonSummonerEntity;
@@ -44,6 +45,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.Difficulty;
 import net.minecraft.network.chat.Component;
 
 import javax.annotation.Nullable;
@@ -63,7 +65,8 @@ public class XPGainProcedure {
 		XP_REWARDS.put(GoblinClubEntity.class, 3);
 		XP_REWARDS.put(StoneGolemEntity.class, 15);
 		XP_REWARDS.put(SteelFangWolfEntity.class, 5);
-		XP_REWARDS.put(OrcEntity.class, 6);
+		XP_REWARDS.put(SteelFangedLycanEntity.class, 5);
+		XP_REWARDS.put(OrcEntity.class, 25);
 		XP_REWARDS.put(RedAntsEntity.class, 40);
 		XP_REWARDS.put(PolarBearEntity.class, 16);
 		XP_REWARDS.put(IceElfEntity.class, 35);
@@ -138,18 +141,39 @@ public class XPGainProcedure {
 		// Get XP value for the entity (default is 1 XP only if soloDungeonProgressionOnly is false)
 		int baseXP = isListed ? XP_REWARDS.get(entity.getClass()) : 1;
 		int xpMultiplier = world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER);
-		double diffMultiplier = DifficultyXPMultiplierProcedure.execute(world);
+		double diffMultiplier = difficultyMultiplier(world);
+		awardBaseXp(world, (Player) xpReceiver, baseXP, diffMultiplier, xpMultiplier);
+	}
+
+	public static void awardBaseXp(LevelAccessor world, Player player, int baseXP) {
+		if (world == null || player == null)
+			return;
+		int xpMultiplier = world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER);
+		double diffMultiplier = difficultyMultiplier(world);
+		awardBaseXp(world, player, baseXP, diffMultiplier, xpMultiplier);
+	}
+
+	private static double difficultyMultiplier(LevelAccessor world) {
+		if (world.getDifficulty() == Difficulty.NORMAL)
+			return 0.75;
+		if (world.getDifficulty() == Difficulty.HARD)
+			return 0.5;
+		return 1;
+	}
+
+	private static void awardBaseXp(LevelAccessor world, Player player, int baseXP, double diffMultiplier, int xpMultiplier) {
+		SololevelingModVariables.PlayerVariables playerVars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
+		if (!playerVars.Player)
+			return;
 		double totalXP = diffMultiplier * playerVars.xpmultiplier * (xpMultiplier / 10.0) * baseXP;
-		// Update player's XP
 		double newXP = playerVars.Xp + totalXP;
-		xpReceiver.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			capability.Xp = newXP;
-			capability.syncPlayerVariables(xpReceiver);
+			capability.syncPlayerVariables(player);
 		});
-		// Send XP gained message to the player
-		if (!xpReceiver.level().isClientSide()) {
+		if (!player.level().isClientSide()) {
 			String formattedXP = String.format(Locale.FRANCE, "%,.1f", totalXP);
-			((Player) xpReceiver).displayClientMessage(Component.literal("\u00A7bGained \u00A7f" + formattedXP + "\u00A7b XP"), true);
+			player.displayClientMessage(Component.literal("\u00A7bGained \u00A7f" + formattedXP + "\u00A7b XP"), true);
 		}
 	}
 }

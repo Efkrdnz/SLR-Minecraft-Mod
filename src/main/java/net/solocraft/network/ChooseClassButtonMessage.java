@@ -2,12 +2,7 @@
 package net.solocraft.network;
 
 import net.solocraft.world.inventory.ChooseClassMenu;
-import net.solocraft.procedures.ClassChooseButton6Procedure;
-import net.solocraft.procedures.ClassChooseButton5Procedure;
-import net.solocraft.procedures.ClassChooseButton4Procedure;
-import net.solocraft.procedures.ClassChooseButton3Procedure;
-import net.solocraft.procedures.ClassChooseButton2Procedure;
-import net.solocraft.procedures.ClassChooseButton1Procedure;
+import net.solocraft.procedures.ClassChooseButtonProcedure;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -67,29 +62,8 @@ public class ChooseClassButtonMessage {
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
-		if (buttonID == 0) {
-
-			ClassChooseButton1Procedure.execute(entity);
-		}
-		if (buttonID == 1) {
-
-			ClassChooseButton2Procedure.execute(entity);
-		}
-		if (buttonID == 2) {
-
-			ClassChooseButton3Procedure.execute(entity);
-		}
-		if (buttonID == 3) {
-
-			ClassChooseButton4Procedure.execute(entity);
-		}
-		if (buttonID == 4) {
-
-			ClassChooseButton5Procedure.execute(entity);
-		}
-		if (buttonID == 5) {
-
-			ClassChooseButton6Procedure.execute(entity);
+		if (buttonID >= 0 && buttonID <= 5) {
+			ClassChooseButtonProcedure.execute(entity, buttonID + 1);
 		}
 	}
 

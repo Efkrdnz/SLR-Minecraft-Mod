@@ -15,6 +15,7 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.BlockPos;
+import net.solocraft.util.CooldownManager;
 
 public class DOnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -32,7 +33,7 @@ public class DOnKeyPressedProcedure {
 					}
 				}
 			} else if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.DEMON_KINGS_LONG_SWORD.get()) {
-				if (!(entity instanceof LivingEntity _livEnt7 && _livEnt7.hasEffect(SololevelingModMobEffects.COOLDOWN_SOFF.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "soff")) {
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SWORD_ENHANCE.get(), 999999, 1));
 					if (world instanceof Level _level) {
@@ -54,7 +55,7 @@ public class DOnKeyPressedProcedure {
 					}
 				}
 			} else if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MYTHIC_DAGGER.get()) {
-				if (!(entity instanceof LivingEntity _livEnt16 && _livEnt16.hasEffect(SololevelingModMobEffects.COUNTER_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "counter")) {
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SWORD_ENHANCE.get(), 999999, 1));
 					if (world instanceof Level _level) {
@@ -66,7 +67,7 @@ public class DOnKeyPressedProcedure {
 					}
 				}
 			} else if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.GRAVITY_DAGGER.get()) {
-				if (!(entity instanceof LivingEntity _livEnt21 && _livEnt21.hasEffect(SololevelingModMobEffects.LEV_DAGGER_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "lev_dagger")) {
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SWORD_ENHANCE.get(), 999999, 1));
 					if (world instanceof Level _level) {
@@ -107,7 +108,7 @@ public class DOnKeyPressedProcedure {
 				}
 			} else if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.KASAKAS_VENOM_FANGS.get()
 					|| (entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.KASAKAS_AWAKENED_VENOM_FANG.get()) {
-				if (!(entity instanceof LivingEntity _livEnt39 && _livEnt39.hasEffect(SololevelingModMobEffects.PARALYZE_COOLDOWN.get()))) {
+				if (!CooldownManager.isOnCooldown(entity, "paralyze")) {
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SWORD_ENHANCE.get(), 999999, 1));
 					if (world instanceof Level _level) {

@@ -31,7 +31,7 @@ public class DunPlaceInstanceProcedure {
 			}
 		}
 		SololevelingMod.queueServerWork(20, () -> {
-			InstanceRandomProcedure.execute(world, entity);
+			InstanceRandomProcedure.execute(world, x, y, z);
 		});
 	}
 }

@@ -21,6 +21,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class PhysicalBuffCastProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -29,7 +30,7 @@ public class PhysicalBuffCastProcedure {
 		double raytrace_distance = 0;
 		String found_entity_name = "";
 		boolean entity_found = false;
-		if (!(entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.PHYSICAL_BUFF_COOLDOWN.get()))) {
+		if (!CooldownManager.isOnCooldown(entity, "Physical Buff")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600
 					+ (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10) {
 				if (!entity.isShiftKeyDown()) {
@@ -293,11 +294,9 @@ public class PhysicalBuffCastProcedure {
 									capability.syncPlayerVariables(entity);
 								});
 							}
-							if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 100, 0, false, false));
-							if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.PHYSICAL_BUFF_COOLDOWN.get(),
-										(int) ((600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10) * 1.5), 0, false, false));
+							CooldownManager.set(entity, "mana_refresh", 100);
+							CooldownManager.set(entity, "Physical Buff",
+									(int) ((600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10) * 1.5));
 							if (world instanceof Level _level) {
 								if (!_level.isClientSide()) {
 									_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.spawn")), SoundSource.NEUTRAL, 1, 2);
@@ -311,11 +310,9 @@ public class PhysicalBuffCastProcedure {
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.PHYSICAL_BUFF.get(),
 								(int) (600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10), 0, false, false));
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.MANA_REFLESH_COOLDOWN.get(), 100, 0, false, false));
-					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.PHYSICAL_BUFF_COOLDOWN.get(),
-								(int) ((600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10) * 1.5), 0, false, false));
+					CooldownManager.set(entity, "mana_refresh", 100);
+					CooldownManager.set(entity, "Physical Buff",
+							(int) ((600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10) * 1.5));
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
 							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.spawn")), SoundSource.NEUTRAL, 1, 2);

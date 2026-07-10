@@ -1,6 +1,5 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModMobEffects;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -18,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.solocraft.util.CooldownManager;
 
 public class BarukaOnEntityTickUpdateProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -50,8 +50,7 @@ public class BarukaOnEntityTickUpdateProcedure {
 					_level.sendParticles(ParticleTypes.SNOWFLAKE, x, y, z, 120, 0.5, 1.8, 0.5, 0);
 				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 					_entity.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 60, 1, false, false));
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.STEALTH_COOLDOWN.get(), 60, 1, false, false));
+				CooldownManager.set(entity, "Stealth", 60);
 			}
 			if (entity.getPersistentData().getDouble("IA") == 130) {
 				if (world instanceof Level _level) {

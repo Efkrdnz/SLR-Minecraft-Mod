@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.phys.Vec3;
@@ -24,6 +23,7 @@ import net.minecraft.core.particles.ParticleTypes;
 
 import java.util.List;
 import java.util.Comparator;
+import net.solocraft.util.CooldownManager;
 
 public class HealingBeamProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
@@ -38,8 +38,7 @@ public class HealingBeamProcedure {
 		double raytrace_distance = 0;
 		double delay = 0;
 		if (!entity.isShiftKeyDown()) {
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.HEALING_BEAM_COOLDOWN.get(), 280, 1, false, false));
+			CooldownManager.set(entity, "Heal Beam", 280);
 			if (entity instanceof LivingEntity _entity)
 				_entity.swing(InteractionHand.MAIN_HAND, true);
 			entity.getPersistentData().putDouble("range", 60);
@@ -98,8 +97,7 @@ public class HealingBeamProcedure {
 		} else {
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 80, 2, false, false));
-			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.HEALING_BEAM_COOLDOWN.get(), 400, 1, false, false));
+			CooldownManager.set(entity, "Heal Beam", 400);
 			if (world instanceof ServerLevel _level)
 				_level.sendParticles(ParticleTypes.GLOW_SQUID_INK, (entity.getPersistentData().getDouble("sx")), (entity.getPersistentData().getDouble("sy")), (entity.getPersistentData().getDouble("sz")), 40, 4, 4, 4, 0.5);
 			{

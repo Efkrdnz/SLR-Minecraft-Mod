@@ -9,12 +9,12 @@ import net.minecraft.resources.ResourceLocation;
 public class OrcShadowModel extends GeoModel<OrcShadowEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(OrcShadowEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/orc.animation.json");
+		return new ResourceLocation("sololeveling", "animations/greenorc.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(OrcShadowEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/orc.geo.json");
+		return new ResourceLocation("sololeveling", "geo/greenorc.geo.json");
 	}
 
 	@Override

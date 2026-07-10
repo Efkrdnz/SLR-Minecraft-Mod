@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.RewardManager;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -25,7 +26,7 @@ public class SLRRewardSetItemboxProcedure {
 				if (reward_slot == 1) {
 					reward_to_recieve = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_1;
 					if (collect_prev_reward) {
-						RewardCollectProcedure.execute(entityiterator, reward_to_recieve);
+						RewardManager.appendReward(entityiterator, reward_to_recieve);
 					}
 					{
 						String _setval = reward_to_assign;
@@ -38,7 +39,7 @@ public class SLRRewardSetItemboxProcedure {
 				if (reward_slot == 2) {
 					reward_to_recieve = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_2;
 					if (collect_prev_reward) {
-						RewardCollectProcedure.execute(entityiterator, reward_to_recieve);
+						RewardManager.appendReward(entityiterator, reward_to_recieve);
 					}
 					{
 						String _setval = reward_to_assign;
@@ -51,7 +52,7 @@ public class SLRRewardSetItemboxProcedure {
 				if (reward_slot == 3) {
 					reward_to_recieve = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_3;
 					if (collect_prev_reward) {
-						RewardCollectProcedure.execute(entityiterator, reward_to_recieve);
+						RewardManager.appendReward(entityiterator, reward_to_recieve);
 					}
 					{
 						String _setval = reward_to_assign;

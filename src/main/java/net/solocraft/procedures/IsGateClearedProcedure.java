@@ -33,6 +33,9 @@ public class IsGateClearedProcedure {
 		if (world.dayTime() % 20 == 0) {
 			if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals")))) {
 				if (SololevelingModVariables.MapVariables.get(world).GatesCleared.contains(entity.getStringUUID())) {
+					if (entity.getPersistentData().getBoolean("slr_is_red_gate")) {
+						SololevelingModVariables.MapVariables.get(world).RedGate = false;
+					}
 					if (!entity.level().isClientSide())
 						entity.discard();
 					SololevelingModVariables.MapVariables.get(world).GatesCleared = SololevelingModVariables.MapVariables.get(world).GatesCleared.replace(entity.getStringUUID(), "");

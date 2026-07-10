@@ -6,16 +6,6 @@ build/
 .idea/
 .settings/
 
-# Local assistant/tooling folders
-.claude/
-.codex/
-
-# Local planning/context notes
-CHAT_CHANGELOG.md
-SPARK_PROFILER_NOTES.md
-efk_shader_renderer_project_prompt.md
-shader_rendering_system.md
-
 # MCreator workspace
 .mcreator/
 

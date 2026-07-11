@@ -54,8 +54,10 @@ public final class PlayerAuraRenderer {
 
 		List<AuraInstance> active = ClientPlayerAuraManager.activeFor(player.getId());
 		if (wearsFullGoliathSet(player)) {
-			active.add(new AuraInstance(PlayerAuraRegistry.GOLIATH.id(), 0L, -1, 1.0F,
-					player.getUUID().hashCode()));
+			addEquipmentAura(active, PlayerAuraRegistry.GOLIATH, player);
+		}
+		if (wearsFullShadowMonarchSet(player)) {
+			addEquipmentAura(active, PlayerAuraRegistry.SHADOW_MONARCH_MANIFESTATION, player);
 		}
 		if (active.isEmpty()) {
 			ClientPlayerAuraManager.clearTrail(player.getId());
@@ -66,13 +68,16 @@ public final class PlayerAuraRenderer {
 		Vec3 currentPosition = player.getPosition(event.getPartialTick());
 		boolean fluidAuraActive = active.stream()
 				.map(instance -> PlayerAuraRegistry.get(instance.auraId()))
-				.anyMatch(definition -> definition != null && definition.fluid() != null);
+				.anyMatch(definition -> definition != null && definition.fluid() != null
+						&& !isShadowRift(definition));
 		if (fluidAuraActive)
 			ClientPlayerAuraManager.recordTrail(player.getId(), currentPosition);
+		else
+			ClientPlayerAuraManager.clearTrail(player.getId());
 		for (AuraInstance instance : active) {
 			PlayerAuraDefinition definition = PlayerAuraRegistry.get(instance.auraId());
 			if (definition != null) {
-				if (definition.fluid() != null)
+				if (definition.fluid() != null && !isShadowRift(definition))
 					renderFluidTrail(event, definition, instance, currentPosition, gameTime, minecraft);
 				renderInstance(event, definition, instance, gameTime, minecraft);
 			}
@@ -88,7 +93,7 @@ public final class PlayerAuraRenderer {
 		float envelope = instance.envelope(partialTick, gameTime) * instance.intensity();
 		float radius = Math.max(event.getEntity().getBbWidth() * 0.5F + 0.28F, definition.radius());
 		float height = Math.max(1.25F, event.getEntity().getBbHeight() * definition.heightScale());
-		VertexConsumer vertices = event.getMultiBufferSource().getBuffer(PlayerAuraRenderTypes.aura(definition.fallbackTexture()));
+		VertexConsumer vertices = event.getMultiBufferSource().getBuffer(PlayerAuraRenderTypes.aura(definition));
 		PoseStack poseStack = event.getPoseStack();
 
 		for (int i = 1; i < trail.size(); i++) {
@@ -114,6 +119,26 @@ public final class PlayerAuraRenderer {
 				&& player.getItemBySlot(EquipmentSlot.FEET).is(SololevelingModItems.GOLIATH_ARMOR_BOOTS.get());
 	}
 
+	private static boolean wearsFullShadowMonarchSet(Player player) {
+		return player.getItemBySlot(EquipmentSlot.HEAD).is(SololevelingModItems.SHADOW_ARMOR_HELMET.get())
+				&& player.getItemBySlot(EquipmentSlot.CHEST).is(SololevelingModItems.SHADOW_ARMOR_CHESTPLATE.get())
+				&& player.getItemBySlot(EquipmentSlot.LEGS).is(SololevelingModItems.SHADOW_ARMOR_LEGGINGS.get())
+				&& player.getItemBySlot(EquipmentSlot.FEET).is(SololevelingModItems.SHADOW_ARMOR_BOOTS.get());
+	}
+
+	private static void addEquipmentAura(List<AuraInstance> active, PlayerAuraDefinition definition,
+			Player player) {
+		if (active.stream().noneMatch(instance -> definition.id().equals(instance.auraId()))) {
+			active.add(new AuraInstance(definition.id(), 0L, -1, 1.0F,
+					player.getUUID().hashCode() ^ definition.id().hashCode()));
+		}
+	}
+
+	private static boolean isShadowRift(PlayerAuraDefinition definition) {
+		return definition.fluid() != null
+				&& definition.fluid().style() == PlayerAuraDefinition.FluidStyle.SHADOW_RIFT;
+	}
+
 	private static void renderInstance(RenderPlayerEvent.Post event, PlayerAuraDefinition definition,
 			AuraInstance instance, long gameTime, Minecraft minecraft) {
 		float partialTick = event.getPartialTick();
@@ -134,9 +159,14 @@ public final class PlayerAuraRenderer {
 
 		PoseStack poseStack = event.getPoseStack();
 		MultiBufferSource buffers = event.getMultiBufferSource();
-		VertexConsumer vertices = buffers.getBuffer(PlayerAuraRenderTypes.aura(definition.fallbackTexture()));
+		VertexConsumer vertices = buffers.getBuffer(PlayerAuraRenderTypes.aura(definition));
 		poseStack.pushPose();
 		poseStack.translate(0.0D, 0.015D, 0.0D);
+		if (isShadowRift(definition)) {
+			drawShadowBillboard(vertices, poseStack, definition, radius, height, envelope, minecraft);
+			poseStack.popPose();
+			return;
+		}
 
 		for (int layer = 0; layer < definition.shellLayers(); layer++) {
 			float layerRadius = radius * (0.88F + layer * 0.16F);
@@ -235,6 +265,7 @@ public final class PlayerAuraRenderer {
 			PlayerAuraDefinition definition, float radius, float height, float motion,
 			float fade, int sampleIndex, Minecraft minecraft) {
 		PlayerAuraDefinition.FluidProfile fluid = definition.fluid();
+		float uvBase = fluid.style() == PlayerAuraDefinition.FluidStyle.SHADOW_RIFT ? 26.0F : 8.0F;
 		for (int i = 0; i < 4; i++) {
 			float angle = (i * 0.5F + sampleIndex * 0.17F) * Mth.PI;
 			float echoRadius = radius * fluid.radiusScale() * (0.48F + i * 0.07F);
@@ -246,7 +277,7 @@ public final class PlayerAuraRenderer {
 			poseStack.pushPose();
 			poseStack.translate(Mth.sin(angle) * echoRadius, y, Mth.cos(angle) * echoRadius);
 			applyFacing(poseStack, PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 0.0F, minecraft);
-			drawFluidQuad(vertices, poseStack.last(), width, echoHeight, definition, echoAlpha, 8.0F);
+			drawFluidQuad(vertices, poseStack.last(), width, echoHeight, definition, echoAlpha, uvBase);
 			poseStack.popPose();
 		}
 	}
@@ -254,6 +285,7 @@ public final class PlayerAuraRenderer {
 	private static void drawFluidLobes(VertexConsumer vertices, PoseStack poseStack,
 			PlayerAuraDefinition definition, PlayerAuraDefinition.FluidProfile fluid, float radius,
 			float height, float motion, float envelope, Minecraft minecraft) {
+		float uvBase = fluid.style() == PlayerAuraDefinition.FluidStyle.SHADOW_RIFT ? 20.0F : 8.0F;
 		for (int i = 0; i < fluid.lobeCount(); i++) {
 			float random = hash(i * 97 + definition.id().hashCode());
 			float angle = i * (Mth.TWO_PI / Math.max(1, fluid.lobeCount())) + (random - 0.5F) * 0.42F;
@@ -271,7 +303,7 @@ public final class PlayerAuraRenderer {
 			poseStack.translate(Mth.sin(angle) * orbit, y, Mth.cos(angle) * orbit);
 			applyFacing(poseStack, PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 0.0F, minecraft);
 			poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin(motion * 0.028F + i * 2.3F) * 7.0F));
-			drawFluidQuad(vertices, poseStack.last(), width, lobeHeight, definition, lobeAlpha, 8.0F);
+			drawFluidQuad(vertices, poseStack.last(), width, lobeHeight, definition, lobeAlpha, uvBase);
 			poseStack.popPose();
 		}
 	}
@@ -279,6 +311,7 @@ public final class PlayerAuraRenderer {
 	private static void drawFluidVeils(VertexConsumer vertices, PoseStack poseStack,
 			PlayerAuraDefinition definition, PlayerAuraDefinition.FluidProfile fluid, float radius,
 			float height, float motion, float envelope, Minecraft minecraft) {
+		float uvBase = fluid.style() == PlayerAuraDefinition.FluidStyle.SHADOW_RIFT ? 22.0F : 10.0F;
 		for (int i = 0; i < fluid.veilCount(); i++) {
 			float random = hash(i * 71 + definition.id().hashCode());
 			float angle = i * (Mth.TWO_PI / Math.max(1, fluid.veilCount())) + random * 0.31F;
@@ -292,7 +325,7 @@ public final class PlayerAuraRenderer {
 			poseStack.pushPose();
 			poseStack.translate(Mth.sin(angle) * veilRadius, y, Mth.cos(angle) * veilRadius);
 			applyFacing(poseStack, PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 0.0F, minecraft);
-			drawFluidQuad(vertices, poseStack.last(), width, veilHeight, definition, veilAlpha, 10.0F);
+			drawFluidQuad(vertices, poseStack.last(), width, veilHeight, definition, veilAlpha, uvBase);
 			poseStack.popPose();
 		}
 	}
@@ -308,6 +341,7 @@ public final class PlayerAuraRenderer {
 		float cameraYaw = minecraft.gameRenderer.getMainCamera().getYRot() * Mth.DEG_TO_RAD;
 		float cameraRightX = Mth.cos(cameraYaw);
 		float cameraRightZ = Mth.sin(cameraYaw);
+		float uvBase = fluid.style() == PlayerAuraDefinition.FluidStyle.SHADOW_RIFT ? 24.0F : 12.0F;
 
 		for (int i = 0; i < fluid.backflowCount(); i++) {
 			float random = hash(i * 113 + definition.id().hashCode());
@@ -321,8 +355,46 @@ public final class PlayerAuraRenderer {
 			int backflowAlpha = alpha(104.0F * fluid.opacity() * envelope);
 			drawSoftBackflow(vertices, poseStack.last(), definition, startX, startY, startZ,
 					backwardX, backwardZ, rightX, rightZ, cameraRightX, cameraRightZ,
-					length, rise, width, motion, i, backflowAlpha);
+					length, rise, width, motion, i, backflowAlpha, uvBase);
 		}
+	}
+
+	private static void drawShadowBillboard(VertexConsumer vertices, PoseStack poseStack,
+			PlayerAuraDefinition definition, float radius, float height, float envelope,
+			Minecraft minecraft) {
+		float halfWidth = radius * definition.fluid().radiusScale() * 1.34F;
+		float billboardHeight = height * 1.12F;
+		int innerAlpha = alpha(255.0F * definition.fluid().opacity() * envelope);
+		int outerAlpha = alpha(174.0F * definition.fluid().opacity() * envelope);
+		int rootColor = mixColor(definition.secondaryColor(), definition.primaryColor(), 0.12F);
+		int crownColor = mixColor(definition.primaryColor(), 0xE5B6FF, 0.18F);
+
+		poseStack.translate(0.0D, billboardHeight * 0.43F - height * 0.10F, 0.0D);
+		applyFacing(poseStack, PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 0.0F, minecraft);
+
+		poseStack.pushPose();
+		poseStack.translate(0.0D, billboardHeight * 0.025F, -0.18D);
+		drawShadowBillboardQuad(vertices, poseStack.last(), halfWidth * 1.34F,
+				billboardHeight * 1.20F, rootColor, crownColor, outerAlpha, 34.0F);
+		poseStack.popPose();
+
+		// Both planes stay behind the model; the outer plane is farther away so its
+		// distortion halo cannot wash over the denser inner flame.
+		poseStack.translate(0.0D, 0.0D, -0.11D);
+		drawShadowBillboardQuad(vertices, poseStack.last(), halfWidth, billboardHeight,
+				rootColor, crownColor, innerAlpha, 32.0F);
+	}
+
+	private static void drawShadowBillboardQuad(VertexConsumer vertices, PoseStack.Pose pose,
+			float halfWidth, float height, int rootColor, int crownColor, int alpha, float uvBase) {
+		vertex(vertices, pose, -halfWidth, -height * 0.5F, 0.0F,
+				uvBase + 0.02F, 1.0F, rootColor, alpha);
+		vertex(vertices, pose, halfWidth, -height * 0.5F, 0.0F,
+				uvBase + 0.98F, 1.0F, rootColor, alpha);
+		vertex(vertices, pose, halfWidth, height * 0.5F, 0.0F,
+				uvBase + 0.98F, 0.0F, crownColor, alpha);
+		vertex(vertices, pose, -halfWidth, height * 0.5F, 0.0F,
+				uvBase + 0.02F, 0.0F, crownColor, alpha);
 	}
 
 	private static void drawFluidQuad(VertexConsumer vertices, PoseStack.Pose pose, float width,
@@ -339,7 +411,7 @@ public final class PlayerAuraRenderer {
 			PlayerAuraDefinition definition, float startX, float startY, float startZ,
 			float backwardX, float backwardZ, float rightX, float rightZ,
 			float cameraRightX, float cameraRightZ, float length, float rise, float width,
-			float motion, int index, int alpha) {
+			float motion, int index, int alpha, float uvBase) {
 		final int segments = 5;
 		for (int segment = 0; segment < segments; segment++) {
 			float t0 = segment / (float) segments;
@@ -358,13 +430,13 @@ public final class PlayerAuraRenderer {
 			int color1 = mixColor(definition.secondaryColor(), definition.primaryColor(), 0.35F + t1 * 0.45F);
 
 			vertex(vertices, pose, x0 - cameraRightX * width0, y0, z0 - cameraRightZ * width0,
-					12.05F, 1.0F - t0, color0, alpha);
+					uvBase + 0.05F, 1.0F - t0, color0, alpha);
 			vertex(vertices, pose, x0 + cameraRightX * width0, y0, z0 + cameraRightZ * width0,
-					12.95F, 1.0F - t0, color0, alpha);
+					uvBase + 0.95F, 1.0F - t0, color0, alpha);
 			vertex(vertices, pose, x1 + cameraRightX * width1, y1, z1 + cameraRightZ * width1,
-					12.95F, 1.0F - t1, color1, alpha);
+					uvBase + 0.95F, 1.0F - t1, color1, alpha);
 			vertex(vertices, pose, x1 - cameraRightX * width1, y1, z1 - cameraRightZ * width1,
-					12.05F, 1.0F - t1, color1, alpha);
+					uvBase + 0.05F, 1.0F - t1, color1, alpha);
 		}
 	}
 

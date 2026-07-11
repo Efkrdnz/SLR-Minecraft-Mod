@@ -9,7 +9,13 @@ public record PlayerAuraDefinition(String id, int primaryColor, int secondaryCol
 		boolean groundRing) {
 	/** Parameters for a soft, non-geometric aura made from overlapping fluid volumes. */
 	public record FluidProfile(int lobeCount, int veilCount, int backflowCount,
-			float radiusScale, float opacity, float turbulence, float speed) {
+			float radiusScale, float opacity, float turbulence, float speed, FluidStyle style) {
+		public FluidProfile(int lobeCount, int veilCount, int backflowCount,
+				float radiusScale, float opacity, float turbulence, float speed) {
+			this(lobeCount, veilCount, backflowCount, radiusScale, opacity, turbulence, speed,
+					FluidStyle.LIQUID_FLAME);
+		}
+
 		public FluidProfile {
 			lobeCount = Math.max(0, Math.min(32, lobeCount));
 			veilCount = Math.max(0, Math.min(16, veilCount));
@@ -18,7 +24,14 @@ public record PlayerAuraDefinition(String id, int primaryColor, int secondaryCol
 			opacity = Math.max(0.05F, Math.min(1.0F, opacity));
 			turbulence = Math.max(0.0F, Math.min(2.0F, turbulence));
 			speed = Math.max(0.0F, Math.min(3.0F, speed));
+			if (style == null)
+				style = FluidStyle.LIQUID_FLAME;
 		}
+	}
+
+	public enum FluidStyle {
+		LIQUID_FLAME,
+		SHADOW_RIFT
 	}
 
 	public enum Facing {

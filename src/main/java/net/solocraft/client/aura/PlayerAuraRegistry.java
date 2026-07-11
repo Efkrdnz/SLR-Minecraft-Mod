@@ -18,7 +18,8 @@ public final class PlayerAuraRegistry {
 			"goliath_manifestation", 0xFFF6C7, 0xC97412, GOLD_GLOW,
 			PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 0.82F, 1.35F,
 			0.72F, 0, 0, 0,
-			new PlayerAuraDefinition.FluidProfile(20, 8, 6, 1.0F, 0.52F, 1.15F, 0.78F), false));
+			new PlayerAuraDefinition.FluidProfile(20, 8, 6, 1.0F, 0.52F, 1.15F, 0.78F), false,
+			0xFFC542));
 
 	public static final PlayerAuraDefinition SHADOW_MONARCH_MANIFESTATION = register(new PlayerAuraDefinition(
 			"shadow_monarch_manifestation", 0xC568FF, 0x10001F, PURPLE_GLOW,

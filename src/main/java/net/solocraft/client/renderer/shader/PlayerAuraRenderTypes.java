@@ -20,13 +20,16 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(
+		modid = SololevelingMod.MODID,
+		bus = Mod.EventBusSubscriber.Bus.MOD,
+		value = Dist.CLIENT
+)
 public final class PlayerAuraRenderTypes extends RenderStateShard {
-	private static final Map<ResourceLocation, RenderType> SHADER_TYPES = new HashMap<>();
-	private static final Map<ResourceLocation, RenderType> SHADOW_SHADER_TYPES = new HashMap<>();
+	private static final Map<ResourceLocation, RenderType> NORMAL_AURA_TYPES = new HashMap<>();
 	private static final Map<ResourceLocation, RenderType> FALLBACK_TYPES = new HashMap<>();
+
 	private static ShaderInstance auraShader;
-	private static ShaderInstance shadowAuraShader;
 
 	private PlayerAuraRenderTypes(String name, Runnable setupState, Runnable clearState) {
 		super(name, setupState, clearState);
@@ -34,50 +37,76 @@ public final class PlayerAuraRenderTypes extends RenderStateShard {
 
 	@SubscribeEvent
 	public static void registerShaders(RegisterShadersEvent event) throws IOException {
-		event.registerShader(new ShaderInstance(event.getResourceProvider(),
-				new ResourceLocation(SololevelingMod.MODID, "rendertype_player_aura"),
-				DefaultVertexFormat.NEW_ENTITY), shader -> {
-			auraShader = shader;
-			SHADER_TYPES.clear();
-		});
-		event.registerShader(new ShaderInstance(event.getResourceProvider(),
-				new ResourceLocation(SololevelingMod.MODID, "rendertype_shadow_player_aura"),
-				DefaultVertexFormat.NEW_ENTITY), shader -> {
-			shadowAuraShader = shader;
-			SHADOW_SHADER_TYPES.clear();
-		});
+		event.registerShader(
+				new ShaderInstance(
+						event.getResourceProvider(),
+						new ResourceLocation(SololevelingMod.MODID, "rendertype_player_aura"),
+						DefaultVertexFormat.NEW_ENTITY
+				),
+				shader -> {
+					auraShader = shader;
+					NORMAL_AURA_TYPES.clear();
+				}
+		);
 	}
 
 	public static RenderType aura(PlayerAuraDefinition definition) {
-		boolean shadow = definition.fluid() != null
-				&& definition.fluid().style() == PlayerAuraDefinition.FluidStyle.SHADOW_RIFT;
-		return aura(definition.fallbackTexture(), shadow);
+		return normalAura(definition.fallbackTexture());
 	}
 
 	public static RenderType aura(ResourceLocation fallbackTexture) {
-		return aura(fallbackTexture, false);
+		return normalAura(fallbackTexture);
 	}
 
-	private static RenderType aura(ResourceLocation fallbackTexture, boolean shadow) {
-		ShaderInstance selectedShader = shadow ? shadowAuraShader : auraShader;
-		if (selectedShader == null || IrisCompat.isShaderPackInUse())
-			return FALLBACK_TYPES.computeIfAbsent(fallbackTexture, RenderType::entityTranslucentEmissive);
-		Map<ResourceLocation, RenderType> cache = shadow ? SHADOW_SHADER_TYPES : SHADER_TYPES;
-		return cache.computeIfAbsent(fallbackTexture, texture -> {
+	private static RenderType normalAura(ResourceLocation texture) {
+		return shaderType(
+				texture,
+				auraShader,
+				NORMAL_AURA_TYPES,
+				"player_aura_",
+				false
+		);
+	}
+
+	private static RenderType shaderType(
+			ResourceLocation texture,
+			ShaderInstance shader,
+			Map<ResourceLocation, RenderType> cache,
+			String namePrefix,
+			boolean additive
+	) {
+		if (shader == null || IrisCompat.isShaderPackInUse()) {
+			return FALLBACK_TYPES.computeIfAbsent(
+					texture,
+					RenderType::entityTranslucentEmissive
+			);
+		}
+
+		return cache.computeIfAbsent(texture, resourceLocation -> {
 			RenderType.CompositeState state = RenderType.CompositeState.builder()
-					.setShaderState(new ShaderStateShard(() -> selectedShader))
-					.setTextureState(new TextureStateShard(texture, false, false))
-					.setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+					.setShaderState(new ShaderStateShard(() -> shader))
+					.setTextureState(new TextureStateShard(resourceLocation, false, false))
+					.setTransparencyState(
+							additive
+									? ADDITIVE_TRANSPARENCY
+									: TRANSLUCENT_TRANSPARENCY
+					)
 					.setDepthTestState(LEQUAL_DEPTH_TEST)
 					.setCullState(NO_CULL)
 					.setLightmapState(LIGHTMAP)
 					.setOverlayState(OVERLAY)
 					.setWriteMaskState(COLOR_WRITE)
 					.createCompositeState(false);
-			return RenderType.create((shadow ? "shadow_player_aura_" : "player_aura_")
-						+ texture.getPath().replace('/', '_'),
-					DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 2048, false, true, state);
+
+			return RenderType.create(
+					namePrefix + resourceLocation.getPath().replace('/', '_'),
+					DefaultVertexFormat.NEW_ENTITY,
+					VertexFormat.Mode.QUADS,
+					2048,
+					false,
+					true,
+					state
+			);
 		});
 	}
-
 }

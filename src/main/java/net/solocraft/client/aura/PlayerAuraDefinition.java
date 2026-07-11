@@ -6,7 +6,18 @@ import net.minecraft.resources.ResourceLocation;
 public record PlayerAuraDefinition(String id, int primaryColor, int secondaryColor,
 		ResourceLocation fallbackTexture, Facing facing, float radius, float heightScale,
 		float speed, int shellLayers, int wispCount, int spikeCount, FluidProfile fluid,
-		boolean groundRing) {
+		boolean groundRing, int smokeColor) {
+	/** Sentinel meaning "derive the smoke palette from the primary/secondary colors". */
+	public static final int SMOKE_FROM_COLORS = -1;
+
+	/** Convenience overload that derives the aura's smoke color from its main colors. */
+	public PlayerAuraDefinition(String id, int primaryColor, int secondaryColor,
+			ResourceLocation fallbackTexture, Facing facing, float radius, float heightScale,
+			float speed, int shellLayers, int wispCount, int spikeCount, FluidProfile fluid,
+			boolean groundRing) {
+		this(id, primaryColor, secondaryColor, fallbackTexture, facing, radius, heightScale,
+				speed, shellLayers, wispCount, spikeCount, fluid, groundRing, SMOKE_FROM_COLORS);
+	}
 	/** Parameters for a soft, non-geometric aura made from overlapping fluid volumes. */
 	public record FluidProfile(int lobeCount, int veilCount, int backflowCount,
 			float radiusScale, float opacity, float turbulence, float speed, FluidStyle style) {

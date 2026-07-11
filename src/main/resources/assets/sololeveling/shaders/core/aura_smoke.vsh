@@ -13,13 +13,11 @@ uniform mat4 TextureMat;
 
 out vec4 vertexColor;
 out vec2 texCoord0;
-out vec3 localPos;
 out vec2 lightMap;
 
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
     vertexColor = Color;
     texCoord0 = (TextureMat * vec4(UV0, 0.0, 1.0)).xy;
-    localPos = Position;
     lightMap = vec2(UV2) / 256.0;
 }

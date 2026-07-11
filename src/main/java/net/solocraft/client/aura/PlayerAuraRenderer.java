@@ -150,10 +150,6 @@ public final class PlayerAuraRenderer {
 		if (definition.fluid() != null)
 			drawFluidField(vertices, poseStack, definition, player, radius, height, motion,
 					envelope, partialTick, minecraft);
-		if (definition.fluid() != null && definition.fluid().innerGlow() > 0.0F) {
-			VertexConsumer glowVertices = buffers.getBuffer(PlayerAuraRenderTypes.glow(definition.fallbackTexture()));
-			drawInnerFluidGlow(glowVertices, poseStack, definition, radius, height, motion, envelope, minecraft);
-		}
 		if (definition.groundRing())
 			drawGroundRing(vertices, poseStack, definition, radius * 1.16F, motion, alpha(74.0F * envelope));
 		poseStack.popPose();
@@ -234,39 +230,6 @@ public final class PlayerAuraRenderer {
 				motion, envelope, partialTick, minecraft);
 	}
 
-	private static void drawInnerFluidGlow(VertexConsumer vertices, PoseStack poseStack,
-			PlayerAuraDefinition definition, float radius, float height, float motion,
-			float envelope, Minecraft minecraft) {
-		PlayerAuraDefinition.FluidProfile fluid = definition.fluid();
-		final int glowCount = 12;
-		for (int i = 0; i < glowCount; i++) {
-			int tier = i / 4;
-			int around = i % 4;
-			float angle = around * Mth.HALF_PI + tier * 0.43F;
-			float breathing = 1.0F + Mth.sin(motion * 0.045F + i * 1.71F) * 0.035F;
-			float glowRadius = radius * (0.52F + tier * 0.035F) * breathing;
-			float y = height * (0.17F + tier * 0.25F);
-			float width = radius * (0.20F + tier * 0.025F);
-			float glowHeight = height * (0.28F + tier * 0.015F);
-			int glowAlpha = alpha(94.0F * fluid.innerGlow() * envelope);
-
-			poseStack.pushPose();
-			poseStack.translate(Mth.sin(angle) * glowRadius, y, Mth.cos(angle) * glowRadius);
-			applyFacing(poseStack, PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 0.0F, minecraft);
-			drawInnerGlowQuad(vertices, poseStack.last(), width, glowHeight, definition, glowAlpha);
-			poseStack.popPose();
-		}
-	}
-
-	private static void drawInnerGlowQuad(VertexConsumer vertices, PoseStack.Pose pose, float width,
-			float height, PlayerAuraDefinition definition, int alpha) {
-		int warmGold = mixColor(definition.secondaryColor(), definition.primaryColor(), 0.68F);
-		int whiteGold = mixColor(definition.primaryColor(), 0xFFFFFF, 0.48F);
-		vertex(vertices, pose, -width, -height * 0.5F, 0.0F, 14.05F, 1.0F, warmGold, alpha);
-		vertex(vertices, pose, width, -height * 0.5F, 0.0F, 14.95F, 1.0F, warmGold, alpha);
-		vertex(vertices, pose, width, height * 0.5F, 0.0F, 14.95F, 0.0F, whiteGold, alpha);
-		vertex(vertices, pose, -width, height * 0.5F, 0.0F, 14.05F, 0.0F, whiteGold, alpha);
-	}
 
 	private static void drawTrailEcho(VertexConsumer vertices, PoseStack poseStack,
 			PlayerAuraDefinition definition, float radius, float height, float motion,

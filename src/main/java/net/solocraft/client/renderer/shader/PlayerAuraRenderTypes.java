@@ -22,7 +22,6 @@ import java.util.Map;
 @Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class PlayerAuraRenderTypes extends RenderStateShard {
 	private static final Map<ResourceLocation, RenderType> SHADER_TYPES = new HashMap<>();
-	private static final Map<ResourceLocation, RenderType> GLOW_TYPES = new HashMap<>();
 	private static final Map<ResourceLocation, RenderType> FALLBACK_TYPES = new HashMap<>();
 	private static ShaderInstance auraShader;
 
@@ -37,7 +36,6 @@ public final class PlayerAuraRenderTypes extends RenderStateShard {
 				DefaultVertexFormat.NEW_ENTITY), shader -> {
 			auraShader = shader;
 			SHADER_TYPES.clear();
-			GLOW_TYPES.clear();
 		});
 	}
 
@@ -60,22 +58,4 @@ public final class PlayerAuraRenderTypes extends RenderStateShard {
 		});
 	}
 
-	public static RenderType glow(ResourceLocation fallbackTexture) {
-		if (auraShader == null || IrisCompat.isShaderPackInUse())
-			return FALLBACK_TYPES.computeIfAbsent(fallbackTexture, RenderType::entityTranslucentEmissive);
-		return GLOW_TYPES.computeIfAbsent(fallbackTexture, texture -> {
-			RenderType.CompositeState state = RenderType.CompositeState.builder()
-					.setShaderState(new ShaderStateShard(() -> auraShader))
-					.setTextureState(new TextureStateShard(texture, false, false))
-					.setTransparencyState(ADDITIVE_TRANSPARENCY)
-					.setDepthTestState(LEQUAL_DEPTH_TEST)
-					.setCullState(NO_CULL)
-					.setLightmapState(LIGHTMAP)
-					.setOverlayState(OVERLAY)
-					.setWriteMaskState(COLOR_WRITE)
-					.createCompositeState(false);
-			return RenderType.create("player_aura_inner_glow_" + texture.getPath().replace('/', '_'),
-					DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1024, false, true, state);
-		});
-	}
 }

@@ -78,18 +78,11 @@ void main() {
 		float rolling = sin(upward * 13.0 - time * 0.29 + broad * 5.5) * 0.5 + 0.5;
 		float openVeil = smoothstep(0.26, 0.76, broad * 0.62 + detail * 0.38);
 		alpha = sideFade * verticalFade * (0.05 + openVeil * 0.34 + rolling * 0.11);
-	} else if (kind < 6.5) {
+	} else {
 		float ribbonFade = 1.0 - smoothstep(0.28, 0.50, abs(uv.x - 0.5));
 		float endFade = smoothstep(0.0, 0.12, upward) * smoothstep(0.0, 0.14, 1.0 - upward);
 		float rolling = sin(upward * 16.0 - time * 0.38 + detail * 6.0) * 0.5 + 0.5;
 		alpha = ribbonFade * endFade * (0.08 + broad * 0.27 + rolling * 0.15);
-	} else {
-		vec2 p = uv * 2.0 - 1.0;
-		p.y *= 0.72;
-		float softCore = 1.0 - smoothstep(0.44, 1.02, length(p));
-		float liquidPulse = sin(upward * 14.0 - time * 0.36 + broad * 4.0) * 0.5 + 0.5;
-		float closeDetail = smoothstep(0.25, 0.78, broad * 0.45 + detail * 0.55);
-		alpha = softCore * (0.13 + closeDetail * 0.33 + liquidPulse * 0.18);
     }
 
     alpha *= vertexColor.a;

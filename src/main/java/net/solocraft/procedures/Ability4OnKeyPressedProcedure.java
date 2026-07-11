@@ -181,6 +181,8 @@ public class Ability4OnKeyPressedProcedure {
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
 				if (entity instanceof Player _player && !_player.level().isClientSide())
 					_player.displayClientMessage(Component.literal("ability wip"), false);
+			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 5) {
+				GoliathManifestationProcedure.execute(world, x, y, z, entity);
 			}
 		}
 	}

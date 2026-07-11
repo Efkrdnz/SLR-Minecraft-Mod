@@ -133,7 +133,12 @@ public class SololevelingModKeyMappings {
 			if (isDownOld != isDown && isDown) {
 				if (isCombatMode()) {
 					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability2Message(0, 0));
-					Ability2Message.pressAction(Minecraft.getInstance().player, 0, 0);
+					ABILITY_2_LASTPRESS = System.currentTimeMillis();
+				}
+			} else if (isDownOld != isDown && !isDown) {
+				if (isCombatMode()) {
+					int dt = (int) Math.min(Integer.MAX_VALUE, System.currentTimeMillis() - ABILITY_2_LASTPRESS);
+					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability2Message(1, dt));
 				}
 			}
 			isDownOld = isDown;
@@ -330,6 +335,7 @@ public class SololevelingModKeyMappings {
 	private static long USE_SKILL_LASTPRESS = 0;
 	private static long D_LASTPRESS = 0;
 	private static long ABILITY_1_LASTPRESS = 0;
+	private static long ABILITY_2_LASTPRESS = 0;
 	private static long QUEST_INFO_LASTPRESS = 0;
 	private static final long[] HOTBAR_LASTPRESS = new long[8];
 

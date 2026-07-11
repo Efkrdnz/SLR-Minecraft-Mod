@@ -22,6 +22,7 @@ public class SkillListHelper {
 			JobSkillManager.ICE_CHUNK,
 			JobSkillManager.ICE_SPEAR,
 			JobSkillManager.SNOW_SCREEN,
+			JobSkillManager.THOMAS_MANIFESTATION,
 			JobSkillManager.MONARCH_BEAM,
 			JobSkillManager.LIGHTNING_STORM,
 			JobSkillManager.STORM_BURST);

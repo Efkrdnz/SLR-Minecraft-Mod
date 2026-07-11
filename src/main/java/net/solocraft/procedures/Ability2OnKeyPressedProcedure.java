@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.RulersAuthorityManager;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -20,15 +21,22 @@ import net.solocraft.util.CooldownManager;
 
 public class Ability2OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
+		execute(world, x, y, z, entity, 0, 0);
+	}
+
+	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, int inputType, int pressedMs) {
 		if (entity == null)
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).combatmode) {
-			if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).abilities).contains("telekinesis")) {
-				if (!CooldownManager.isOnCooldown(entity, "telekinesis")) {
-					TelekinesisProcedure.execute(world, x, y, z, entity);
-				} else {
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("Ability on Cooldown!"), true);
+			if (RulersAuthorityManager.hasAbility(entity)) {
+				if (entity instanceof net.minecraft.server.level.ServerPlayer player) {
+					if (inputType == 0) {
+						RulersAuthorityManager.begin(player);
+					} else if (inputType == 1) {
+						RulersAuthorityManager.release(player, pressedMs);
+					} else if (inputType == 2) {
+						RulersAuthorityManager.adjustDistance(player, pressedMs);
+					}
 				}
 			} else {
 				if (entity instanceof Player _player && !_player.level().isClientSide())

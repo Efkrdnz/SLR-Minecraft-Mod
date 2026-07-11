@@ -39,6 +39,7 @@ import net.solocraft.entity.ShadowHighOrcEntity;
 import net.solocraft.entity.ShadowGreenOrcEntity;
 import net.solocraft.entity.SecretaryEntity;
 import net.solocraft.entity.RulersHandEntity;
+import net.solocraft.entity.RulersAuthorityAuraEntity;
 import net.solocraft.entity.RedGateEntity;
 import net.solocraft.entity.RedAntsEntity;
 import net.solocraft.entity.RangerProjectileEntity;
@@ -492,6 +493,8 @@ public class SololevelingModEntities {
 			.setCustomClientFactory(HomingFlameArrowEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<RulersHandEntity>> RULERS_HAND = register("projectile_rulers_hand",
 			EntityType.Builder.<RulersHandEntity>of(RulersHandEntity::new, MobCategory.MISC).setCustomClientFactory(RulersHandEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
+	public static final RegistryObject<EntityType<RulersAuthorityAuraEntity>> RULERS_AUTHORITY_AURA = register("rulers_authority_aura",
+			EntityType.Builder.<RulersAuthorityAuraEntity>of(RulersAuthorityAuraEntity::new, MobCategory.MISC).setCustomClientFactory(RulersAuthorityAuraEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(128).setUpdateInterval(1).sized(0.1f, 0.1f));
 	public static final RegistryObject<EntityType<SpiderWebEntity>> SPIDER_WEB = register("projectile_spider_web",
 			EntityType.Builder.<SpiderWebEntity>of(SpiderWebEntity::new, MobCategory.MISC).setCustomClientFactory(SpiderWebEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<ShadowStepEntity>> SHADOW_STEP = register("projectile_shadow_step",

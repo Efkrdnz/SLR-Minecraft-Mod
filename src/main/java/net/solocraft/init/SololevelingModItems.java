@@ -121,6 +121,7 @@ import net.solocraft.item.HealerMasteryItemItem;
 import net.solocraft.item.HammerItem;
 import net.solocraft.item.GriamoreItem;
 import net.solocraft.item.GravityDaggerItem;
+import net.solocraft.item.GoliathARMORItem;
 import net.solocraft.item.GrandMageItem;
 import net.solocraft.item.GiveTuskItem;
 import net.solocraft.item.GiveKamishItem;
@@ -421,6 +422,10 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> SHADOW_ARMOR_CHESTPLATE = REGISTRY.register("shadow_armor_chestplate", () -> new ShadowARMORItem.Chestplate());
 	public static final RegistryObject<Item> SHADOW_ARMOR_LEGGINGS = REGISTRY.register("shadow_armor_leggings", () -> new ShadowARMORItem.Leggings());
 	public static final RegistryObject<Item> SHADOW_ARMOR_BOOTS = REGISTRY.register("shadow_armor_boots", () -> new ShadowARMORItem.Boots());
+	public static final RegistryObject<Item> GOLIATH_ARMOR_HELMET = REGISTRY.register("goliath_armor_helmet", () -> new GoliathARMORItem.Helmet());
+	public static final RegistryObject<Item> GOLIATH_ARMOR_CHESTPLATE = REGISTRY.register("goliath_armor_chestplate", () -> new GoliathARMORItem.Chestplate());
+	public static final RegistryObject<Item> GOLIATH_ARMOR_LEGGINGS = REGISTRY.register("goliath_armor_leggings", () -> new GoliathARMORItem.Leggings());
+	public static final RegistryObject<Item> GOLIATH_ARMOR_BOOTS = REGISTRY.register("goliath_armor_boots", () -> new GoliathARMORItem.Boots());
 	public static final RegistryObject<Item> DUNGEON_SPAWNER = REGISTRY.register("dungeon_spawner", () -> new DungeonSpawnerItem());
 	public static final RegistryObject<Item> GRIAMORE = REGISTRY.register("griamore", () -> new GriamoreItem());
 	public static final RegistryObject<Item> TELEPORT_SAI = REGISTRY.register("teleport_sai", () -> new TeleportSaiItem());

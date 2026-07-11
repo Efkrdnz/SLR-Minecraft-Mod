@@ -40,6 +40,7 @@ import net.solocraft.client.renderer.RedGateRenderer;
 import net.solocraft.client.renderer.RedAntsRenderer;
 import net.solocraft.client.renderer.RandomCaveLargeRenderer;
 import net.solocraft.client.renderer.QuickSlashesRenderer;
+import net.solocraft.client.renderer.RulersAuthorityAuraRenderer;
 import net.solocraft.client.renderer.PortalSewersRenderer;
 import net.solocraft.client.renderer.PortalSRenderer;
 import net.solocraft.client.renderer.PortalRenderer;
@@ -261,6 +262,7 @@ public class SololevelingModEntityRenderers {
 		event.registerEntityRenderer(SololevelingModEntities.MANA_ARROW.get(), ManaArrowRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.HOMING_FLAME_ARROW.get(), ThrownItemRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.RULERS_HAND.get(), ThrownItemRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.RULERS_AUTHORITY_AURA.get(), RulersAuthorityAuraRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SPIDER_WEB.get(), ThrownItemRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SHADOW_STEP.get(), ThrownItemRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.LIGHT_BALL.get(), LightBallRenderer::new);

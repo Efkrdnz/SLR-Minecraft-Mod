@@ -141,6 +141,9 @@ public class SololevelingModVariables {
 			clone.Intelligence = original.Intelligence;
 			clone.investvalue = original.investvalue;
 			clone.JOB = original.JOB;
+			clone.vesselType = original.vesselType;
+			clone.vesselIdentity = original.vesselIdentity;
+			clone.vesselGrantedAuthority = original.vesselGrantedAuthority;
 			clone.jobkey = original.jobkey;
 			clone.killmission = original.killmission;
 			clone.LastKilled = original.LastKilled;
@@ -637,6 +640,9 @@ public class SololevelingModVariables {
 		public double Intelligence = 0;
 		public double investvalue = 1.0;
 		public double JOB = 0.0;
+		public String vesselType = "";
+		public String vesselIdentity = "";
+		public boolean vesselGrantedAuthority = false;
 		public boolean jobkey = false;
 		public double killmission = 9.0;
 		public double LastKilled = 0;
@@ -902,6 +908,9 @@ public class SololevelingModVariables {
 			nbt.putDouble("Intelligence", Intelligence);
 			nbt.putDouble("investvalue", investvalue);
 			nbt.putDouble("JOB", JOB);
+			nbt.putString("vesselType", vesselType);
+			nbt.putString("vesselIdentity", vesselIdentity);
+			nbt.putBoolean("vesselGrantedAuthority", vesselGrantedAuthority);
 			nbt.putBoolean("jobkey", jobkey);
 			nbt.putDouble("killmission", killmission);
 			nbt.putDouble("LastKilled", LastKilled);
@@ -1151,6 +1160,9 @@ public class SololevelingModVariables {
 			Intelligence = nbt.getDouble("Intelligence");
 			investvalue = nbt.getDouble("investvalue");
 			JOB = nbt.getDouble("JOB");
+			vesselType = nbt.getString("vesselType");
+			vesselIdentity = nbt.getString("vesselIdentity");
+			vesselGrantedAuthority = nbt.getBoolean("vesselGrantedAuthority");
 			jobkey = nbt.getBoolean("jobkey");
 			killmission = nbt.getDouble("killmission");
 			LastKilled = nbt.getDouble("LastKilled");
@@ -1425,6 +1437,9 @@ public class SololevelingModVariables {
 					variables.Intelligence = message.data.Intelligence;
 					variables.investvalue = message.data.investvalue;
 					variables.JOB = message.data.JOB;
+					variables.vesselType = message.data.vesselType;
+					variables.vesselIdentity = message.data.vesselIdentity;
+					variables.vesselGrantedAuthority = message.data.vesselGrantedAuthority;
 					variables.jobkey = message.data.jobkey;
 					variables.killmission = message.data.killmission;
 					variables.LastKilled = message.data.LastKilled;

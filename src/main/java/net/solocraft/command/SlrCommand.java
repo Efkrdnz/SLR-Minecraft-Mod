@@ -50,6 +50,7 @@ import net.solocraft.procedures.SLRARankProcedure;
 import net.solocraft.guild.GuildSavedData;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.VesselManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -229,77 +230,20 @@ public class SlrCommand {
 
 					SLRResetProcedure.execute(world, arguments, entity);
 					return 0;
-				})).then(Commands.literal("job").then(Commands.literal("reset").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRJobResetProcedure.execute(arguments);
-					return 0;
-				})).then(Commands.literal("ShadowMonarch").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRShadowMonarchProcedure.execute(arguments);
-					return 0;
-				})).then(Commands.literal("GrandMage").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRGrandMageProcedure.execute(arguments);
-					return 0;
-				})).then(Commands.literal("FrostMonarch").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRFrostMonarchProcedure.execute(arguments);
-					return 0;
-				})).then(Commands.literal("MonarchOfWhiteFlames").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRWhiteFlameMonarchProcedure.execute(arguments);
-					return 0;
-				}))).then(Commands.literal("rank").then(Commands.literal("E").executes(arguments -> {
+				})).then(Commands.literal("vessel")
+						.then(Commands.literal("reset").executes(VesselManager::reset))
+						.then(Commands.literal("ruler")
+								.then(Commands.literal("ashborn").executes(arguments -> VesselManager.assign(arguments, "ruler", "ashborn")))
+								.then(Commands.literal("thomas_andre").executes(arguments -> VesselManager.assign(arguments, "ruler", "thomas_andre")))
+								.then(Commands.literal("liu_zhigang").executes(arguments -> VesselManager.assign(arguments, "ruler", "liu_zhigang")))
+								.then(Commands.literal("christopher_reed").executes(arguments -> VesselManager.assign(arguments, "ruler", "christopher_reed")))
+								.then(Commands.literal("sung_il_hwan").executes(arguments -> VesselManager.assign(arguments, "ruler", "sung_il_hwan")))
+								.then(Commands.literal("sung_il_whan").executes(arguments -> VesselManager.assign(arguments, "ruler", "sung_il_whan")))
+								.then(Commands.literal("go_gunhee").executes(arguments -> VesselManager.assign(arguments, "ruler", "go_gunhee"))))
+						.then(Commands.literal("monarch")
+								.then(Commands.literal("sillad").executes(arguments -> VesselManager.assign(arguments, "monarch", "sillad")))
+								.then(Commands.literal("baran").executes(arguments -> VesselManager.assign(arguments, "monarch", "baran")))))
+					.then(Commands.literal("rank").then(Commands.literal("E").executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
 					double x = arguments.getSource().getPosition().x();
 					double y = arguments.getSource().getPosition().y();

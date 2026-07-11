@@ -45,7 +45,7 @@ public class MageQTEOverlay {
     private static final float RING_THICKNESS = 5f;
 
     @SubscribeEvent
-    public static void onRenderGui(RenderGuiEvent.Pre event) {
+    public static void onRenderGui(RenderGuiEvent.Post event) {
         MageQTEState state = MageQTEState.INSTANCE;
 
         // ── Timeout: cancel cleanly on client ────────────────────────────────
@@ -129,6 +129,7 @@ public class MageQTEOverlay {
             int hintW = mc.font.width(hint);
             gg.drawString(mc.font, Component.literal(hint),
                     (int)(cx - hintW / 2f), (int)(cy + RADIUS + 10), 0xFFAAAAAA, false);
+            renderTimingBar(gg, mc, state, cx, cy + RADIUS + 28);
         }
 
         // 9. Result flash text (shown after key release, fades out)
@@ -150,6 +151,34 @@ public class MageQTEOverlay {
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();
         ps.popPose();
+    }
+
+    private static void renderTimingBar(GuiGraphics gg, Minecraft mc, MageQTEState state, float cx, float y) {
+        int width = 164;
+        int height = 9;
+        int x = (int) (cx - width / 2f);
+        int top = (int) y;
+        gg.fill(x - 2, top - 2, x + width + 2, top + height + 2, 0xD0000000);
+        gg.fill(x, top, x + width, top + height, 0xDD101522);
+        drawZoneOnBar(gg, x, top, width, height, state.getGoodZoneStart(), state.getGoodZoneEnd(), 0xFFFFC94A);
+        drawZoneOnBar(gg, x, top - 1, width, height + 2, state.getPerfectZoneStart(), state.getPerfectZoneEnd(), 0xFF46E7FF);
+
+        int marker = x + Math.round((state.getCurrentRotation() / 360f) * width);
+        gg.fill(marker - 1, top - 5, marker + 2, top + height + 5, 0xFFFFFFFF);
+        gg.fill(marker, top - 4, marker + 1, top + height + 4, 0xFF74A8FF);
+
+        gg.drawString(mc.font, Component.literal("RELEASE"), x + width + 8, top, 0xFFE8F7FF, true);
+    }
+
+    private static void drawZoneOnBar(GuiGraphics gg, int x, int y, int width, int height, float startDeg, float endDeg, int color) {
+        if (endDeg < startDeg) {
+            drawZoneOnBar(gg, x, y, width, height, startDeg, 360f, color);
+            drawZoneOnBar(gg, x, y, width, height, 0f, endDeg, color);
+            return;
+        }
+        int start = x + Math.round((startDeg / 360f) * width);
+        int end = x + Math.round((endDeg / 360f) * width);
+        gg.fill(start, y, Math.max(start + 1, end), y + height, color);
     }
 
     // ── Geometry helpers (adapted verbatim from BlackFlashQTERendererProcedure) ──

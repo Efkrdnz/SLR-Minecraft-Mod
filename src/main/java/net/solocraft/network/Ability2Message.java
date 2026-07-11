@@ -43,6 +43,8 @@ public class Ability2Message {
 	}
 
 	public static void pressAction(Player entity, int type, int pressedms) {
+		if (entity == null || entity.level().isClientSide())
+			return;
 		Level world = entity.level();
 		double x = entity.getX();
 		double y = entity.getY();
@@ -50,10 +52,7 @@ public class Ability2Message {
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(entity.blockPosition()))
 			return;
-		if (type == 0) {
-
-			Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity);
-		}
+		Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity, type, pressedms);
 	}
 
 	@SubscribeEvent

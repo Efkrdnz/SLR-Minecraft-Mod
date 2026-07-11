@@ -47,6 +47,7 @@ public class JobSkillManager {
 	public static final String MONARCH_BEAM = "Monarch Beam";
 	public static final String LIGHTNING_STORM = "Lightning Storm";
 	public static final String STORM_BURST = "Storm Burst";
+	public static final String THOMAS_MANIFESTATION = "Spiritual Body Manifestation";
 
 	private static final String LAST_SYNCED_JOB = "sololeveling:last_synced_job_skills";
 
@@ -54,6 +55,7 @@ public class JobSkillManager {
 			ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION,
 			FIRE_CHARGE, METEOR_RAIN, FIREFLIES,
 			ICE_BALL, ICE_CHUNK, ICE_SPEAR, SNOW_SCREEN,
+			THOMAS_MANIFESTATION,
 			MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST);
 
 	private JobSkillManager() {
@@ -79,6 +81,8 @@ public class JobSkillManager {
 			return 0xFF5A32;
 		if (List.of(ICE_BALL, ICE_CHUNK, ICE_SPEAR, SNOW_SCREEN).contains(skill))
 			return 0x6FE8FF;
+		if (THOMAS_MANIFESTATION.equals(skill))
+			return 0xFFD35A;
 		if (List.of(MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST).contains(skill))
 			return 0xFFE38A;
 		return 0xFFFFFF;
@@ -120,6 +124,7 @@ public class JobSkillManager {
 			case SHADOW_COMMAND -> ShadowCommandOpenProcedure.execute(world, x, y, z, entity);
 			case SHADOW_EXCHANGE -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case SHADOW_MANIFESTATION -> runOldJobAbility(entity, () -> Ability4OnKeyPressedProcedure.execute(world, x, y, z, entity));
+			case THOMAS_MANIFESTATION -> runOldJobAbility(entity, () -> Ability4OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case FIRE_CHARGE -> castFireCharge(world, x, y, z, entity);
 			case METEOR_RAIN -> runOldJobAbility(entity, () -> Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case FIREFLIES -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
@@ -141,7 +146,7 @@ public class JobSkillManager {
 			case FIRE_CHARGE, MONARCH_BEAM -> "job_1";
 			case METEOR_RAIN, ICE_CHUNK, LIGHTNING_STORM -> "job_2";
 			case FIREFLIES, ICE_SPEAR, STORM_BURST -> "job_3";
-			case SHADOW_MANIFESTATION, SNOW_SCREEN -> "job_4";
+			case SHADOW_MANIFESTATION, SNOW_SCREEN, THOMAS_MANIFESTATION -> "job_4";
 			default -> skill;
 		};
 	}
@@ -200,6 +205,7 @@ public class JobSkillManager {
 			case 2 -> List.of(FIRE_CHARGE, METEOR_RAIN, FIREFLIES);
 			case 3 -> List.of(ICE_BALL, ICE_CHUNK, ICE_SPEAR, SNOW_SCREEN);
 			case 4 -> List.of(MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST);
+			case 5 -> List.of(THOMAS_MANIFESTATION);
 			default -> List.of();
 		};
 	}

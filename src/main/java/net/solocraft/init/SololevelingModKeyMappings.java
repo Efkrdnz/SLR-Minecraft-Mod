@@ -109,13 +109,13 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				if (isCombatMode()) {
+				if (canUseAbilityKeys()) {
 					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability1Message(0, 0));
 					Ability1Message.pressAction(Minecraft.getInstance().player, 0, 0);
 					ABILITY_1_LASTPRESS = System.currentTimeMillis();
 				}
 			} else if (isDownOld != isDown && !isDown) {
-				if (isCombatMode()) {
+				if (canUseAbilityKeys()) {
 					int dt = (int) (System.currentTimeMillis() - ABILITY_1_LASTPRESS);
 					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability1Message(1, dt));
 					Ability1Message.pressAction(Minecraft.getInstance().player, 1, dt);
@@ -131,12 +131,12 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				if (isCombatMode()) {
+				if (canUseAbilityKeys()) {
 					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability2Message(0, 0));
 					ABILITY_2_LASTPRESS = System.currentTimeMillis();
 				}
 			} else if (isDownOld != isDown && !isDown) {
-				if (isCombatMode()) {
+				if (canUseAbilityKeys()) {
 					int dt = (int) Math.min(Integer.MAX_VALUE, System.currentTimeMillis() - ABILITY_2_LASTPRESS);
 					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability2Message(1, dt));
 				}
@@ -151,7 +151,7 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				if (isCombatMode()) {
+				if (canUseAbilityKeys()) {
 					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability3Message(0, 0));
 					Ability3Message.pressAction(Minecraft.getInstance().player, 0, 0);
 				}
@@ -166,7 +166,7 @@ public class SololevelingModKeyMappings {
 		public void setDown(boolean isDown) {
 			super.setDown(isDown);
 			if (isDownOld != isDown && isDown) {
-				if (isCombatMode()) {
+				if (canUseAbilityKeys()) {
 					SololevelingMod.PACKET_HANDLER.sendToServer(new Ability4Message(0, 0));
 					Ability4Message.pressAction(Minecraft.getInstance().player, 0, 0);
 				}
@@ -353,10 +353,13 @@ public class SololevelingModKeyMappings {
 		UseSkillMessage.pressAction(Minecraft.getInstance().player, type, dt);
 	}
 
-	private static boolean isCombatMode() {
+	private static boolean canUseAbilityKeys() {
 		if (Minecraft.getInstance().player == null)
 			return false;
-		return Minecraft.getInstance().player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).combatmode;
+		SololevelingModVariables.PlayerVariables variables = Minecraft.getInstance().player
+				.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables());
+		return variables.combatmode || (int) variables.JOB == 3;
 	}
 
 	@SubscribeEvent

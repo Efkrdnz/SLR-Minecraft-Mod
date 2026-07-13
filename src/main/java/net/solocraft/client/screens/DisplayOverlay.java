@@ -104,10 +104,12 @@ public class DisplayOverlay {
 			case JobSkillManager.FIRE_CHARGE -> new ResourceLocation("sololeveling:textures/screens/griamorefire.png");
 			case JobSkillManager.METEOR_RAIN -> new ResourceLocation("sololeveling:textures/screens/icon_firearrows.png");
 			case JobSkillManager.FIREFLIES -> new ResourceLocation("sololeveling:textures/screens/newmagesummoning.png");
-			case JobSkillManager.ICE_BALL -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchiceball.png");
-			case JobSkillManager.ICE_CHUNK -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchchunk.png");
 			case JobSkillManager.ICE_SPEAR -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchspear.png");
-			case JobSkillManager.SNOW_SCREEN -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchsnowscreen.png");
+			case JobSkillManager.FLASH_FREEZE -> new ResourceLocation("sololeveling:textures/screens/icon_frost_stillness.png");
+			case JobSkillManager.FROZEN_PATH -> new ResourceLocation("sololeveling:textures/screens/icon_frost_causeway.png");
+			case JobSkillManager.FROST_COUNTER -> new ResourceLocation("sololeveling:textures/screens/icon_frost_winter_remembers.png");
+			case JobSkillManager.ABSOLUTE_ZERO -> new ResourceLocation("sololeveling:textures/screens/icon_frost_whiteout.png");
+			case JobSkillManager.FROST_SPIRITUALIZATION -> new ResourceLocation("sololeveling:textures/screens/icon_frost_spiritualization.png");
 			case JobSkillManager.MONARCH_BEAM -> new ResourceLocation("sololeveling:textures/screens/newbaranlaser.png");
 			case JobSkillManager.LIGHTNING_STORM -> new ResourceLocation("sololeveling:textures/screens/newbaranlightningstrike.png");
 			case JobSkillManager.STORM_BURST -> new ResourceLocation("sololeveling:textures/screens/newbaranstormburst.png");

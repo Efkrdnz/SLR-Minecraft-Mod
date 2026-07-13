@@ -1,6 +1,7 @@
 package net.solocraft.init;
 
 import net.solocraft.block.GuildComputerBlock;
+import net.solocraft.block.FrostCausewayBlock;
 import net.solocraft.block.WoodenPassageOpenBlock;
 import net.solocraft.block.UnbreakableDeepslateBlock;
 import net.solocraft.block.SkeletonBlock;
@@ -71,6 +72,7 @@ public class SololevelingModBlocks {
 	public static final RegistryObject<Block> CUSTOM_PORTAL = REGISTRY.register("custom_portal", () -> new CustomPortalBlock());
 	public static final RegistryObject<Block> SHADOW = REGISTRY.register("shadow", () -> new ShadowBlock());
 	public static final RegistryObject<Block> DEEPSLATE_KEYBLOCK_DKC = REGISTRY.register("deepslate_keyblock_dkc", () -> new DeepslateKeyblockDKCBlock());
+	public static final RegistryObject<Block> FROST_CAUSEWAY = REGISTRY.register("frost_causeway", FrostCausewayBlock::new);
 
 	// â”€â”€ Guild System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 	public static final RegistryObject<Block> GUILD_COMPUTER = REGISTRY.register("guild_computer", GuildComputerBlock::new);

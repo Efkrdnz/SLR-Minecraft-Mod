@@ -18,6 +18,7 @@ import net.minecraft.core.registries.Registries;
 import java.util.List;
 import java.util.Comparator;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.FrostMonarchManager;
 
 public class Ability2OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -27,6 +28,11 @@ public class Ability2OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, int inputType, int pressedMs) {
 		if (entity == null)
 			return;
+		if (FrostMonarchManager.isFrostMonarch(entity)) {
+			if (inputType == 0)
+				FrostMonarchManager.castFrozenPath(entity);
+			return;
+		}
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).combatmode) {
 			if (RulersAuthorityManager.hasAbility(entity)) {
 				if (entity instanceof net.minecraft.server.level.ServerPlayer player) {
@@ -155,8 +161,6 @@ public class Ability2OnKeyPressedProcedure {
 				}
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 2) {
 				MeteorRainProcedure.execute(world, y, entity);
-			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 3) {
-				CastIceChunkProcedure.execute(world, y, entity);
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
 				if (!CooldownManager.isOnCooldown(entity, "job_2")) {
 					LightningStormActivationProcedure.execute(entity);

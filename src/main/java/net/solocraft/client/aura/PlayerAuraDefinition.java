@@ -42,7 +42,8 @@ public record PlayerAuraDefinition(String id, int primaryColor, int secondaryCol
 
 	public enum FluidStyle {
 		LIQUID_FLAME,
-		SHADOW_RIFT
+		SHADOW_RIFT,
+		WHITE_FLAME_HAIR
 	}
 
 	public enum Facing {

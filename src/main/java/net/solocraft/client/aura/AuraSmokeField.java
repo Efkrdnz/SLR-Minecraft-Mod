@@ -42,7 +42,7 @@ public final class AuraSmokeField {
 	private static final Map<Integer, Vec3> LEAN = new ConcurrentHashMap<>();
 	private static final Random RNG = new Random();
 
-	private static final int MAX_PER_ENTITY = 72;
+	private static final int MAX_PER_ENTITY = 96;
 	private static final double EMIT_RANGE_SQR = 60.0D * 60.0D;
 
 	private AuraSmokeField() {
@@ -148,11 +148,13 @@ public final class AuraSmokeField {
 
 		boolean shadow = definition.fluid() != null
 				&& definition.fluid().style() == PlayerAuraDefinition.FluidStyle.SHADOW_RIFT;
+		boolean whiteHair = definition.fluid() != null
+				&& definition.fluid().style() == PlayerAuraDefinition.FluidStyle.WHITE_FLAME_HAIR;
 		float radius = Math.max(player.getBbWidth() * 0.5F + 0.2F, definition.radius());
 		float height = Math.max(1.4F, player.getBbHeight() * definition.heightScale());
 		float density = definition.fluid() != null ? definition.fluid().opacity() : 0.7F;
 
-		float rate = (shadow ? 2.6F : 2.0F) + intensity * 2.4F;
+		float rate = (whiteHair ? 4.6F : shadow ? 2.6F : 2.0F) + intensity * (whiteHair ? 3.0F : 2.4F);
 		int count = Mth.floor(rate);
 		if (RNG.nextFloat() < rate - count) {
 			count++;
@@ -162,10 +164,12 @@ public final class AuraSmokeField {
 
 		for (int i = 0; i < count; i++) {
 			double angle = RNG.nextDouble() * Math.PI * 2.0D;
-			double distance = Math.sqrt(RNG.nextDouble()) * radius * 0.72D;
+			double distance = Math.sqrt(RNG.nextDouble()) * radius * (whiteHair ? 0.42D : 0.72D);
 			double x = player.getX() + Math.cos(angle) * distance;
 			double z = player.getZ() + Math.sin(angle) * distance;
-			double y = player.getY() + 0.08D + RNG.nextDouble() * height * 0.9D;
+			double y = whiteHair
+					? player.getY() + player.getBbHeight() * (0.78D + RNG.nextDouble() * 0.42D)
+					: player.getY() + 0.08D + RNG.nextDouble() * height * 0.9D;
 
 			boolean bright = RNG.nextFloat() < (shadow ? 0.20F : 0.30F);
 			double inherit = bright ? 0.42D : 0.6D;
@@ -176,12 +180,12 @@ public final class AuraSmokeField {
 			puff.pz = puff.ppz = z;
 			puff.vx = motion.x * inherit + (RNG.nextDouble() - 0.5D) * 0.02D;
 			puff.vz = motion.z * inherit + (RNG.nextDouble() - 0.5D) * 0.02D;
-			puff.vy = (bright ? 0.03D : 0.018D) + RNG.nextDouble() * 0.02D;
+			puff.vy = (bright ? 0.03D : 0.018D) + RNG.nextDouble() * 0.02D + (whiteHair ? 0.018D : 0.0D);
 			puff.age = 0.0D;
 			puff.maxAge = (bright ? 15 + RNG.nextInt(12) : 32 + RNG.nextInt(24)) * (shadow ? 1.25D : 1.0D);
 			puff.size = bright
-					? radius * (0.10F + RNG.nextFloat() * 0.07F)
-					: radius * (0.30F + RNG.nextFloat() * 0.34F);
+					? radius * (whiteHair ? 0.14F + RNG.nextFloat() * 0.10F : 0.10F + RNG.nextFloat() * 0.07F)
+					: radius * (whiteHair ? 0.22F + RNG.nextFloat() * 0.28F : 0.30F + RNG.nextFloat() * 0.34F);
 			if (definition.smokeColor() >= 0) {
 				// Explicit smoke palette: gold-ish body, white-hot embers.
 				puff.color = bright
@@ -194,6 +198,7 @@ public final class AuraSmokeField {
 								0.28F + RNG.nextFloat() * 0.5F);
 			}
 			puff.bright = bright;
+			puff.hair = whiteHair;
 			puff.baseAlpha = Mth.clamp(intensity * density * (bright ? 1.05F : 0.72F), 0.0F, 1.0F);
 			puff.seed = RNG.nextInt(16);
 			puff.texture = definition.fallbackTexture();
@@ -208,7 +213,7 @@ public final class AuraSmokeField {
 
 		double t = time * 0.12D + puff.seed * 1.3D;
 		double acceleration = puff.bright ? 0.0007D : 0.0013D;
-		double buoyancy = puff.bright ? 0.011D : 0.006D;
+		double buoyancy = (puff.bright ? 0.011D : 0.006D) + (puff.hair ? 0.006D : 0.0D);
 
 		puff.vx += Math.sin(puff.py * 2.1D + t * 1.6D + puff.seed) * acceleration
 				+ Math.sin(puff.pz * 1.7D - t) * acceleration * 0.5D;
@@ -267,6 +272,7 @@ public final class AuraSmokeField {
 		float baseAlpha;
 		int color;
 		boolean bright;
+		boolean hair;
 		int seed;
 		ResourceLocation texture;
 	}

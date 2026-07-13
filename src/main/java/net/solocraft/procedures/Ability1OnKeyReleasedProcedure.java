@@ -7,11 +7,14 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.FrostMonarchManager;
 import net.solocraft.util.GoliathCombatManager;
 
 public class Ability1OnKeyReleasedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
+			return;
+		if (FrostMonarchManager.isFrostMonarch(entity))
 			return;
 		if (GoliathCombatManager.isCombatStance(entity)) {
 			GoliathCombatManager.releasePursuit(entity, 0);

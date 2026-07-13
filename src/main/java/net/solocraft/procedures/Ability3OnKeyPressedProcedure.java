@@ -29,11 +29,16 @@ import java.util.Comparator;
 
 import io.netty.buffer.Unpooled;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.FrostMonarchManager;
 
 public class Ability3OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		if (FrostMonarchManager.isFrostMonarch(entity)) {
+			FrostMonarchManager.castIceSpear(entity);
+			return;
+		}
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).combatmode) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dash == 1) {
 				{
@@ -105,8 +110,6 @@ public class Ability3OnKeyPressedProcedure {
 						}
 					}
 				}
-			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 3) {
-				IceSpearGiveProcedure.execute(world, x, y, z, entity);
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
 				if (!CooldownManager.isOnCooldown(entity, "job_3")) {
 					StormBurstProcedure.execute(world, x, y, z, entity);

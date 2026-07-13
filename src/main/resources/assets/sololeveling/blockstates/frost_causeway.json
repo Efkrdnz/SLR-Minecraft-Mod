@@ -1,0 +1,7 @@
+{
+  "multipart": [
+    {
+      "apply": { "model": "sololeveling:block/frost_causeway" }
+    }
+  ]
+}

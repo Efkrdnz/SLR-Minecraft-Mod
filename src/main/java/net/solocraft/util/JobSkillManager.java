@@ -42,10 +42,12 @@ public class JobSkillManager {
 	public static final String FIRE_CHARGE = "Fire Charge";
 	public static final String METEOR_RAIN = "Meteor Rain";
 	public static final String FIREFLIES = "Fireflies";
-	public static final String ICE_BALL = "Ice Ball";
-	public static final String ICE_CHUNK = "Ice Chunk";
 	public static final String ICE_SPEAR = "Ice Spear";
-	public static final String SNOW_SCREEN = "Snow Screen";
+	public static final String FLASH_FREEZE = FrostMonarchManager.FLASH_FREEZE;
+	public static final String FROZEN_PATH = FrostMonarchManager.FROZEN_PATH;
+	public static final String FROST_COUNTER = FrostMonarchManager.FROST_COUNTER;
+	public static final String ABSOLUTE_ZERO = FrostMonarchManager.ABSOLUTE_ZERO;
+	public static final String FROST_SPIRITUALIZATION = FrostMonarchManager.SPIRITUALIZATION;
 	public static final String MONARCH_BEAM = "Monarch Beam";
 	public static final String LIGHTNING_STORM = "Lightning Storm";
 	public static final String STORM_BURST = "Storm Burst";
@@ -55,11 +57,17 @@ public class JobSkillManager {
 	public static final String THOMAS_COLLAPSE = GoliathCombatManager.COLLAPSE;
 
 	private static final String LAST_SYNCED_JOB = "sololeveling:last_synced_job_skills";
+	private static final List<String> FROST_SKILLS = List.of(
+			ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH,
+			FROST_COUNTER, ABSOLUTE_ZERO, FROST_SPIRITUALIZATION);
 
 	private static final List<String> ALL_JOB_SKILLS = List.of(
 			ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION,
 			FIRE_CHARGE, METEOR_RAIN, FIREFLIES,
-			ICE_BALL, ICE_CHUNK, ICE_SPEAR, SNOW_SCREEN,
+			"Ice Ball", "Ice Chunk", "Snow Screen", "Stillness Decree", "Pale Causeway",
+			"Winter Remembers", "Whiteout Procession",
+			ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROST_COUNTER,
+			ABSOLUTE_ZERO, FROST_SPIRITUALIZATION,
 			THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION,
 			MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST);
 
@@ -79,12 +87,16 @@ public class JobSkillManager {
 		return ALL_JOB_SKILLS.contains(skill);
 	}
 
+	public static boolean isFrostSkill(String skill) {
+		return FROST_SKILLS.contains(skill);
+	}
+
 	public static int skillColor(String skill) {
 		if (List.of(ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION).contains(skill))
 			return 0xB965FF;
 		if (List.of(FIRE_CHARGE, METEOR_RAIN, FIREFLIES).contains(skill))
 			return 0xFF5A32;
-		if (List.of(ICE_BALL, ICE_CHUNK, ICE_SPEAR, SNOW_SCREEN).contains(skill))
+		if (isFrostSkill(skill))
 			return 0x6FE8FF;
 		if (List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION).contains(skill))
 			return 0xFFD35A;
@@ -94,6 +106,8 @@ public class JobSkillManager {
 	}
 
 	public static List<Component> tooltip(Entity entity, String skill) {
+		if (isFrostSkill(skill))
+			return frostTooltip(entity, skill);
 		if (!List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION).contains(skill))
 			return List.of(Component.literal(ShadowMonarchManager.displaySkillName(entity, skill)), Component.literal(skill));
 		boolean manifested = GoliathCombatManager.isManifested(entity);
@@ -115,6 +129,51 @@ public class JobSkillManager {
 			case THOMAS_MANIFESTATION -> {
 				lines.add(Component.literal("Manifest the golden Goliath armor.").withStyle(ChatFormatting.GRAY));
 				lines.add(Component.literal("Transforms all Goliath skills and combat-stance attacks.").withStyle(ChatFormatting.YELLOW));
+			}
+			default -> {
+			}
+		}
+		return lines;
+	}
+
+	private static List<Component> frostTooltip(Entity entity, String skill) {
+		boolean manifested = FrostMonarchManager.isSpiritualized(entity);
+		ArrayList<Component> lines = new ArrayList<>();
+		lines.add(Component.literal(skill).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD));
+		switch (skill) {
+			case ICE_SPEAR -> {
+				lines.add(Component.literal("Throw the Ice Spear, then cast again to recall it.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Sneak-cast to receive the existing Ice Spear item in your inventory.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal((manifested ? "300" : "260") + " MP throw | 5.5s cooldown | Sneak: 100 MP, 3s").withStyle(ChatFormatting.YELLOW));
+			}
+			case FLASH_FREEZE -> {
+				lines.add(Component.literal("Flash-freeze enemies in a forward cone.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Strike frozen enemies in melee to shatter the ice.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal((manifested ? "12 blocks | 340 MP" : "9 blocks | 300 MP") + " | 10s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case FROZEN_PATH -> {
+				lines.add(Component.literal("Freeze ground and water ahead, bridging small gaps.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("It leaves obsidian, harder blocks, and protected cells untouched, then keeps going.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal((manifested ? "32x5 path | 280 MP" : "24x3 path | 240 MP") + " | 9s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case FROST_COUNTER -> {
+				lines.add(Component.literal("Brace to reduce the next hit you receive.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("The attacker is frozen when the counter triggers.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal(manifested
+						? "5s window | 75% reduction | 300 MP | 12s cooldown"
+						: "4s window | 60% reduction | 260 MP | 12s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case ABSOLUTE_ZERO -> {
+				lines.add(Component.literal("Create a freezing field that follows you.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Enemies are slowed immediately and freeze after staying inside.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal(manifested
+						? "10 blocks for 10s | 700 MP | 22s cooldown"
+						: "8 blocks for 8s | 600 MP | 22s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case FROST_SPIRITUALIZATION -> {
+				lines.add(Component.literal("Manifest the Frost Monarch's spiritual aura immediately.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("No buildup required | 0 MP activation").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal("24s maximum duration | 45s cooldown").withStyle(ChatFormatting.YELLOW));
 			}
 			default -> {
 			}
@@ -165,10 +224,12 @@ public class JobSkillManager {
 			case FIRE_CHARGE -> castFireCharge(world, x, y, z, entity);
 			case METEOR_RAIN -> runOldJobAbility(entity, () -> Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case FIREFLIES -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
-			case ICE_BALL -> runOldJobAbility(entity, () -> Ability1OnKeyPressedProcedure.execute(world, x, y, z, entity));
-			case ICE_CHUNK -> runOldJobAbility(entity, () -> Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity));
-			case ICE_SPEAR -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
-			case SNOW_SCREEN -> runOldJobAbility(entity, () -> Ability4OnKeyPressedProcedure.execute(world, x, y, z, entity));
+			case ICE_SPEAR -> FrostMonarchManager.castIceSpear(entity);
+			case FLASH_FREEZE -> FrostMonarchManager.castFlashFreeze(entity);
+			case FROZEN_PATH -> FrostMonarchManager.castFrozenPath(entity);
+			case FROST_COUNTER -> FrostMonarchManager.castFrostCounter(entity);
+			case ABSOLUTE_ZERO -> FrostMonarchManager.castAbsoluteZero(entity);
+			case FROST_SPIRITUALIZATION -> FrostMonarchManager.toggleSpiritualization(entity);
 			case MONARCH_BEAM -> castMonarchBeam(entity);
 			case LIGHTNING_STORM -> runOldJobAbility(entity, () -> Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case STORM_BURST -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
@@ -181,10 +242,13 @@ public class JobSkillManager {
 	public static String cooldownKey(String skill) {
 		return switch (skill) {
 			case FIRE_CHARGE, MONARCH_BEAM -> "job_1";
-			case METEOR_RAIN, ICE_CHUNK, LIGHTNING_STORM -> "job_2";
-			case FIREFLIES, ICE_SPEAR, STORM_BURST -> "job_3";
-			case SHADOW_MANIFESTATION, SNOW_SCREEN, THOMAS_MANIFESTATION -> "job_4";
-			case THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE -> skill;
+			case METEOR_RAIN, LIGHTNING_STORM -> "job_2";
+			case FIREFLIES, STORM_BURST -> "job_3";
+			case SHADOW_MANIFESTATION, THOMAS_MANIFESTATION -> "job_4";
+			case THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE,
+					ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROST_COUNTER,
+					ABSOLUTE_ZERO -> skill;
+			case FROST_SPIRITUALIZATION -> FrostMonarchManager.SPIRITUALIZATION_COOLDOWN;
 			default -> skill;
 		};
 	}
@@ -241,7 +305,7 @@ public class JobSkillManager {
 		return switch (job) {
 			case 1 -> List.of(ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION);
 			case 2 -> List.of(FIRE_CHARGE, METEOR_RAIN, FIREFLIES);
-			case 3 -> List.of(ICE_BALL, ICE_CHUNK, ICE_SPEAR, SNOW_SCREEN);
+			case 3 -> FROST_SKILLS;
 			case 4 -> List.of(MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST);
 			case 5 -> List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION);
 			default -> List.of();

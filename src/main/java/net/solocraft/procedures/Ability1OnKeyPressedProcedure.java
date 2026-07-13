@@ -26,11 +26,16 @@ import net.minecraft.core.BlockPos;
 import io.netty.buffer.Unpooled;
 import net.solocraft.util.CooldownManager;
 import net.solocraft.util.GoliathCombatManager;
+import net.solocraft.util.FrostMonarchManager;
 
 public class Ability1OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		if (FrostMonarchManager.isFrostMonarch(entity)) {
+			FrostMonarchManager.castFlashFreeze(entity);
+			return;
+		}
 		if (GoliathCombatManager.isCombatStance(entity)) {
 			GoliathCombatManager.beginPursuit(entity);
 			return;
@@ -76,8 +81,6 @@ public class Ability1OnKeyPressedProcedure {
 							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.USING_FIRE.get(), 999, 1, false, false));
 						CooldownManager.set(entity, "mana_refresh", 999);
 					}
-				} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 3) {
-					IceBallCastProcedure.execute(world, x, y, z, entity);
 				} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
 					if (!CooldownManager.isOnCooldown(entity, "job_1")) {
 						{

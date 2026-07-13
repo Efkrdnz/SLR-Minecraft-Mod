@@ -24,11 +24,16 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.FrostMonarchManager;
 
 public class Ability4OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		if (FrostMonarchManager.isFrostMonarch(entity)) {
+			FrostMonarchManager.castFrostCounter(entity);
+			return;
+		}
 		ItemStack head = ItemStack.EMPTY;
 		ItemStack chest = ItemStack.EMPTY;
 		ItemStack leg = ItemStack.EMPTY;
@@ -176,8 +181,6 @@ public class Ability4OnKeyPressedProcedure {
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 2) {
 				if (entity instanceof Player _player && !_player.level().isClientSide())
 					_player.displayClientMessage(Component.literal("ability wip"), false);
-			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 3) {
-				SnowScreenCastProcedure.execute(world, entity);
 			} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
 				if (entity instanceof Player _player && !_player.level().isClientSide())
 					_player.displayClientMessage(Component.literal("ability wip"), false);

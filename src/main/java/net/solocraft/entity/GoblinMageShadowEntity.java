@@ -504,7 +504,7 @@ public class GoblinMageShadowEntity extends TamableAnimal implements GeoEntity {
 		builder = builder.add(Attributes.MAX_HEALTH, 18);
 		builder = builder.add(Attributes.ARMOR, 0);
 		builder = builder.add(Attributes.ATTACK_DAMAGE, 0);
-		builder = builder.add(Attributes.FOLLOW_RANGE, 16);
+		builder = builder.add(Attributes.FOLLOW_RANGE, 32);
 		return builder;
 	}
 

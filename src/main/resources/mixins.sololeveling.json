@@ -7,6 +7,9 @@
     "DisableHotbarKeymappingMixin",
     "SMixin"
   ],
-  "client": [],
+  "client": [
+    "GoliathFirstPersonHandMixin",
+    "GoliathThirdPersonHandMixin"
+  ],
   "minVersion": "0.8"
 }

@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.FlameVortexPEntity;
 import net.solocraft.entity.ChoijongEntity;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -20,25 +21,21 @@ public class ChoijongOnEntityTickUpdateProcedure {
 		if (entity == null)
 			return;
 		double rand = 0;
-		double distance = 0;
 		double dmg_modifier = 0;
 		if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == (null))) {
+			Entity target = entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null;
 			entity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()),
-					((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY() + entity.getBbHeight() / 2), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ())));
+					target.getY() + target.getBbHeight() * 0.6D, target.getZ()));
+			CombatRangeHelper.maintainRangedBand(entity, target, 7.0D, 19.0D, 1.12D);
 			if (entity instanceof ChoijongEntity _datEntSetI)
 				_datEntSetI.getEntityData().set(ChoijongEntity.DATA_IA, (int) ((entity instanceof ChoijongEntity _datEntI ? _datEntI.getEntityData().get(ChoijongEntity.DATA_IA) : 0) + 1));
-			distance = Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-					+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2));
-			if ((entity instanceof ChoijongEntity _datEntI ? _datEntI.getEntityData().get(ChoijongEntity.DATA_backoff) : 0) > 0) {
-				if (entity instanceof ChoijongEntity _datEntSetI)
-					_datEntSetI.getEntityData().set(ChoijongEntity.DATA_backoff, (int) ((entity instanceof ChoijongEntity _datEntI ? _datEntI.getEntityData().get(ChoijongEntity.DATA_backoff) : 0) - 1));
-			}
-			if (distance <= 5) {
-				if ((entity instanceof ChoijongEntity _datEntI ? _datEntI.getEntityData().get(ChoijongEntity.DATA_backoff) : 0) == 0) {
-					entity.setDeltaMovement(new Vec3((entity.getLookAngle().x * (-2)), 0.3, (entity.getLookAngle().z * (-2))));
-					if (entity instanceof ChoijongEntity _datEntSetI)
-						_datEntSetI.getEntityData().set(ChoijongEntity.DATA_backoff, 50);
-				}
+			int attackTimer = entity instanceof ChoijongEntity choi
+					? choi.getEntityData().get(ChoijongEntity.DATA_IA) : 0;
+			if (attackTimer % 24 == 0 && entity instanceof ChoijongEntity choi
+					&& target instanceof net.minecraft.world.entity.LivingEntity livingTarget
+					&& CombatRangeHelper.withinSurfaceRange(entity, target, 24.0D)
+					&& choi.getSensing().hasLineOfSight(livingTarget)) {
+				choi.performRangedAttack(livingTarget, 1.0F);
 			}
 			if ((entity instanceof ChoijongEntity _datEntI ? _datEntI.getEntityData().get(ChoijongEntity.DATA_IA) : 0) == 60) {
 				rand = Mth.nextInt(RandomSource.create(), 1, 3);
@@ -73,7 +70,7 @@ public class ChoijongOnEntityTickUpdateProcedure {
 							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ())));
 					FireTornadoShootProcedure.execute(world, entity);
 				}
-			} else if ((entity instanceof ChoijongEntity _datEntI ? _datEntI.getEntityData().get(ChoijongEntity.DATA_IA) : 0) > 60) {
+			} else if ((entity instanceof ChoijongEntity _datEntI ? _datEntI.getEntityData().get(ChoijongEntity.DATA_IA) : 0) > 80) {
 				if (entity instanceof ChoijongEntity _datEntSetI)
 					_datEntSetI.getEntityData().set(ChoijongEntity.DATA_IA, 0);
 			}

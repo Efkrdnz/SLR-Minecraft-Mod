@@ -18,7 +18,6 @@ public class RandomHunterMageTickProcedure {
 			return;
 		double Rank = 0;
 		double rand = 0;
-		double distance = 0;
 		double dmg_modifier = 0;
 		if ((entity instanceof HunterEntity _datEntS ? _datEntS.getEntityData().get(HunterEntity.DATA_Rank) : "").equals("S")) {
 			dmg_modifier = 20;
@@ -37,20 +36,6 @@ public class RandomHunterMageTickProcedure {
 					new Vec3(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()),
 							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY() + (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getBbHeight()),
 							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ())));
-			if ((entity instanceof HunterEntity _datEntI ? _datEntI.getEntityData().get(HunterEntity.DATA_backoff) : 0) > 0) {
-				if (entity instanceof HunterEntity _datEntSetI)
-					_datEntSetI.getEntityData().set(HunterEntity.DATA_backoff, (int) ((entity instanceof HunterEntity _datEntI ? _datEntI.getEntityData().get(HunterEntity.DATA_backoff) : 0) - 1));
-			}
-			distance = Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-					+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2));
-			if (distance <= 3.25) {
-				if ((entity instanceof HunterEntity _datEntI ? _datEntI.getEntityData().get(HunterEntity.DATA_backoff) : 0) == 0) {
-					entity.setDeltaMovement(new Vec3((entity.getLookAngle().x * (-0.65)), 0.1, (entity.getLookAngle().z * (-0.65))));
-					entity.hasImpulse = true;
-					if (entity instanceof HunterEntity _datEntSetI)
-						_datEntSetI.getEntityData().set(HunterEntity.DATA_backoff, 100);
-				}
-			}
 			if ((entity instanceof HunterEntity _datEntI ? _datEntI.getEntityData().get(HunterEntity.DATA_IA) : 0) <= 45) {
 				if (entity instanceof HunterEntity _datEntSetI)
 					_datEntSetI.getEntityData().set(HunterEntity.DATA_IA, (int) ((entity instanceof HunterEntity _datEntI ? _datEntI.getEntityData().get(HunterEntity.DATA_IA) : 0) + 1));

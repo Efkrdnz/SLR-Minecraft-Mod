@@ -514,7 +514,7 @@ public class GoblinArcherShadowEntity extends TamableAnimal implements GeoEntity
 		builder = builder.add(Attributes.MAX_HEALTH, 14);
 		builder = builder.add(Attributes.ARMOR, 0);
 		builder = builder.add(Attributes.ATTACK_DAMAGE, 0);
-		builder = builder.add(Attributes.FOLLOW_RANGE, 32);
+		builder = builder.add(Attributes.FOLLOW_RANGE, 40);
 		builder = builder.add(Attributes.ATTACK_KNOCKBACK, 0.8);
 		return builder;
 	}

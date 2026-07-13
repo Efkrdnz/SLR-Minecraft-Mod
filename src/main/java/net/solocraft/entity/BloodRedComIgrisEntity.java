@@ -15,6 +15,7 @@ import net.solocraft.procedures.IgrisEntityDiesProcedure;
 import net.solocraft.procedures.BloodRedComIgrisOnEntityTickUpdateProcedure;
 import net.solocraft.procedures.BloodRedComIgrisDeathTimeIsReachedProcedure;
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.network.PlayMessages;
@@ -142,7 +143,7 @@ public class BloodRedComIgrisEntity extends Monster implements GeoEntity {
         public boolean canUse() {
             LivingEntity t = igris.getTarget();
             if (t == null) return false;
-            double dist = igris.distanceTo(t);
+            double dist = CombatRangeHelper.surfaceDistance(igris, t);
             return igris.getPersistentData().getString("state").equals("idle")
                     && dist > 4.5 && dist < 15.0;
         }
@@ -152,7 +153,7 @@ public class BloodRedComIgrisEntity extends Monster implements GeoEntity {
             LivingEntity t = igris.getTarget();
             if (t == null) return false;
             return igris.getPersistentData().getString("state").equals("idle")
-                    && igris.distanceTo(t) < 15.0;
+                    && CombatRangeHelper.surfaceDistance(igris, t) < 15.0;
         }
 
         @Override
@@ -173,7 +174,7 @@ public class BloodRedComIgrisEntity extends Monster implements GeoEntity {
             // Occasionally reverse the strafe direction for unpredictability
             if (igris.getRandom().nextFloat() < 0.22f) strafeSign = -strafeSign;
 
-            double dist         = igris.distanceTo(target);
+            double dist         = CombatRangeHelper.surfaceDistance(igris, target);
             Vec3   toTargetNorm = target.position().subtract(igris.position()).normalize();
             Vec3   lateral      = new Vec3(-toTargetNorm.z * strafeSign, 0, toTargetNorm.x * strafeSign);
 

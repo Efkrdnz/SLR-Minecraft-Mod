@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.GoblinKingEntity;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,8 +18,9 @@ public class GoblinBossstatechangerProcedure {
 		double rand = 0;
 		rand = Mth.nextInt(RandomSource.create(), 1, 2);
 		if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
-			if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-					+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 3) {
+			double distance = CombatRangeHelper.surfaceDistance(entity,
+					(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null));
+			if (distance <= 3.0D) {
 				if (rand == 1) {
 					if (entity instanceof GoblinKingEntity _datEntSetI)
 						_datEntSetI.getEntityData().set(GoblinKingEntity.DATA_MF, 0);
@@ -34,8 +36,7 @@ public class GoblinBossstatechangerProcedure {
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 10));
 				}
-			} else if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-					+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 8) {
+			} else if (distance <= 8.0D) {
 				if (entity instanceof GoblinKingEntity _datEntSetS)
 					_datEntSetS.getEntityData().set(GoblinKingEntity.DATA_state, "idle");
 				if (entity instanceof GoblinKingEntity _datEntSetI)

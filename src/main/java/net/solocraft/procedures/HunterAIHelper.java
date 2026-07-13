@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.entity.HunterEntity;
 import net.solocraft.entity.RangerProjectileEntity;
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraftforge.eventbus.api.Event;
 
@@ -76,7 +77,7 @@ public class HunterAIHelper {
 			living.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 45, Math.min(2, 1 + rank / 3), false, false));
 			living.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 70, Math.min(2, rank / 2), false, false));
 			tauntNearby(entity, rank);
-			if (entity.distanceTo(target) <= 4.25D)
+			if (CombatRangeHelper.withinSurfaceRange(entity, target, 2.0D))
 				strike(target, entity, 2.5F + rank * 1.25F, 0.55D);
 			blockParticles(entity);
 		}
@@ -92,7 +93,7 @@ public class HunterAIHelper {
 		if (skillReady(entity, 55 - rank * 4)) {
 			living.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 45, Math.min(1, rank / 3), false, false));
 			living.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 30, Math.min(1, rank / 3), false, false));
-			if (entity.distanceTo(target) > 3.5D)
+			if (!CombatRangeHelper.withinSurfaceRange(entity, target, 1.75D))
 				dashToward(entity, target, 1.05D);
 			else
 				strike(target, entity, 3.5F + rank * 1.55F, 0.65D);
@@ -112,7 +113,7 @@ public class HunterAIHelper {
 			if (rank >= 4)
 				living.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 35, 0, false, false));
 			dashBehind(entity, target, 1.05D + rank * 0.05D);
-			if (entity.distanceTo(target) <= 4.0D)
+			if (CombatRangeHelper.withinSurfaceRange(entity, target, 2.0D))
 				strike(target, entity, 3.0F + rank * 1.65F, 0.25D);
 			dodgeParticles(entity);
 		}
@@ -125,7 +126,8 @@ public class HunterAIHelper {
 		if (target == null)
 			return;
 		int rank = rankValue(hunter);
-		if (entity.distanceTo(target) < 3.75D && backlineDodgeReady(entity, 45))
+		CombatRangeHelper.maintainRangedBand(entity, target, 6.5D, 19.0D, 1.08D);
+		if (CombatRangeHelper.surfaceDistance(entity, target) < 2.5D && backlineDodgeReady(entity, 45))
 			dodgeMove(entity, target, 0.42D);
 		if (rank >= 3 && skillReady(entity, 82 - rank * 3)) {
 			shoot(entity, target, 0.8F + rank * 0.45F, 0.0D);
@@ -143,7 +145,8 @@ public class HunterAIHelper {
 		if (target == null)
 			return;
 		int rank = rankValue(hunter);
-		if (entity.distanceTo(target) < 3.5D && backlineDodgeReady(entity, 60))
+		CombatRangeHelper.maintainRangedBand(entity, target, 6.0D, 15.0D, 1.0D);
+		if (CombatRangeHelper.surfaceDistance(entity, target) < 2.25D && backlineDodgeReady(entity, 60))
 			dodgeMove(entity, target, 0.45D);
 		if (rank >= 4 && skillReady(entity, 120 - rank * 4)) {
 			living.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 45, 0, false, false));

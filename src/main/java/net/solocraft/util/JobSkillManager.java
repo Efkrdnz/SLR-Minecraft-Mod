@@ -11,6 +11,7 @@ import net.solocraft.procedures.Ability4OnKeyPressedProcedure;
 import net.solocraft.procedures.AriseSkillProcedure;
 import net.solocraft.procedures.DoesHaveExchangeProcedure;
 import net.solocraft.procedures.DoesHaveShadowManifestationProcedure;
+import net.solocraft.procedures.GoliathManifestationProcedure;
 import net.solocraft.procedures.ShadowCommandOpenProcedure;
 import net.solocraft.procedures.SkillSlotHelper;
 
@@ -19,6 +20,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -48,6 +50,9 @@ public class JobSkillManager {
 	public static final String LIGHTNING_STORM = "Lightning Storm";
 	public static final String STORM_BURST = "Storm Burst";
 	public static final String THOMAS_MANIFESTATION = "Spiritual Body Manifestation";
+	public static final String THOMAS_CAPTURE = GoliathCombatManager.CAPTURE;
+	public static final String THOMAS_POWER_SMASH = GoliathCombatManager.POWER_SMASH;
+	public static final String THOMAS_COLLAPSE = GoliathCombatManager.COLLAPSE;
 
 	private static final String LAST_SYNCED_JOB = "sololeveling:last_synced_job_skills";
 
@@ -55,7 +60,7 @@ public class JobSkillManager {
 			ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION,
 			FIRE_CHARGE, METEOR_RAIN, FIREFLIES,
 			ICE_BALL, ICE_CHUNK, ICE_SPEAR, SNOW_SCREEN,
-			THOMAS_MANIFESTATION,
+			THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION,
 			MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST);
 
 	private JobSkillManager() {
@@ -81,11 +86,40 @@ public class JobSkillManager {
 			return 0xFF5A32;
 		if (List.of(ICE_BALL, ICE_CHUNK, ICE_SPEAR, SNOW_SCREEN).contains(skill))
 			return 0x6FE8FF;
-		if (THOMAS_MANIFESTATION.equals(skill))
+		if (List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION).contains(skill))
 			return 0xFFD35A;
 		if (List.of(MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST).contains(skill))
 			return 0xFFE38A;
 		return 0xFFFFFF;
+	}
+
+	public static List<Component> tooltip(Entity entity, String skill) {
+		if (!List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION).contains(skill))
+			return List.of(Component.literal(ShadowMonarchManager.displaySkillName(entity, skill)), Component.literal(skill));
+		boolean manifested = GoliathCombatManager.isManifested(entity);
+		ArrayList<Component> lines = new ArrayList<>();
+		lines.add(Component.literal(skill).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+		switch (skill) {
+			case THOMAS_CAPTURE -> {
+				lines.add(Component.literal("Pull and restrain enemies with crushing authority.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(manifested ? "Sovereign Capture: recast to hurl every captured target." : "Manifested: wider pull, suspension, and a throw recast.").withStyle(ChatFormatting.YELLOW));
+			}
+			case THOMAS_POWER_SMASH -> {
+				lines.add(Component.literal("Drive a mana-loaded fist through a frontal formation.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(manifested ? "Goliath Breaker: extended wave and fractured guard." : "Manifested: greater reach, damage, and guard damage.").withStyle(ChatFormatting.YELLOW));
+			}
+			case THOMAS_COLLAPSE -> {
+				lines.add(Component.literal("Shatter the battlefield with a radial ground impact.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(manifested ? "Continental Collapse: pressure lock followed by a second rupture." : "Manifested: larger impact and a delayed second shockwave.").withStyle(ChatFormatting.YELLOW));
+			}
+			case THOMAS_MANIFESTATION -> {
+				lines.add(Component.literal("Manifest the golden Goliath armor.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Transforms all Goliath skills and combat-stance attacks.").withStyle(ChatFormatting.YELLOW));
+			}
+			default -> {
+			}
+		}
+		return lines;
 	}
 
 	public static void syncJobSkills(Entity entity) {
@@ -124,7 +158,10 @@ public class JobSkillManager {
 			case SHADOW_COMMAND -> ShadowCommandOpenProcedure.execute(world, x, y, z, entity);
 			case SHADOW_EXCHANGE -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case SHADOW_MANIFESTATION -> runOldJobAbility(entity, () -> Ability4OnKeyPressedProcedure.execute(world, x, y, z, entity));
-			case THOMAS_MANIFESTATION -> runOldJobAbility(entity, () -> Ability4OnKeyPressedProcedure.execute(world, x, y, z, entity));
+			case THOMAS_CAPTURE -> GoliathCombatManager.castCapture(entity);
+			case THOMAS_POWER_SMASH -> GoliathCombatManager.castPowerSmash(entity);
+			case THOMAS_COLLAPSE -> GoliathCombatManager.castCollapse(entity);
+			case THOMAS_MANIFESTATION -> GoliathManifestationProcedure.execute(world, x, y, z, entity);
 			case FIRE_CHARGE -> castFireCharge(world, x, y, z, entity);
 			case METEOR_RAIN -> runOldJobAbility(entity, () -> Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case FIREFLIES -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
@@ -147,6 +184,7 @@ public class JobSkillManager {
 			case METEOR_RAIN, ICE_CHUNK, LIGHTNING_STORM -> "job_2";
 			case FIREFLIES, ICE_SPEAR, STORM_BURST -> "job_3";
 			case SHADOW_MANIFESTATION, SNOW_SCREEN, THOMAS_MANIFESTATION -> "job_4";
+			case THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE -> skill;
 			default -> skill;
 		};
 	}
@@ -205,7 +243,7 @@ public class JobSkillManager {
 			case 2 -> List.of(FIRE_CHARGE, METEOR_RAIN, FIREFLIES);
 			case 3 -> List.of(ICE_BALL, ICE_CHUNK, ICE_SPEAR, SNOW_SCREEN);
 			case 4 -> List.of(MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST);
-			case 5 -> List.of(THOMAS_MANIFESTATION);
+			case 5 -> List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION);
 			default -> List.of();
 		};
 	}

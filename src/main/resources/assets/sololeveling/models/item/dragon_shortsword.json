@@ -1,0 +1,39 @@
+{
+  "loader": "forge:obj",
+  "flip_v": true,
+  "model": "sololeveling:models/item/dragon_shortsword.obj",
+  "textures": {
+    "texture0": "sololeveling:item/dragon_shortsword",
+    "particle": "sololeveling:item/dragon_shortsword"
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "translation": [0, 13, 0]
+    },
+    "thirdperson_lefthand": {
+      "translation": [0, 13, 0]
+    },
+    "firstperson_righthand": {
+      "translation": [0, 6.25, 0],
+      "scale": [0.65625, 0.65625, 0.65625]
+    },
+    "firstperson_lefthand": {
+      "translation": [0, 6.25, 0],
+      "scale": [0.65625, 0.65625, 0.65625]
+    },
+    "ground": {
+      "translation": [0, 12.5, 0],
+      "scale": [0.64063, 0.64063, 0.64063]
+    },
+    "gui": {
+      "rotation": [-90, -46, -90],
+      "translation": [2.25, 2, 0],
+      "scale": [0.51367, 0.51367, 0.51367]
+    },
+    "fixed": {
+      "rotation": [-90, 50, 90],
+      "translation": [-2.25, 2.75, 0],
+      "scale": [0.62109, 0.62109, 0.62109]
+    }
+  }
+}

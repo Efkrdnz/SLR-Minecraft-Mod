@@ -1,10 +1,14 @@
 package net.solocraft;
 
+import net.solocraft.client.gui.WeaponTooltipProfiles;
+import net.solocraft.client.gui.WeaponTooltipRenderer;
+
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderTooltipEvent;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -53,10 +57,25 @@ public class CustomTooltipRenderer {
     private static final float V_BORDER  = 0.34f;
 
     @OnlyIn(Dist.CLIENT)
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onTooltipPre(RenderTooltipEvent.Pre event) {
+        WeaponTooltipProfiles.Profile profile = WeaponTooltipProfiles.find(event.getItemStack());
+        if (profile != null)
+            WeaponTooltipRenderer.render(event, profile);
+    }
+
+    @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
     public static void onTooltipColor(RenderTooltipEvent.Color event) {
         ItemStack stack = event.getItemStack();
         if (stack.isEmpty() || !isModItem(stack)) return;
+
+        if (WeaponTooltipProfiles.find(stack) != null) {
+            event.setBackground(0x00000000);
+            event.setBorderStart(0x00000000);
+            event.setBorderEnd(0x00000000);
+            return;
+        }
 
         String name = getPath(stack.getItem()).toLowerCase(Locale.ROOT);
         if (name.equals("redkey")) {

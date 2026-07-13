@@ -4,6 +4,7 @@ import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.ShamanMagicEntity;
 import net.solocraft.entity.GoblinMageEntity;
 import net.solocraft.SololevelingMod;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -41,8 +42,11 @@ public class GoblinMageOnEntityTickUpdateProcedure {
 				}
 				entity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY() + 1.2),
 						((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ())));
-				if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-						+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 10) {
+				Entity target = entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null;
+				CombatRangeHelper.maintainRangedBand(entity, target, 4.5D, 14.0D, 0.95D);
+				if (CombatRangeHelper.withinSurfaceRange(entity, target, 17.0D)
+						&& entity instanceof Mob mob && target instanceof LivingEntity livingTarget
+						&& mob.getSensing().hasLineOfSight(livingTarget)) {
 					entity.getPersistentData().putBoolean("CanShoot", true);
 				} else {
 					entity.getPersistentData().putBoolean("CanShoot", false);

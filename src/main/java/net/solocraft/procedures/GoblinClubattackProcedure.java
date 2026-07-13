@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.GoblinClubEntity;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Mob;
@@ -27,16 +28,14 @@ public class GoblinClubattackProcedure {
 							_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 12, 2, false, false));
 					}
 					if ((entity instanceof GoblinClubEntity _datEntI ? _datEntI.getEntityData().get(GoblinClubEntity.DATA_MF) : 0) == 4) {
-						if (Math.sqrt(
-								Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-										+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 2) {
+						if (CombatRangeHelper.withinSurfaceRange(entity,
+								(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 2.0D)) {
 							(entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 3);
 						}
 					}
 					if ((entity instanceof GoblinClubEntity _datEntI ? _datEntI.getEntityData().get(GoblinClubEntity.DATA_MF) : 0) == 8) {
-						if (Math.sqrt(
-								Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-										+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 2) {
+						if (CombatRangeHelper.withinSurfaceRange(entity,
+								(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 2.0D)) {
 							if (entity instanceof GoblinClubEntity _datEntSetS)
 								_datEntSetS.getEntityData().set(GoblinClubEntity.DATA_state, "attack2");
 							if (entity instanceof GoblinClubEntity _datEntSetI)
@@ -59,9 +58,8 @@ public class GoblinClubattackProcedure {
 							_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 22, 2, false, false));
 					}
 					if ((entity instanceof GoblinClubEntity _datEntI ? _datEntI.getEntityData().get(GoblinClubEntity.DATA_MF) : 0) == 2) {
-						if (Math.sqrt(
-								Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-										+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 2) {
+						if (CombatRangeHelper.withinSurfaceRange(entity,
+								(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 2.0D)) {
 							(entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 3);
 						}
 					}

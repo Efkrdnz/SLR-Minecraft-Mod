@@ -99,7 +99,8 @@ public class ChaHaeInEntity extends PathfinderMob implements GeoEntity {
 		this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
-				return 5.76;
+				double reach = this.mob.getBbWidth() * 0.5D + entity.getBbWidth() * 0.5D + 1.5D;
+				return reach * reach;
 			}
 		});
 		this.goalSelector.addGoal(3, new RandomStrollGoal(this, 1));
@@ -153,7 +154,8 @@ public class ChaHaeInEntity extends PathfinderMob implements GeoEntity {
 	@Override
 	public void baseTick() {
 		super.baseTick();
-		ChaHaeInOnEntityTickUpdateProcedure.execute(this.level(), this.getX(), this.getY(), this.getZ(), this);
+		if (!this.level().isClientSide())
+			ChaHaeInOnEntityTickUpdateProcedure.execute(this.level(), this.getX(), this.getY(), this.getZ(), this);
 		this.refreshDimensions();
 	}
 
@@ -173,11 +175,13 @@ public class ChaHaeInEntity extends PathfinderMob implements GeoEntity {
 
 	public static AttributeSupplier.Builder createAttributes() {
 		AttributeSupplier.Builder builder = Mob.createMobAttributes();
-		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.3);
-		builder = builder.add(Attributes.MAX_HEALTH, 130);
-		builder = builder.add(Attributes.ARMOR, 24);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, 14);
+		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.36);
+		builder = builder.add(Attributes.MAX_HEALTH, 175);
+		builder = builder.add(Attributes.ARMOR, 28);
+		builder = builder.add(Attributes.ATTACK_DAMAGE, 18);
 		builder = builder.add(Attributes.FOLLOW_RANGE, 64);
+		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.35);
+		builder = builder.add(Attributes.ATTACK_KNOCKBACK, 0.8);
 		return builder;
 	}
 

@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.GoblinClubEntity;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -21,8 +22,8 @@ public class GoblinClubOnEntityTickUpdateProcedure {
 					_entity.getNavigation().moveTo(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY()),
 							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ()), 1);
 				if ((entity instanceof GoblinClubEntity _datEntS ? _datEntS.getEntityData().get(GoblinClubEntity.DATA_state) : "").equals("idle")) {
-					if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-							+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 2.5) {
+					if (CombatRangeHelper.withinSurfaceRange(entity,
+							(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 2.5D)) {
 						if (entity instanceof GoblinClubEntity _datEntSetS)
 							_datEntSetS.getEntityData().set(GoblinClubEntity.DATA_state, "attack");
 					} else {

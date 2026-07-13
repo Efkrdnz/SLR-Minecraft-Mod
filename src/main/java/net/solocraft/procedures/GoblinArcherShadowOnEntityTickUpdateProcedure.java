@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.entity.GoblinArcherShadowEntity;
 import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -42,13 +43,13 @@ public class GoblinArcherShadowOnEntityTickUpdateProcedure {
 					if (entity instanceof LivingEntity _entity)
 						_entity.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 				}
-				entity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY()),
-						((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ())));
-				if (entity instanceof Mob _entity)
-					_entity.getNavigation().moveTo(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY()),
-							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ()), 1);
-				if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-						+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 8) {
+				Entity target = entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null;
+				entity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3(target.getX(),
+						target.getY() + target.getBbHeight() * 0.55D, target.getZ()));
+				CombatRangeHelper.maintainRangedBand(entity, target, 6.0D, 23.0D, 1.05D);
+				if (CombatRangeHelper.withinSurfaceRange(entity, target, 26.0D)
+						&& entity instanceof Mob mob && target instanceof LivingEntity livingTarget
+						&& mob.getSensing().hasLineOfSight(livingTarget)) {
 					entity.getPersistentData().putBoolean("CanShoot", true);
 				} else {
 					entity.getPersistentData().putBoolean("CanShoot", false);
@@ -80,8 +81,15 @@ public class GoblinArcherShadowOnEntityTickUpdateProcedure {
 							}
 						}.getArrow(projectileLevel, entity, (float) 1.5, (int) 0.1);
 						_entityToSpawn.setPos(_shootFrom.getX(), _shootFrom.getEyeY() - 0.1, _shootFrom.getZ());
-						_entityToSpawn.shoot(_shootFrom.getLookAngle().x, _shootFrom.getLookAngle().y, _shootFrom.getLookAngle().z, 3, 0);
-						projectileLevel.addFreshEntity(_entityToSpawn);
+						Entity target = entity instanceof Mob mob ? mob.getTarget() : null;
+						if (target != null) {
+							double dx = target.getX() - _shootFrom.getX();
+							double dz = target.getZ() - _shootFrom.getZ();
+							double horizontal = Math.sqrt(dx * dx + dz * dz);
+							double dy = target.getY() + target.getBbHeight() * 0.5D - _entityToSpawn.getY();
+							_entityToSpawn.shoot(dx, dy + horizontal * 0.10D, dz, 3.0F, 1.0F);
+							projectileLevel.addFreshEntity(_entityToSpawn);
+						}
 					}
 				}
 			}

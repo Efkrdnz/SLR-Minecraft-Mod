@@ -394,7 +394,6 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			return;
 		String payload = hasShiftDown() ? "all" : "";
 		SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowSummonGUIButtonMessage(entry.id, x, y, z, payload));
-		ShadowSummonGUIButtonMessage.handleButtonAction(entity, entry.id, x, y, z, payload);
 	}
 
 	private void toggleFormationMode() {

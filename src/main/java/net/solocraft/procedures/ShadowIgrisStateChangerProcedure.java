@@ -1,5 +1,7 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.CombatRangeHelper;
+
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
@@ -15,8 +17,8 @@ public class ShadowIgrisStateChangerProcedure {
 		double rand = 0;
 		rand = Mth.nextInt(RandomSource.create(), 1, 6);
 		if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
-			if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-					+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 5) {
+			if (CombatRangeHelper.withinSurfaceRange(entity,
+					(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 5.0D)) {
 				if (rand == 1 || rand == 2) {
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 10));

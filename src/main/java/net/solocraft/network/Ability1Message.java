@@ -4,6 +4,7 @@ package net.solocraft.network;
 import net.solocraft.procedures.Ability1OnKeyReleasedProcedure;
 import net.solocraft.procedures.Ability1OnKeyPressedProcedure;
 import net.solocraft.SololevelingMod;
+import net.solocraft.util.GoliathCombatManager;
 
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -56,8 +57,10 @@ public class Ability1Message {
 			Ability1OnKeyPressedProcedure.execute(world, x, y, z, entity);
 		}
 		if (type == 1) {
-
-			Ability1OnKeyReleasedProcedure.execute(world, x, y, z, entity);
+			if (GoliathCombatManager.isCombatStance(entity))
+				GoliathCombatManager.releasePursuit(entity, pressedms);
+			else
+				Ability1OnKeyReleasedProcedure.execute(world, x, y, z, entity);
 		}
 	}
 

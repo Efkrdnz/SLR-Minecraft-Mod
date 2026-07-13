@@ -9,6 +9,7 @@ import net.solocraft.network.UnlockedSkillsTab1ButtonMessage;
 import net.solocraft.procedures.SkillSlotHelper;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.SkillListHelper;
+import net.solocraft.util.JobSkillManager;
 import net.solocraft.world.inventory.UnlockedSkillsTab1Menu;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -101,7 +102,7 @@ public class UnlockedSkillsTab1Screen extends SystemContainerScreen<UnlockedSkil
 				continue;
 			int y0 = topPos + pRelY + 42 + i * ROW_H;
 			if (mouseX >= leftPos + pRelX + 10 && mouseX < leftPos + pRelX + pW - 10 && mouseY >= y0 && mouseY < y0 + 20) {
-				SystemTooltip.render(g, this.font, List.of(Component.literal(SkillListHelper.displaySkillAt(entity, index)), Component.literal(raw)), mouseX, mouseY, this.width, this.height);
+				SystemTooltip.render(g, this.font, JobSkillManager.tooltip(entity, raw), mouseX, mouseY, this.width, this.height);
 				return;
 			}
 		}

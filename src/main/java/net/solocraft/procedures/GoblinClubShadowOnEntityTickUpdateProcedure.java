@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.entity.GoblinClubShadowEntity;
+import net.solocraft.util.CombatRangeHelper;
 import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraft.world.phys.Vec3;
@@ -30,8 +31,8 @@ public class GoblinClubShadowOnEntityTickUpdateProcedure {
 					_entity.getNavigation().moveTo(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY()),
 							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ()), 1);
 				if ((entity instanceof GoblinClubShadowEntity _datEntS ? _datEntS.getEntityData().get(GoblinClubShadowEntity.DATA_state) : "").equals("idle")) {
-					if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-							+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 2.5) {
+					if (CombatRangeHelper.withinSurfaceRange(entity,
+							(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 2.5D)) {
 						if (entity instanceof GoblinClubShadowEntity _datEntSetS)
 							_datEntSetS.getEntityData().set(GoblinClubShadowEntity.DATA_state, "attack");
 					} else {

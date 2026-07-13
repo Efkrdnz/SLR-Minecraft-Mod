@@ -32,7 +32,8 @@ public class BaranStateChangerProcedure {
 		if (target == null) return;
 
 		boolean phase2 = baran.getPersistentData().getBoolean("baran_phase2");
-		double distSq = baran.distanceToSqr(target);
+		double surfaceDistance = net.solocraft.util.CombatRangeHelper.surfaceDistance(baran, target);
+		double distSq = surfaceDistance * surfaceDistance;
 		boolean closeRange = distSq <= 36; // 6 blocks
 
 		int rand = Mth.nextInt(RandomSource.create(), 1, phase2 ? 12 : 10);

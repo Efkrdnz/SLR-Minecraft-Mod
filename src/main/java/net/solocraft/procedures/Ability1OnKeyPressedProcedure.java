@@ -25,11 +25,16 @@ import net.minecraft.core.BlockPos;
 
 import io.netty.buffer.Unpooled;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.GoliathCombatManager;
 
 public class Ability1OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		if (GoliathCombatManager.isCombatStance(entity)) {
+			GoliathCombatManager.beginPursuit(entity);
+			return;
+		}
 		Entity shadow = null;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).combatmode) {
 			DaggerRushActProcedure.execute(world, x, y, z, entity);

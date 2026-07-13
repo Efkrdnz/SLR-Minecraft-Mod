@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.ThomasAndreEntity;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -44,14 +45,14 @@ public class ThomasPunchProcedure {
 					((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ())));
 		}
 		if (entity.getPersistentData().getDouble("IA") == 22) {
-			if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-					+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 2) {
+			if (CombatRangeHelper.withinSurfaceRange(entity,
+					(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 2.0D)) {
 				(entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 20);
 			}
 		}
 		if (entity.getPersistentData().getDouble("IA") == 34) {
-			if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-					+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 2) {
+			if (CombatRangeHelper.withinSurfaceRange(entity,
+					(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 2.0D)) {
 				(entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 20);
 				(entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).setDeltaMovement(new Vec3((entity.getLookAngle().x * 2), (entity.getLookAngle().y * 1.5), (entity.getLookAngle().z * 2)));
 			}

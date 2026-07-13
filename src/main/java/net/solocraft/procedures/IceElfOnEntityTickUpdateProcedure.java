@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.ManaArrowEntity;
 import net.solocraft.entity.IceElfEntity;
+import net.solocraft.util.CombatRangeHelper;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -45,8 +46,11 @@ public class IceElfOnEntityTickUpdateProcedure {
 					}
 					entity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY() + 1.2),
 							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ())));
-					if (Math.sqrt(Math.pow(entity.getX() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX(), 2) + Math.pow(entity.getY() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY(), 2)
-							+ Math.pow(entity.getZ() - (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ(), 2)) <= 14) {
+					Entity target = entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null;
+					CombatRangeHelper.maintainRangedBand(entity, target, 6.0D, 16.0D, 1.0D);
+					if (CombatRangeHelper.withinSurfaceRange(entity, target, 20.0D)
+							&& entity instanceof Mob mob && target instanceof LivingEntity livingTarget
+							&& mob.getSensing().hasLineOfSight(livingTarget)) {
 						if (entity instanceof IceElfEntity _datEntSetL)
 							_datEntSetL.getEntityData().set(IceElfEntity.DATA_canshoot, true);
 					} else {

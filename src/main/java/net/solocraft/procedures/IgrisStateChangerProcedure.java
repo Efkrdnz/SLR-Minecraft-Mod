@@ -1,5 +1,7 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.CombatRangeHelper;
+
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -20,7 +22,7 @@ public class IgrisStateChangerProcedure {
         LivingEntity target    = mob.getTarget();
         boolean      enraged   = entity.getPersistentData().getBoolean("enraged");
         RandomSource rng       = entity.level().getRandom();
-        double       dist      = entity.distanceTo(target);
+        double       dist      = CombatRangeHelper.surfaceDistance(entity, target);
 
         // Too far to commit to an attack — back off and retry in ~10 ticks
         if (dist > 5.5) {

@@ -111,6 +111,10 @@ public class DisplayOverlay {
 			case JobSkillManager.MONARCH_BEAM -> new ResourceLocation("sololeveling:textures/screens/newbaranlaser.png");
 			case JobSkillManager.LIGHTNING_STORM -> new ResourceLocation("sololeveling:textures/screens/newbaranlightningstrike.png");
 			case JobSkillManager.STORM_BURST -> new ResourceLocation("sololeveling:textures/screens/newbaranstormburst.png");
+			case JobSkillManager.THOMAS_CAPTURE -> new ResourceLocation("sololeveling:textures/screens/icon_goliath_1.png");
+			case JobSkillManager.THOMAS_POWER_SMASH -> new ResourceLocation("sololeveling:textures/screens/icon_goliath_2.png");
+			case JobSkillManager.THOMAS_COLLAPSE -> new ResourceLocation("sololeveling:textures/screens/icon_goliath_3.png");
+			case JobSkillManager.THOMAS_MANIFESTATION -> new ResourceLocation("sololeveling:textures/screens/icon_spiritualize_goliath.png");
 			default -> new ResourceLocation("sololeveling:textures/screens/icon_template.png");
 		};
 	}

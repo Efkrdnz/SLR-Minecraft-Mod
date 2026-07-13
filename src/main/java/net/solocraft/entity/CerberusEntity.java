@@ -275,7 +275,7 @@ public class CerberusEntity extends Monster implements GeoEntity {
 			return;
 		}
 
-		double distance = this.distanceTo(target);
+		double distance = net.solocraft.util.CombatRangeHelper.surfaceDistance(this, target);
 		if (this.fireBreathCooldown <= 0 && distance > 4.0D && distance < 18.0D && this.hasLineOfSight(target)) {
 			beginFireBreath();
 		} else if (this.slamCooldown <= 0 && distance > 5.0D && distance < 16.0D) {

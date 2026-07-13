@@ -212,12 +212,14 @@ public class TuskShadowOnEntityTickUpdateProcedure {
 	private static void tryCombatSpells(LevelAccessor world, Entity entity, LivingEntity owner, LivingEntity target) {
 		if (!target.isAlive() || isFriendly(entity, owner, target))
 			return;
-		if (entity.getPersistentData().getInt(SOUL_FLAME_COOLDOWN) <= 0 && entity.distanceToSqr(target) <= 36 * 36) {
+		if (entity.getPersistentData().getInt(SOUL_FLAME_COOLDOWN) <= 0
+				&& net.solocraft.util.CombatRangeHelper.withinSurfaceRange(entity, target, 36.0D)) {
 			castSoulFlame(world, entity, owner, target);
 			setCooldown(entity, SOUL_FLAME_COOLDOWN, 90 + entity.level().random.nextInt(60));
 			return;
 		}
-		if (entity.getPersistentData().getInt(CURSE_FIELD_COOLDOWN) <= 0 && entity.distanceToSqr(target) <= 28 * 28) {
+		if (entity.getPersistentData().getInt(CURSE_FIELD_COOLDOWN) <= 0
+				&& net.solocraft.util.CombatRangeHelper.withinSurfaceRange(entity, target, 28.0D)) {
 			castCurseField(world, entity, owner, target);
 			setCooldown(entity, CURSE_FIELD_COOLDOWN, 170 + entity.level().random.nextInt(90));
 		}

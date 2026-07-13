@@ -137,6 +137,7 @@ import net.solocraft.item.ETierSwordItem;
 import net.solocraft.item.DungeonSpawnerItem;
 import net.solocraft.item.DungeonNostalgiaItem;
 import net.solocraft.item.Dun1Item;
+import net.solocraft.item.DragonShortswordItem;
 import net.solocraft.item.DemonKingsLongSwordItem;
 import net.solocraft.item.DemonKingsDaggerItem;
 import net.solocraft.item.DaggerKnightDItem;
@@ -180,6 +181,7 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> HAMMER = REGISTRY.register("hammer", () -> new HammerItem());
 	public static final RegistryObject<Item> WAR_AXE = REGISTRY.register("war_axe", () -> new WarAxeItem());
 	public static final RegistryObject<Item> ICE_SPEAR = REGISTRY.register("ice_spear", () -> new IceSpearItem());
+	public static final RegistryObject<Item> DRAGON_SHORTSWORD = REGISTRY.register("dragon_shortsword", DragonShortswordItem::new);
 	public static final RegistryObject<Item> DEMON_KINGS_LONG_SWORD = REGISTRY.register("demon_kings_long_sword", () -> new DemonKingsLongSwordItem());
 	public static final RegistryObject<Item> FROST_BLADE = REGISTRY.register("frost_blade", () -> new FrostBladeItem());
 	public static final RegistryObject<Item> S_TIER_SWORD = REGISTRY.register("s_tier_sword", () -> new STierSwordItem());

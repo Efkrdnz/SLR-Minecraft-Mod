@@ -226,7 +226,7 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 			return;
 		}
 
-		double distance = this.distanceTo(target);
+		double distance = net.solocraft.util.CombatRangeHelper.surfaceDistance(this, target);
 		if (wingBurstCooldown <= 0 && distance < 7.0D) {
 			beginWingBurst();
 		} else if (breathCooldown <= 0 && distance >= 8.0D && distance <= 30.0D && this.hasLineOfSight(target)) {

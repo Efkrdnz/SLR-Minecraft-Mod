@@ -83,12 +83,6 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 		this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
 		this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(5, new FloatGoal(this));
-		this.goalSelector.addGoal(1, new RangedAttackGoal(this, 1.25, 40, 10f) {
-			@Override
-			public boolean canContinueToUse() {
-				return this.canUse();
-			}
-		});
 	}
 
 	@Override
@@ -157,7 +151,8 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 	@Override
 	public void baseTick() {
 		super.baseTick();
-		ChoijongOnEntityTickUpdateProcedure.execute(this.level(), this);
+		if (!this.level().isClientSide())
+			ChoijongOnEntityTickUpdateProcedure.execute(this.level(), this);
 	}
 
 	@Override
@@ -172,11 +167,12 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 
 	public static AttributeSupplier.Builder createAttributes() {
 		AttributeSupplier.Builder builder = Mob.createMobAttributes();
-		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.3);
-		builder = builder.add(Attributes.MAX_HEALTH, 150);
-		builder = builder.add(Attributes.ARMOR, 30);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, 6);
-		builder = builder.add(Attributes.FOLLOW_RANGE, 32);
+		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.32);
+		builder = builder.add(Attributes.MAX_HEALTH, 180);
+		builder = builder.add(Attributes.ARMOR, 32);
+		builder = builder.add(Attributes.ATTACK_DAMAGE, 8);
+		builder = builder.add(Attributes.FOLLOW_RANGE, 48);
+		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.25);
 		return builder;
 	}
 }

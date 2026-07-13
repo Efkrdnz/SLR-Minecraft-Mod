@@ -248,7 +248,7 @@ public class VulcanEntity extends Monster implements GeoEntity {
 			return;
 		}
 
-		double distance = this.distanceTo(target);
+		double distance = net.solocraft.util.CombatRangeHelper.surfaceDistance(this, target);
 		if (this.hammerSlamCooldown <= 0 && distance < 8.5D) {
 			beginHammerSlam();
 		} else if (this.moltenBurstCooldown <= 0 && distance > 5.0D && distance < 22.0D && this.hasLineOfSight(target)) {

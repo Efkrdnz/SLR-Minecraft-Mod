@@ -113,6 +113,7 @@ public class ShadowMonarchManager {
 			return false;
 		ensureRoster(player);
 		absorbVisibleOwnedShadows(player);
+		enforceSummonedLimit(player, type);
 		CompoundTag shadow = firstSummonableShadow(player, type);
 		if (shadow == null)
 			return false;
@@ -127,13 +128,8 @@ public class ShadowMonarchManager {
 			return 0;
 		ensureRoster(player);
 		absorbVisibleOwnedShadows(player);
-		ArrayList<CompoundTag> matching = new ArrayList<>();
-		ListTag shadows = shadows(player);
-		for (int i = 0; i < shadows.size(); i++) {
-			CompoundTag shadow = shadows.getCompound(i);
-			if (type.equals(shadow.getString("type")))
-				matching.add(shadow);
-		}
+		enforceSummonedLimit(player, type);
+		List<CompoundTag> matching = ownedRosterWithinLimit(player, type);
 		int summoned = 0;
 		Vec3 origin = new Vec3(x, y, z);
 		for (CompoundTag shadow : matching) {
@@ -653,7 +649,7 @@ public class ShadowMonarchManager {
 		if (isDefaultLinkedTarget(current, shadow, owner))
 			return current;
 		LivingEntity ownerTarget = owner.getLastHurtMob();
-		if (isValidShadowTarget(ownerTarget, shadow, owner))
+		if (isValidOwnerDirectedTarget(ownerTarget, shadow, owner))
 			return ownerTarget;
 		LivingEntity ownerAttacker = owner.getLastHurtByMob();
 		if (isValidShadowTarget(ownerAttacker, shadow, owner))
@@ -663,9 +659,21 @@ public class ShadowMonarchManager {
 	}
 
 	private static boolean isDefaultLinkedTarget(LivingEntity target, Mob shadow, Player owner) {
+		if (target == owner.getLastHurtMob())
+			return isValidOwnerDirectedTarget(target, shadow, owner);
 		if (!isValidShadowTarget(target, shadow, owner))
 			return false;
-		return target == owner.getLastHurtMob() || target == owner.getLastHurtByMob() || target instanceof Mob mob && mob.getTarget() == owner;
+		return target == owner.getLastHurtByMob() || target instanceof Mob mob && mob.getTarget() == owner;
+	}
+
+	private static boolean isValidOwnerDirectedTarget(LivingEntity target, Mob shadow, Player owner) {
+		if (target == null || !target.isAlive() || target == shadow || target == owner || !target.isAttackable() || target.isInvulnerable())
+			return false;
+		if (target.getType().is(SHADOW_ENTITY_TAG) || owner.isAlliedTo(target) || shadow.isAlliedTo(target))
+			return false;
+		if (target instanceof TamableAnimal tame && owner.getUUID().equals(tame.getOwnerUUID()))
+			return false;
+		return !(target instanceof Player player) || owner.canHarmPlayer(player);
 	}
 
 	private static LivingEntity findOwnerThreat(Mob shadow, Player owner) {
@@ -699,7 +707,7 @@ public class ShadowMonarchManager {
 	public static boolean canReachShadowTarget(Mob shadow, LivingEntity target) {
 		if (shadow == null || target == null || !target.isAlive())
 			return false;
-		if (shadow.distanceToSqr(target) <= 36.0D && shadow.hasLineOfSight(target))
+		if (CombatRangeHelper.withinSurfaceRange(shadow, target, 6.0D) && shadow.hasLineOfSight(target))
 			return true;
 		Path path = shadow.getNavigation().createPath(target.blockPosition(), 0);
 		return path != null && path.canReach();
@@ -817,9 +825,8 @@ public class ShadowMonarchManager {
 		if (available != null)
 			return available;
 		CompoundTag bestActive = null;
-		for (int i = 0; i < shadows(player).size(); i++) {
-			CompoundTag shadow = shadows(player).getCompound(i);
-			if (!type.equals(shadow.getString("type")) || !shadow.hasUUID("summoned"))
+		for (CompoundTag shadow : ownedRosterWithinLimit(player, type)) {
+			if (!shadow.hasUUID("summoned"))
 				continue;
 			Entity existing = findSummonedEntity(player, shadow.getUUID("summoned"));
 			if (existing != null && existing.isAlive() && isBetterShadow(shadow, bestActive))
@@ -829,12 +836,8 @@ public class ShadowMonarchManager {
 	}
 
 	private static CompoundTag firstAvailableShadow(Player player, String type) {
-		ListTag shadows = shadows(player);
 		CompoundTag best = null;
-		for (int i = 0; i < shadows.size(); i++) {
-			CompoundTag shadow = shadows.getCompound(i);
-			if (!type.equals(shadow.getString("type")))
-				continue;
+		for (CompoundTag shadow : ownedRosterWithinLimit(player, type)) {
 			boolean available = !shadow.hasUUID("summoned");
 			if (!available) {
 				Entity existing = findSummonedEntity(player, shadow.getUUID("summoned"));
@@ -852,6 +855,57 @@ public class ShadowMonarchManager {
 		if (count < max)
 			return createShadow(player, type, count + 1);
 		return null;
+	}
+
+	private static List<CompoundTag> ownedRosterWithinLimit(Player player, String type) {
+		int limit = Math.max(0, legacyMax(player, type));
+		if (limit == 0)
+			return List.of();
+		ArrayList<CompoundTag> matching = new ArrayList<>();
+		ListTag roster = shadows(player);
+		for (int i = 0; i < roster.size(); i++) {
+			CompoundTag shadow = roster.getCompound(i);
+			if (type.equals(shadow.getString("type")))
+				matching.add(shadow);
+		}
+		matching.sort(ShadowMonarchManager::compareStrongestFirst);
+		if (matching.size() > limit)
+			return new ArrayList<>(matching.subList(0, limit));
+		return matching;
+	}
+
+	private static int compareStrongestFirst(CompoundTag first, CompoundTag second) {
+		int byLevel = Integer.compare(Math.max(1, second.getInt("level")), Math.max(1, first.getInt("level")));
+		if (byLevel != 0)
+			return byLevel;
+		int byXp = Integer.compare(second.getInt("xp"), first.getInt("xp"));
+		if (byXp != 0)
+			return byXp;
+		return first.getString("id").compareTo(second.getString("id"));
+	}
+
+	private static void enforceSummonedLimit(ServerPlayer player, String type) {
+		List<CompoundTag> allowed = ownedRosterWithinLimit(player, type);
+		ArrayList<String> allowedIds = new ArrayList<>(allowed.size());
+		for (CompoundTag shadow : allowed)
+			allowedIds.add(shadow.getString("id"));
+		int removed = 0;
+		ListTag roster = shadows(player);
+		for (int i = 0; i < roster.size(); i++) {
+			CompoundTag shadow = roster.getCompound(i);
+			if (!type.equals(shadow.getString("type")) || allowedIds.contains(shadow.getString("id")) || !shadow.hasUUID("summoned"))
+				continue;
+			Entity existing = findSummonedEntity(player, shadow.getUUID("summoned"));
+			if (existing != null) {
+				dropStoredShadowInventory(existing);
+				existing.discard();
+				removed++;
+			}
+			shadow.remove("summoned");
+		}
+		if (removed > 0)
+			updateLegacySpawnCounter(player, type, -removed);
+		player.getPersistentData().put(ROOT, root(player));
 	}
 
 	private static boolean isBetterShadow(CompoundTag candidate, CompoundTag current) {
@@ -1320,19 +1374,19 @@ public class ShadowMonarchManager {
 	private static void updateLegacySpawnCounter(Player player, String type, int amount) {
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			switch (type) {
-				case "goblin_club" -> capability.GobShadow += amount;
-				case "goblin_archer" -> capability.ShadowGoblinArcherAmount += amount;
-				case "goblin_mage" -> capability.ShadowGoblinMageAmount += amount;
-				case "wolf" -> capability.WolfShadow += amount;
-				case "knight" -> capability.OrdShadow += amount;
-				case "polar_bear" -> capability.polarbear += amount;
-				case "orc" -> capability.orcspawned += amount;
-				case "igris" -> capability.IgrisSpawned += amount;
-				case "beru" -> capability.beru += amount;
-				case "kamish" -> capability.shadowdragonnum += amount;
-				case "high_orc" -> capability.highorcspawned += amount;
-				case "tusk" -> capability.tuskspawned += amount;
-				case "kaisel" -> capability.KaiselSpawned += amount;
+				case "goblin_club" -> capability.GobShadow = Math.max(0, capability.GobShadow + amount);
+				case "goblin_archer" -> capability.ShadowGoblinArcherAmount = Math.max(0, capability.ShadowGoblinArcherAmount + amount);
+				case "goblin_mage" -> capability.ShadowGoblinMageAmount = Math.max(0, capability.ShadowGoblinMageAmount + amount);
+				case "wolf" -> capability.WolfShadow = Math.max(0, capability.WolfShadow + amount);
+				case "knight" -> capability.OrdShadow = Math.max(0, capability.OrdShadow + amount);
+				case "polar_bear" -> capability.polarbear = Math.max(0, capability.polarbear + amount);
+				case "orc" -> capability.orcspawned = Math.max(0, capability.orcspawned + amount);
+				case "igris" -> capability.IgrisSpawned = Math.max(0, capability.IgrisSpawned + amount);
+				case "beru" -> capability.beru = Math.max(0, capability.beru + amount);
+				case "kamish" -> capability.shadowdragonnum = Math.max(0, capability.shadowdragonnum + amount);
+				case "high_orc" -> capability.highorcspawned = Math.max(0, capability.highorcspawned + amount);
+				case "tusk" -> capability.tuskspawned = Math.max(0, capability.tuskspawned + amount);
+				case "kaisel" -> capability.KaiselSpawned = Math.max(0, capability.KaiselSpawned + amount);
 				default -> {
 				}
 			}

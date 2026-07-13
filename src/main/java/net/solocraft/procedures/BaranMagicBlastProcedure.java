@@ -95,8 +95,9 @@ public class BaranMagicBlastProcedure {
 				sl.sendParticles(ParticleTypes.LARGE_SMOKE, tx, ty + 0.5, tz, 30, 2.5, 0.5, 2.5, 0.0);
 				// Damage all in radius 5
 				for (LivingEntity nearby : sl.getEntitiesOfClass(LivingEntity.class,
-						baran.getBoundingBox().inflate(300),
-						e -> e != baran && !isWildKaiselin(e) && e.distanceTo(target) <= 5)) {
+						target.getBoundingBox().inflate(5.0D),
+						e -> e != baran && !isWildKaiselin(e)
+								&& net.solocraft.util.CombatRangeHelper.withinSurfaceRange(e, target, 5.0D))) {
 					nearby.hurt(magicDamage(world, baran), 15f);
 				}
 				sl.playSound(null, BlockPos.containing(tx, ty, tz),

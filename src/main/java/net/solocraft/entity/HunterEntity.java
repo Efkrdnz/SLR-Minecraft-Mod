@@ -122,7 +122,8 @@ public class HunterEntity extends TamableAnimal {
 		this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
-				return this.mob.getBbWidth() * this.mob.getBbWidth() + entity.getBbWidth();
+				double reach = this.mob.getBbWidth() * 0.5D + entity.getBbWidth() * 0.5D + 1.25D;
+				return reach * reach;
 			}
 
 			@Override
@@ -329,7 +330,7 @@ public class HunterEntity extends TamableAnimal {
 		builder = builder.add(Attributes.MAX_HEALTH, 20);
 		builder = builder.add(Attributes.ARMOR, 6);
 		builder = builder.add(Attributes.ATTACK_DAMAGE, 1);
-		builder = builder.add(Attributes.FOLLOW_RANGE, 16);
+		builder = builder.add(Attributes.FOLLOW_RANGE, 40);
 		return builder;
 	}
 }

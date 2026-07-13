@@ -22,6 +22,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.HAMMER.get());
 				tabData.accept(SololevelingModItems.WAR_AXE.get());
 				tabData.accept(SololevelingModItems.ICE_SPEAR.get());
+				tabData.accept(SololevelingModItems.DRAGON_SHORTSWORD.get());
 				tabData.accept(SololevelingModItems.DEMON_KINGS_LONG_SWORD.get());
 				tabData.accept(SololevelingModItems.FROST_BLADE.get());
 				tabData.accept(SololevelingModItems.S_TIER_SWORD.get());

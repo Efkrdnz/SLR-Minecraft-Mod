@@ -17,12 +17,18 @@ public class GoliathArmorTickProcedure {
 	public static void execute(LevelAccessor world, Entity entity, ItemStack itemstack) {
 		if (entity == null)
 			return;
+		if (entity.level().isClientSide())
+			return;
 		if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLAST_PROTECTION, itemstack) == 0)
 			itemstack.enchant(Enchantments.BLAST_PROTECTION, 2);
 		if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BINDING_CURSE, itemstack) == 0)
 			itemstack.enchant(Enchantments.BINDING_CURSE, 10);
 		if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.VANISHING_CURSE, itemstack) == 0)
 			itemstack.enchant(Enchantments.VANISHING_CURSE, 10);
+		long gameTime = entity.level().getGameTime();
+		if (entity.getPersistentData().getLong("goliath_last_armor_tick") == gameTime)
+			return;
+		entity.getPersistentData().putLong("goliath_last_armor_tick", gameTime);
 		if (entity instanceof LivingEntity living && !living.level().isClientSide())
 			living.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 30, 2));
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {

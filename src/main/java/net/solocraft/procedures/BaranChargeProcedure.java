@@ -98,7 +98,7 @@ public class BaranChargeProcedure {
 
 		if (MF == 18) {
 			// Final slam if close enough
-			if (baran.distanceTo(target) <= 6) {
+			if (net.solocraft.util.CombatRangeHelper.withinSurfaceRange(baran, target, 6.0D)) {
 				DamageSource src = new DamageSource(
 						world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
 								.getHolderOrThrow(DamageTypes.MOB_ATTACK), baran);

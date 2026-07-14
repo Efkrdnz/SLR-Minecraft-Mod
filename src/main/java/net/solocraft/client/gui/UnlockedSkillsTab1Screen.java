@@ -13,6 +13,7 @@ import net.solocraft.util.JobSkillManager;
 import net.solocraft.world.inventory.UnlockedSkillsTab1Menu;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -75,7 +76,12 @@ public class UnlockedSkillsTab1Screen extends SystemContainerScreen<UnlockedSkil
 		String current = selectedSlot > 0 ? SkillSlotHelper.getSlot(vars, selectedSlot) : "";
 		String target = selectedSlot > 0 ? "TARGET SLOT " + selectedSlot : "TARGET SLOT";
 		g.drawString(this.font, target, pRelX + 12, pRelY + 22, ShopStyle.ACCENT, false);
-		g.drawString(this.font, current == null || current.isBlank() ? "Empty" : ShadowMonarchManager.displaySkillName(entity, current), pRelX + 12, pRelY + 33, ShopStyle.TEXT_SUB, false);
+		String currentLabel = current == null || current.isBlank() ? "Empty" : ShadowMonarchManager.displaySkillName(entity, current);
+		Component currentText = Component.literal(currentLabel);
+		if (JobSkillManager.isWhiteFlameSkill(current))
+			currentText = currentText.copy().withStyle(ChatFormatting.BOLD);
+		g.drawString(this.font, currentText, pRelX + 12, pRelY + 33,
+				JobSkillManager.isWhiteFlameSkill(current) ? 0xFFFFFFFF : ShopStyle.TEXT_SUB, false);
 
 		int pageCount = SkillListHelper.pageCount(entity, ROWS);
 		for (int i = 0; i < ROWS; i++) {
@@ -87,7 +93,11 @@ public class UnlockedSkillsTab1Screen extends SystemContainerScreen<UnlockedSkil
 			int color = SkillListHelper.colorAt(entity, index);
 			int rowY = pRelY + 47 + i * ROW_H;
 			g.drawString(this.font, index < 10 ? "0" + index : String.valueOf(index), pRelX + 16, rowY, 0xFF8FB8D8, false);
-			g.drawString(this.font, "empty".equals(raw) ? "-" : label, pRelX + 44, rowY, "empty".equals(raw) ? 0xFF566A7A : color, false);
+			Component skillText = Component.literal("empty".equals(raw) ? "-" : label);
+			if (JobSkillManager.isWhiteFlameSkill(raw))
+				skillText = skillText.copy().withStyle(ChatFormatting.BOLD);
+			g.drawString(this.font, skillText, pRelX + 44, rowY,
+					"empty".equals(raw) ? 0xFF566A7A : JobSkillManager.isWhiteFlameSkill(raw) ? 0xFFFFFFFF : color, false);
 		}
 		String pageText = "Page " + (page + 1) + "/" + pageCount;
 		g.drawString(this.font, pageText, pRelX + (pW - this.font.width(pageText)) / 2, pRelY + pH - 19, ShopStyle.TEXT_SUB, false);

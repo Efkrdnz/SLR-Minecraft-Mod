@@ -1,6 +1,7 @@
 package net.solocraft.client.renderer;
 
 import net.solocraft.client.renderer.shader.RulersAuthorityAuraRenderTypes;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.entity.RulersAuthorityAuraEntity;
 
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -40,7 +41,7 @@ public class RulersAuthorityAuraRenderer extends EntityRenderer<RulersAuthorityA
         float radius = width * (aura.isAuthority() ? 0.74F : 0.66F) + 0.18F;
         float intensity = aura.isResisted() ? 0.82F : 1.0F;
         RenderType renderType = RulersAuthorityAuraRenderTypes.aura(TEXTURE);
-        VertexConsumer vertices = bufferSource.getBuffer(renderType);
+        VertexConsumer vertices = DeferredWorldShaderRenderer.buffer(bufferSource, renderType);
 
         poseStack.pushPose();
         Entity target = aura.getTarget();

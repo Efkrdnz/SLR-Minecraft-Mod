@@ -28,24 +28,6 @@ public class DOnKeyReleasedProcedure {
 			}
 			if (entity instanceof LivingEntity _entity)
 				_entity.removeEffect(SololevelingModMobEffects.SWORD_ENHANCE.get());
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).frostcharge == 60) {
-				FrostExplosionProcedure.execute(world, x, z, entity);
-				{
-					double _setval = 0;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.frostcharge = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else {
-				{
-					double _setval = 0;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.frostcharge = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			}
 		}
 	}
 }

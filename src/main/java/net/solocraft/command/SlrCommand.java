@@ -242,7 +242,8 @@ public class SlrCommand {
 								.then(Commands.literal("go_gunhee").executes(arguments -> VesselManager.assign(arguments, "ruler", "go_gunhee"))))
 						.then(Commands.literal("monarch")
 								.then(Commands.literal("sillad").executes(arguments -> VesselManager.assign(arguments, "monarch", "sillad")))
-								.then(Commands.literal("baran").executes(arguments -> VesselManager.assign(arguments, "monarch", "baran")))))
+								.then(Commands.literal("baran").executes(arguments -> VesselManager.assign(arguments, "monarch", "baran")))
+								.then(Commands.literal("rakan").executes(arguments -> VesselManager.assign(arguments, "monarch", "rakan")))))
 					.then(Commands.literal("rank").then(Commands.literal("E").executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
 					double x = arguments.getSource().getPosition().x();

@@ -35,7 +35,7 @@ public class ClassPassivesOverlay {
 	@SubscribeEvent
 	public static void onRenderGui(RenderGuiEvent.Pre event) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.player == null || mc.options.hideGui || mc.screen != null)
+		if (mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.screen != null)
 			return;
 		SololevelingModVariables.PlayerVariables vars = mc.player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		if (!vars.CustomHUD)

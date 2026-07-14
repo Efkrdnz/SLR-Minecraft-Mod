@@ -113,10 +113,20 @@ public class DisplayOverlay {
 			case JobSkillManager.MONARCH_BEAM -> new ResourceLocation("sololeveling:textures/screens/newbaranlaser.png");
 			case JobSkillManager.LIGHTNING_STORM -> new ResourceLocation("sololeveling:textures/screens/newbaranlightningstrike.png");
 			case JobSkillManager.STORM_BURST -> new ResourceLocation("sololeveling:textures/screens/newbaranstormburst.png");
+			case JobSkillManager.LIGHTNING_BREATH -> new ResourceLocation("sololeveling:textures/screens/icon_mowf_lightningbreath.png");
+			case JobSkillManager.HELLSTORM_DOMINION -> new ResourceLocation("sololeveling:textures/screens/icon_mowf_hellstormdominion.png");
+			case JobSkillManager.RADIRU_BLOOD_SPEAR -> new ResourceLocation("sololeveling:textures/screens/icon_mowf_radirubloodspear.png");
+			case JobSkillManager.DOPPELGANGER -> new ResourceLocation("sololeveling:textures/screens/icon_mowf_doppelganger.png");
+			case JobSkillManager.HELLS_ARMY -> new ResourceLocation("sololeveling:textures/screens/icon_mowf_hellsarmy.png");
+			case JobSkillManager.WHITE_FLAME_SPIRITUALIZATION -> new ResourceLocation("sololeveling:textures/screens/icon_spiritualize_mowf.png");
 			case JobSkillManager.THOMAS_CAPTURE -> new ResourceLocation("sololeveling:textures/screens/icon_goliath_1.png");
 			case JobSkillManager.THOMAS_POWER_SMASH -> new ResourceLocation("sololeveling:textures/screens/icon_goliath_2.png");
 			case JobSkillManager.THOMAS_COLLAPSE -> new ResourceLocation("sololeveling:textures/screens/icon_goliath_3.png");
 			case JobSkillManager.THOMAS_MANIFESTATION -> new ResourceLocation("sololeveling:textures/screens/icon_spiritualize_goliath.png");
+			case JobSkillManager.LIU_HEAVENLY_COUNTER -> new ResourceLocation("sololeveling:textures/screens/icon_goliath_1.png");
+			case JobSkillManager.LIU_GOLDEN_DRAGON_DANCE -> new ResourceLocation("sololeveling:textures/screens/icon_goliath_2.png");
+			case JobSkillManager.LIU_SOVEREIGN_SWORD_DOMAIN -> new ResourceLocation("sololeveling:textures/screens/icon_goliath_3.png");
+			case JobSkillManager.LIU_MANIFESTATION -> new ResourceLocation("sololeveling:textures/screens/icon_spiritualize_goliath.png");
 			default -> new ResourceLocation("sololeveling:textures/screens/icon_template.png");
 		};
 	}

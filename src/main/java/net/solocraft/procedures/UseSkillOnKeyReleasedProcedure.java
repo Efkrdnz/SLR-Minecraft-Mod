@@ -6,6 +6,7 @@ import net.solocraft.util.CooldownManager;
 import net.solocraft.util.MageQTEHelper;
 import net.solocraft.util.MageQTEState;
 import net.solocraft.util.QTEResult;
+import net.solocraft.util.JobSkillManager;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -36,6 +37,9 @@ public class UseSkillOnKeyReleasedProcedure {
 
         String power = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
                 .orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower;
+
+        if (JobSkillManager.release(entity, power, pressedMs))
+            return;
 
         // ── Mage QTE key release ──────────────────────────────────────────────
         if (MageQTEHelper.MAGE_SKILLS.contains(power)) {

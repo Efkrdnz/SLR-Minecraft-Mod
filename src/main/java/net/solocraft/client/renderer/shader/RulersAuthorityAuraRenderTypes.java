@@ -29,11 +29,11 @@ public class RulersAuthorityAuraRenderTypes extends RenderStateShard {
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 new ResourceLocation(SololevelingMod.MODID, "rendertype_rulers_authority_aura"),
-                DefaultVertexFormat.NEW_ENTITY), shader -> auraShader = shader);
+                WorldShaderVertexFormat.NEW_ENTITY), shader -> auraShader = shader);
     }
 
     public static RenderType aura(ResourceLocation texture) {
-        if (auraShader == null || IrisCompat.isShaderPackInUse())
+        if (auraShader == null)
             return RenderType.entityTranslucentEmissive(texture);
 
         RenderType.CompositeState state = RenderType.CompositeState.builder()
@@ -46,7 +46,7 @@ public class RulersAuthorityAuraRenderTypes extends RenderStateShard {
                 .setOverlayState(OVERLAY)
                 .setWriteMaskState(COLOR_WRITE)
                 .createCompositeState(false);
-        return RenderType.create("rulers_authority_aura", DefaultVertexFormat.NEW_ENTITY,
+        return RenderType.create("rulers_authority_aura", WorldShaderVertexFormat.NEW_ENTITY,
                 VertexFormat.Mode.QUADS, 1024, false, true, state);
     }
 }

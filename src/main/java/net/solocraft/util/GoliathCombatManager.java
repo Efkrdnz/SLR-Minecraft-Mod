@@ -103,6 +103,7 @@ public final class GoliathCombatManager {
 			case 3 -> manifested ? 120 : 85;
 			default -> manifested ? 65 : 45;
 		};
+		mana = VesselManaScaling.strengthScaledCost(serverPlayer, mana, 0.55D);
 		if (!consumeMana(serverPlayer, mana))
 			return;
 		player.getPersistentData().putLong(NEXT_STRIKE, now + (manifested ? 4 : 5));
@@ -140,6 +141,7 @@ public final class GoliathCombatManager {
 			return;
 		boolean manifested = isManifested(player);
 		int mana = manifested ? 520 : 330;
+		mana = VesselManaScaling.strengthScaledCost(player, mana, 0.4D);
 		if (!consumeMana(player, mana))
 			return;
 		double radius = manifested ? 15.0D : 10.0D;
@@ -160,7 +162,8 @@ public final class GoliathCombatManager {
 		if (!(entity instanceof ServerPlayer player) || !isGoliathVessel(player) || !ready(player, POWER_SMASH))
 			return;
 		boolean manifested = isManifested(player);
-		if (!consumeMana(player, manifested ? 620 : 390))
+		int mana = VesselManaScaling.strengthScaledCost(player, manifested ? 620 : 390, 0.45D);
+		if (!consumeMana(player, mana))
 			return;
 		CooldownManager.set(player, POWER_SMASH, manifested ? 125 : 85);
 		Vec3 forward = horizontalLook(player);
@@ -190,7 +193,8 @@ public final class GoliathCombatManager {
 		if (!(entity instanceof ServerPlayer player) || !isGoliathVessel(player) || !ready(player, COLLAPSE))
 			return;
 		boolean manifested = isManifested(player);
-		if (!consumeMana(player, manifested ? 850 : 540))
+		int mana = VesselManaScaling.strengthScaledCost(player, manifested ? 850 : 540, 0.42D);
+		if (!consumeMana(player, mana))
 			return;
 		CooldownManager.set(player, COLLAPSE, manifested ? 220 : 150);
 		player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
@@ -234,6 +238,7 @@ public final class GoliathCombatManager {
 			target = null;
 		boolean manifested = isManifested(player);
 		int mana = target == null ? (manifested ? 260 : 160) : (manifested ? 430 : 280);
+		mana = VesselManaScaling.strengthScaledCost(player, mana, 0.45D);
 		if (!consumeMana(player, mana))
 			return;
 		double chargePower = Mth.clamp(0.45D + pressedMs / 900.0D, 0.55D, 1.35D);

@@ -12,6 +12,12 @@ public class TitleTextProcedure {
 		if ("thomas_andre".equals(vars.vesselIdentity)) {
 			return "Goliath";
 		}
+		if ("liu_zhigang".equals(vars.vesselIdentity)) {
+			return "Sword Saint";
+		}
+		if ("rakan".equals(vars.vesselIdentity)) {
+			return "Monarch of Fangs";
+		}
 		if (vars.JOB == 1) {
 			return "Shadow Monarch";
 		} else if (vars.JOB == 2) {
@@ -20,6 +26,8 @@ public class TitleTextProcedure {
 			return "Frost Monarch";
 		} else if (vars.JOB == 3) {
 			return "Demon Monarch";
+		} else if (vars.JOB == 9) {
+			return "Monarch of Fangs";
 		}
 		return "none";
 	}

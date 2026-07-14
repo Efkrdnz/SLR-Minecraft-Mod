@@ -10,6 +10,7 @@ import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache
 import software.bernie.geckolib.animatable.GeoEntity;
 
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.WhiteFlameMonarchManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.network.PlayMessages;
@@ -31,6 +32,7 @@ import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.sounds.SoundEvent;
@@ -41,6 +43,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.nbt.CompoundTag;
+
+import java.util.UUID;
 
 public class DemonKnightEntity extends Monster implements GeoEntity {
 
@@ -97,7 +101,9 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 		});
 		this.goalSelector.addGoal(2, new RandomStrollGoal(this, 0.6));
 		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+				candidate -> !this.getPersistentData().hasUUID(WhiteFlameMonarchManager.SUMMON_OWNER)
+						&& candidate instanceof Player player && !player.isCreative() && !player.isSpectator()));
 		this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(5, new FloatGoal(this));
 	}
@@ -110,6 +116,36 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
+	}
+
+	@Override
+	public boolean isAlliedTo(Entity other) {
+		if (super.isAlliedTo(other))
+			return true;
+		if (!this.getPersistentData().hasUUID(WhiteFlameMonarchManager.SUMMON_OWNER))
+			return false;
+		UUID owner = this.getPersistentData().getUUID(WhiteFlameMonarchManager.SUMMON_OWNER);
+		return owner.equals(other.getUUID())
+				|| other.getPersistentData().hasUUID(WhiteFlameMonarchManager.SUMMON_OWNER)
+				&& owner.equals(other.getPersistentData().getUUID(WhiteFlameMonarchManager.SUMMON_OWNER));
+	}
+
+	@Override
+	public boolean hurt(DamageSource source, float amount) {
+		return source.getEntity() == null || !this.isAlliedTo(source.getEntity())
+				? super.hurt(source, amount)
+				: false;
+	}
+
+	@Override
+	public boolean doHurtTarget(Entity target) {
+		return !this.isAlliedTo(target) && super.doHurtTarget(target);
+	}
+
+	@Override
+	protected void dropAllDeathLoot(DamageSource source) {
+		if (!this.getPersistentData().getBoolean("mowf_no_loot"))
+			super.dropAllDeathLoot(source);
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package net.solocraft.client.renderer;
 
 import net.solocraft.client.renderer.shader.QuickSlashesRenderTypes;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.entity.QuickSlashesEntity;
 
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -32,7 +33,7 @@ public class QuickSlashesRenderer extends EntityRenderer<QuickSlashesEntity> {
 		float scale = entity.getScale() * (1.0F + (1.0F - fade) * 0.16F);
 		int seed = entity.getSeed();
 		RenderType renderType = QuickSlashesRenderTypes.slashes(TEXTURE);
-		VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
+		VertexConsumer vertexConsumer = DeferredWorldShaderRenderer.buffer(bufferSource, renderType, false);
 		poseStack.pushPose();
 		poseStack.mulPose(Axis.YP.rotationDegrees(-entity.getYaw()));
 		for (int i = 0; i < SLASH_COUNT; i++) {

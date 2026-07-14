@@ -3,6 +3,7 @@ package net.solocraft.client.aura;
 import net.solocraft.SololevelingMod;
 import net.solocraft.client.aura.AuraSmokeField.Puff;
 import net.solocraft.client.renderer.shader.AuraSmokeRenderTypes;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
@@ -42,10 +43,15 @@ public final class AuraSmokeRenderer {
 
 	@SubscribeEvent
 	public static void onRenderLevel(RenderLevelStageEvent event) {
-		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES
+				&& event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL) {
 			return;
 		}
-
+		boolean renderStage = DeferredWorldShaderRenderer.isRenderStage(
+				event, RenderLevelStageEvent.Stage.AFTER_PARTICLES);
+		if (!renderStage && event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+			return;
+		}
 		Map<Integer, List<Puff>> all = AuraSmokeField.puffs();
 		if (all.isEmpty()) {
 			return;
@@ -55,38 +61,70 @@ public final class AuraSmokeRenderer {
 		if (minecraft.level == null || minecraft.player == null) {
 			return;
 		}
-
-		Camera camera = event.getCamera();
-		Vec3 cameraPosition = camera.getPosition();
-		Quaternionf billboard = minecraft.getEntityRenderDispatcher().cameraOrientation();
-		float partialTick = event.getPartialTick();
-		boolean custom = AuraSmokeRenderTypes.usesCustomShader();
-
 		int selfId = minecraft.player.getId();
 		boolean firstPerson = minecraft.options.getCameraType().isFirstPerson();
+		if (!hasRenderablePuffs(all, selfId, firstPerson)) {
+			return;
+		}
+		DeferredWorldShaderRenderer.requestDepthAtStage(
+				event, RenderLevelStageEvent.Stage.AFTER_PARTICLES);
+		if (!renderStage) {
+			return;
+		}
+		if (!DeferredWorldShaderRenderer.beginWorldPass(event)) {
+			return;
+		}
 
-		PoseStack poseStack = event.getPoseStack();
-		MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
+		try {
+			Camera camera = event.getCamera();
+			Vec3 cameraPosition = camera.getPosition();
+			Quaternionf billboard = minecraft.getEntityRenderDispatcher().cameraOrientation();
+			float partialTick = event.getPartialTick();
+			boolean custom = AuraSmokeRenderTypes.usesCustomShader();
 
-		// Two passes keep each render type's buffer open instead of flushing per
-		// puff, and draw the translucent smoke before the additive embers so the
-		// glow reads on top.
-		for (int pass = 0; pass < 2; pass++) {
-			boolean brightPass = pass == 1;
-			for (Map.Entry<Integer, List<Puff>> entry : all.entrySet()) {
-				if (firstPerson && entry.getKey() == selfId) {
-					continue;
-				}
-				for (Puff puff : entry.getValue()) {
-					if (puff.bright != brightPass) {
+			PoseStack poseStack = DeferredWorldShaderRenderer.worldPoseStack(event);
+			MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
+
+			// Two passes keep each render type's buffer open instead of flushing per
+			// puff, and draw translucent smoke before additive embers.
+			for (int pass = 0; pass < 2; pass++) {
+				boolean brightPass = pass == 1;
+				for (Map.Entry<Integer, List<Puff>> entry : all.entrySet()) {
+					if (firstPerson && entry.getKey() == selfId) {
 						continue;
 					}
-					renderPuff(poseStack, buffers, puff, cameraPosition, billboard, partialTick, custom);
+					for (Puff puff : entry.getValue()) {
+						if (puff.bright != brightPass) {
+							continue;
+						}
+						renderPuff(poseStack, buffers, puff, cameraPosition, billboard,
+								partialTick, custom);
+					}
+				}
+			}
+
+			buffers.endBatch();
+		} finally {
+			DeferredWorldShaderRenderer.endWorldPass();
+		}
+	}
+
+	private static boolean hasRenderablePuffs(
+			Map<Integer, List<Puff>> all,
+			int selfId,
+			boolean firstPerson
+	) {
+		for (Map.Entry<Integer, List<Puff>> entry : all.entrySet()) {
+			if (firstPerson && entry.getKey() == selfId) {
+				continue;
+			}
+			for (Puff puff : entry.getValue()) {
+				if (puff.maxAge > 0.0D && puff.age < puff.maxAge && puff.baseAlpha >= 0.01F) {
+					return true;
 				}
 			}
 		}
-
-		buffers.endBatch();
+		return false;
 	}
 
 	private static void renderPuff(

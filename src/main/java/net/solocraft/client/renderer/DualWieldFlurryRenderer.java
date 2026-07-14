@@ -1,6 +1,7 @@
 package net.solocraft.client.renderer;
 
 import net.solocraft.client.renderer.shader.DualWieldFlurryRenderTypes;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.entity.DualWieldFlurryEntity;
 
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -31,7 +32,7 @@ public class DualWieldFlurryRenderer extends EntityRenderer<DualWieldFlurryEntit
 		if (fade <= 0.0F)
 			return;
 		RenderType renderType = DualWieldFlurryRenderTypes.flurry(TEXTURE);
-		VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
+		VertexConsumer vertexConsumer = DeferredWorldShaderRenderer.buffer(bufferSource, renderType, false);
 		int seed = entity.getSeed();
 		float age = entity.tickCount + partialTick;
 		float reveal = clamp(age / TELEPORT_DELAY_TICKS, 0.0F, 1.0F);

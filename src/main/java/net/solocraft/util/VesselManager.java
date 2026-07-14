@@ -30,6 +30,8 @@ public final class VesselManager {
         try {
             int changed = 0;
             for (Entity target : EntityArgument.getEntities(context, "name")) {
+				if (target instanceof net.minecraft.server.level.ServerPlayer player && LiuManifestationManager.isActive(player))
+					LiuManifestationManager.restore(player);
                 target.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
                     if (RULER.equals(definition.type)) {
                         if (!hasAbility(capability.abilities, "telekinesis")) {
@@ -63,6 +65,8 @@ public final class VesselManager {
         try {
             int changed = 0;
             for (Entity target : EntityArgument.getEntities(context, "name")) {
+				if (target instanceof net.minecraft.server.level.ServerPlayer player && LiuManifestationManager.isActive(player))
+					LiuManifestationManager.restore(player);
                 target.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
                     revokeAutomaticAuthority(capability);
                     capability.vesselType = "";
@@ -109,6 +113,7 @@ public final class VesselManager {
             return switch (identity) {
                 case "sillad" -> new VesselDefinition(MONARCH, identity, 3, "Monarch / Sillad");
                 case "baran" -> new VesselDefinition(MONARCH, identity, 4, "Monarch / Baran");
+                case "rakan" -> new VesselDefinition(MONARCH, identity, 9, "Monarch / Rakan");
                 default -> null;
             };
         }

@@ -1,6 +1,7 @@
 package net.solocraft.client.renderer;
 
 import net.solocraft.client.renderer.shader.SwordBeamProjectileRenderTypes;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.entity.SwordBeamProjectileEntity;
 
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -33,7 +34,7 @@ public class SwordBeamProjectileRenderer extends EntityRenderer<SwordBeamProject
 		float halfHeight = 0.34F * pulse;
 		int alpha = Math.round(245.0F * fade);
 		RenderType renderType = SwordBeamProjectileRenderTypes.projectile(TEXTURE);
-		VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
+		VertexConsumer vertexConsumer = DeferredWorldShaderRenderer.buffer(bufferSource, renderType);
 		poseStack.pushPose();
 		poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick, entity.yRotO, entity.getYRot()) - 90.0F));
 		poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F + Mth.lerp(partialTick, entity.xRotO, entity.getXRot())));

@@ -1,5 +1,11 @@
 package net.solocraft.init;
 
+import net.solocraft.entity.RadiruBloodSpearEntity;
+import net.solocraft.entity.GlacialPursuitEntity;
+import net.solocraft.entity.BeastVfxEntity;
+import net.solocraft.entity.LiuSwordBeamEntity;
+import net.solocraft.entity.LiuSwordVfxEntity;
+import net.solocraft.entity.WhiteFlameVfxEntity;
 import net.solocraft.entity.WhiteFlameEntity;
 import net.solocraft.entity.VulcanEntity;
 import net.solocraft.entity.TuskShadowEntity;
@@ -517,6 +523,18 @@ public class SololevelingModEntities {
 			EntityType.Builder.<SlashEffectEntity>of(SlashEffectEntity::new, MobCategory.MISC).setCustomClientFactory(SlashEffectEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(2.8f, 1.6f));
 	public static final RegistryObject<EntityType<BasicAttackSlashEntity>> BASIC_ATTACK_SLASH = register("basic_attack_slash",
 			EntityType.Builder.<BasicAttackSlashEntity>of(BasicAttackSlashEntity::new, MobCategory.MISC).setCustomClientFactory(BasicAttackSlashEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(2.6f, 1.3f));
+	public static final RegistryObject<EntityType<GlacialPursuitEntity>> GLACIAL_PURSUIT = register("glacial_pursuit",
+			EntityType.Builder.<GlacialPursuitEntity>of(GlacialPursuitEntity::new, MobCategory.MISC).setCustomClientFactory(GlacialPursuitEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(192).setUpdateInterval(1).sized(1.35f, 0.35f));
+	public static final RegistryObject<EntityType<WhiteFlameVfxEntity>> WHITE_FLAME_VFX = register("white_flame_vfx",
+			EntityType.Builder.<WhiteFlameVfxEntity>of(WhiteFlameVfxEntity::new, MobCategory.MISC).setCustomClientFactory(WhiteFlameVfxEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(96).setUpdateInterval(1).sized(0.1f, 0.1f));
+	public static final RegistryObject<EntityType<RadiruBloodSpearEntity>> RADIRU_BLOOD_SPEAR = register("radiru_blood_spear",
+			EntityType.Builder.<RadiruBloodSpearEntity>of(RadiruBloodSpearEntity::new, MobCategory.MISC).setCustomClientFactory(RadiruBloodSpearEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(96).setUpdateInterval(1).sized(0.35f, 0.35f));
+	public static final RegistryObject<EntityType<LiuSwordVfxEntity>> LIU_SWORD_VFX = register("liu_sword_vfx",
+			EntityType.Builder.<LiuSwordVfxEntity>of(LiuSwordVfxEntity::new, MobCategory.MISC).setCustomClientFactory(LiuSwordVfxEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(128).setUpdateInterval(1).sized(0.1f, 0.1f));
+	public static final RegistryObject<EntityType<BeastVfxEntity>> BEAST_VFX = register("beast_vfx",
+			EntityType.Builder.<BeastVfxEntity>of(BeastVfxEntity::new, MobCategory.MISC).setCustomClientFactory(BeastVfxEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(128).setUpdateInterval(1).sized(0.1f, 0.1f));
+	public static final RegistryObject<EntityType<LiuSwordBeamEntity>> LIU_SWORD_BEAM = register("liu_sword_beam",
+			EntityType.Builder.<LiuSwordBeamEntity>of(LiuSwordBeamEntity::new, MobCategory.MISC).setCustomClientFactory(LiuSwordBeamEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(256).setUpdateInterval(1).sized(0.2f, 0.2f));
 	public static final RegistryObject<EntityType<DualWieldFlurryEntity>> DUAL_WIELD_FLURRY = register("dual_wield_flurry",
 			EntityType.Builder.<DualWieldFlurryEntity>of(DualWieldFlurryEntity::new, MobCategory.MISC).setCustomClientFactory(DualWieldFlurryEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(6.0f, 3.0f));
 	public static final RegistryObject<EntityType<CrossStrikeEntity>> CROSS_STRIKE = register("cross_strike",

@@ -4,7 +4,9 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.client.aura.ClientPlayerAuraManager.AuraInstance;
 import net.solocraft.client.aura.ClientPlayerAuraManager.TrailPoint;
 import net.solocraft.client.renderer.shader.PlayerAuraRenderTypes;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.init.SololevelingModItems;
+import net.solocraft.util.LiuManifestationManager;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderPlayerEvent;
@@ -137,6 +139,11 @@ public final class PlayerAuraRenderer {
 			);
 		}
 
+		if (LiuManifestationManager.isManifestedSword(player.getMainHandItem())
+				&& LiuManifestationManager.isManifestedSword(player.getOffhandItem())) {
+			addEquipmentAura(active, PlayerAuraRegistry.LIU_DRAGON_SWORDS, player);
+		}
+
 		return active;
 	}
 
@@ -164,8 +171,8 @@ public final class PlayerAuraRenderer {
 				event.getEntity().getBbHeight() * definition.heightScale()
 		);
 
-		VertexConsumer vertices = event.getMultiBufferSource()
-				.getBuffer(PlayerAuraRenderTypes.aura(definition));
+		VertexConsumer vertices = DeferredWorldShaderRenderer.buffer(
+				event.getMultiBufferSource(), PlayerAuraRenderTypes.aura(definition));
 		PoseStack poseStack = event.getPoseStack();
 
 		for (int i = 1; i < trail.size(); i++) {
@@ -291,9 +298,8 @@ public final class PlayerAuraRenderer {
 			return;
 		}
 
-		VertexConsumer vertices = buffers.getBuffer(
-				PlayerAuraRenderTypes.aura(definition)
-		);
+		VertexConsumer vertices = DeferredWorldShaderRenderer.buffer(
+				buffers, PlayerAuraRenderTypes.aura(definition));
 
 		for (int layer = 0; layer < definition.shellLayers(); layer++) {
 			float layerRadius = radius * (0.88F + layer * 0.16F);
@@ -350,6 +356,9 @@ public final class PlayerAuraRenderer {
 					partialTick,
 					minecraft
 			);
+			if (isWhiteFlameHair(definition)) {
+				drawWhiteFlameHair(vertices, poseStack, definition, player, radius, motion, envelope, minecraft);
+			}
 		}
 
 		if (definition.groundRing()) {
@@ -364,6 +373,48 @@ public final class PlayerAuraRenderer {
 		}
 
 		poseStack.popPose();
+	}
+
+	private static boolean isWhiteFlameHair(PlayerAuraDefinition definition) {
+		return definition.fluid() != null
+				&& definition.fluid().style() == PlayerAuraDefinition.FluidStyle.WHITE_FLAME_HAIR;
+	}
+
+	private static void drawWhiteFlameHair(VertexConsumer vertices, PoseStack poseStack,
+			PlayerAuraDefinition definition, Player player, float radius, float motion,
+			float envelope, Minecraft minecraft) {
+		float headY = player.getBbHeight() * 0.88F;
+		int tongues = 18;
+		for (int i = 0; i < tongues; i++) {
+			float random = hash(i * 149 + definition.id().hashCode());
+			float angle = i * Mth.TWO_PI / tongues + Mth.sin(motion * 0.055F + i) * 0.09F;
+			float orbit = radius * (0.18F + random * 0.30F);
+			float riseCycle = fract(i * 0.381966F + motion * (0.010F + (i % 3) * 0.0015F));
+			float width = radius * (0.16F + hash(i * 47 + 3) * 0.14F);
+			float flameHeight = 0.72F + hash(i * 59 + 11) * 0.72F;
+			float y = headY + riseCycle * 0.42F + Mth.sin(motion * 0.08F + i * 1.7F) * 0.04F;
+			float lifeFade = (float) (Mth.smoothstep(Math.min(1.0F, riseCycle * 5.0F))
+					* Mth.smoothstep(Math.min(1.0F, (1.0F - riseCycle) * 4.0F)));
+			int flameAlpha = alpha((138.0F + random * 58.0F) * envelope * lifeFade);
+
+			poseStack.pushPose();
+			poseStack.translate(Mth.sin(angle) * orbit, y, Mth.cos(angle) * orbit);
+			applyFacing(poseStack, PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, angle, minecraft);
+			poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin(motion * 0.07F + i * 2.1F) * 8.0F));
+			drawFluidQuad(vertices, poseStack.last(), width, flameHeight, definition, flameAlpha, 8.0F);
+			poseStack.popPose();
+		}
+
+		for (int i = 0; i < 5; i++) {
+			float angle = i * Mth.TWO_PI / 5.0F + motion * 0.012F;
+			poseStack.pushPose();
+			poseStack.translate(Mth.sin(angle) * radius * 0.30F, headY + 0.35F,
+					Mth.cos(angle) * radius * 0.30F);
+			applyFacing(poseStack, PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, angle, minecraft);
+			drawFluidQuad(vertices, poseStack.last(), radius * 0.34F, 1.45F, definition,
+					alpha(92.0F * envelope), 10.0F);
+			poseStack.popPose();
+		}
 	}
 
 	private static void drawShell(

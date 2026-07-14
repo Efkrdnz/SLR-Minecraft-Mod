@@ -27,15 +27,15 @@ public class DualWieldFlurryRenderTypes extends RenderStateShard {
 
 	@SubscribeEvent
 	public static void registerShaders(RegisterShadersEvent event) throws IOException {
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_dual_wield_flurry"), DefaultVertexFormat.NEW_ENTITY), shader -> flurryShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_dual_wield_flurry"), WorldShaderVertexFormat.NEW_ENTITY), shader -> flurryShader = shader);
 	}
 
 	public static RenderType flurry(ResourceLocation texture) {
-		if (flurryShader == null || IrisCompat.isShaderPackInUse()) {
+		if (flurryShader == null) {
 			return RenderType.entityTranslucentEmissive(texture);
 		}
 		RenderType.CompositeState state = RenderType.CompositeState.builder().setShaderState(new ShaderStateShard(() -> flurryShader)).setTextureState(new TextureStateShard(texture, false, false))
 				.setTransparencyState(TRANSLUCENT_TRANSPARENCY).setDepthTestState(NO_DEPTH_TEST).setCullState(NO_CULL).setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).setWriteMaskState(COLOR_WRITE).createCompositeState(false);
-		return RenderType.create("dual_wield_flurry", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 512, false, true, state);
+		return RenderType.create("dual_wield_flurry", WorldShaderVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 512, false, true, state);
 	}
 }

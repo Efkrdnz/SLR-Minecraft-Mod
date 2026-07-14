@@ -60,7 +60,7 @@ public class MPOverlayOverlay {
 	public static void eventHandler(RenderGuiEvent.Pre event) {
 		Minecraft mc = Minecraft.getInstance();
 		Player player = mc.player;
-		if (player == null || mc.options.hideGui || mc.screen != null)
+		if (player == null || mc.options.hideGui || mc.options.renderDebug || mc.screen != null)
 			return;
 		if (!IfInSurvivalProcedure.execute(player))
 			return;

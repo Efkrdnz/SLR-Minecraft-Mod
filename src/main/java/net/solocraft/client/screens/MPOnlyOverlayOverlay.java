@@ -36,13 +36,17 @@ import com.mojang.blaze3d.platform.GlStateManager;
 public class MPOnlyOverlayOverlay {
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public static void eventHandler(RenderGuiEvent.Pre event) {
+		Minecraft minecraft = Minecraft.getInstance();
+		if (minecraft.options.renderDebug) {
+			return;
+		}
 		int w = event.getWindow().getGuiScaledWidth();
 		int h = event.getWindow().getGuiScaledHeight();
 		Level world = null;
 		double x = 0;
 		double y = 0;
 		double z = 0;
-		Player entity = Minecraft.getInstance().player;
+		Player entity = minecraft.player;
 		if (entity != null) {
 			world = entity.level();
 			x = entity.getX();

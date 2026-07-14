@@ -31,10 +31,10 @@ public class BasicAttackSlashRenderTypes extends RenderStateShard {
 
 	@SubscribeEvent
 	public static void registerShaders(RegisterShadersEvent event) throws IOException {
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_fist"), DefaultVertexFormat.NEW_ENTITY), shader -> fistShader = shader);
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_sword"), DefaultVertexFormat.NEW_ENTITY), shader -> swordShader = shader);
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_dagger"), DefaultVertexFormat.NEW_ENTITY), shader -> daggerShader = shader);
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_dual_dagger"), DefaultVertexFormat.NEW_ENTITY), shader -> dualDaggerShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_fist"), WorldShaderVertexFormat.NEW_ENTITY), shader -> fistShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_sword"), WorldShaderVertexFormat.NEW_ENTITY), shader -> swordShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_dagger"), WorldShaderVertexFormat.NEW_ENTITY), shader -> daggerShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_dual_dagger"), WorldShaderVertexFormat.NEW_ENTITY), shader -> dualDaggerShader = shader);
 	}
 
 	public static RenderType slash(int style, ResourceLocation texture) {
@@ -44,7 +44,7 @@ public class BasicAttackSlashRenderTypes extends RenderStateShard {
 			case BasicAttackSlashEntity.STYLE_DUAL_DAGGER -> dualDaggerShader;
 			default -> swordShader;
 		};
-		if (shader == null || IrisCompat.isShaderPackInUse()) {
+		if (shader == null) {
 			return RenderType.entityTranslucentEmissive(texture);
 		}
 		String name = switch (style) {
@@ -55,6 +55,6 @@ public class BasicAttackSlashRenderTypes extends RenderStateShard {
 		};
 		RenderType.CompositeState state = RenderType.CompositeState.builder().setShaderState(new ShaderStateShard(() -> shader)).setTextureState(new TextureStateShard(texture, false, false))
 				.setTransparencyState(TRANSLUCENT_TRANSPARENCY).setDepthTestState(NO_DEPTH_TEST).setCullState(NO_CULL).setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).setWriteMaskState(COLOR_WRITE).createCompositeState(false);
-		return RenderType.create(name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, false, true, state);
+		return RenderType.create(name, WorldShaderVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, false, true, state);
 	}
 }

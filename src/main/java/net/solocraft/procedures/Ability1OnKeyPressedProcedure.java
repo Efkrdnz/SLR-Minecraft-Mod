@@ -25,19 +25,29 @@ import net.minecraft.core.BlockPos;
 
 import io.netty.buffer.Unpooled;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.BeastMonarchManager;
 import net.solocraft.util.GoliathCombatManager;
+import net.solocraft.util.LiuZhigangCombatManager;
 import net.solocraft.util.FrostMonarchManager;
 
 public class Ability1OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		if (FrostMonarchManager.isFrostMonarch(entity)) {
+		if (FrostMonarchManager.isDirectAbilityMode(entity)) {
 			FrostMonarchManager.castFlashFreeze(entity);
+			return;
+		}
+		if (BeastMonarchManager.isFangStance(entity)) {
+			BeastMonarchManager.beginPredatorsIntercept(entity);
 			return;
 		}
 		if (GoliathCombatManager.isCombatStance(entity)) {
 			GoliathCombatManager.beginPursuit(entity);
+			return;
+		}
+		if (LiuZhigangCombatManager.isCombatStance(entity)) {
+			LiuZhigangCombatManager.beginDragonFlash(entity);
 			return;
 		}
 		Entity shadow = null;

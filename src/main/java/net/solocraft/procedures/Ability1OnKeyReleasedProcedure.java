@@ -7,17 +7,27 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.BeastMonarchManager;
 import net.solocraft.util.FrostMonarchManager;
 import net.solocraft.util.GoliathCombatManager;
+import net.solocraft.util.LiuZhigangCombatManager;
 
 public class Ability1OnKeyReleasedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		if (FrostMonarchManager.isFrostMonarch(entity))
+		if (FrostMonarchManager.isDirectAbilityMode(entity))
 			return;
+		if (BeastMonarchManager.isFangStance(entity)) {
+			BeastMonarchManager.releasePredatorsIntercept(entity, 0);
+			return;
+		}
 		if (GoliathCombatManager.isCombatStance(entity)) {
 			GoliathCombatManager.releasePursuit(entity, 0);
+			return;
+		}
+		if (LiuZhigangCombatManager.isCombatStance(entity)) {
+			LiuZhigangCombatManager.releaseDragonFlash(entity, 0);
 			return;
 		}
 		{

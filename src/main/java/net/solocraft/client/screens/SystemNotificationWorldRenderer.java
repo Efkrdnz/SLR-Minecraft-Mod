@@ -76,7 +76,6 @@ public class SystemNotificationWorldRenderer {
 		List<Notification> list = SystemNotificationManager.INSTANCE.active();
 		if (list.isEmpty())
 			return;
-
 		Font font = mc.font;
 		Camera cam = event.getCamera();
 		long now = System.currentTimeMillis();
@@ -96,7 +95,7 @@ public class SystemNotificationWorldRenderer {
 		float stackGap = STACK_GAP_WORLD * notificationScale;
 
 		for (int idx = 0; idx < list.size(); idx++) {
-			Notification n = list.get(list.size() - 1 - idx); // newest lowest (nearest eye level)
+			Notification n = list.get(list.size() - 1 - idx); // newest lowest
 			int[] size = measure(font, n);
 			float currentHalfHeight = size[1] * s * 0.5f;
 			if (idx > 0)
@@ -104,21 +103,21 @@ public class SystemNotificationWorldRenderer {
 			Vec3 offset = cameraScreenOffset(cam, stackCenter);
 
 			ps.pushPose();
-			ps.translate(offset.x, offset.y, offset.z);                // world-space delta from camera
-			ps.mulPose(mc.getEntityRenderDispatcher().cameraOrientation()); // same facing as in-world nametags
+			ps.translate(offset.x, offset.y, offset.z);
+			ps.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
 			ps.mulPose(Axis.YP.rotationDegrees(PANEL_TILT));
-			ps.scale(-s, -s, s);                                       // pixels -> blocks (upright), user-scaled
+			ps.scale(-s, -s, s);
 			renderPanel(ps, font, buffer, n, now, size);
 			ps.popPose();
 
 			previousHalfHeight = currentHalfHeight;
 		}
 
-		buffer.endBatch(); // flush all world text on top
-
+		buffer.endBatch();
 		RenderSystem.enableDepthTest();
 		RenderSystem.enableCull();
 		RenderSystem.disableBlend();
+		RenderSystem.defaultBlendFunc();
 		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 	}
 
@@ -235,7 +234,9 @@ public class SystemNotificationWorldRenderer {
 	// ── raw quad helpers ───────────────────────────────────────────────────────
 
 	private static void drawShaderRect(Matrix4f m, float hw, float hh) {
-		ShaderInstance shader = IrisCompat.isShaderPackInUse() ? null : SystemBackgroundRenderTypes.get();
+		ShaderInstance shader = IrisCompat.isShaderPackInUse()
+				? null
+				: SystemBackgroundRenderTypes.get();
 		if (shader == null) {
 			drawRect(m, -hw, -hh, hw, hh, 0xF00A1830);
 			return;

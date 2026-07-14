@@ -51,12 +51,29 @@ public class JobSkillManager {
 	public static final String MONARCH_BEAM = "Monarch Beam";
 	public static final String LIGHTNING_STORM = "Lightning Storm";
 	public static final String STORM_BURST = "Storm Burst";
+	public static final String LIGHTNING_BREATH = WhiteFlameMonarchManager.LIGHTNING_BREATH;
+	public static final String HELLSTORM_DOMINION = WhiteFlameMonarchManager.HELLSTORM_DOMINION;
+	public static final String RADIRU_BLOOD_SPEAR = WhiteFlameMonarchManager.RADIRU_BLOOD_SPEAR;
+	public static final String DOPPELGANGER = WhiteFlameMonarchManager.DOPPELGANGER;
+	public static final String HELLS_ARMY = WhiteFlameMonarchManager.HELLS_ARMY;
+	public static final String WHITE_FLAME_SPIRITUALIZATION = WhiteFlameMonarchManager.SPIRITUALIZATION;
 	public static final String THOMAS_MANIFESTATION = "Spiritual Body Manifestation";
 	public static final String THOMAS_CAPTURE = GoliathCombatManager.CAPTURE;
 	public static final String THOMAS_POWER_SMASH = GoliathCombatManager.POWER_SMASH;
 	public static final String THOMAS_COLLAPSE = GoliathCombatManager.COLLAPSE;
+	public static final String LIU_HEAVENLY_COUNTER = LiuZhigangCombatManager.HEAVENLY_COUNTER;
+	public static final String LIU_GOLDEN_DRAGON_DANCE = LiuZhigangCombatManager.GOLDEN_DRAGON_DANCE;
+	public static final String LIU_SOVEREIGN_SWORD_DOMAIN = LiuZhigangCombatManager.SOVEREIGN_SWORD_DOMAIN;
+	public static final String LIU_MANIFESTATION = LiuZhigangCombatManager.DRAGON_SWORD_MANIFESTATION;
 
 	private static final String LAST_SYNCED_JOB = "sololeveling:last_synced_job_skills";
+	private static final String RETIRED_KINGS_VERDICT = "King's Verdict";
+	private static final List<String> WHITE_FLAME_SKILLS = List.of(
+			LIGHTNING_BREATH, HELLSTORM_DOMINION, RADIRU_BLOOD_SPEAR,
+			DOPPELGANGER, HELLS_ARMY, WHITE_FLAME_SPIRITUALIZATION);
+	private static final List<String> LIU_SKILLS = List.of(
+			LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE,
+			LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION);
 	private static final List<String> FROST_SKILLS = List.of(
 			ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH,
 			FROST_COUNTER, ABSOLUTE_ZERO, FROST_SPIRITUALIZATION);
@@ -69,7 +86,10 @@ public class JobSkillManager {
 			ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROST_COUNTER,
 			ABSOLUTE_ZERO, FROST_SPIRITUALIZATION,
 			THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION,
-			MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST);
+			LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE, LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION,
+			MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST,
+			LIGHTNING_BREATH, HELLSTORM_DOMINION, RETIRED_KINGS_VERDICT, RADIRU_BLOOD_SPEAR,
+			DOPPELGANGER, HELLS_ARMY, WHITE_FLAME_SPIRITUALIZATION);
 
 	private JobSkillManager() {
 	}
@@ -87,6 +107,14 @@ public class JobSkillManager {
 		return ALL_JOB_SKILLS.contains(skill);
 	}
 
+	public static boolean isWhiteFlameSkill(String skill) {
+		return WHITE_FLAME_SKILLS.contains(skill);
+	}
+
+	public static boolean isLiuSkill(String skill) {
+		return LIU_SKILLS.contains(skill);
+	}
+
 	public static boolean isFrostSkill(String skill) {
 		return FROST_SKILLS.contains(skill);
 	}
@@ -100,6 +128,10 @@ public class JobSkillManager {
 			return 0x6FE8FF;
 		if (List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION).contains(skill))
 			return 0xFFD35A;
+		if (isLiuSkill(skill))
+			return 0xFFD34E;
+		if (isWhiteFlameSkill(skill))
+			return 0xFFFFFF;
 		if (List.of(MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST).contains(skill))
 			return 0xFFE38A;
 		return 0xFFFFFF;
@@ -108,6 +140,10 @@ public class JobSkillManager {
 	public static List<Component> tooltip(Entity entity, String skill) {
 		if (isFrostSkill(skill))
 			return frostTooltip(entity, skill);
+		if (isWhiteFlameSkill(skill))
+			return whiteFlameTooltip(entity, skill);
+		if (isLiuSkill(skill))
+			return liuTooltip(entity, skill);
 		if (!List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION).contains(skill))
 			return List.of(Component.literal(ShadowMonarchManager.displaySkillName(entity, skill)), Component.literal(skill));
 		boolean manifested = GoliathCombatManager.isManifested(entity);
@@ -143,37 +179,112 @@ public class JobSkillManager {
 		switch (skill) {
 			case ICE_SPEAR -> {
 				lines.add(Component.literal("Throw the Ice Spear, then cast again to recall it.").withStyle(ChatFormatting.GRAY));
-				lines.add(Component.literal("Sneak-cast to receive the existing Ice Spear item in your inventory.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal("Both passes build Frostbite and shatter frozen enemies.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal("Sneak-cast to receive the existing Ice Spear item in your inventory.").withStyle(ChatFormatting.DARK_AQUA));
 				lines.add(Component.literal((manifested ? "300" : "260") + " MP throw | 5.5s cooldown | Sneak: 100 MP, 3s").withStyle(ChatFormatting.YELLOW));
 			}
 			case FLASH_FREEZE -> {
-				lines.add(Component.literal("Flash-freeze enemies in a forward cone.").withStyle(ChatFormatting.GRAY));
-				lines.add(Component.literal("Strike frozen enemies in melee to shatter the ice.").withStyle(ChatFormatting.AQUA));
-				lines.add(Component.literal((manifested ? "12 blocks | 340 MP" : "9 blocks | 300 MP") + " | 10s cooldown").withStyle(ChatFormatting.YELLOW));
+				lines.add(Component.literal("Damage enemies in a forward cone and inflict heavy Frostbite.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Already-frozen enemies shatter into damaging ice fragments.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal((manifested ? "12 blocks | 320 MP" : "9 blocks | 280 MP") + " | 7s cooldown").withStyle(ChatFormatting.YELLOW));
 			}
 			case FROZEN_PATH -> {
-				lines.add(Component.literal("Freeze ground and water ahead, bridging small gaps.").withStyle(ChatFormatting.GRAY));
-				lines.add(Component.literal("It leaves obsidian, harder blocks, and protected cells untouched, then keeps going.").withStyle(ChatFormatting.AQUA));
-				lines.add(Component.literal((manifested ? "32x5 path | 280 MP" : "24x3 path | 240 MP") + " | 9s cooldown").withStyle(ChatFormatting.YELLOW));
+				lines.add(Component.literal("Hold to steer a piercing ice current that forms a two-block-wide road.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Sneak before casting to ride it; release to rupture the current.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal((manifested ? "210" : "180") + " MP + upkeep | 7-8s cooldown after release").withStyle(ChatFormatting.YELLOW));
 			}
 			case FROST_COUNTER -> {
-				lines.add(Component.literal("Brace to reduce the next hit you receive.").withStyle(ChatFormatting.GRAY));
-				lines.add(Component.literal("The attacker is frozen when the counter triggers.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal("Parry the next hit and retaliate with a freezing rupture.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("The counter deals damage, inflicts Frostbite, and can shatter.").withStyle(ChatFormatting.AQUA));
 				lines.add(Component.literal(manifested
-						? "5s window | 75% reduction | 300 MP | 12s cooldown"
-						: "4s window | 60% reduction | 260 MP | 12s cooldown").withStyle(ChatFormatting.YELLOW));
+						? "2s window | 75% reduction | 280 MP | 9s cooldown"
+						: "1.6s window | 60% reduction | 240 MP | 9s cooldown").withStyle(ChatFormatting.YELLOW));
 			}
 			case ABSOLUTE_ZERO -> {
-				lines.add(Component.literal("Create a freezing field that follows you.").withStyle(ChatFormatting.GRAY));
-				lines.add(Component.literal("Enemies are slowed immediately and freeze after staying inside.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal("Create a damaging freezing field that follows you.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Recast to detonate chilled and frozen enemies at once.").withStyle(ChatFormatting.AQUA));
 				lines.add(Component.literal(manifested
-						? "10 blocks for 10s | 700 MP | 22s cooldown"
-						: "8 blocks for 8s | 600 MP | 22s cooldown").withStyle(ChatFormatting.YELLOW));
+						? "10 blocks for 10s | 700 MP | 20s cooldown"
+						: "8 blocks for 8s | 600 MP | 20s cooldown").withStyle(ChatFormatting.YELLOW));
 			}
 			case FROST_SPIRITUALIZATION -> {
-				lines.add(Component.literal("Manifest the Frost Monarch's spiritual aura immediately.").withStyle(ChatFormatting.GRAY));
-				lines.add(Component.literal("No buildup required | 0 MP activation").withStyle(ChatFormatting.AQUA));
-				lines.add(Component.literal("24s maximum duration | 45s cooldown").withStyle(ChatFormatting.YELLOW));
+				lines.add(Component.literal("Toggle the Frost Monarch's enhanced spiritual aura.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Enhances Frost skills until disabled or MP is depleted.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal("0 MP activation | 14 MP per second | No cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			default -> {
+			}
+		}
+		return lines;
+	}
+
+	private static List<Component> liuTooltip(Entity entity, String skill) {
+		boolean manifested = LiuZhigangCombatManager.isManifested(entity);
+		ArrayList<Component> lines = new ArrayList<>();
+		lines.add(Component.literal(skill).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+		switch (skill) {
+			case LIU_HEAVENLY_COUNTER -> {
+				lines.add(Component.literal("Enter a razor-thin counter window and turn force back on its source.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(manifested
+						? "Manifested: two counters; success advances the next beam charge tier."
+						: "A successful counter empowers the next charged sword beam.").withStyle(ChatFormatting.YELLOW));
+			}
+			case LIU_GOLDEN_DRAGON_DANCE -> {
+				lines.add(Component.literal("Cross the battlefield in a chained sequence of sovereign cuts.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(manifested
+						? "Manifested: hunts up to ten targets with stronger Dragon Sword cuts."
+						: "With no target, releases three advancing sword waves.").withStyle(ChatFormatting.YELLOW));
+			}
+			case LIU_SOVEREIGN_SWORD_DOMAIN -> {
+				lines.add(Component.literal("Claim the area as a field of suspended, unseen sword paths.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Attacks echo, projectiles are repelled, and every mark ruptures together.").withStyle(ChatFormatting.YELLOW));
+			}
+			case LIU_MANIFESTATION -> {
+				lines.add(Component.literal("Manifest the twin Dragon Swords granted by a Ruler's power.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(manifested
+						? "ACTIVE: original hand items are safely sealed until release."
+						: "Transforms Liu's skills and preserves both held items exactly.").withStyle(ChatFormatting.YELLOW));
+			}
+			default -> {
+			}
+		}
+		return lines;
+	}
+
+	private static List<Component> whiteFlameTooltip(Entity entity, String skill) {
+		boolean manifested = WhiteFlameMonarchManager.isSpiritualized(entity);
+		ArrayList<Component> lines = new ArrayList<>();
+		lines.add(Component.literal(skill).withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD));
+		switch (skill) {
+			case LIGHTNING_BREATH -> {
+				lines.add(Component.literal("Exhale a steerable stream of white lightning-fire.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Repeated hits brand enemies for Hellstorm Dominion.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal(manifested ? "Manifested: wider, longer, faster, and more efficient." : "220 MP | 3.9s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case HELLSTORM_DOMINION -> {
+				lines.add(Component.literal("Claim a moving domain that hunts nearby enemies with lightning.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Branded enemies are prioritized and suffer amplified strikes.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal(manifested ? "Manifested: larger domain, denser storm, longer reign." : "850 MP | 19.5s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case RADIRU_BLOOD_SPEAR -> {
+				lines.add(Component.literal("Hurl Radiru's royal spear through an enemy formation.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Pierces targets, ignites them, and carves in a royal brand.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal(manifested ? "Manifested: seven-target pierce with greater velocity." : "300 MP | 4.8s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case DOPPELGANGER -> {
+				lines.add(Component.literal("Create three false selves that intercept incoming attacks.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Each broken echo dodges, repositions, and retaliates.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal(manifested ? "Manifested: four echoes with a longer lifetime." : "590 MP | 14s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case HELLS_ARMY -> {
+				lines.add(Component.literal("Open Hell's gate and call Radiru's temporary royal guard.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("The guards follow your aggression and cannot harm you.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal(manifested ? "Manifested: seven stronger guards remain longer." : "1200 MP | 32.5s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case WHITE_FLAME_SPIRITUALIZATION -> {
+				lines.add(Component.literal("Unseal Baran's spiritual body without mortal armor.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Adds 25% dodge after Perception; a dodge chains for 0.5 seconds.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal(manifested ? "ACTIVE: skills have entered their sovereign forms." : "800 MP to awaken | 14 MP per second").withStyle(ChatFormatting.YELLOW));
 			}
 			default -> {
 			}
@@ -221,6 +332,10 @@ public class JobSkillManager {
 			case THOMAS_POWER_SMASH -> GoliathCombatManager.castPowerSmash(entity);
 			case THOMAS_COLLAPSE -> GoliathCombatManager.castCollapse(entity);
 			case THOMAS_MANIFESTATION -> GoliathManifestationProcedure.execute(world, x, y, z, entity);
+			case LIU_HEAVENLY_COUNTER -> LiuZhigangCombatManager.castHeavenlyCounter(entity);
+			case LIU_GOLDEN_DRAGON_DANCE -> LiuZhigangCombatManager.castGoldenDragonDance(entity);
+			case LIU_SOVEREIGN_SWORD_DOMAIN -> LiuZhigangCombatManager.castSovereignSwordDomain(entity);
+			case LIU_MANIFESTATION -> LiuZhigangCombatManager.toggleDragonSwordManifestation(entity);
 			case FIRE_CHARGE -> castFireCharge(world, x, y, z, entity);
 			case METEOR_RAIN -> runOldJobAbility(entity, () -> Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case FIREFLIES -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
@@ -230,6 +345,12 @@ public class JobSkillManager {
 			case FROST_COUNTER -> FrostMonarchManager.castFrostCounter(entity);
 			case ABSOLUTE_ZERO -> FrostMonarchManager.castAbsoluteZero(entity);
 			case FROST_SPIRITUALIZATION -> FrostMonarchManager.toggleSpiritualization(entity);
+			case LIGHTNING_BREATH -> WhiteFlameMonarchManager.castLightningBreath(entity);
+			case HELLSTORM_DOMINION -> WhiteFlameMonarchManager.castHellstormDominion(entity);
+			case RADIRU_BLOOD_SPEAR -> WhiteFlameMonarchManager.castRadiruBloodSpear(entity);
+			case DOPPELGANGER -> WhiteFlameMonarchManager.castDoppelganger(entity);
+			case HELLS_ARMY -> WhiteFlameMonarchManager.castHellsArmy(entity);
+			case WHITE_FLAME_SPIRITUALIZATION -> WhiteFlameMonarchManager.toggleSpiritualization(entity);
 			case MONARCH_BEAM -> castMonarchBeam(entity);
 			case LIGHTNING_STORM -> runOldJobAbility(entity, () -> Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case STORM_BURST -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
@@ -239,6 +360,16 @@ public class JobSkillManager {
 		return true;
 	}
 
+	public static boolean release(Entity entity, String skill, int pressedMs) {
+		if (entity == null || skill == null || !isJobSkill(skill))
+			return false;
+		if (FROZEN_PATH.equals(skill)) {
+			FrostMonarchManager.releaseFrozenPath(entity);
+			return true;
+		}
+		return false;
+	}
+
 	public static String cooldownKey(String skill) {
 		return switch (skill) {
 			case FIRE_CHARGE, MONARCH_BEAM -> "job_1";
@@ -246,9 +377,9 @@ public class JobSkillManager {
 			case FIREFLIES, STORM_BURST -> "job_3";
 			case SHADOW_MANIFESTATION, THOMAS_MANIFESTATION -> "job_4";
 			case THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE,
+					LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE, LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION,
 					ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROST_COUNTER,
 					ABSOLUTE_ZERO -> skill;
-			case FROST_SPIRITUALIZATION -> FrostMonarchManager.SPIRITUALIZATION_COOLDOWN;
 			default -> skill;
 		};
 	}
@@ -306,8 +437,11 @@ public class JobSkillManager {
 			case 1 -> List.of(ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION);
 			case 2 -> List.of(FIRE_CHARGE, METEOR_RAIN, FIREFLIES);
 			case 3 -> FROST_SKILLS;
-			case 4 -> List.of(MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST);
+			case 4 -> List.of(LIGHTNING_BREATH, HELLSTORM_DOMINION,
+					RADIRU_BLOOD_SPEAR, DOPPELGANGER, HELLS_ARMY, WHITE_FLAME_SPIRITUALIZATION);
 			case 5 -> List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION);
+			case 6 -> LIU_SKILLS;
+			case 9 -> List.of();
 			default -> List.of();
 		};
 	}

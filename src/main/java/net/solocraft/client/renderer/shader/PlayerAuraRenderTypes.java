@@ -41,7 +41,7 @@ public final class PlayerAuraRenderTypes extends RenderStateShard {
 				new ShaderInstance(
 						event.getResourceProvider(),
 						new ResourceLocation(SololevelingMod.MODID, "rendertype_player_aura"),
-						DefaultVertexFormat.NEW_ENTITY
+						WorldShaderVertexFormat.NEW_ENTITY
 				),
 				shader -> {
 					auraShader = shader;
@@ -75,7 +75,7 @@ public final class PlayerAuraRenderTypes extends RenderStateShard {
 			String namePrefix,
 			boolean additive
 	) {
-		if (shader == null || IrisCompat.isShaderPackInUse()) {
+		if (shader == null) {
 			return FALLBACK_TYPES.computeIfAbsent(
 					texture,
 					RenderType::entityTranslucentEmissive
@@ -100,7 +100,7 @@ public final class PlayerAuraRenderTypes extends RenderStateShard {
 
 			return RenderType.create(
 					namePrefix + resourceLocation.getPath().replace('/', '_'),
-					DefaultVertexFormat.NEW_ENTITY,
+					WorldShaderVertexFormat.NEW_ENTITY,
 					VertexFormat.Mode.QUADS,
 					2048,
 					false,

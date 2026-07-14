@@ -25,7 +25,7 @@ import java.util.Map;
  * <p>Two variants share one shader source: soft translucent smoke that gently
  * occludes, and additive embers that glow. Both fall back to
  * {@link RenderType#entityTranslucentEmissive} when the custom shader is
- * unavailable or an Iris/Oculus shader pack is active.</p>
+	 * unavailable.</p>
  */
 @Mod.EventBusSubscriber(
 		modid = SololevelingMod.MODID,
@@ -50,7 +50,7 @@ public final class AuraSmokeRenderTypes extends RenderStateShard {
 				new ShaderInstance(
 						event.getResourceProvider(),
 						new ResourceLocation(SololevelingMod.MODID, "aura_smoke"),
-						DefaultVertexFormat.NEW_ENTITY
+						WorldShaderVertexFormat.NEW_ENTITY
 				),
 				shader -> {
 					smokeShader = shader;
@@ -62,7 +62,7 @@ public final class AuraSmokeRenderTypes extends RenderStateShard {
 				new ShaderInstance(
 						event.getResourceProvider(),
 						new ResourceLocation(SololevelingMod.MODID, "aura_smoke_add"),
-						DefaultVertexFormat.NEW_ENTITY
+						WorldShaderVertexFormat.NEW_ENTITY
 				),
 				shader -> {
 					emberShader = shader;
@@ -73,9 +73,7 @@ public final class AuraSmokeRenderTypes extends RenderStateShard {
 
 	/** Whether the procedural smoke shader can be used (false forces the fallback). */
 	public static boolean usesCustomShader() {
-		return smokeShader != null
-				&& emberShader != null
-				&& !IrisCompat.isShaderPackInUse();
+		return smokeShader != null && emberShader != null;
 	}
 
 	/** Soft, gently occluding translucent smoke. */
@@ -121,7 +119,7 @@ public final class AuraSmokeRenderTypes extends RenderStateShard {
 
 		return RenderType.create(
 				namePrefix + texture.getPath().replace('/', '_'),
-				DefaultVertexFormat.NEW_ENTITY,
+				WorldShaderVertexFormat.NEW_ENTITY,
 				VertexFormat.Mode.QUADS,
 				2048,
 				false,

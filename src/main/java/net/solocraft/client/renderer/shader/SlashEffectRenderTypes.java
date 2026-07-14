@@ -28,15 +28,15 @@ public class SlashEffectRenderTypes extends RenderStateShard {
 
 	@SubscribeEvent
 	public static void registerShaders(RegisterShadersEvent event) throws IOException {
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_slash_effect"), DefaultVertexFormat.NEW_ENTITY), shader -> slashShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_slash_effect"), WorldShaderVertexFormat.NEW_ENTITY), shader -> slashShader = shader);
 	}
 
 	public static RenderType slash(ResourceLocation texture) {
-		if (slashShader == null || IrisCompat.isShaderPackInUse()) {
+		if (slashShader == null) {
 			return RenderType.entityTranslucentEmissive(texture);
 		}
 		RenderType.CompositeState state = RenderType.CompositeState.builder().setShaderState(new ShaderStateShard(() -> slashShader)).setTextureState(new TextureStateShard(texture, false, false))
 				.setTransparencyState(TRANSLUCENT_TRANSPARENCY).setCullState(NO_CULL).setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).setWriteMaskState(COLOR_WRITE).createCompositeState(false);
-		return RenderType.create("slash_effect", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, false, true, state);
+		return RenderType.create("slash_effect", WorldShaderVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 256, false, true, state);
 	}
 }

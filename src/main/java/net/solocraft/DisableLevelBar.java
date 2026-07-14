@@ -16,11 +16,13 @@ import net.minecraft.client.Minecraft;
 public class DisableLevelBar {
 	@SubscribeEvent
 	public static void RenderHealthBar(RenderGuiOverlayEvent.Pre event) {
-		Entity entity = Minecraft.getInstance().player;
+		Minecraft minecraft = Minecraft.getInstance();
+		Entity entity = minecraft.player;
 		if (entity == null)
 			return;
 			
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).CustomHUD
+		if (!minecraft.options.renderDebug
+				&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).CustomHUD
 				&& SystemClientConfig.isLegacyOverlayEnabled()) {
 			if (VanillaGuiOverlay.EXPERIENCE_BAR.type() == event.getOverlay()) {
 				event.setCanceled(true);

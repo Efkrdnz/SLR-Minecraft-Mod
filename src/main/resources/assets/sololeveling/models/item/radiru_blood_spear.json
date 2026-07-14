@@ -1,0 +1,79 @@
+{
+	"credit": "Made with Blockbench",
+	"texture_size": [64, 64],
+	"textures": {
+		"0": "sololeveling:item/radiru_blood_spear",
+		"particle": "sololeveling:item/radiru_blood_spear"
+	},
+	"elements": [
+		{
+			"from": [7.5, -12, 7.5],
+			"to": [8.5, 25.75, 8.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7.5, 0, 7.5]},
+			"faces": {
+				"north": {"uv": [5.5, 0, 5.75, 9.5], "texture": "#0"},
+				"east": {"uv": [5.5, 0, 5.75, 9.5], "texture": "#0"},
+				"south": {"uv": [5.5, 0, 5.75, 9.5], "texture": "#0"},
+				"west": {"uv": [5.5, 0, 5.75, 9.5], "texture": "#0"},
+				"up": {"uv": [6.75, 3.75, 6.5, 3.5], "texture": "#0"},
+				"down": {"uv": [6.75, 3.75, 6.5, 4], "texture": "#0"}
+			}
+		},
+		{
+			"from": [2.5, -16, 8],
+			"to": [13.5, 32, 8],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7.5, 25.75, 7]},
+			"faces": {
+				"north": {"uv": [0, 0, 2.75, 12], "texture": "#0"},
+				"east": {"uv": [0, 0, 0, 12], "texture": "#0"},
+				"south": {"uv": [2.75, 0, 0, 12], "texture": "#0"},
+				"west": {"uv": [0, 0, 0, 12], "texture": "#0"},
+				"up": {"uv": [2.75, 0, 0, 0], "texture": "#0"},
+				"down": {"uv": [2.75, 0, 0, 0], "texture": "#0"}
+			}
+		},
+		{
+			"from": [8, -16, 2.5],
+			"to": [8, 32, 13.5],
+			"rotation": {"angle": 0, "axis": "y", "origin": [7, 25.75, 8.5]},
+			"faces": {
+				"north": {"uv": [0, 0, 0, 12], "texture": "#0"},
+				"east": {"uv": [2.75, 0, 0, 12], "texture": "#0"},
+				"south": {"uv": [0, 0, 0, 12], "texture": "#0"},
+				"west": {"uv": [0, 0, 2.75, 12], "texture": "#0"},
+				"up": {"uv": [2.75, 0, 0, 0], "rotation": 270, "texture": "#0"},
+				"down": {"uv": [2.75, 0, 0, 0], "rotation": 90, "texture": "#0"}
+			}
+		}
+	],
+	"display": {
+		"firstperson_righthand": {
+			"rotation": [-12.25, 0, 0],
+			"scale": [0.62305, 0.62305, 0.62305]
+		},
+		"firstperson_lefthand": {
+			"rotation": [-11.25, 0, 0],
+			"scale": [0.62305, 0.62305, 0.62305]
+		},
+		"ground": {
+			"translation": [0, 3, 0],
+			"scale": [0.63477, 0.63477, 0.63477]
+		},
+		"gui": {
+			"rotation": [0, 0, -45.5],
+			"scale": [0.44141, 0.44141, 0.44141]
+		},
+		"fixed": {
+			"rotation": [0, 0, 45],
+			"scale": [0.48047, 0.48047, 0.48047]
+		}
+	},
+	"groups": [
+		{
+			"name": "gg",
+			"origin": [8, 8, 8],
+			"color": 0,
+			"children": [0, 1, 2]
+		}
+	]
+}

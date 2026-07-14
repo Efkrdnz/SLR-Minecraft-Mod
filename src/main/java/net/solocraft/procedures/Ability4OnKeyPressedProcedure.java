@@ -30,7 +30,7 @@ public class Ability4OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		if (FrostMonarchManager.isFrostMonarch(entity)) {
+		if (FrostMonarchManager.isDirectAbilityMode(entity)) {
 			FrostMonarchManager.castFrostCounter(entity);
 			return;
 		}

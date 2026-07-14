@@ -1,5 +1,6 @@
 package net.solocraft.mixins;
 
+import net.solocraft.util.BeastMonarchManager;
 import net.solocraft.util.GoliathCombatManager;
 
 import net.minecraft.client.Minecraft;
@@ -15,6 +16,7 @@ public abstract class GoliathFirstPersonHandMixin {
 	@ModifyVariable(method = "renderArmWithItem", at = @At("HEAD"), argsOnly = true)
 	private ItemStack sololeveling$hideGoliathMainHand(ItemStack stack) {
 		Minecraft minecraft = Minecraft.getInstance();
-		return minecraft.player != null && GoliathCombatManager.isCombatStance(minecraft.player) ? ItemStack.EMPTY : stack;
+		return minecraft.player != null && (GoliathCombatManager.isCombatStance(minecraft.player)
+				|| BeastMonarchManager.isFangStance(minecraft.player)) ? ItemStack.EMPTY : stack;
 	}
 }

@@ -1,5 +1,11 @@
 package net.solocraft.init;
 
+import net.solocraft.client.renderer.RadiruBloodSpearRenderer;
+import net.solocraft.client.renderer.GlacialPursuitRenderer;
+import net.solocraft.client.renderer.BeastVfxRenderer;
+import net.solocraft.client.renderer.LiuSwordBeamRenderer;
+import net.solocraft.client.renderer.LiuSwordVfxRenderer;
+import net.solocraft.client.renderer.WhiteFlameVfxRenderer;
 import net.solocraft.client.renderer.WhiteFlameRenderer;
 import net.solocraft.client.renderer.VulcanRenderer;
 import net.solocraft.client.renderer.TuskShadowRenderer;
@@ -274,6 +280,12 @@ public class SololevelingModEntityRenderers {
 		event.registerEntityRenderer(SololevelingModEntities.SLASH_6.get(), Slash6Renderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SLASH_EFFECT.get(), SlashEffectRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.BASIC_ATTACK_SLASH.get(), BasicAttackSlashRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.GLACIAL_PURSUIT.get(), GlacialPursuitRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.WHITE_FLAME_VFX.get(), WhiteFlameVfxRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.RADIRU_BLOOD_SPEAR.get(), RadiruBloodSpearRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.LIU_SWORD_VFX.get(), LiuSwordVfxRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.BEAST_VFX.get(), BeastVfxRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.LIU_SWORD_BEAM.get(), LiuSwordBeamRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.DUAL_WIELD_FLURRY.get(), DualWieldFlurryRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.CROSS_STRIKE.get(), CrossStrikeRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.QUICK_SLASHES.get(), QuickSlashesRenderer::new);

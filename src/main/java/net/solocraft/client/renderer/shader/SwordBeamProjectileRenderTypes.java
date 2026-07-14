@@ -27,15 +27,15 @@ public class SwordBeamProjectileRenderTypes extends RenderStateShard {
 
 	@SubscribeEvent
 	public static void registerShaders(RegisterShadersEvent event) throws IOException {
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_sword_beam_projectile"), DefaultVertexFormat.NEW_ENTITY), shader -> projectileShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_sword_beam_projectile"), WorldShaderVertexFormat.NEW_ENTITY), shader -> projectileShader = shader);
 	}
 
 	public static RenderType projectile(ResourceLocation texture) {
-		if (projectileShader == null || IrisCompat.isShaderPackInUse()) {
+		if (projectileShader == null) {
 			return RenderType.entityTranslucentEmissive(texture);
 		}
 		RenderType.CompositeState state = RenderType.CompositeState.builder().setShaderState(new ShaderStateShard(() -> projectileShader)).setTextureState(new TextureStateShard(texture, false, false))
 				.setTransparencyState(TRANSLUCENT_TRANSPARENCY).setDepthTestState(LEQUAL_DEPTH_TEST).setCullState(NO_CULL).setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).setWriteMaskState(COLOR_WRITE).createCompositeState(false);
-		return RenderType.create("sword_beam_projectile", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 512, false, true, state);
+		return RenderType.create("sword_beam_projectile", WorldShaderVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 512, false, true, state);
 	}
 }

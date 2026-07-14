@@ -1,6 +1,7 @@
 package net.solocraft.client.renderer;
 
 import net.solocraft.client.renderer.shader.CrossStrikeRenderTypes;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.entity.CrossStrikeEntity;
 
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -31,7 +32,7 @@ public class CrossStrikeRenderer extends EntityRenderer<CrossStrikeEntity> {
 		float halfWidth = 4.35F * scale;
 		float halfHeight = 0.24F * scale;
 		RenderType renderType = CrossStrikeRenderTypes.cross(TEXTURE);
-		VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
+		VertexConsumer vertexConsumer = DeferredWorldShaderRenderer.buffer(bufferSource, renderType, false);
 		poseStack.pushPose();
 		poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
 		drawSlash(vertexConsumer, poseStack, -43.0F, halfWidth, halfHeight, Math.round(235.0F * fade));

@@ -1,5 +1,6 @@
 package net.solocraft.mixins;
 
+import net.solocraft.util.BeastMonarchManager;
 import net.solocraft.util.GoliathCombatManager;
 
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
@@ -14,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class GoliathThirdPersonHandMixin {
 	@ModifyVariable(method = "renderArmWithItem", at = @At("HEAD"), argsOnly = true)
 	private ItemStack sololeveling$hideGoliathMainHand(ItemStack stack, LivingEntity entity) {
-		return GoliathCombatManager.isCombatStance(entity) ? ItemStack.EMPTY : stack;
+		return GoliathCombatManager.isCombatStance(entity) || BeastMonarchManager.isFangStance(entity)
+				? ItemStack.EMPTY : stack;
 	}
 }

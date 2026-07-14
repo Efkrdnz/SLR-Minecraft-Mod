@@ -38,15 +38,20 @@ import net.solocraft.entity.AncientGolemEntity;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.Difficulty;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.CompoundTag;
 
 import javax.annotation.Nullable;
 
@@ -56,6 +61,10 @@ import java.util.HashMap;
 
 @Mod.EventBusSubscriber
 public class XPGainProcedure {
+	private static final String LAST_PLAYER_DAMAGE_UUID = "SLRLastPlayerDamageUUID";
+	private static final String LAST_PLAYER_DAMAGE_EXPIRES = "SLRLastPlayerDamageExpires";
+	private static final long FIRE_KILL_CREDIT_WINDOW_TICKS = 20L * 20L;
+
 	// Define XP rewards for each entity type
 	private static final Map<Class<? extends Entity>, Integer> XP_REWARDS = new HashMap<>();
 	static {
@@ -96,11 +105,48 @@ public class XPGainProcedure {
 		XP_REWARDS.put(KamishEntity.class, 20000);
 	}
 
+	@SubscribeEvent(priority = EventPriority.LOWEST)
+	public static void onEntityHurt(LivingHurtEvent event) {
+		if (event == null || event.isCanceled() || event.getAmount() <= 0 || event.getEntity().level().isClientSide())
+			return;
+		Player player = ShadowKillCreditHelper.creditedPlayer(event.getEntity().level(), event.getSource().getEntity());
+		if (player == null)
+			player = ShadowKillCreditHelper.creditedPlayer(event.getEntity().level(), event.getSource().getDirectEntity());
+		if (player == null || player == event.getEntity())
+			return;
+		CompoundTag data = event.getEntity().getPersistentData();
+		data.putUUID(LAST_PLAYER_DAMAGE_UUID, player.getUUID());
+		data.putLong(LAST_PLAYER_DAMAGE_EXPIRES, event.getEntity().level().getGameTime() + FIRE_KILL_CREDIT_WINDOW_TICKS);
+	}
+
 	@SubscribeEvent
 	public static void onEntityDeath(LivingDeathEvent event) {
 		if (event != null && event.getEntity() != null) {
-			execute(event, event.getEntity().level(), event.getEntity(), event.getSource().getEntity());
+			Entity source = event.getSource().getEntity();
+			Player creditedPlayer = ShadowKillCreditHelper.creditedPlayer(event.getEntity().level(), source);
+			if (creditedPlayer == null)
+				creditedPlayer = ShadowKillCreditHelper.creditedPlayer(event.getEntity().level(), event.getSource().getDirectEntity());
+			if (creditedPlayer == null && event.getSource().is(DamageTypeTags.IS_FIRE))
+				creditedPlayer = fireKillCredit(event.getEntity());
+			execute(event, event.getEntity().level(), event.getEntity(), creditedPlayer != null ? creditedPlayer : source);
 		}
+	}
+
+	private static Player fireKillCredit(LivingEntity victim) {
+		Player vanillaCredit = ShadowKillCreditHelper.creditedPlayer(victim.level(), victim.getKillCredit());
+		if (vanillaCredit != null)
+			return vanillaCredit;
+		CompoundTag data = victim.getPersistentData();
+		if (!data.hasUUID(LAST_PLAYER_DAMAGE_UUID))
+			return null;
+		if (data.getLong(LAST_PLAYER_DAMAGE_EXPIRES) < victim.level().getGameTime()) {
+			data.remove(LAST_PLAYER_DAMAGE_UUID);
+			data.remove(LAST_PLAYER_DAMAGE_EXPIRES);
+			return null;
+		}
+		if (victim.level() instanceof ServerLevel serverLevel)
+			return serverLevel.getServer().getPlayerList().getPlayer(data.getUUID(LAST_PLAYER_DAMAGE_UUID));
+		return null;
 	}
 
 	public static void execute(LevelAccessor world, Entity entity, Entity sourceEntity) {
@@ -110,23 +156,9 @@ public class XPGainProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity, Entity sourceEntity) {
 		if (entity == null || sourceEntity == null)
 			return;
-		// Determine who should receive XP
-		final Entity xpReceiver;
-		// If the source is a player, they get XP
-		if (sourceEntity instanceof Player) {
-			xpReceiver = sourceEntity;
-		}
-		// If the source is a tamed entity, give XP to its owner
-		else if (sourceEntity instanceof TamableAnimal tamable && tamable.isTame()) {
-			Entity owner = tamable.getOwner();
-			if (owner instanceof Player) {
-				xpReceiver = owner;
-			} else {
-				return; // No valid XP receiver found
-			}
-		} else {
-			return; // If source is neither a player nor a tamed entity, ignore XP gain
-		}
+		Player xpReceiver = ShadowKillCreditHelper.creditedPlayer(world, sourceEntity);
+		if (xpReceiver == null)
+			return;
 		// Retrieve player variables
 		SololevelingModVariables.PlayerVariables playerVars = xpReceiver.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		// Ensure the XP system is enabled for the player
@@ -142,7 +174,7 @@ public class XPGainProcedure {
 		int baseXP = isListed ? XP_REWARDS.get(entity.getClass()) : 1;
 		int xpMultiplier = world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER);
 		double diffMultiplier = difficultyMultiplier(world);
-		awardBaseXp(world, (Player) xpReceiver, baseXP, diffMultiplier, xpMultiplier);
+		awardBaseXp(world, xpReceiver, baseXP, diffMultiplier, xpMultiplier);
 	}
 
 	public static void awardBaseXp(LevelAccessor world, Player player, int baseXP) {

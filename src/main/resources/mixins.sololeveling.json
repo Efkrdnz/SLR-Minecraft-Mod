@@ -5,6 +5,7 @@
   "refmap": "mixins.sololeveling.refmap.json",
   "mixins": [
     "DisableHotbarKeymappingMixin",
+    "LiuManifestedSwordMenuMixin",
     "SMixin"
   ],
   "client": [

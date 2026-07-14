@@ -28,9 +28,12 @@ public class Ability2OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, int inputType, int pressedMs) {
 		if (entity == null)
 			return;
-		if (FrostMonarchManager.isFrostMonarch(entity)) {
+		if (FrostMonarchManager.isDirectAbilityMode(entity)
+				|| inputType == 1 && FrostMonarchManager.hasActiveFrozenPath(entity)) {
 			if (inputType == 0)
 				FrostMonarchManager.castFrozenPath(entity);
+			else if (inputType == 1)
+				FrostMonarchManager.releaseFrozenPath(entity);
 			return;
 		}
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).combatmode) {

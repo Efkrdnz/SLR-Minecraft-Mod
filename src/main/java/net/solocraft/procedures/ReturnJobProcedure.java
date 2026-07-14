@@ -16,6 +16,8 @@ public class ReturnJobProcedure {
 			return "\u00A7f\u00A7l" + "Job: " + "Frost Monarch";
 		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
 			return "\u00A7f\u00A7l" + "Job: " + "Monarch Of White Flames";
+		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 9) {
+			return "\u00A7f\u00A7l" + "Job: " + "Monarch Of Fangs";
 		}
 		return "\u00A7f\u00A7l" + "Job: " + "None";
 	}

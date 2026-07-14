@@ -1,6 +1,7 @@
 package net.solocraft.client.renderer;
 
 import net.solocraft.client.renderer.shader.SlashEffectRenderTypes;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.entity.SlashEffectEntity;
 
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -53,7 +54,8 @@ public class SlashEffectRenderer extends EntityRenderer<SlashEffectEntity> {
 		poseStack.pushPose();
 		poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
 		poseStack.mulPose(Axis.ZP.rotationDegrees(entity.getRoll()));
-		VertexConsumer vertexConsumer = bufferSource.getBuffer(SlashEffectRenderTypes.slash(TEXTURE));
+		VertexConsumer vertexConsumer = DeferredWorldShaderRenderer.buffer(bufferSource,
+				SlashEffectRenderTypes.slash(TEXTURE));
 		var pose = poseStack.last();
 		int glowAlpha = Math.round(48.0F * fade);
 		int coreAlpha = Math.round(235.0F * fade);

@@ -5,11 +5,15 @@ import net.solocraft.client.gui.system.SystemContainerScreen;
 import net.solocraft.client.gui.system.SystemScreen;
 import net.solocraft.client.gui.system.SystemTooltip;
 import net.solocraft.network.EquippedAbilitiesButtonMessage;
+import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.ReturnAbilitySlotColorProcedure;
 import net.solocraft.procedures.ReturnAbilitySlotProcedure;
+import net.solocraft.procedures.SkillSlotHelper;
+import net.solocraft.util.JobSkillManager;
 import net.solocraft.world.inventory.EquippedAbilitiesMenu;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -69,16 +73,24 @@ public class EquippedAbilitiesScreen extends SystemContainerScreen<EquippedAbili
 		int startY = pRelY + 39;
 		String page = abilityPage == 1 ? "SLOTS 1-8" : "SLOTS 9-16";
 		g.drawString(this.font, page, pRelX + 12, pRelY + 22, ShopStyle.ACCENT, false);
+		SololevelingModVariables.PlayerVariables vars = entity.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables());
 
 		for (int i = 0; i < ROWS; i++) {
 			int slot = displaySlot(i + 1);
 			int rowY = startY + i * ROW_H;
 			int color = ReturnAbilitySlotColorProcedure.execute(entity, slot);
+			String rawSkill = SkillSlotHelper.getSlot(vars, slot);
+			boolean whiteFlame = JobSkillManager.isWhiteFlameSkill(rawSkill);
 			String skill = ReturnAbilitySlotProcedure.execute(entity, slot);
 			if (skill.length() > 22)
 				skill = skill.substring(0, 21) + "...";
 			g.drawString(this.font, slot < 10 ? "0" + slot : String.valueOf(slot), pRelX + 16, rowY, 0xFF8FB8D8, false);
-			g.drawString(this.font, skill, pRelX + 44, rowY, color, false);
+			Component skillText = Component.literal(skill);
+			if (whiteFlame)
+				skillText = skillText.copy().withStyle(ChatFormatting.BOLD);
+			g.drawString(this.font, skillText, pRelX + 44, rowY, whiteFlame ? 0xFFFFFFFF : color, false);
 		}
 	}
 

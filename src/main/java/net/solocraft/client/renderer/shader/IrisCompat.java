@@ -6,62 +6,68 @@ import org.slf4j.Logger;
 
 import java.lang.reflect.Method;
 
-/**
- * Soft compatibility bridge to Iris / Oculus.
- *
- * <p>Iris (and its Forge port Oculus) replace the entire rendering pipeline with
- * a shaderpack's gbuffer programs when a pack is enabled, and cannot run a mod's
- * custom core shaders. Any {@code RenderType} built on a custom
- * {@code ShaderStateShard} is therefore dropped/misrendered while a pack is
- * active. Our slash render types query {@link #isShaderPackInUse()} and fall
- * back to a vanilla render type in that case, so the effects stay visible.
- *
- * <p>Oculus is an optional runtime mod and is not on the compile classpath, so
- * the Iris API is accessed purely by reflection. If Oculus is absent (or the API
- * ever changes), this reports {@code false} and the custom shaders are used
- * exactly as before — it can never crash or hard-depend on Iris.
- */
+/** Optional Iris/Oculus access without a required runtime dependency. */
 public final class IrisCompat {
 	private static final Logger LOGGER = LogUtils.getLogger();
-	private static volatile boolean initialized = false;
-	private static boolean available = false;
+	private static volatile boolean initialized;
+	private static boolean available;
 	private static Object irisApi;
 	private static Method isShaderPackInUseMethod;
+	private static Method isRenderingShadowPassMethod;
 
 	private IrisCompat() {
 	}
 
-	/** @return true only if Oculus/Iris is installed AND a shaderpack is currently active. */
+	/** True only while Iris/Oculus is actively rendering a shader pack. */
 	public static boolean isShaderPackInUse() {
-		if (!initialized)
-			init();
-		if (!available)
+		initialize();
+		return invokeBoolean(isShaderPackInUseMethod);
+	}
+
+	/** True while the optional shader mod is rendering its shadow camera. */
+	public static boolean isRenderingShadowPass() {
+		initialize();
+		return invokeBoolean(isRenderingShadowPassMethod);
+	}
+
+	public static boolean isAvailable() {
+		initialize();
+		return available;
+	}
+
+	private static boolean invokeBoolean(Method method) {
+		if (!available || method == null)
 			return false;
 		try {
-			return isShaderPackInUseMethod.invoke(irisApi) instanceof Boolean b && b;
-		} catch (Throwable t) {
+			return Boolean.TRUE.equals(method.invoke(irisApi));
+		} catch (ReflectiveOperationException | LinkageError ignored) {
 			return false;
 		}
 	}
 
-	private static synchronized void init() {
+	private static synchronized void initialize() {
 		if (initialized)
 			return;
 		initialized = true;
-		// current Iris/Oculus uses net.irisshaders.*; older Oculus shaded net.coderbot.*
-		for (String className : new String[] { "net.irisshaders.iris.api.v0.IrisApi", "net.coderbot.iris.api.v0.IrisApi" }) {
+		for (String className : new String[] {
+				"net.irisshaders.iris.api.v0.IrisApi",
+				"net.coderbot.iris.api.v0.IrisApi"
+		}) {
 			try {
-				Class<?> api = Class.forName(className);
-				irisApi = api.getMethod("getInstance").invoke(null);
-				isShaderPackInUseMethod = api.getMethod("isShaderPackInUse");
+				Class<?> apiClass = Class.forName(className);
+				irisApi = apiClass.getMethod("getInstance").invoke(null);
+				isShaderPackInUseMethod = apiClass.getMethod("isShaderPackInUse");
+				isRenderingShadowPassMethod = apiClass.getMethod("isRenderingShadowPass");
 				available = true;
-				LOGGER.info("[SoloLeveling] Iris/Oculus detected ({}). Slash effects will fall back to a vanilla render type while a shaderpack is active.", className);
+				LOGGER.info("[SoloLeveling] Iris/Oculus detected ({}); world quad shaders will use deferred compatibility when a pack is active.", className);
 				return;
-			} catch (Throwable ignored) {
-				// try next candidate
+			} catch (ReflectiveOperationException | LinkageError ignored) {
+				irisApi = null;
+				isShaderPackInUseMethod = null;
+				isRenderingShadowPassMethod = null;
 			}
 		}
 		available = false;
-		LOGGER.info("[SoloLeveling] Iris/Oculus not detected; using custom slash shaders normally.");
+		LOGGER.info("[SoloLeveling] Iris/Oculus not detected; world quad shaders will use the normal render path.");
 	}
 }

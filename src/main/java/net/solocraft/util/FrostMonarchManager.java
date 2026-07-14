@@ -2,12 +2,14 @@ package net.solocraft.util;
 
 import net.solocraft.SololevelingMod;
 import net.solocraft.block.FrostCausewayBlock;
+import net.solocraft.entity.GlacialPursuitEntity;
 import net.solocraft.init.SololevelingModBlocks;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.EntityMountEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -78,10 +80,11 @@ public final class FrostMonarchManager {
 	public static final String WHITEOUT_PROCESSION = "Whiteout Procession";
 	public static final String SPIRITUALIZATION = "Frost Monarch Spiritualization";
 	public static final String AURA_ID = "frost_spiritualization";
+	public static final int SPIRITUALIZATION_MANA_PER_SECOND = 14;
 
-	public static final String SPIRITUALIZATION_COOLDOWN = "frost_spiritualization_exhaustion";
+	private static final String LEGACY_SPIRITUALIZATION_COOLDOWN = "frost_spiritualization_exhaustion";
 	private static final String SPIRITUALIZED = "frost_spiritualized";
-	private static final String SPIRITUALIZED_UNTIL = "frost_spiritualized_until";
+	private static final String LEGACY_SPIRITUALIZED_UNTIL = "frost_spiritualized_until";
 	private static final List<String> LEGACY_PROGRESS_KEYS = List.of(
 			"frost_winter_prongs", "frost_last_prong_source", "frost_last_prong_tick",
 			"frost_last_payoff_tick", "frost_next_decay_tick", "frost_royal_seals",
@@ -91,6 +94,11 @@ public final class FrostMonarchManager {
 	private static final String WHITEOUT_PVE = "frost_whiteout_pve";
 	private static final String WHITEOUT_OWNER = "frost_whiteout_owner";
 	private static final String STILLNESS_IMMUNE_UNTIL = "frost_stillness_immune_until";
+	private static final String PATH_FALL_PROTECTION_UNTIL = "frost_path_fall_protection_until";
+	private static final int MAX_FROSTBITE = 5;
+	private static final int FROSTBITE_LIFETIME = 120;
+	private static final int PURSUIT_BLOCK_GRACE_TICKS = 12;
+	private static final int PURSUIT_REMOUNT_GRACE_TICKS = 10;
 	private static final TagKey<EntityType<?>> BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE,
 			new ResourceLocation("soloboss"));
 	private static final TagKey<EntityType<?>> SHADOWS = TagKey.create(Registries.ENTITY_TYPE,
@@ -98,13 +106,13 @@ public final class FrostMonarchManager {
 
 	private static final int SPEAR_BIT = 1;
 	private static final int STILLNESS_BIT = 1 << 1;
-	private static final int CAUSEWAY_BIT = 1 << 2;
 	private static final int WINTER_BIT = 1 << 3;
 	private static final int WHITEOUT_BIT = 1 << 4;
 
 	private static final Map<UUID, SpearState> SPEARS = new HashMap<>();
 	private static final Map<UUID, StillnessState> STILLNESS = new HashMap<>();
-	private static final Map<UUID, CausewayState> CAUSEWAYS = new HashMap<>();
+	private static final Map<UUID, GlacialPursuitState> GLACIAL_PURSUITS = new HashMap<>();
+	private static final Map<UUID, FrostbiteState> FROSTBITE = new HashMap<>();
 	private static final Map<UUID, WinterState> WINTERS = new HashMap<>();
 	private static final Map<UUID, WhiteoutState> WHITEOUTS = new HashMap<>();
 	private static final Map<UUID, FrozenTargetState> FROZEN_TARGETS = new HashMap<>();
@@ -119,11 +127,17 @@ public final class FrostMonarchManager {
 				.map(data -> (int) data.JOB == 3).orElse(false);
 	}
 
+	/** X/C/V/B use Frost job actions only while the universal combat controls are off. */
+	public static boolean isDirectAbilityMode(Entity entity) {
+		return isFrostMonarch(entity) && !variables(entity).combatmode;
+	}
+
+	public static boolean hasActiveFrozenPath(Entity entity) {
+		return entity != null && GLACIAL_PURSUITS.containsKey(entity.getUUID());
+	}
+
 	public static boolean isSpiritualized(Entity entity) {
-		if (!(entity instanceof ServerPlayer player))
-			return entity != null && entity.getPersistentData().getBoolean(SPIRITUALIZED);
-		return player.getPersistentData().getBoolean(SPIRITUALIZED)
-				&& player.getPersistentData().getLong(SPIRITUALIZED_UNTIL) >= player.level().getGameTime();
+		return entity != null && entity.getPersistentData().getBoolean(SPIRITUALIZED);
 	}
 
 	public static void castIceSpear(Entity entity) {
@@ -198,15 +212,15 @@ public final class FrostMonarchManager {
 		if (!(entity instanceof ServerPlayer player) || !isFrostMonarch(player))
 			return;
 		boolean manifested = isSpiritualized(player);
-		int mana = manifested ? 340 : 300;
+		int mana = manifested ? 320 : 280;
 		if (!canStartCast(player, FLASH_FREEZE, mana, 0))
 			return;
-		commitCast(player, FLASH_FREEZE, mana, 200, 0);
+		commitCast(player, FLASH_FREEZE, mana, 140, 0);
 		double range = manifested ? 12.0D : 9.0D;
 		double minimumDot = manifested ? 0.67D : 0.78D;
 		List<LivingEntity> targets = findConeTargets(player, range, 8, minimumDot);
 		for (LivingEntity target : targets)
-			applyFreeze(player, target, manifested ? 40 : 30, manifested);
+			dealFrostDamage(player, target, flashFreezeDamage(player, target, manifested), 3, true);
 		showFlashFreeze(player, range, manifested);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
 				SoundSource.PLAYERS, 1.0F, manifested ? 0.72F : 0.88F);
@@ -216,12 +230,12 @@ public final class FrostMonarchManager {
 		if (!(entity instanceof ServerPlayer player) || !isFrostMonarch(player))
 			return;
 		boolean manifested = isSpiritualized(player);
-		int mana = manifested ? 300 : 260;
+		int mana = manifested ? 280 : 240;
 		if (!canStartCast(player, FROST_COUNTER, mana, 0))
 			return;
-		commitCast(player, FROST_COUNTER, mana, 240, 0);
+		commitCast(player, FROST_COUNTER, mana, 180, 0);
 		FROST_COUNTERS.put(player.getUUID(), new FrostCounterState(
-				player.level().getGameTime() + (manifested ? 100 : 80), manifested));
+				player.level().getGameTime() + (manifested ? 40 : 32), manifested));
 		player.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getEyeY() - 0.4D,
 				player.getZ(), 28, 0.55D, 0.75D, 0.55D, 0.03D);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.SHIELD_BLOCK,
@@ -231,14 +245,19 @@ public final class FrostMonarchManager {
 	public static void castAbsoluteZero(Entity entity) {
 		if (!(entity instanceof ServerPlayer player) || !isFrostMonarch(player))
 			return;
+		AbsoluteZeroState existing = ABSOLUTE_ZEROS.get(player.getUUID());
+		if (existing != null) {
+			detonateAbsoluteZero(player, existing, 1.0F);
+			return;
+		}
 		boolean manifested = isSpiritualized(player);
 		int mana = manifested ? 700 : 600;
 		if (!canStartCast(player, ABSOLUTE_ZERO, mana, 0))
 			return;
-		commitCast(player, ABSOLUTE_ZERO, mana, 440, 0);
+		commitCast(player, ABSOLUTE_ZERO, mana, 400, 0);
 		long now = player.level().getGameTime();
 		ABSOLUTE_ZEROS.put(player.getUUID(), new AbsoluteZeroState(
-				now + (manifested ? 200 : 160), manifested));
+				now + (manifested ? 200 : 160), now + 6, manifested));
 		player.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY() + 0.2D,
 				player.getZ(), manifested ? 90 : 65, manifested ? 5.0D : 4.0D,
 				0.35D, manifested ? 5.0D : 4.0D, 0.05D);
@@ -273,30 +292,46 @@ public final class FrostMonarchManager {
 	public static void castFrozenPath(Entity entity) {
 		if (!(entity instanceof ServerPlayer player) || !isFrostMonarch(player))
 			return;
+		if (GLACIAL_PURSUITS.containsKey(player.getUUID()))
+			return;
 		boolean manifested = isSpiritualized(player);
-		int mana = manifested ? 280 : 240;
+		boolean riderMode = player.isShiftKeyDown();
+		int mana = (manifested ? 210 : 180) + (riderMode ? 30 : 0);
 		if (!canStartCast(player, FROZEN_PATH, mana, 0))
 			return;
-		removeCauseway(player.getUUID());
-		PathCandidate candidate = solveFrozenPath(player, manifested ? 32 : 24, manifested ? 5 : 3);
 		ServerLevel level = player.serverLevel();
-		Map<BlockPos, Integer> pathCells = new LinkedHashMap<>();
-		for (Map.Entry<BlockPos, Integer> entry : candidate.stepsByPos.entrySet()) {
-			BlockPos pos = entry.getKey();
-			FrozenCellResult result = freezePathCell(player, pos);
-			if (result.tracked())
-				pathCells.put(pos.immutable(), entry.getValue());
-		}
-		if (pathCells.isEmpty()) {
-			message(player, "Frozen Path could not cross this protected area.", ChatFormatting.RED);
+		Vec3 direction = pursuitLookDirection(player, riderMode);
+		Vec3 riderForward = horizontal(direction);
+		if (riderForward.lengthSqr() < 0.01D)
+			riderForward = Vec3.directionFromRotation(0.0F, player.getYRot());
+		Vec3 start = riderMode
+				? player.position().add(riderForward.normalize().scale(0.72D)).add(0.0D, 0.06D, 0.0D)
+				: player.getEyePosition().add(direction.scale(0.82D));
+		GlacialPursuitEntity pursuit = GlacialPursuitEntity.spawn(level, player, start, direction,
+				riderMode, manifested);
+		if (!pursuit.isAddedToWorld()) {
+			pursuit.discard();
+			message(player, "The frozen current failed to form.", ChatFormatting.RED);
 			return;
 		}
-		commitCast(player, FROZEN_PATH, mana, 180, 0);
-		CAUSEWAYS.put(player.getUUID(), new CausewayState(level.dimension(), pathCells,
-				candidate.direction, candidate.baseY, level.getGameTime() + 240, manifested));
-		level.playSound(null, player.blockPosition(), SoundEvents.GLASS_PLACE,
-				SoundSource.PLAYERS, 1.0F, 0.72F);
-		spawnCausewayWave(level, pathCells);
+		consumeMana(player, mana);
+		long now = level.getGameTime();
+		GlacialPursuitState state = new GlacialPursuitState(level.dimension(), pursuit.getUUID(),
+				direction, start, now, now + (manifested ? 120 : 100),
+				riderMode, manifested);
+		GLACIAL_PURSUITS.put(player.getUUID(), state);
+		if (riderMode)
+			player.startRiding(pursuit, true);
+		level.playSound(null, player.blockPosition(), SoundEvents.TRIDENT_RIPTIDE_2,
+				SoundSource.PLAYERS, 0.9F, manifested ? 0.72F : 0.86F);
+	}
+
+	public static void releaseFrozenPath(Entity entity) {
+		if (!(entity instanceof ServerPlayer player))
+			return;
+		GlacialPursuitState state = GLACIAL_PURSUITS.get(player.getUUID());
+		if (state != null)
+			endGlacialPursuit(player, state, true, true);
 	}
 
 	public static void castWinterRemembers(Entity entity) {
@@ -348,19 +383,18 @@ public final class FrostMonarchManager {
 	public static void toggleSpiritualization(Entity entity) {
 		if (!(entity instanceof ServerPlayer player) || !isFrostMonarch(player))
 			return;
+		clearObsoleteSpiritualizationCooldowns(player);
 		if (isSpiritualized(player)) {
-			endSpiritualization(player, true);
+			endSpiritualization(player, false);
 			return;
 		}
-		if (CooldownManager.isOnCooldown(player, SPIRITUALIZATION_COOLDOWN)) {
-			message(player, "Your spiritual body is exhausted for "
-					+ CooldownManager.getRemainingSeconds(player, SPIRITUALIZATION_COOLDOWN) + "s.", ChatFormatting.RED);
+		if (!player.isCreative() && variables(player).MP < SPIRITUALIZATION_MANA_PER_SECOND) {
+			message(player, "Not enough MP to sustain Frost Spiritualization.", ChatFormatting.RED);
 			return;
 		}
 		clearLegacyProgress(player);
-		long now = player.level().getGameTime();
 		player.getPersistentData().putBoolean(SPIRITUALIZED, true);
-		player.getPersistentData().putLong(SPIRITUALIZED_UNTIL, now + 480);
+		player.getPersistentData().remove(LEGACY_SPIRITUALIZED_UNTIL);
 		PlayerAuraSystem.setContinuous(player, AURA_ID, 1.2F);
 		player.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getEyeY(), player.getZ(),
 				55, 0.55D, 0.95D, 0.55D, 0.08D);
@@ -380,16 +414,20 @@ public final class FrostMonarchManager {
 			return;
 		}
 		long now = player.level().getGameTime();
-		if (player.getPersistentData().getBoolean(SPIRITUALIZED)
-				&& player.getPersistentData().getLong(SPIRITUALIZED_UNTIL) < now)
-			endSpiritualization(player, true);
+		clearObsoleteSpiritualizationCooldowns(player);
+		if (player.getPersistentData().getBoolean(SPIRITUALIZED)) {
+			player.getPersistentData().remove(LEGACY_SPIRITUALIZED_UNTIL);
+			if (player.tickCount % 20 == 0 && !drainSpiritualizationMana(player))
+				endSpiritualization(player, true);
+		}
 		clearLegacyProgress(player);
 		updateSpear(player, now);
+		updateFrostbite(player, now);
 		updateFrozenTargets(player, now);
 		updateFrostCounter(player, now);
 		updateAbsoluteZero(player, now);
 		updateStillness(player, now);
-		updateCauseway(player, now);
+		updateGlacialPursuit(player, now);
 		updateWinter(player, now);
 		updateWhiteout(player, now);
 	}
@@ -398,6 +436,12 @@ public final class FrostMonarchManager {
 	public static void onFrostCounterHurt(LivingHurtEvent event) {
 		if (!(event.getEntity() instanceof ServerPlayer player) || player.level().isClientSide())
 			return;
+		if (event.getSource().is(DamageTypes.FALL)
+				&& player.getPersistentData().getLong(PATH_FALL_PROTECTION_UNTIL) >= player.level().getGameTime()) {
+			event.setCanceled(true);
+			player.fallDistance = 0.0F;
+			return;
+		}
 		if (event.isCanceled() || event.getAmount() <= 0.0F)
 			return;
 		FrostCounterState state = FROST_COUNTERS.get(player.getUUID());
@@ -411,7 +455,7 @@ public final class FrostMonarchManager {
 			return;
 		FROST_COUNTERS.remove(player.getUUID());
 		event.setAmount(event.getAmount() * (state.manifested ? 0.25F : 0.40F));
-		applyFreeze(player, attacker, state.manifested ? 35 : 25, state.manifested);
+		dealFrostDamage(player, attacker, frostCounterDamage(player, attacker, state.manifested), 4, true);
 		player.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getEyeY(), player.getZ(),
 				36, 0.65D, 0.85D, 0.65D, 0.08D);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.GLASS_BREAK,
@@ -427,12 +471,9 @@ public final class FrostMonarchManager {
 				|| !attacker.getUUID().equals(state.ownerId))
 			return;
 		releaseFreeze(event.getEntity());
-		event.setAmount(event.getAmount() * (state.manifested ? 1.35F : 1.25F));
-		attacker.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, event.getEntity().getX(),
-				event.getEntity().getEyeY(), event.getEntity().getZ(), 28,
-				0.35D, 0.45D, 0.35D, 0.09D);
-		attacker.level().playSound(null, event.getEntity().blockPosition(), SoundEvents.GLASS_BREAK,
-				SoundSource.PLAYERS, 0.9F, 1.65F);
+		event.setAmount(event.getAmount() * (state.manifested ? 1.55F : 1.40F)
+				+ shatterFlatBonus(attacker, event.getEntity()));
+		emitShatter(attacker, event.getEntity(), state.manifested);
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
@@ -461,10 +502,22 @@ public final class FrostMonarchManager {
 	}
 
 	@SubscribeEvent
+	public static void onGlacialPursuitDismount(EntityMountEvent event) {
+		if (event.isMounting() || event.getEntityMounting().level().isClientSide()
+				|| !(event.getEntityMounting() instanceof ServerPlayer player)
+				|| !(event.getEntityBeingMounted() instanceof GlacialPursuitEntity pursuit))
+			return;
+		GlacialPursuitState state = GLACIAL_PURSUITS.get(player.getUUID());
+		if (state != null && state.entityId.equals(pursuit.getUUID())
+				&& player.isAlive() && !player.isChangingDimension())
+			event.setCanceled(true);
+	}
+
+	@SubscribeEvent
 	public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
 		if (event.getEntity() instanceof ServerPlayer player) {
 			releaseFreeze(player);
-			clearAll(player, true);
+			clearAll(player, false);
 		}
 	}
 
@@ -472,12 +525,13 @@ public final class FrostMonarchManager {
 	public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
 		if (event.getEntity() instanceof ServerPlayer player) {
 			releaseFreeze(player);
-			clearAll(player, true);
+			clearAll(player, false);
 		}
 	}
 
 	@SubscribeEvent
 	public static void onDeath(LivingDeathEvent event) {
+		FROSTBITE.remove(event.getEntity().getUUID());
 		releaseFreeze(event.getEntity());
 		if (event.getEntity() instanceof ServerPlayer player)
 			clearAll(player, true);
@@ -485,15 +539,129 @@ public final class FrostMonarchManager {
 
 	@SubscribeEvent
 	public static void onServerStopping(ServerStoppingEvent event) {
-		CAUSEWAYS.clear();
+		GLACIAL_PURSUITS.clear();
+		FROSTBITE.clear();
 		FROZEN_TARGETS.clear();
 		FROST_COUNTERS.clear();
 		ABSOLUTE_ZEROS.clear();
 	}
 
+	private static boolean dealFrostDamage(ServerPlayer owner, LivingEntity target, float amount,
+			int frostbite, boolean canShatter) {
+		if (!validTarget(owner, target))
+			return false;
+		FrozenTargetState frozen = FROZEN_TARGETS.get(target.getUUID());
+		if (canShatter && frozen != null && owner.getUUID().equals(frozen.ownerId)) {
+			releaseFreeze(target);
+			float shatterDamage = amount * (frozen.manifested ? 1.55F : 1.40F)
+					+ shatterFlatBonus(owner, target);
+			target.invulnerableTime = 0;
+			boolean hurt = hurtFrostRaw(owner, target, shatterDamage);
+			emitShatter(owner, target, frozen.manifested);
+			return hurt;
+		}
+		boolean hurt = hurtFrostRaw(owner, target, amount);
+		if (hurt && frostbite > 0)
+			applyFrostbite(owner, target, frostbite, isSpiritualized(owner));
+		return hurt;
+	}
+
+	private static boolean hurtFrostRaw(ServerPlayer owner, LivingEntity target, float amount) {
+		if (!validTarget(owner, target))
+			return false;
+		boolean hurt = target.hurt(owner.damageSources().indirectMagic(owner, owner), Math.max(0.5F, amount));
+		if (hurt)
+			target.setLastHurtByPlayer(owner);
+		return hurt;
+	}
+
+	private static void applyFrostbite(ServerPlayer owner, LivingEntity target, int amount, boolean manifested) {
+		if (!validTarget(owner, target) || FROZEN_TARGETS.containsKey(target.getUUID()))
+			return;
+		long now = owner.level().getGameTime();
+		FrostbiteState state = FROSTBITE.get(target.getUUID());
+		if (state == null || !owner.getUUID().equals(state.ownerId)
+				|| state.dimension != owner.level().dimension() || now > state.expiresAt) {
+			state = new FrostbiteState(owner.getUUID(), owner.level().dimension(), 0, now + FROSTBITE_LIFETIME);
+			FROSTBITE.put(target.getUUID(), state);
+		}
+		state.stacks = Math.min(MAX_FROSTBITE, state.stacks + Math.max(1, amount));
+		state.expiresAt = now + FROSTBITE_LIFETIME;
+		target.setTicksFrozen(Math.max(target.getTicksFrozen(), state.stacks * 24));
+		if (state.stacks >= MAX_FROSTBITE) {
+			FROSTBITE.remove(target.getUUID());
+			applyFreeze(owner, target, manifested ? 44 : 34, manifested);
+			owner.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, target.getX(), target.getEyeY(), target.getZ(),
+					24, 0.34D, 0.48D, 0.34D, 0.05D);
+			owner.level().playSound(null, target.blockPosition(), SoundEvents.GLASS_PLACE,
+					SoundSource.PLAYERS, 0.72F, 1.42F);
+		}
+	}
+
+	private static int frostbiteStacks(ServerPlayer owner, LivingEntity target) {
+		FrostbiteState state = FROSTBITE.get(target.getUUID());
+		return state != null && owner.getUUID().equals(state.ownerId) ? state.stacks : 0;
+	}
+
+	private static void updateFrostbite(ServerPlayer owner, long now) {
+		List<UUID> remove = new ArrayList<>();
+		for (Map.Entry<UUID, FrostbiteState> entry : FROSTBITE.entrySet()) {
+			FrostbiteState state = entry.getValue();
+			if (!owner.getUUID().equals(state.ownerId))
+				continue;
+			if (state.dimension != owner.level().dimension() || now > state.expiresAt) {
+				remove.add(entry.getKey());
+				continue;
+			}
+			Entity raw = owner.serverLevel().getEntity(entry.getKey());
+			if (!(raw instanceof LivingEntity target) || !target.isAlive()) {
+				remove.add(entry.getKey());
+				continue;
+			}
+			if ((now & 7L) == 0L)
+				owner.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, target.getX(), target.getEyeY(), target.getZ(),
+						Math.min(4, state.stacks), 0.22D, 0.3D, 0.22D, 0.012D);
+		}
+		for (UUID id : remove)
+			FROSTBITE.remove(id);
+	}
+
+	private static float shatterFlatBonus(ServerPlayer owner, LivingEntity target) {
+		double intelligence = variables(owner).Intelligence;
+		double healthContribution = Math.min(isBoss(target) ? 10.0D : 16.0D, target.getMaxHealth() * 0.025D);
+		double damage = 5.0D + intelligence / 40.0D + healthContribution;
+		if (target instanceof Player)
+			damage *= 0.60D;
+		return (float) damage;
+	}
+
+	private static void emitShatter(ServerPlayer owner, LivingEntity shattered, boolean manifested) {
+		ServerLevel level = owner.serverLevel();
+		Vec3 center = shattered.getBoundingBox().getCenter();
+		double radius = manifested ? 5.0D : 3.6D;
+		int maximum = manifested ? 9 : 6;
+		float shardDamage = (float) ((manifested ? 7.0D : 5.0D) + variables(owner).Intelligence / 52.0D);
+		List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
+				shattered.getBoundingBox().inflate(radius), candidate -> candidate != shattered && validTarget(owner, candidate));
+		nearby.sort(Comparator.comparingDouble(candidate -> candidate.distanceToSqr(center)));
+		for (int i = 0; i < Math.min(maximum, nearby.size()); i++) {
+			LivingEntity target = nearby.get(i);
+			if (hurtFrostRaw(owner, target, shardDamage))
+				applyFrostbite(owner, target, 1, manifested);
+			spawnParticleLine(level, center, target.getBoundingBox().getCenter(), ParticleTypes.SNOWFLAKE, 5);
+		}
+		level.sendParticles(ParticleTypes.SNOWFLAKE, center.x, center.y, center.z, manifested ? 52 : 36,
+				0.52D, 0.62D, 0.52D, 0.12D);
+		level.sendParticles(ParticleTypes.END_ROD, center.x, center.y, center.z, manifested ? 12 : 8,
+				0.38D, 0.44D, 0.38D, 0.08D);
+		level.playSound(null, shattered.blockPosition(), SoundEvents.GLASS_BREAK,
+				SoundSource.PLAYERS, 1.0F, manifested ? 1.35F : 1.55F);
+	}
+
 	private static void applyFreeze(ServerPlayer owner, LivingEntity target, int duration, boolean manifested) {
 		if (!validTarget(owner, target))
 			return;
+		FROSTBITE.remove(target.getUUID());
 		boolean hardRoot = !(target instanceof Player) && !isBoss(target);
 		if (target instanceof Player)
 			duration = Math.min(duration, manifested ? 14 : 10);
@@ -581,28 +749,57 @@ public final class FrostMonarchManager {
 		if (state == null)
 			return;
 		if (now > state.expiresAt) {
-			ABSOLUTE_ZEROS.remove(player.getUUID());
+			detonateAbsoluteZero(player, state, 0.78F);
 			return;
 		}
 		double radius = state.manifested ? 10.0D : 8.0D;
-		int threshold = state.manifested ? 30 : 40;
-		Set<UUID> inside = new HashSet<>();
+		boolean pulse = now >= state.nextPulseAt;
+		if (pulse) {
+			state.nextPulseAt = now + 10;
+			state.pulseCount++;
+		}
 		for (LivingEntity target : player.serverLevel().getEntitiesOfClass(LivingEntity.class,
 				player.getBoundingBox().inflate(radius, 4.0D, radius), candidate -> validTarget(player, candidate))) {
 			if (target.distanceToSqr(player) > radius * radius)
 				continue;
-			inside.add(target.getUUID());
 			Vec3 movement = target.getDeltaMovement();
-			double slow = target instanceof Player ? 0.90D : isBoss(target) ? 0.72D : 0.62D;
+			double slow = target instanceof Player ? 0.90D : isBoss(target) ? 0.74D : 0.64D;
 			target.setDeltaMovement(movement.x * slow, movement.y, movement.z * slow);
 			target.hurtMarked = true;
-			int exposure = state.exposure.merge(target.getUUID(), 1, Integer::sum);
-			if (exposure >= threshold && state.frozenOnce.add(target.getUUID()))
-				applyFreeze(player, target, state.manifested ? 36 : 25, state.manifested);
+			if (pulse)
+				dealFrostDamage(player, target, absoluteZeroPulseDamage(player, target, state.manifested),
+						state.pulseCount % 2 == 0 ? 1 : 0, false);
 		}
-		state.exposure.keySet().removeIf(id -> !inside.contains(id));
 		if ((now & 3L) == 0L)
 			showAbsoluteZero(player, radius);
+	}
+
+	private static void detonateAbsoluteZero(ServerPlayer player, AbsoluteZeroState state, float power) {
+		if (ABSOLUTE_ZEROS.get(player.getUUID()) != state)
+			return;
+		ABSOLUTE_ZEROS.remove(player.getUUID());
+		double radius = state.manifested ? 11.0D : 9.0D;
+		for (LivingEntity target : player.serverLevel().getEntitiesOfClass(LivingEntity.class,
+				player.getBoundingBox().inflate(radius, 5.0D, radius), candidate -> validTarget(player, candidate))) {
+			if (target.distanceToSqr(player) > radius * radius)
+				continue;
+			int stacks = frostbiteStacks(player, target);
+			float damage = absoluteZeroDetonationDamage(player, target, state.manifested)
+					* power * (1.0F + stacks * 0.08F);
+			dealFrostDamage(player, target, damage, state.manifested ? 2 : 1, true);
+			Vec3 away = target.position().subtract(player.position());
+			if (away.lengthSqr() > 0.01D && !isBoss(target)) {
+				Vec3 force = away.normalize().scale(target instanceof Player ? 0.32D : 0.58D);
+				target.setDeltaMovement(force.x, Math.max(0.16D, target.getDeltaMovement().y), force.z);
+				target.hurtMarked = true;
+			}
+		}
+		player.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, player.getX(), player.getY() + 0.4D,
+				player.getZ(), state.manifested ? 110 : 78, radius * 0.55D, 0.55D, radius * 0.55D, 0.13D);
+		player.serverLevel().sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 0.25D,
+				player.getZ(), state.manifested ? 24 : 16, radius * 0.42D, 0.25D, radius * 0.42D, 0.08D);
+		player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE,
+				SoundSource.PLAYERS, 1.0F, 1.55F);
 	}
 
 	private static void showFlashFreeze(ServerPlayer player, double range, boolean manifested) {
@@ -659,7 +856,7 @@ public final class FrostMonarchManager {
 				start.distanceToSqr(clippedEnd));
 		if (entityHit != null && entityHit.getEntity() instanceof LivingEntity target) {
 			float damage = spearPrimaryDamage(player, target, state.manifested);
-			if (hurtPhysical(player, target, damage))
+			if (dealFrostDamage(player, target, damage, 2, true))
 				state.outwardTarget = target.getUUID();
 			state.anchorTarget = target.getUUID();
 			state.anchorPoint = target.getBoundingBox().getCenter();
@@ -740,7 +937,7 @@ public final class FrostMonarchManager {
 			float multiplier = same ? (target instanceof Player ? 0.05F : 0.40F) : 0.60F;
 			if (same)
 				target.invulnerableTime = 0;
-			hurtPhysical(player, target, primary * multiplier);
+			dealFrostDamage(player, target, primary * multiplier, same ? 1 : 2, true);
 		}
 		visual.setPos(next.x, next.y, next.z);
 		level.sendParticles(ParticleTypes.END_ROD, next.x, next.y, next.z, 2,
@@ -894,46 +1091,6 @@ public final class FrostMonarchManager {
 					player.getZ(), state.charges, 0.35D, 0.08D, 0.35D, 0.0D);
 	}
 
-	private static PathCandidate solveFrozenPath(ServerPlayer player, int maximumLength, int width) {
-		Direction forward = Direction.fromYRot(player.getYRot());
-		Direction right = forward.getClockWise();
-		Vec3 direction = Vec3.atLowerCornerOf(forward.getNormal()).normalize();
-		int baseY = BlockPos.containing(player.getX(), player.getY() - 0.2D, player.getZ()).getY();
-		int currentY = baseY;
-		int halfWidth = width / 2;
-		Map<BlockPos, Integer> positions = new LinkedHashMap<>();
-		BlockPos origin = player.blockPosition();
-		for (int step = 1; step <= maximumLength; step++) {
-			BlockPos center = new BlockPos(origin.relative(forward, step).getX(), currentY,
-					origin.relative(forward, step).getZ());
-			if (!rowHasHeadroom(player.serverLevel(), center, right, halfWidth)) {
-				BlockPos raised = center.above();
-				if (!rowHasHeadroom(player.serverLevel(), raised, right, halfWidth))
-					continue;
-				center = raised;
-				currentY++;
-			}
-			for (int lane = -halfWidth; lane <= halfWidth; lane++)
-				positions.put(center.relative(right, lane).immutable(), step);
-		}
-		return new PathCandidate(positions, baseY, direction);
-	}
-
-	private static boolean rowHasHeadroom(ServerLevel level, BlockPos center, Direction right, int halfWidth) {
-		for (int lane = -halfWidth; lane <= halfWidth; lane++) {
-			BlockPos floor = center.relative(right, lane);
-			if (!level.hasChunkAt(floor) || !level.getWorldBorder().isWithinBounds(floor)
-					|| floor.getY() <= level.getMinBuildHeight() || floor.getY() >= level.getMaxBuildHeight() - 2)
-				return false;
-			for (int height = 1; height <= 2; height++) {
-				BlockPos head = floor.above(height);
-				if (!level.getBlockState(head).getCollisionShape(level, head).isEmpty())
-					return false;
-			}
-		}
-		return true;
-	}
-
 	private static FrozenCellResult freezePathCell(ServerPlayer player, BlockPos pos) {
 		ServerLevel level = player.serverLevel();
 		if (!level.hasChunkAt(pos) || !level.getWorldBorder().isWithinBounds(pos)
@@ -955,7 +1112,8 @@ public final class FrostMonarchManager {
 			return FrozenCellResult.SKIPPED;
 		if (!level.mayInteract(player, pos) || !player.mayUseItemAt(pos, Direction.UP, ItemStack.EMPTY))
 			return FrozenCellResult.SKIPPED;
-		if (!level.getEntitiesOfClass(LivingEntity.class, new AABB(pos), Entity::isAlive).isEmpty())
+		if (!level.getEntitiesOfClass(LivingEntity.class, new AABB(pos),
+				entity -> entity.isAlive() && entity != player).isEmpty())
 			return FrozenCellResult.SKIPPED;
 		BlockSnapshot snapshot = BlockSnapshot.create(level.dimension(), level, pos);
 		int returnLevel = water && oldState.hasProperty(BlockStateProperties.LEVEL)
@@ -963,7 +1121,7 @@ public final class FrostMonarchManager {
 				: FrostCausewayBlock.RETURN_AIR;
 		BlockState frost = SololevelingModBlocks.FROST_CAUSEWAY.get().defaultBlockState()
 				.setValue(FrostCausewayBlock.RETURN_LEVEL, returnLevel);
-		if (!level.setBlock(pos, frost, 3))
+		if (!level.setBlock(pos, frost, 2))
 			return FrozenCellResult.SKIPPED;
 		if (ForgeEventFactory.onBlockPlace(player, snapshot, Direction.UP)) {
 			snapshot.restore(true, false);
@@ -973,84 +1131,289 @@ public final class FrostMonarchManager {
 		return FrozenCellResult.TRACKED;
 	}
 
-	private static void updateCauseway(ServerPlayer player, long now) {
-		CausewayState state = CAUSEWAYS.get(player.getUUID());
+	private static void updateGlacialPursuit(ServerPlayer player, long now) {
+		GlacialPursuitState state = GLACIAL_PURSUITS.get(player.getUUID());
 		if (state == null)
 			return;
-		if (state.dimension != player.level().dimension() || now > state.expiresAt) {
-			removeCauseway(player.getUUID());
+		if (state.dimension != player.level().dimension()) {
+			endGlacialPursuit(player, state, false, false);
 			return;
 		}
-		BlockPos feet = BlockPos.containing(player.getX(), player.getY() - 0.1D, player.getZ());
-		Integer step = state.pathCells.get(feet);
-		if (step != null) {
-			applyFrozenPathMomentum(player, state.direction, state.manifested);
-			player.fallDistance = 0.0F;
+		if (now > state.expiresAt) {
+			endGlacialPursuit(player, state, true, true);
+			return;
 		}
-		if ((now & 1L) == 0L) {
-			for (LivingEntity target : player.serverLevel().getEntitiesOfClass(LivingEntity.class,
-					state.bounds.inflate(0.0D, 2.0D, 0.0D), candidate -> validTarget(player, candidate))) {
-				BlockPos targetFloor = BlockPos.containing(target.getX(), target.getY() - 0.1D, target.getZ());
-				if (!state.pathCells.containsKey(targetFloor))
-					continue;
-				Vec3 movement = target.getDeltaMovement();
-				target.setDeltaMovement(movement.x * 0.55D, movement.y, movement.z * 0.55D);
-				target.hurtMarked = true;
+		Entity raw = player.serverLevel().getEntity(state.entityId);
+		if (!(raw instanceof GlacialPursuitEntity pursuit) || !pursuit.isAlive()) {
+			endGlacialPursuit(player, state, false, true);
+			return;
+		}
+		if (state.riderMode && !pursuit.hasPassenger(player)) {
+			if (!player.isAlive()) {
+				endGlacialPursuit(player, state, false, false);
+				return;
+			}
+			if (player.distanceToSqr(pursuit) > 9.0D)
+				player.teleportTo(pursuit.getX(), pursuit.getY() + pursuit.getPassengersRidingOffset(), pursuit.getZ());
+			if (!player.startRiding(pursuit, true)) {
+				state.remountFailures++;
+				pursuit.setFlight(pursuit.position(), Vec3.ZERO);
+				if (state.remountFailures > PURSUIT_REMOUNT_GRACE_TICKS)
+					endGlacialPursuit(player, state, true, true);
+				return;
+			}
+			state.remountFailures = 0;
+		}
+		if (now >= state.nextManaAt) {
+			state.nextManaAt = now + 5;
+			int upkeep = (state.riderMode ? 14 : 10) + (state.manifested ? 2 : 0);
+			if (variables(player).MP < upkeep) {
+				message(player, "Glacial Pursuit ended: not enough MP.", ChatFormatting.RED);
+				endGlacialPursuit(player, state, true, true);
+				return;
+			}
+			consumeMana(player, upkeep);
+		}
+
+		Vec3 current = pursuit.position();
+		Vec3 look = pursuitLookDirection(player, state.riderMode);
+		Vec3 desired = state.riderMode
+				? look
+				: player.getEyePosition().add(look.scale(42.0D)).subtract(current);
+		if (desired.lengthSqr() < 0.01D)
+			desired = look;
+		state.direction = steerDirection(state.direction, desired.normalize(),
+				Math.toRadians(state.riderMode ? 6.0D : 8.5D));
+		double speed = state.riderMode
+				? (state.manifested ? 1.05D : 0.90D)
+				: (state.manifested ? 1.30D : 1.15D);
+		Vec3 movement = state.direction.scale(speed);
+		Vec3 next = current.add(movement);
+		BlockPos nextPos = BlockPos.containing(next);
+		ServerLevel level = player.serverLevel();
+		if (!level.hasChunkAt(nextPos) || !level.getWorldBorder().isWithinBounds(nextPos)
+				|| next.y <= level.getMinBuildHeight() + 1 || next.y >= level.getMaxBuildHeight() - 2) {
+			endGlacialPursuit(player, state, false, true);
+			return;
+		}
+		BlockHitResult blockHit = level.clip(new ClipContext(current, next, ClipContext.Block.COLLIDER,
+				ClipContext.Fluid.NONE, pursuit));
+		if (blockHit.getType() != HitResult.Type.MISS
+				&& !isPursuitPassableIce(state, level.getBlockState(blockHit.getBlockPos()))) {
+			boolean steppingOffSupport = state.riderMode && movement.y < -0.02D
+					&& blockHit.getDirection() == Direction.UP
+					&& current.distanceTo(blockHit.getLocation()) <= 0.38D;
+			if (!steppingOffSupport && state.riderMode
+					&& blockHit.getDirection() == Direction.UP) {
+				Vec3 flat = horizontal(state.direction);
+				if (flat.lengthSqr() < 0.01D) {
+					pauseBlockedPursuit(player, state, pursuit);
+					return;
+				}
+				movement = flat.normalize().scale(speed);
+				next = current.add(movement);
+				BlockHitResult wallCheck = level.clip(new ClipContext(current, next, ClipContext.Block.COLLIDER,
+						ClipContext.Fluid.NONE, pursuit));
+				if (wallCheck.getType() != HitResult.Type.MISS
+						&& !isPursuitPassableIce(state, level.getBlockState(wallCheck.getBlockPos()))) {
+					pauseBlockedPursuit(player, state, pursuit);
+					return;
+				}
+			} else if (!steppingOffSupport) {
+				if (state.riderMode) {
+					pauseBlockedPursuit(player, state, pursuit);
+					return;
+				}
+				pursuit.setFlight(blockHit.getLocation().subtract(state.direction.scale(0.12D)), Vec3.ZERO);
+				endGlacialPursuit(player, state, true, true);
+				return;
 			}
 		}
-		if (now % 5 == 0) {
-			Vec3 center = state.bounds.getCenter();
-			double spreadX = Math.max(0.3D, state.bounds.getXsize() * 0.48D);
-			double spreadZ = Math.max(0.3D, state.bounds.getZsize() * 0.48D);
-			player.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, center.x,
-					state.bounds.minY + 1.02D, center.z, state.manifested ? 36 : 24,
-					spreadX, 0.04D, spreadZ, 0.0D);
-			player.serverLevel().sendParticles(new BlockParticleOption(ParticleTypes.BLOCK,
-					net.minecraft.world.level.block.Blocks.PACKED_ICE.defaultBlockState()), center.x,
-					state.bounds.minY + 1.01D, center.z, state.manifested ? 18 : 12,
-					spreadX, 0.02D, spreadZ, 0.0D);
+		if (state.riderMode && pursuit.hasPassenger(player)
+				&& !hasRiderClearance(level, player, movement)) {
+			Vec3 flat = horizontal(state.direction);
+			Vec3 fallback = flat.lengthSqr() < 0.01D ? Vec3.ZERO : flat.normalize().scale(speed);
+			if (fallback.lengthSqr() < 0.01D || !hasRiderClearance(level, player, fallback)) {
+				pauseBlockedPursuit(player, state, pursuit);
+				return;
+			}
+			movement = fallback;
+			next = current.add(movement);
+		}
+
+		state.blockedTicks = 0;
+		pursuit.setFlight(next, movement);
+		state.distanceTravelled += speed;
+		layPursuitTrail(player, state, state.lastTrailPoint, next);
+		state.lastTrailPoint = next;
+		hitPursuitTargets(player, state, current, next, now);
+		if ((now & 1L) == 0L)
+			level.sendParticles(ParticleTypes.SNOWFLAKE, next.x, next.y, next.z,
+					state.manifested ? 5 : 3, 0.22D, 0.22D, 0.22D, 0.025D);
+	}
+
+	private static boolean hasRiderClearance(ServerLevel level, ServerPlayer player, Vec3 movement) {
+		AABB moved = player.getBoundingBox().move(movement);
+		double horizontalInset = Math.min(0.08D, moved.getXsize() * 0.16D);
+		AABB body = new AABB(moved.minX + horizontalInset, moved.minY + 0.48D,
+				moved.minZ + horizontalInset, moved.maxX - horizontalInset,
+				moved.maxY - 0.04D, moved.maxZ - horizontalInset);
+		if (body.maxY <= body.minY)
+			return true;
+		for (BlockPos pos : BlockPos.betweenClosed(Mth.floor(body.minX), Mth.floor(body.minY), Mth.floor(body.minZ),
+				Mth.floor(body.maxX), Mth.floor(body.maxY), Mth.floor(body.maxZ))) {
+			BlockState block = level.getBlockState(pos);
+			if (block.is(SololevelingModBlocks.FROST_CAUSEWAY.get()))
+				continue;
+			for (AABB collision : block.getCollisionShape(level, pos).toAabbs()) {
+				if (body.intersects(collision.move(pos.getX(), pos.getY(), pos.getZ())))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	private static boolean isPursuitPassableIce(GlacialPursuitState pursuit, BlockState block) {
+		if (block.is(SololevelingModBlocks.FROST_CAUSEWAY.get()))
+			return true;
+		if (pursuit.riderMode)
+			return false;
+		return block.is(net.minecraft.world.level.block.Blocks.ICE)
+				|| block.is(net.minecraft.world.level.block.Blocks.PACKED_ICE)
+				|| block.is(net.minecraft.world.level.block.Blocks.BLUE_ICE)
+				|| block.is(net.minecraft.world.level.block.Blocks.FROSTED_ICE);
+	}
+
+	private static void pauseBlockedPursuit(ServerPlayer player, GlacialPursuitState state,
+			GlacialPursuitEntity pursuit) {
+		pursuit.setFlight(pursuit.position(), Vec3.ZERO);
+		state.blockedTicks++;
+		if (state.blockedTicks > PURSUIT_BLOCK_GRACE_TICKS)
+			endGlacialPursuit(player, state, true, true);
+	}
+
+	private static void layPursuitTrail(ServerPlayer player, GlacialPursuitState state, Vec3 start, Vec3 end) {
+		double length = start.distanceTo(end);
+		int samples = Math.max(1, Mth.ceil(length / 0.42D));
+		for (int i = 0; i <= samples; i++) {
+			Vec3 point = start.lerp(end, i / (double) samples);
+			double floorOffset = state.riderMode ? 0.86D : 1.62D;
+			BlockPos center = BlockPos.containing(point.x, point.y - floorOffset, point.z);
+			Direction forward = Direction.fromYRot(yawFor(state.direction));
+			Direction right = forward.getClockWise();
+			Vec3 centerPoint = Vec3.atCenterOf(center);
+			Vec3 rightVector = Vec3.atLowerCornerOf(right.getNormal());
+			double lateral = point.subtract(centerPoint).dot(rightVector);
+			Direction secondDirection = lateral >= 0.0D ? right : right.getOpposite();
+			placePursuitCell(player, state, center);
+			placePursuitCell(player, state, center.relative(secondDirection));
 		}
 	}
 
-	private static void applyFrozenPathMomentum(ServerPlayer player, Vec3 direction, boolean manifested) {
-		Vec3 movement = horizontal(player.getDeltaMovement());
-		double along = movement.dot(direction);
-		if (along <= 0.02D)
+	private static void placePursuitCell(ServerPlayer player, GlacialPursuitState state, BlockPos pos) {
+		BlockPos immutable = pos.immutable();
+		if (state.trailCells.contains(immutable))
 			return;
-		double boosted = Math.min(manifested ? 0.54D : 0.40D,
-				Math.max(along, manifested ? 0.34D : 0.25D));
-		Vec3 lateral = movement.subtract(direction.scale(along)).scale(0.35D);
-		Vec3 result = direction.scale(boosted).add(lateral);
-		player.setDeltaMovement(result.x, player.getDeltaMovement().y, result.z);
-		player.hurtMarked = true;
+		if (freezePathCell(player, immutable).tracked())
+			state.trailCells.add(immutable);
 	}
 
-	private static void removeCauseway(UUID owner) {
-		CAUSEWAYS.remove(owner);
+	private static void hitPursuitTargets(ServerPlayer player, GlacialPursuitState state,
+			Vec3 start, Vec3 end, long now) {
+		double radius = state.manifested ? 1.22D : 0.96D;
+		AABB sweep = new AABB(start, end).inflate(radius);
+		for (LivingEntity target : player.serverLevel().getEntitiesOfClass(LivingEntity.class, sweep,
+				candidate -> validTarget(player, candidate))) {
+			if (target.getBoundingBox().inflate(radius).clip(start, end).isEmpty()
+					|| now < state.nextHitAt.getOrDefault(target.getUUID(), 0L))
+				continue;
+			state.nextHitAt.put(target.getUUID(), now + 18);
+			if (!dealFrostDamage(player, target, glacialPursuitDamage(player, target, state.manifested), 2, true))
+				continue;
+			double force = target instanceof Player ? 0.52D : isBoss(target) ? 0.24D : 1.05D;
+			Vec3 launch = state.direction.scale(force);
+			target.setDeltaMovement(launch.x, Math.max(target.getDeltaMovement().y, 0.16D * force), launch.z);
+			target.hurtMarked = true;
+			player.serverLevel().sendParticles(new BlockParticleOption(ParticleTypes.BLOCK,
+					net.minecraft.world.level.block.Blocks.PACKED_ICE.defaultBlockState()),
+					target.getX(), target.getEyeY(), target.getZ(), state.manifested ? 18 : 12,
+					0.32D, 0.38D, 0.32D, 0.08D);
+		}
 	}
 
-	private static void spawnCausewayWave(ServerLevel level, Map<BlockPos, Integer> placed) {
-		AABB bounds = pathBounds(placed.keySet());
-		Vec3 center = bounds.getCenter();
-		level.sendParticles(ParticleTypes.SNOWFLAKE, center.x, bounds.minY + 1.0D, center.z,
-				Math.min(80, Math.max(18, placed.size())),
-				Math.max(0.3D, bounds.getXsize() * 0.48D), 0.08D,
-				Math.max(0.3D, bounds.getZsize() * 0.48D), 0.03D);
-		level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK,
-				net.minecraft.world.level.block.Blocks.PACKED_ICE.defaultBlockState()), center.x,
-				bounds.minY + 1.0D, center.z, Math.min(48, Math.max(12, placed.size() / 2)),
-				Math.max(0.3D, bounds.getXsize() * 0.48D), 0.05D,
-				Math.max(0.3D, bounds.getZsize() * 0.48D), 0.02D);
+	private static void endGlacialPursuit(ServerPlayer player, GlacialPursuitState state,
+			boolean burst, boolean startCooldown) {
+		if (GLACIAL_PURSUITS.get(player.getUUID()) != state)
+			return;
+		GLACIAL_PURSUITS.remove(player.getUUID());
+		ServerLevel pursuitLevel = player.getServer().getLevel(state.dimension);
+		Entity raw = pursuitLevel == null ? null : pursuitLevel.getEntity(state.entityId);
+		Vec3 end = raw == null ? state.lastTrailPoint : raw.position();
+		if (burst && state.dimension.equals(player.level().dimension()))
+			pursuitReleaseBurst(player, state, end);
+		if (raw != null) {
+			raw.ejectPassengers();
+			raw.discard();
+		}
+		if (state.riderMode) {
+			if (player.isPassenger())
+				player.stopRiding();
+			player.fallDistance = 0.0F;
+			if (startCooldown) {
+				Vec3 exit = state.direction.scale(state.manifested ? 0.76D : 0.62D);
+				player.setDeltaMovement(exit.x, Math.max(0.12D, exit.y), exit.z);
+				player.hurtMarked = true;
+				player.getPersistentData().putLong(PATH_FALL_PROTECTION_UNTIL,
+						player.level().getGameTime() + 50);
+			}
+		}
+		if (startCooldown) {
+			CooldownManager.set(player, FROZEN_PATH, state.manifested ? 140 : 160);
+			CooldownManager.set(player, "mana_refresh", 40);
+		}
 	}
 
-	private static AABB pathBounds(Set<BlockPos> positions) {
-		int minX = positions.stream().mapToInt(BlockPos::getX).min().orElse(0);
-		int minY = positions.stream().mapToInt(BlockPos::getY).min().orElse(0);
-		int minZ = positions.stream().mapToInt(BlockPos::getZ).min().orElse(0);
-		int maxX = positions.stream().mapToInt(BlockPos::getX).max().orElse(0);
-		int maxY = positions.stream().mapToInt(BlockPos::getY).max().orElse(0);
-		int maxZ = positions.stream().mapToInt(BlockPos::getZ).max().orElse(0);
-		return new AABB(minX, minY, minZ, maxX + 1.0D, maxY + 1.0D, maxZ + 1.0D);
+	private static void pursuitReleaseBurst(ServerPlayer player, GlacialPursuitState state, Vec3 center) {
+		double radius = state.manifested ? 4.2D : 3.2D;
+		for (LivingEntity target : player.serverLevel().getEntitiesOfClass(LivingEntity.class,
+				new AABB(center, center).inflate(radius), candidate -> validTarget(player, candidate))) {
+			if (target.distanceToSqr(center) > radius * radius)
+				continue;
+			dealFrostDamage(player, target,
+					glacialPursuitDamage(player, target, state.manifested) * 0.48F, 1, true);
+		}
+		player.serverLevel().sendParticles(ParticleTypes.SNOWFLAKE, center.x, center.y, center.z,
+				state.manifested ? 48 : 32, 0.75D, 0.75D, 0.75D, 0.14D);
+		player.serverLevel().sendParticles(new BlockParticleOption(ParticleTypes.BLOCK,
+				net.minecraft.world.level.block.Blocks.PACKED_ICE.defaultBlockState()),
+				center.x, center.y, center.z, state.manifested ? 28 : 18,
+				0.62D, 0.62D, 0.62D, 0.11D);
+		player.level().playSound(null, BlockPos.containing(center), SoundEvents.GLASS_BREAK,
+				SoundSource.PLAYERS, 0.9F, 1.18F);
+	}
+
+	private static Vec3 pursuitLookDirection(ServerPlayer player, boolean riderMode) {
+		float pitch = riderMode
+				? Mth.clamp(player.getXRot(), -28.0F, 22.0F)
+				: Mth.clamp(player.getXRot(), -55.0F, 55.0F);
+		return Vec3.directionFromRotation(pitch, player.getYRot()).normalize();
+	}
+
+	private static Vec3 steerDirection(Vec3 current, Vec3 desired, double maximumAngle) {
+		if (current.lengthSqr() < 1.0E-6D)
+			return desired;
+		Vec3 from = current.normalize();
+		double dot = Mth.clamp(from.dot(desired), -1.0D, 1.0D);
+		double angle = Math.acos(dot);
+		if (angle <= maximumAngle)
+			return desired;
+		double blend = maximumAngle / Math.max(1.0E-5D, angle);
+		Vec3 steered = from.scale(1.0D - blend).add(desired.scale(blend));
+		return steered.lengthSqr() < 1.0E-6D ? desired : steered.normalize();
+	}
+
+	private static float yawFor(Vec3 direction) {
+		return (float) Math.toDegrees(Math.atan2(-direction.x, direction.z));
 	}
 
 	private static void updateWinter(ServerPlayer player, long now) {
@@ -1325,6 +1688,28 @@ public final class FrostMonarchManager {
 		CooldownManager.set(player, "mana_refresh", 40);
 	}
 
+	private static boolean drainSpiritualizationMana(ServerPlayer player) {
+		if (player.isCreative())
+			return true;
+		boolean enoughMana = variables(player).MP >= SPIRITUALIZATION_MANA_PER_SECOND;
+		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(data -> {
+			data.MP = enoughMana
+					? Math.max(0.0D, data.MP - SPIRITUALIZATION_MANA_PER_SECOND)
+					: 0.0D;
+			data.syncPlayerVariables(player);
+		});
+		if (enoughMana)
+			CooldownManager.set(player, "mana_refresh", 35);
+		return enoughMana;
+	}
+
+	private static void clearObsoleteSpiritualizationCooldowns(ServerPlayer player) {
+		if (CooldownManager.getRemainingTicks(player, LEGACY_SPIRITUALIZATION_COOLDOWN) > 0)
+			CooldownManager.clear(player, LEGACY_SPIRITUALIZATION_COOLDOWN);
+		if (CooldownManager.getRemainingTicks(player, SPIRITUALIZATION) > 0)
+			CooldownManager.clear(player, SPIRITUALIZATION);
+	}
+
 	private static void clearLegacyProgress(ServerPlayer player) {
 		for (String key : LEGACY_PROGRESS_KEYS)
 			player.getPersistentData().remove(key);
@@ -1336,32 +1721,33 @@ public final class FrostMonarchManager {
 		}
 	}
 
-	private static void endSpiritualization(ServerPlayer player, boolean exhausted) {
+	private static void endSpiritualization(ServerPlayer player, boolean insufficientMana) {
 		if (!player.getPersistentData().getBoolean(SPIRITUALIZED))
 			return;
 		player.getPersistentData().remove(SPIRITUALIZED);
-		player.getPersistentData().remove(SPIRITUALIZED_UNTIL);
+		player.getPersistentData().remove(LEGACY_SPIRITUALIZED_UNTIL);
 		PlayerAuraSystem.clearContinuous(player);
 		clearLegacyProgress(player);
-		if (exhausted)
-			CooldownManager.set(player, SPIRITUALIZATION_COOLDOWN, 900);
 		player.level().playSound(null, player.blockPosition(), SoundEvents.BEACON_DEACTIVATE,
 				SoundSource.PLAYERS, 0.8F, 1.25F);
-		if (exhausted)
-			message(player, "Frost spiritualization ended — 45s exhaustion.", ChatFormatting.GRAY);
+		if (insufficientMana)
+			message(player, "Frost Spiritualization ended: insufficient MP.", ChatFormatting.RED);
 	}
 
-	private static void clearAll(ServerPlayer player, boolean exhaustForm) {
+	private static void clearAll(ServerPlayer player, boolean endForm) {
 		removeSpear(player.getUUID(), player.getServer());
-		removeCauseway(player.getUUID());
+		GlacialPursuitState pursuit = GLACIAL_PURSUITS.get(player.getUUID());
+		if (pursuit != null)
+			endGlacialPursuit(player, pursuit, false, false);
 		STILLNESS.remove(player.getUUID());
 		WINTERS.remove(player.getUUID());
 		WHITEOUTS.remove(player.getUUID());
 		FROST_COUNTERS.remove(player.getUUID());
 		ABSOLUTE_ZEROS.remove(player.getUUID());
+		FROSTBITE.entrySet().removeIf(entry -> entry.getValue().ownerId.equals(player.getUUID()));
 		releaseFreezesOwnedBy(player);
-		if (player.getPersistentData().getBoolean(SPIRITUALIZED))
-			endSpiritualization(player, exhaustForm);
+		if (endForm && player.getPersistentData().getBoolean(SPIRITUALIZED))
+			endSpiritualization(player, false);
 		else
 			clearLegacyProgress(player);
 	}
@@ -1369,9 +1755,10 @@ public final class FrostMonarchManager {
 	private static boolean hasAnyState(ServerPlayer player) {
 		UUID id = player.getUUID();
 		return player.getPersistentData().getBoolean(SPIRITUALIZED)
-				|| SPEARS.containsKey(id) || STILLNESS.containsKey(id) || CAUSEWAYS.containsKey(id)
+				|| SPEARS.containsKey(id) || STILLNESS.containsKey(id) || GLACIAL_PURSUITS.containsKey(id)
 				|| WINTERS.containsKey(id) || WHITEOUTS.containsKey(id) || FROST_COUNTERS.containsKey(id)
 				|| ABSOLUTE_ZEROS.containsKey(id)
+				|| FROSTBITE.values().stream().anyMatch(state -> state.ownerId.equals(id))
 				|| FROZEN_TARGETS.values().stream().anyMatch(state -> state.ownerId.equals(id));
 	}
 
@@ -1480,11 +1867,52 @@ public final class FrostMonarchManager {
 
 	private static float spearPrimaryDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
-		double damage = 20.0D + data.Strength / 8.0D + data.Intelligence / 16.0D;
+		double damage = 22.0D + data.Strength / 8.0D + data.Intelligence / 14.0D;
 		if (target instanceof Player)
 			damage *= 0.75D;
 		if (manifested)
 			damage *= 1.15D;
+		return (float) damage;
+	}
+
+	private static float flashFreezeDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
+		SololevelingModVariables.PlayerVariables data = variables(player);
+		return scaleFrostDamage(12.0D + data.Strength / 18.0D + data.Intelligence / 10.0D,
+				target, manifested);
+	}
+
+	private static float frostCounterDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
+		SololevelingModVariables.PlayerVariables data = variables(player);
+		return scaleFrostDamage(16.0D + data.Strength / 12.0D + data.Intelligence / 12.0D,
+				target, manifested);
+	}
+
+	private static float glacialPursuitDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
+		SololevelingModVariables.PlayerVariables data = variables(player);
+		return scaleFrostDamage(14.0D + data.Strength / 14.0D + data.Intelligence / 10.0D,
+				target, manifested);
+	}
+
+	private static float absoluteZeroPulseDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
+		SololevelingModVariables.PlayerVariables data = variables(player);
+		return scaleFrostDamage(4.0D + data.Strength / 50.0D + data.Intelligence / 30.0D,
+				target, manifested);
+	}
+
+	private static float absoluteZeroDetonationDamage(ServerPlayer player, LivingEntity target,
+			boolean manifested) {
+		SololevelingModVariables.PlayerVariables data = variables(player);
+		return scaleFrostDamage(18.0D + data.Strength / 14.0D + data.Intelligence / 9.0D,
+				target, manifested);
+	}
+
+	private static float scaleFrostDamage(double damage, LivingEntity target, boolean manifested) {
+		if (target instanceof Player)
+			damage *= 0.65D;
+		else if (isBoss(target))
+			damage *= 0.80D;
+		if (manifested)
+			damage *= 1.20D;
 		return (float) damage;
 	}
 
@@ -1564,25 +1992,48 @@ public final class FrostMonarchManager {
 		}
 	}
 
-	private static final class CausewayState {
+	private static final class GlacialPursuitState {
 		private final ResourceKey<Level> dimension;
-		private final Map<BlockPos, Integer> pathCells;
-		private final Vec3 direction;
-		private final int baseY;
+		private final UUID entityId;
+		private final long startedAt;
 		private final long expiresAt;
+		private final boolean riderMode;
 		private final boolean manifested;
-		private final AABB bounds;
+		private final Set<BlockPos> trailCells = new HashSet<>();
+		private final Map<UUID, Long> nextHitAt = new HashMap<>();
+		private Vec3 direction;
+		private Vec3 lastTrailPoint;
+		private long nextManaAt;
+		private double distanceTravelled;
+		private int blockedTicks;
+		private int remountFailures;
 
-		private CausewayState(ResourceKey<Level> dimension, Map<BlockPos, Integer> pathCells,
-				Vec3 direction, int baseY,
-				long expiresAt, boolean manifested) {
+		private GlacialPursuitState(ResourceKey<Level> dimension, UUID entityId, Vec3 direction,
+				Vec3 lastTrailPoint, long startedAt, long expiresAt,
+				boolean riderMode, boolean manifested) {
 			this.dimension = dimension;
-			this.pathCells = pathCells;
+			this.entityId = entityId;
 			this.direction = direction;
-			this.baseY = baseY;
+			this.lastTrailPoint = lastTrailPoint;
+			this.startedAt = startedAt;
 			this.expiresAt = expiresAt;
+			this.riderMode = riderMode;
 			this.manifested = manifested;
-			this.bounds = pathBounds(pathCells.keySet());
+			this.nextManaAt = startedAt + 5;
+		}
+	}
+
+	private static final class FrostbiteState {
+		private final UUID ownerId;
+		private final ResourceKey<Level> dimension;
+		private int stacks;
+		private long expiresAt;
+
+		private FrostbiteState(UUID ownerId, ResourceKey<Level> dimension, int stacks, long expiresAt) {
+			this.ownerId = ownerId;
+			this.dimension = dimension;
+			this.stacks = stacks;
+			this.expiresAt = expiresAt;
 		}
 	}
 
@@ -1618,11 +2069,12 @@ public final class FrostMonarchManager {
 	private static final class AbsoluteZeroState {
 		private final long expiresAt;
 		private final boolean manifested;
-		private final Map<UUID, Integer> exposure = new HashMap<>();
-		private final Set<UUID> frozenOnce = new HashSet<>();
+		private long nextPulseAt;
+		private int pulseCount;
 
-		private AbsoluteZeroState(long expiresAt, boolean manifested) {
+		private AbsoluteZeroState(long expiresAt, long nextPulseAt, boolean manifested) {
 			this.expiresAt = expiresAt;
+			this.nextPulseAt = nextPulseAt;
 			this.manifested = manifested;
 		}
 	}
@@ -1668,9 +2120,6 @@ public final class FrostMonarchManager {
 			this.manifested = manifested;
 			this.frontId = frontId;
 		}
-	}
-
-	private record PathCandidate(Map<BlockPos, Integer> stepsByPos, int baseY, Vec3 direction) {
 	}
 
 	private record FrozenCellResult(boolean tracked) {

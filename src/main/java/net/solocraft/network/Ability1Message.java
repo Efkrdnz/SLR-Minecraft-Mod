@@ -4,7 +4,9 @@ package net.solocraft.network;
 import net.solocraft.procedures.Ability1OnKeyReleasedProcedure;
 import net.solocraft.procedures.Ability1OnKeyPressedProcedure;
 import net.solocraft.SololevelingMod;
+import net.solocraft.util.BeastMonarchManager;
 import net.solocraft.util.GoliathCombatManager;
+import net.solocraft.util.LiuZhigangCombatManager;
 
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -57,8 +59,12 @@ public class Ability1Message {
 			Ability1OnKeyPressedProcedure.execute(world, x, y, z, entity);
 		}
 		if (type == 1) {
-			if (GoliathCombatManager.isCombatStance(entity))
+			if (BeastMonarchManager.isFangStance(entity))
+				BeastMonarchManager.releasePredatorsIntercept(entity, pressedms);
+			else if (GoliathCombatManager.isCombatStance(entity))
 				GoliathCombatManager.releasePursuit(entity, pressedms);
+			else if (LiuZhigangCombatManager.isCombatStance(entity))
+				LiuZhigangCombatManager.releaseDragonFlash(entity, pressedms);
 			else
 				Ability1OnKeyReleasedProcedure.execute(world, x, y, z, entity);
 		}

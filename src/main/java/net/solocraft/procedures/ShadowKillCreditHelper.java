@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.LevelAccessor;
 
 import java.util.UUID;
@@ -16,8 +17,12 @@ final class ShadowKillCreditHelper {
 	}
 
 	static Player creditedPlayer(LevelAccessor world, Entity source) {
+		if (source == null)
+			return null;
 		if (source instanceof Player player)
 			return player;
+		if (source instanceof Projectile projectile && projectile.getOwner() != null)
+			return creditedPlayer(world, projectile.getOwner());
 		if (source instanceof TamableAnimal tame && tame.isTame() && tame.getOwner() instanceof Player owner)
 			return owner;
 		UUID ownerId = ShadowMonarchManager.getShadowOwnerUUID(source);

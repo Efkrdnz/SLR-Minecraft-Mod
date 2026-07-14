@@ -1,6 +1,7 @@
 package net.solocraft.client.renderer;
 
 import net.solocraft.client.renderer.shader.BasicAttackSlashRenderTypes;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.entity.BasicAttackSlashEntity;
 
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -37,7 +38,7 @@ public class BasicAttackSlashRenderer extends EntityRenderer<BasicAttackSlashEnt
 		poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
 		poseStack.mulPose(Axis.ZP.rotationDegrees(entity.getRoll()));
 		RenderType renderType = BasicAttackSlashRenderTypes.slash(style, TEXTURE);
-		VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
+		VertexConsumer vertexConsumer = DeferredWorldShaderRenderer.buffer(bufferSource, renderType, false);
 		var pose = poseStack.last();
 		if (style == BasicAttackSlashEntity.STYLE_DUAL_DAGGER) {
 			drawQuad(vertexConsumer, pose, halfWidth, halfHeight, -26.0F, alpha);

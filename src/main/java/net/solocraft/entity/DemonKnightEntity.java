@@ -17,6 +17,8 @@ import net.minecraftforge.network.PlayMessages;
 import net.minecraftforge.network.NetworkHooks;
 
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
@@ -28,6 +30,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
@@ -46,13 +50,23 @@ import net.minecraft.nbt.CompoundTag;
 
 import java.util.UUID;
 
+import javax.annotation.Nullable;
+
 public class DemonKnightEntity extends Monster implements GeoEntity {
+	private static final int TEXTURE_VARIANT_COUNT = 3;
+	private static final float MIN_VISUAL_SCALE = 0.94F;
+	private static final float MAX_VISUAL_SCALE = 1.08F;
+	private static final String VISUAL_SCALE_TAG = "DemonKnightVisualScale";
 
 	// synced variant (0, 1, 2) — determines which texture is shown
 	public static final EntityDataAccessor<Integer> VARIANT =
 			SynchedEntityData.defineId(DemonKnightEntity.class, EntityDataSerializers.INT);
+	public static final EntityDataAccessor<Float> VISUAL_SCALE =
+			SynchedEntityData.defineId(DemonKnightEntity.class, EntityDataSerializers.FLOAT);
 
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+	private boolean swinging;
+	private long lastSwing;
 	public String animationprocedure = "empty";
 
 	public DemonKnightEntity(PlayMessages.SpawnEntity packet, Level world) {
@@ -70,6 +84,7 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 	protected void defineSynchedData() {
 		super.defineSynchedData();
 		this.entityData.define(VARIANT, 0);
+		this.entityData.define(VISUAL_SCALE, 1.0F);
 	}
 
 	public int getVariant() {
@@ -77,12 +92,25 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 	}
 
 	public void setVariant(int variant) {
-		this.entityData.set(VARIANT, variant);
+		this.entityData.set(VARIANT, Math.max(0, Math.min(TEXTURE_VARIANT_COUNT - 1, variant)));
 	}
 
-	/** Assigns a random texture variant on first spawn. Call after spawning. */
+	public float getVisualScale() {
+		return this.entityData.get(VISUAL_SCALE);
+	}
+
+	private void setVisualScale(float scale) {
+		this.entityData.set(VISUAL_SCALE, Math.max(MIN_VISUAL_SCALE, Math.min(MAX_VISUAL_SCALE, scale)));
+	}
+
+	public void randomizeAppearance() {
+		this.setVariant(this.random.nextInt(TEXTURE_VARIANT_COUNT));
+		this.setVisualScale(MIN_VISUAL_SCALE + this.random.nextFloat() * (MAX_VISUAL_SCALE - MIN_VISUAL_SCALE));
+	}
+
+	/** Kept for existing DKC spawn code; now randomizes the complete appearance. */
 	public void randomizeVariant() {
-		this.setVariant(this.random.nextInt(3)); // 0, 1, or 2
+		this.randomizeAppearance();
 	}
 
 	@Override
@@ -159,9 +187,18 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
+	public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty,
+			MobSpawnType reason, @Nullable SpawnGroupData livingdata, @Nullable CompoundTag tag) {
+		SpawnGroupData spawnData = super.finalizeSpawn(world, difficulty, reason, livingdata, tag);
+		this.randomizeAppearance();
+		return spawnData;
+	}
+
+	@Override
 	public void addAdditionalSaveData(CompoundTag compound) {
 		super.addAdditionalSaveData(compound);
 		compound.putInt("Variant", this.getVariant());
+		compound.putFloat(VISUAL_SCALE_TAG, this.getVisualScale());
 		// preserve DKC tracking data
 		compound.putDouble("dkc_floor_number", this.getPersistentData().getDouble("dkc_floor_number"));
 		compound.putString("dkc_spawned_by", this.getPersistentData().getString("dkc_spawned_by"));
@@ -172,6 +209,12 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 		super.readAdditionalSaveData(compound);
 		if (compound.contains("Variant"))
 			this.setVariant(compound.getInt("Variant"));
+		else
+			this.setVariant(this.random.nextInt(TEXTURE_VARIANT_COUNT));
+		if (compound.contains(VISUAL_SCALE_TAG))
+			this.setVisualScale(compound.getFloat(VISUAL_SCALE_TAG));
+		else
+			this.setVisualScale(MIN_VISUAL_SCALE + this.random.nextFloat() * (MAX_VISUAL_SCALE - MIN_VISUAL_SCALE));
 		if (compound.contains("dkc_floor_number"))
 			this.getPersistentData().putDouble("dkc_floor_number", compound.getDouble("dkc_floor_number"));
 		if (compound.contains("dkc_spawned_by"))
@@ -210,11 +253,25 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 	private PlayState movementPredicate(AnimationState<DemonKnightEntity> event) {
 		if (this.animationprocedure.equals("empty")) {
 			if (event.isMoving() || !(event.getLimbSwingAmount() > -0.15F && event.getLimbSwingAmount() < 0.15F)) {
-				return event.setAndContinue(RawAnimation.begin().thenLoop("walking"));
+				return event.setAndContinue(RawAnimation.begin().thenLoop("run"));
 			}
 			return event.setAndContinue(RawAnimation.begin().thenLoop("idle"));
 		}
 		return PlayState.STOP;
+	}
+
+	private PlayState attackingPredicate(AnimationState<DemonKnightEntity> event) {
+		if (this.getAttackAnim(event.getPartialTick()) > 0.0F && !this.swinging) {
+			this.swinging = true;
+			this.lastSwing = this.level().getGameTime();
+		}
+		if (this.swinging && this.lastSwing + 7L <= this.level().getGameTime())
+			this.swinging = false;
+		if (this.swinging && event.getController().getAnimationState() == AnimationController.State.STOPPED) {
+			event.getController().forceAnimationReset();
+			return event.setAndContinue(RawAnimation.begin().thenPlay("attack"));
+		}
+		return PlayState.CONTINUE;
 	}
 
 	private PlayState procedurePredicate(AnimationState<DemonKnightEntity> event) {
@@ -242,6 +299,7 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 	@Override
 	public void registerControllers(AnimatableManager.ControllerRegistrar data) {
 		data.add(new AnimationController<>(this, "movement", 4, this::movementPredicate));
+		data.add(new AnimationController<>(this, "attacking", 2, this::attackingPredicate));
 		data.add(new AnimationController<>(this, "procedure", 4, this::procedurePredicate));
 	}
 

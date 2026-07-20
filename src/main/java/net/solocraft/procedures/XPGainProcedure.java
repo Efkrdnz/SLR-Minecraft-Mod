@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.entity.StoneGolemEntity;
 import net.solocraft.entity.SteelFangWolfEntity;
@@ -52,6 +53,7 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 
 import javax.annotation.Nullable;
 
@@ -166,15 +168,23 @@ public class XPGainProcedure {
 			return;
 		// Check if the entity is in the XP_REWARDS list
 		boolean isListed = XP_REWARDS.containsKey(entity.getClass());
+		boolean runtimeDungeonMob = entity.getPersistentData().getBoolean(DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG);
 		boolean soloDungeonOnly = world.getLevelData().getGameRules().getBoolean(SololevelingModGameRules.SOLO_DUNGEON_PROGRESSION_ONLY);
 		// If soloDungeonProgressionOnly is true and the entity is not listed, don't give XP
-		if (soloDungeonOnly && !isListed)
+		if (soloDungeonOnly && !isListed && !runtimeDungeonMob)
 			return;
 		// Get XP value for the entity (default is 1 XP only if soloDungeonProgressionOnly is false)
-		int baseXP = isListed ? XP_REWARDS.get(entity.getClass()) : 1;
+		boolean configuredDungeonXp = runtimeDungeonMob && entity.getPersistentData()
+				.contains(DungeonMobLevelAdapter.XP_REWARD_TAG, Tag.TAG_ANY_NUMERIC);
+		int baseXP = configuredDungeonXp
+				? Math.max(0, entity.getPersistentData().getInt(DungeonMobLevelAdapter.XP_REWARD_TAG))
+				: isListed ? XP_REWARDS.get(entity.getClass())
+				: runtimeDungeonMob ? runtimeDungeonBaseXp(entity) : 1;
+		if (baseXP <= 0)
+			return;
 		int xpMultiplier = world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER);
 		double diffMultiplier = difficultyMultiplier(world);
-		awardBaseXp(world, xpReceiver, baseXP, diffMultiplier, xpMultiplier);
+		awardBaseXp(world, xpReceiver, baseXP, diffMultiplier, xpMultiplier, mobLevelXpMultiplier(entity));
 	}
 
 	public static void awardBaseXp(LevelAccessor world, Player player, int baseXP) {
@@ -182,7 +192,7 @@ public class XPGainProcedure {
 			return;
 		int xpMultiplier = world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER);
 		double diffMultiplier = difficultyMultiplier(world);
-		awardBaseXp(world, player, baseXP, diffMultiplier, xpMultiplier);
+		awardBaseXp(world, player, baseXP, diffMultiplier, xpMultiplier, 1);
 	}
 
 	private static double difficultyMultiplier(LevelAccessor world) {
@@ -193,11 +203,33 @@ public class XPGainProcedure {
 		return 1;
 	}
 
-	private static void awardBaseXp(LevelAccessor world, Player player, int baseXP, double diffMultiplier, int xpMultiplier) {
+	private static double mobLevelXpMultiplier(Entity entity) {
+		double statMultiplier = entity.getPersistentData().getDouble(EntityLoadedLevelPresetProcedure.LEVEL_STAT_MULTIPLIER_TAG);
+		if (statMultiplier <= 1) {
+			double level = Math.max(0, entity.getPersistentData().getDouble("Level"));
+			if (level <= 0)
+				return 1;
+			// Conservative fallback for mobs saved before stat-multiplier tracking was added.
+			statMultiplier = 1 + Math.min(200, level) * 0.005D;
+		}
+		return Math.min(3, Math.max(1, Math.sqrt(statMultiplier)));
+	}
+
+	private static int runtimeDungeonBaseXp(Entity entity) {
+		int level = Math.max(1, Math.min(1_000, entity.getPersistentData().getInt("Level")));
+		String role = entity.getPersistentData().getString(DungeonMobLevelAdapter.ROLE_TAG);
+		return switch (role) {
+			case "boss" -> Math.max(25, level * 2);
+			case "elite" -> Math.max(3, level / 3);
+			default -> Math.max(1, level / 5);
+		};
+	}
+
+	private static void awardBaseXp(LevelAccessor world, Player player, int baseXP, double diffMultiplier, int xpMultiplier, double mobLevelMultiplier) {
 		SololevelingModVariables.PlayerVariables playerVars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		if (!playerVars.Player)
 			return;
-		double totalXP = diffMultiplier * playerVars.xpmultiplier * (xpMultiplier / 10.0) * baseXP;
+		double totalXP = diffMultiplier * playerVars.xpmultiplier * (xpMultiplier / 10.0) * baseXP * mobLevelMultiplier;
 		double newXP = playerVars.Xp + totalXP;
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			capability.Xp = newXP;

@@ -21,6 +21,10 @@ import net.solocraft.network.Ab3Message;
 import net.solocraft.network.Ab2Message;
 import net.solocraft.network.Ab1Message;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.network.AbilitiesGUIButtonMessage;
+import net.solocraft.util.SystemPlayerAccess;
+import net.solocraft.util.DungeonBuilderMode;
+import net.solocraft.client.gui.dungeonbuilder.DungeonBuilderStudioClient;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.fml.common.Mod;
@@ -47,7 +51,15 @@ public class SololevelingModKeyMappings {
 			if (isDownOld != isDown && isDown) {
 				Minecraft mc = Minecraft.getInstance();
 				if (mc.player != null && mc.screen == null) {
-					mc.setScreen(new net.solocraft.client.gui.system.SystemPanelScreen());
+					if (DungeonBuilderMode.isActive(mc.level)) {
+						DungeonBuilderStudioClient.requestOpen();
+					} else if (SystemPlayerAccess.hasSystem(mc.player)) {
+						mc.setScreen(new net.solocraft.client.gui.system.SystemPanelScreen());
+					} else {
+						var pos = mc.player.blockPosition();
+						SololevelingMod.PACKET_HANDLER.sendToServer(
+								new AbilitiesGUIButtonMessage(5, pos.getX(), pos.getY(), pos.getZ()));
+					}
 				}
 			}
 			isDownOld = isDown;

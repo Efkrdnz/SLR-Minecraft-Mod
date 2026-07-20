@@ -1,5 +1,8 @@
 package net.solocraft.client.gui.system;
 
+import net.solocraft.util.SystemPlayerAccess;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -33,7 +36,7 @@ public final class SystemNotificationManager {
 
 	/** Push a notification with the negative System sound. */
 	public void push(int accentColor, int durationTicks, Component title, Component undertext, boolean negativeSound) {
-		if (title == null && undertext == null)
+		if ((title == null && undertext == null) || !hasLocalSystem())
 			return;
 		long holdMs = Math.max(0L, durationTicks) * 50L; // 20 tps
 		notifications.add(new Notification(accentColor, title, undertext, System.currentTimeMillis(), holdMs));
@@ -59,9 +62,17 @@ public final class SystemNotificationManager {
 
 	/** Prunes finished notifications and returns the current list (oldest first, newest last). */
 	public List<Notification> active() {
+		if (!hasLocalSystem()) {
+			notifications.clear();
+			return List.of();
+		}
 		long now = System.currentTimeMillis();
 		notifications.removeIf(n -> n.expired(now));
 		return notifications;
+	}
+
+	private static boolean hasLocalSystem() {
+		return SystemPlayerAccess.hasSystem(Minecraft.getInstance().player);
 	}
 
 	/** One on-screen notification with its own timing. */

@@ -36,6 +36,8 @@ public class GoblinKingDiesProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
+		if (entity.getPersistentData().getBoolean(net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG))
+			return;
 		boolean found = false;
 		double uplvl = 0;
 		double sx = 0;

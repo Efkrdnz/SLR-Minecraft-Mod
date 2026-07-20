@@ -27,12 +27,16 @@ public class DaggerRushActProcedure {
 			return;
 		if (world instanceof Level level && level.isClientSide())
 			return;
+		CooldownManager.discardIfRemainingExceeds(entity, "dagger_rush", 40);
 		ItemStack mainHand = entity instanceof LivingEntity livingEntity ? livingEntity.getMainHandItem() : ItemStack.EMPTY;
 		if (mainHand.is(ItemTags.create(new ResourceLocation("dagger")))) {
 			runDaggerCombo(world, entity);
 		} else if (mainHand.is(ItemTags.create(new ResourceLocation("nsword"))) || mainHand.getItem() instanceof SwordItem || mainHand.getItem() instanceof AxeItem) {
 			runSingleSlash(world, x, y, z, entity, BasicAttackSlashEntity.STYLE_SWORD, 100, 40, 4, 1);
 		} else if (mainHand.isEmpty()) {
+			runFistSlash(world, x, y, z, entity);
+		} else {
+			// Custom or third-party weapons without the expected tags still get a usable X attack.
 			runFistSlash(world, x, y, z, entity);
 		}
 	}

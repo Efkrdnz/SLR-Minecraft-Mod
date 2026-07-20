@@ -5,6 +5,7 @@ import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.entity.Portal1Entity;
 import net.solocraft.dungeon.DungeonTheme;
 import net.solocraft.dungeon.ProceduralDungeonRank;
+import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -47,6 +48,7 @@ public class PortalSpawnProcedure {
 				entity.getPersistentData().putString("slr_procedural_rank", rank.name());
 				entity.getPersistentData().putString("slr_procedural_theme", theme.name());
 				entity.getPersistentData().putInt("slr_procedural_complexity", randomComplexity(rank, random));
+				SnowRedGateArenaManager.assignTerritoryIfMissing(entity);
 			}
 		} else {
 			if (!entity.level().isClientSide())

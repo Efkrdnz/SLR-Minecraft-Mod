@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.VesselManager;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,11 +13,11 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.context.CommandContext;
 
 public class SLRResetProcedure {
-	public static void execute(LevelAccessor world, CommandContext<CommandSourceStack> arguments, Entity entity) {
-		if (entity == null)
-			return;
+	public static void execute(LevelAccessor world, CommandContext<CommandSourceStack> arguments) {
 		try {
 			for (Entity entityiterator : EntityArgument.getEntities(arguments, "name")) {
+				if (entityiterator instanceof net.minecraft.server.level.ServerPlayer serverPlayer)
+					VesselManager.resetPlayer(serverPlayer);
 				if ((entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
 					if (SololevelingModVariables.MapVariables.get(world).shmlimit > 0) {
 						SololevelingModVariables.MapVariables.get(world).shmlimit = SololevelingModVariables.MapVariables.get(world).shmlimit - 1;
@@ -163,7 +164,7 @@ public class SLRResetProcedure {
 						capability.syncPlayerVariables(entityiterator);
 					});
 				}
-				if (entity instanceof LivingEntity _entity)
+				if (entityiterator instanceof LivingEntity _entity)
 					_entity.setHealth(20);
 				{
 					String _setval = "";
@@ -265,23 +266,23 @@ public class SLRResetProcedure {
 				}
 				{
 					boolean _setval = false;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+					entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.combatmode = _setval;
-						capability.syncPlayerVariables(entity);
+						capability.syncPlayerVariables(entityiterator);
 					});
 				}
 				{
 					boolean _setval = false;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+					entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.ShadowBody = _setval;
-						capability.syncPlayerVariables(entity);
+						capability.syncPlayerVariables(entityiterator);
 					});
 				}
 				{
 					boolean _setval = false;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+					entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.ShadowExchange = _setval;
-						capability.syncPlayerVariables(entity);
+						capability.syncPlayerVariables(entityiterator);
 					});
 				}
 				{
@@ -428,6 +429,7 @@ public class SLRResetProcedure {
 					double _setval = 0;
 					entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.Classes = _setval;
+						capability.mageSpecialization = "";
 						capability.syncPlayerVariables(entityiterator);
 					});
 				}

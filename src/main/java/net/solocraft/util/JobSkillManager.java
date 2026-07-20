@@ -65,6 +65,11 @@ public class JobSkillManager {
 	public static final String LIU_GOLDEN_DRAGON_DANCE = LiuZhigangCombatManager.GOLDEN_DRAGON_DANCE;
 	public static final String LIU_SOVEREIGN_SWORD_DOMAIN = LiuZhigangCombatManager.SOVEREIGN_SWORD_DOMAIN;
 	public static final String LIU_MANIFESTATION = LiuZhigangCombatManager.DRAGON_SWORD_MANIFESTATION;
+	public static final String BEAST_CLAW_RIFT = BeastMonarchManager.CLAW_RIFT;
+	public static final String BEAST_RUBBLE_JAW = BeastMonarchManager.RUBBLE_JAW;
+	public static final String BEAST_KINGS_MAUL = BeastMonarchManager.KINGS_MAUL;
+	public static final String BEAST_RECONSTITUTION = BeastMonarchManager.FERAL_RECONSTITUTION;
+	public static final String BEAST_WHITE_FANG = BeastMonarchManager.WHITE_FANG_SOVEREIGN;
 
 	private static final String LAST_SYNCED_JOB = "sololeveling:last_synced_job_skills";
 	private static final String RETIRED_KINGS_VERDICT = "King's Verdict";
@@ -77,6 +82,9 @@ public class JobSkillManager {
 	private static final List<String> FROST_SKILLS = List.of(
 			ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH,
 			FROST_COUNTER, ABSOLUTE_ZERO, FROST_SPIRITUALIZATION);
+	private static final List<String> BEAST_SKILLS = List.of(
+			BEAST_CLAW_RIFT, BEAST_RUBBLE_JAW, BEAST_KINGS_MAUL,
+			BEAST_RECONSTITUTION, BEAST_WHITE_FANG);
 
 	private static final List<String> ALL_JOB_SKILLS = List.of(
 			ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION,
@@ -89,7 +97,9 @@ public class JobSkillManager {
 			LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE, LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION,
 			MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST,
 			LIGHTNING_BREATH, HELLSTORM_DOMINION, RETIRED_KINGS_VERDICT, RADIRU_BLOOD_SPEAR,
-			DOPPELGANGER, HELLS_ARMY, WHITE_FLAME_SPIRITUALIZATION);
+			DOPPELGANGER, HELLS_ARMY, WHITE_FLAME_SPIRITUALIZATION,
+			BEAST_CLAW_RIFT, BEAST_RUBBLE_JAW, BEAST_KINGS_MAUL,
+			BEAST_RECONSTITUTION, BEAST_WHITE_FANG);
 
 	private JobSkillManager() {
 	}
@@ -119,6 +129,10 @@ public class JobSkillManager {
 		return FROST_SKILLS.contains(skill);
 	}
 
+	public static boolean isBeastSkill(String skill) {
+		return BEAST_SKILLS.contains(skill);
+	}
+
 	public static int skillColor(String skill) {
 		if (List.of(ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION).contains(skill))
 			return 0xB965FF;
@@ -132,18 +146,28 @@ public class JobSkillManager {
 			return 0xFFD34E;
 		if (isWhiteFlameSkill(skill))
 			return 0xFFFFFF;
+		if (isBeastSkill(skill))
+			return 0xFF8A24;
 		if (List.of(MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST).contains(skill))
 			return 0xFFE38A;
 		return 0xFFFFFF;
 	}
 
 	public static List<Component> tooltip(Entity entity, String skill) {
+		if (FireMageSpellManager.isFireSkill(skill))
+			return FireMageSpellManager.tooltip(entity, skill);
+		if (BarrierMageSpellManager.isBarrierSkill(skill))
+			return BarrierMageSpellManager.tooltip(entity, skill);
+		if (ArcaneMageSpellManager.isArcaneSkill(skill))
+			return ArcaneMageSpellManager.tooltip(entity, skill);
 		if (isFrostSkill(skill))
 			return frostTooltip(entity, skill);
 		if (isWhiteFlameSkill(skill))
 			return whiteFlameTooltip(entity, skill);
 		if (isLiuSkill(skill))
 			return liuTooltip(entity, skill);
+		if (isBeastSkill(skill))
+			return beastTooltip(entity, skill);
 		if (!List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION).contains(skill))
 			return List.of(Component.literal(ShadowMonarchManager.displaySkillName(entity, skill)), Component.literal(skill));
 		boolean manifested = GoliathCombatManager.isManifested(entity);
@@ -251,6 +275,60 @@ public class JobSkillManager {
 		return lines;
 	}
 
+	private static List<Component> beastTooltip(Entity entity, String skill) {
+		boolean sovereign = BeastMonarchManager.isWhiteFangSovereign(entity);
+		ArrayList<Component> lines = new ArrayList<>();
+		lines.add(Component.literal(skill).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+		switch (skill) {
+			case BEAST_CLAW_RIFT -> {
+				lines.add(Component.literal("Rip forward through space and claw every enemy along the route.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(sovereign
+						? "Sovereign: farther dash, wider path, and stronger cuts."
+						: "The dash stops safely at terrain and damages every enemy crossed.")
+						.withStyle(ChatFormatting.GOLD));
+				lines.add(Component.literal("220 base MP | 6s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case BEAST_RUBBLE_JAW -> {
+				lines.add(Component.literal("Erupt the targeted area in a violent jaw of shattered ground.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(sovereign
+						? "Sovereign: larger eruption, stronger launch, and more damage."
+						: "Deals immediate area damage and launches enemies upward.")
+						.withStyle(ChatFormatting.GOLD));
+				lines.add(Component.literal("300 base MP | 8.5s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case BEAST_KINGS_MAUL -> {
+				lines.add(Component.literal("Lunge at the enemy in front of you and deliver a crushing maul.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(sovereign
+						? "Sovereign: longer lunge, heavier hit, and stronger movement lock."
+						: "Automatically catches a visible target in your forward cone.")
+						.withStyle(ChatFormatting.GOLD));
+				lines.add(Component.literal("380 base MP | 10s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case BEAST_RECONSTITUTION -> {
+				lines.add(Component.literal("Instantly regrow missing health and form a temporary absorption hide.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal(sovereign
+						? "Sovereign: stronger healing and a thicker, longer-lasting hide."
+						: "No channel, wound requirement, Quarry, or Hunt cost.")
+						.withStyle(ChatFormatting.GOLD));
+				lines.add(Component.literal("260 base MP | 12s cooldown").withStyle(ChatFormatting.YELLOW));
+			}
+			case BEAST_WHITE_FANG -> {
+				lines.add(Component.literal("Instantly enter the White Fang's close-combat manifestation.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Enhances every Beast skill, adds a fourth claw beat, and increases movement speed.")
+						.withStyle(ChatFormatting.GOLD));
+				lines.add(Component.literal("600 base MP | 20s duration | Press again to end early").withStyle(ChatFormatting.YELLOW));
+			}
+			default -> {
+			}
+		}
+		return lines;
+	}
+
 	private static List<Component> whiteFlameTooltip(Entity entity, String skill) {
 		boolean manifested = WhiteFlameMonarchManager.isSpiritualized(entity);
 		ArrayList<Component> lines = new ArrayList<>();
@@ -336,6 +414,11 @@ public class JobSkillManager {
 			case LIU_GOLDEN_DRAGON_DANCE -> LiuZhigangCombatManager.castGoldenDragonDance(entity);
 			case LIU_SOVEREIGN_SWORD_DOMAIN -> LiuZhigangCombatManager.castSovereignSwordDomain(entity);
 			case LIU_MANIFESTATION -> LiuZhigangCombatManager.toggleDragonSwordManifestation(entity);
+			case BEAST_CLAW_RIFT -> BeastMonarchManager.castClawRift(entity);
+			case BEAST_RUBBLE_JAW -> BeastMonarchManager.castRubbleJaw(entity);
+			case BEAST_KINGS_MAUL -> BeastMonarchManager.castKingsMaul(entity);
+			case BEAST_RECONSTITUTION -> BeastMonarchManager.castFeralReconstitution(entity);
+			case BEAST_WHITE_FANG -> BeastMonarchManager.castWhiteFangSovereign(entity);
 			case FIRE_CHARGE -> castFireCharge(world, x, y, z, entity);
 			case METEOR_RAIN -> runOldJobAbility(entity, () -> Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case FIREFLIES -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
@@ -379,7 +462,8 @@ public class JobSkillManager {
 			case THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE,
 					LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE, LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION,
 					ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROST_COUNTER,
-					ABSOLUTE_ZERO -> skill;
+					ABSOLUTE_ZERO, BEAST_CLAW_RIFT, BEAST_RUBBLE_JAW, BEAST_KINGS_MAUL,
+					BEAST_RECONSTITUTION, BEAST_WHITE_FANG -> skill;
 			default -> skill;
 		};
 	}
@@ -441,7 +525,7 @@ public class JobSkillManager {
 					RADIRU_BLOOD_SPEAR, DOPPELGANGER, HELLS_ARMY, WHITE_FLAME_SPIRITUALIZATION);
 			case 5 -> List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION);
 			case 6 -> LIU_SKILLS;
-			case 9 -> List.of();
+			case 9 -> BEAST_SKILLS;
 			default -> List.of();
 		};
 	}

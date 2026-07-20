@@ -23,7 +23,7 @@ public class PortalJobChangeRenderer extends GeoEntityRenderer<PortalJobChangeEn
 
 	@Override
 	public RenderType getRenderType(PortalJobChangeEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucent(getTextureLocation(animatable));
+		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
 	}
 
 	@Override

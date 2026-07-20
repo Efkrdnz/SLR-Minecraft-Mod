@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class DemonKnightModel extends GeoModel<DemonKnightEntity> {
 
 	private static final ResourceLocation MODEL =
-			new ResourceLocation("sololeveling", "geo/radis_knight.geo.json");
+			new ResourceLocation("sololeveling", "geo/el_demon_knight1.geo.json");
 
 	private static final ResourceLocation ANIMATION =
-			new ResourceLocation("sololeveling", "animations/radis_knight.animation.json");
+			new ResourceLocation("sololeveling", "animations/el_demon_knight1.animation.json");
 
 	private static final ResourceLocation TEXTURE_1 =
-			new ResourceLocation("sololeveling", "textures/entities/demonknight1.png");
+			new ResourceLocation("sololeveling", "textures/entities/el_demon_knight1_texture.png");
 	private static final ResourceLocation TEXTURE_2 =
-			new ResourceLocation("sololeveling", "textures/entities/demonknight2.png");
+			new ResourceLocation("sololeveling", "textures/entities/el_demon_knight1_texture1.png");
 	private static final ResourceLocation TEXTURE_3 =
-			new ResourceLocation("sololeveling", "textures/entities/demonknight3.png");
+			new ResourceLocation("sololeveling", "textures/entities/el_demon_knight1_texture2.png");
 
 	@Override
 	public ResourceLocation getModelResource(DemonKnightEntity entity) {

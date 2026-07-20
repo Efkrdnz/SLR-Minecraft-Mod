@@ -13,7 +13,7 @@ public class TitleTextProcedure {
 			return "Goliath";
 		}
 		if ("liu_zhigang".equals(vars.vesselIdentity)) {
-			return "Sword Saint";
+			return "Sword Demon";
 		}
 		if ("rakan".equals(vars.vesselIdentity)) {
 			return "Monarch of Fangs";

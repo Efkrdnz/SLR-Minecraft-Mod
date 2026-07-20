@@ -1,13 +1,13 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.PlayerVitalSync;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.TickEvent;
 
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
 
 import javax.annotation.Nullable;
@@ -26,11 +26,7 @@ public class HealthUpdateProcedure {
 	}
 
 	private static void execute(@Nullable Event event, Entity entity) {
-		if (entity == null)
-			return;
-		((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
-				.setBaseValue((20 + 0.5 * (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Vitality));
-		((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR)
-				.setBaseValue((0.25 * (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Vitality));
+		if (entity instanceof Player player)
+			PlayerVitalSync.applyDerivedAttributes(player);
 	}
 }

@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.entity.RedGateEntity;
+import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.phys.Vec3;
@@ -44,6 +45,14 @@ public class RedGateRightClickedOnEntityProcedure {
 		if (!((sourceentity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MAGIC_READER.get())) {
 			if (net.solocraft.guild.GuildGateHelper.prepareGateEntry(world, entity, sourceentity))
 				return;
+			// The dedicated legacy red gate now shares the finite, instance-scoped wave
+			// runtime used by procedural gates. Keep the generated procedure below as a
+			// fallback for non-player callers and old integrations.
+			if (entity instanceof RedGateEntity redGate && sourceentity instanceof Player) {
+				if (!world.isClientSide() && sourceentity instanceof ServerPlayer serverPlayer)
+					SnowRedGateArenaManager.enterLegacy(world, redGate, serverPlayer);
+				return;
+			}
 			if (!(entity instanceof RedGateEntity _datEntL2 && _datEntL2.getEntityData().get(RedGateEntity.DATA_usedbefore))) {
 				if (entity instanceof RedGateEntity _datEntSetL)
 					_datEntSetL.getEntityData().set(RedGateEntity.DATA_usedbefore, true);

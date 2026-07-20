@@ -4,7 +4,7 @@ license="Apache License version 2.0"
 
 [[mods]]
 modId="sololeveling"
-version="0.10.7.5"
+version="1.0.0"
 displayName="SoloCraftReawakening"
 displayURL="https://discord.gg/U3RtGxd5uw"
 logoFile="logo.png"

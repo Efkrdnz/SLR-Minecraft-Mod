@@ -23,7 +23,7 @@ public class PortalKargalgansThroneRoomRenderer extends GeoEntityRenderer<Portal
 
 	@Override
 	public RenderType getRenderType(PortalKargalgansThroneRoomEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucent(getTextureLocation(animatable));
+		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
 	}
 
 	@Override

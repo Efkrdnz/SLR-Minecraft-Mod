@@ -1,6 +1,9 @@
 package net.solocraft.init;
 
 import net.solocraft.entity.RadiruBloodSpearEntity;
+import net.solocraft.entity.ArcaneVfxEntity;
+import net.solocraft.entity.BarrierVfxEntity;
+import net.solocraft.entity.FireMageVfxEntity;
 import net.solocraft.entity.GlacialPursuitEntity;
 import net.solocraft.entity.BeastVfxEntity;
 import net.solocraft.entity.LiuSwordBeamEntity;
@@ -46,6 +49,7 @@ import net.solocraft.entity.ShadowGreenOrcEntity;
 import net.solocraft.entity.SecretaryEntity;
 import net.solocraft.entity.RulersHandEntity;
 import net.solocraft.entity.RulersAuthorityAuraEntity;
+import net.solocraft.entity.DKCTowerAuraEntity;
 import net.solocraft.entity.RedGateEntity;
 import net.solocraft.entity.RedAntsEntity;
 import net.solocraft.entity.RangerProjectileEntity;
@@ -57,6 +61,7 @@ import net.solocraft.entity.PortalLushEntity;
 import net.solocraft.entity.PortalLabEntity;
 import net.solocraft.entity.PortalKargalgansThroneRoomEntity;
 import net.solocraft.entity.PortalJobChangeEntity;
+import net.solocraft.entity.CartenonGateEntity;
 import net.solocraft.entity.PortalEntity;
 import net.solocraft.entity.PortalCemeteryEntity;
 import net.solocraft.entity.PortalBeruEntity;
@@ -92,7 +97,6 @@ import net.solocraft.entity.IceBallEntity;
 import net.solocraft.entity.HunterEntity;
 import net.solocraft.entity.HomingFlameArrowEntity;
 import net.solocraft.entity.HighOrcEntity;
-import net.solocraft.entity.HeavyFlameEntity;
 import net.solocraft.entity.GreenOrcEntity;
 import net.solocraft.entity.GoblinMageShadowEntity;
 import net.solocraft.entity.GoblinMageEntity;
@@ -105,13 +109,8 @@ import net.solocraft.entity.GemGolemEntity;
 import net.solocraft.entity.FxspikEntity;
 import net.solocraft.entity.FxPuddleEntity;
 import net.solocraft.entity.FuturisticGolemEntity;
-import net.solocraft.entity.FlameVortexPEntity;
-import net.solocraft.entity.FlameVortexEntity;
 import net.solocraft.entity.FlagOfProtectionEntity;
-import net.solocraft.entity.FireTornadoEntity;
 import net.solocraft.entity.FireFlyEntity;
-import net.solocraft.entity.FireBallProjectileEntity;
-import net.solocraft.entity.FireArrowEntity;
 import net.solocraft.entity.FangedKasakaEntity;
 import net.solocraft.entity.ElderBeastEntity;
 import net.solocraft.entity.DummyPortalRedEntity;
@@ -273,7 +272,7 @@ public class SololevelingModEntities {
 	public static final RegistryObject<EntityType<StatueOfGodEntity>> STATUE_OF_GOD = register("statue_of_god",
 			EntityType.Builder.<StatueOfGodEntity>of(StatueOfGodEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(512).setUpdateInterval(3).setCustomClientFactory(StatueOfGodEntity::new)
 
-					.sized(1.2f, 5.4f));
+					.sized(5.25f, 23.25f));
 	public static final RegistryObject<EntityType<KangTaeshikEntity>> KANG_TAESHIK = register("kang_taeshik",
 			EntityType.Builder.<KangTaeshikEntity>of(KangTaeshikEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(128).setUpdateInterval(3).setCustomClientFactory(KangTaeshikEntity::new)
 
@@ -385,6 +384,8 @@ public class SololevelingModEntities {
 			.setUpdateInterval(3).setCustomClientFactory(PortalLabEntity::new).fireImmune().sized(0.6f, 1.8f));
 	public static final RegistryObject<EntityType<PortalJobChangeEntity>> PORTAL_JOB_CHANGE = register("portal_job_change", EntityType.Builder.<PortalJobChangeEntity>of(PortalJobChangeEntity::new, MobCategory.CREATURE)
 			.setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(PortalJobChangeEntity::new).fireImmune().sized(0.6f, 1.8f));
+	public static final RegistryObject<EntityType<CartenonGateEntity>> CARTENON_GATE = register("cartenon_gate", EntityType.Builder.<CartenonGateEntity>of(CartenonGateEntity::new, MobCategory.CREATURE)
+			.setShouldReceiveVelocityUpdates(true).setTrackingRange(128).setUpdateInterval(2).setCustomClientFactory(CartenonGateEntity::new).fireImmune().sized(1.2f, 2.8f));
 	public static final RegistryObject<EntityType<PortalCemeteryEntity>> PORTAL_CEMETERY = register("portal_cemetery", EntityType.Builder.<PortalCemeteryEntity>of(PortalCemeteryEntity::new, MobCategory.CREATURE).setShouldReceiveVelocityUpdates(true)
 			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(PortalCemeteryEntity::new).fireImmune().sized(0.6f, 1.8f));
 	public static final RegistryObject<EntityType<TrainingBotEntity>> TRAINING_BOT = register("training_bot", EntityType.Builder.<TrainingBotEntity>of(TrainingBotEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true)
@@ -453,10 +454,6 @@ public class SololevelingModEntities {
 			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(IgrisDeadBodyEntity::new).fireImmune().sized(1.2f, 2.5f));
 	public static final RegistryObject<EntityType<BeruDeadBodyEntity>> BERU_DEAD_BODY = register("beru_dead_body", EntityType.Builder.<BeruDeadBodyEntity>of(BeruDeadBodyEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true)
 			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(BeruDeadBodyEntity::new).fireImmune().sized(0.9f, 0.4f));
-	public static final RegistryObject<EntityType<FireTornadoEntity>> FIRE_TORNADO = register("fire_tornado", EntityType.Builder.<FireTornadoEntity>of(FireTornadoEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true)
-			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(FireTornadoEntity::new).fireImmune().sized(0.6f, 1.8f));
-	public static final RegistryObject<EntityType<FlameVortexEntity>> FLAME_VORTEX = register("flame_vortex", EntityType.Builder.<FlameVortexEntity>of(FlameVortexEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true)
-			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(FlameVortexEntity::new).fireImmune().sized(0.6f, 1.8f));
 	public static final RegistryObject<EntityType<CursedChainsEntity>> CURSED_CHAINS = register("cursed_chains", EntityType.Builder.<CursedChainsEntity>of(CursedChainsEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true)
 			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(CursedChainsEntity::new).fireImmune().sized(0.3f, 0.3f));
 	public static final RegistryObject<EntityType<DragonheadEntity>> DRAGONHEAD = register("dragonhead", EntityType.Builder.<DragonheadEntity>of(DragonheadEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64)
@@ -491,8 +488,6 @@ public class SololevelingModEntities {
 			EntityType.Builder.<MagicalSkullEntity>of(MagicalSkullEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(MagicalSkullEntity::new)
 
 					.sized(0.4f, 0.4f));
-	public static final RegistryObject<EntityType<FireBallProjectileEntity>> FIRE_BALL_PROJECTILE = register("projectile_fire_ball_projectile", EntityType.Builder.<FireBallProjectileEntity>of(FireBallProjectileEntity::new, MobCategory.MISC)
-			.setCustomClientFactory(FireBallProjectileEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<ManaArrowEntity>> MANA_ARROW = register("projectile_mana_arrow",
 			EntityType.Builder.<ManaArrowEntity>of(ManaArrowEntity::new, MobCategory.MISC).setCustomClientFactory(ManaArrowEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<HomingFlameArrowEntity>> HOMING_FLAME_ARROW = register("projectile_homing_flame_arrow", EntityType.Builder.<HomingFlameArrowEntity>of(HomingFlameArrowEntity::new, MobCategory.MISC)
@@ -501,6 +496,9 @@ public class SololevelingModEntities {
 			EntityType.Builder.<RulersHandEntity>of(RulersHandEntity::new, MobCategory.MISC).setCustomClientFactory(RulersHandEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<RulersAuthorityAuraEntity>> RULERS_AUTHORITY_AURA = register("rulers_authority_aura",
 			EntityType.Builder.<RulersAuthorityAuraEntity>of(RulersAuthorityAuraEntity::new, MobCategory.MISC).setCustomClientFactory(RulersAuthorityAuraEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(128).setUpdateInterval(1).sized(0.1f, 0.1f));
+	public static final RegistryObject<EntityType<DKCTowerAuraEntity>> DKC_TOWER_AURA = register("dkc_tower_aura",
+			EntityType.Builder.<DKCTowerAuraEntity>of(DKCTowerAuraEntity::new, MobCategory.MISC).setCustomClientFactory(DKCTowerAuraEntity::new).setShouldReceiveVelocityUpdates(false).setTrackingRange(32).setUpdateInterval(20)
+					.fireImmune().sized(1.0f, 1.0f));
 	public static final RegistryObject<EntityType<SpiderWebEntity>> SPIDER_WEB = register("projectile_spider_web",
 			EntityType.Builder.<SpiderWebEntity>of(SpiderWebEntity::new, MobCategory.MISC).setCustomClientFactory(SpiderWebEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<ShadowStepEntity>> SHADOW_STEP = register("projectile_shadow_step",
@@ -527,6 +525,12 @@ public class SololevelingModEntities {
 			EntityType.Builder.<GlacialPursuitEntity>of(GlacialPursuitEntity::new, MobCategory.MISC).setCustomClientFactory(GlacialPursuitEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(192).setUpdateInterval(1).sized(1.35f, 0.35f));
 	public static final RegistryObject<EntityType<WhiteFlameVfxEntity>> WHITE_FLAME_VFX = register("white_flame_vfx",
 			EntityType.Builder.<WhiteFlameVfxEntity>of(WhiteFlameVfxEntity::new, MobCategory.MISC).setCustomClientFactory(WhiteFlameVfxEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(96).setUpdateInterval(1).sized(0.1f, 0.1f));
+	public static final RegistryObject<EntityType<FireMageVfxEntity>> FIRE_MAGE_VFX = register("fire_mage_vfx",
+			EntityType.Builder.<FireMageVfxEntity>of(FireMageVfxEntity::new, MobCategory.MISC).setCustomClientFactory(FireMageVfxEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(256).setUpdateInterval(1).sized(0.1f, 0.1f));
+	public static final RegistryObject<EntityType<BarrierVfxEntity>> BARRIER_VFX = register("barrier_vfx",
+			EntityType.Builder.<BarrierVfxEntity>of(BarrierVfxEntity::new, MobCategory.MISC).setCustomClientFactory(BarrierVfxEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(256).setUpdateInterval(1).sized(0.2f, 0.2f));
+	public static final RegistryObject<EntityType<ArcaneVfxEntity>> ARCANE_VFX = register("arcane_vfx",
+			EntityType.Builder.<ArcaneVfxEntity>of(ArcaneVfxEntity::new, MobCategory.MISC).setCustomClientFactory(ArcaneVfxEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(256).setUpdateInterval(1).sized(0.1f, 0.1f));
 	public static final RegistryObject<EntityType<RadiruBloodSpearEntity>> RADIRU_BLOOD_SPEAR = register("radiru_blood_spear",
 			EntityType.Builder.<RadiruBloodSpearEntity>of(RadiruBloodSpearEntity::new, MobCategory.MISC).setCustomClientFactory(RadiruBloodSpearEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(96).setUpdateInterval(1).sized(0.35f, 0.35f));
 	public static final RegistryObject<EntityType<LiuSwordVfxEntity>> LIU_SWORD_VFX = register("liu_sword_vfx",
@@ -553,10 +557,6 @@ public class SololevelingModEntities {
 			EntityType.Builder.<ShamanMagicEntity>of(ShamanMagicEntity::new, MobCategory.MISC).setCustomClientFactory(ShamanMagicEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<WhiteFlameEntity>> WHITE_FLAME = register("projectile_white_flame",
 			EntityType.Builder.<WhiteFlameEntity>of(WhiteFlameEntity::new, MobCategory.MISC).setCustomClientFactory(WhiteFlameEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
-	public static final RegistryObject<EntityType<FlameVortexPEntity>> FLAME_VORTEX_P = register("projectile_flame_vortex_p",
-			EntityType.Builder.<FlameVortexPEntity>of(FlameVortexPEntity::new, MobCategory.MISC).setCustomClientFactory(FlameVortexPEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
-	public static final RegistryObject<EntityType<HeavyFlameEntity>> HEAVY_FLAME = register("projectile_heavy_flame",
-			EntityType.Builder.<HeavyFlameEntity>of(HeavyFlameEntity::new, MobCategory.MISC).setCustomClientFactory(HeavyFlameEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<DragonFireballEntity>> DRAGON_FIREBALL = register("projectile_dragon_fireball",
 			EntityType.Builder.<DragonFireballEntity>of(DragonFireballEntity::new, MobCategory.MISC).setCustomClientFactory(DragonFireballEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<RangerProjectileEntity>> RANGER_PROJECTILE = register("projectile_ranger_projectile", EntityType.Builder.<RangerProjectileEntity>of(RangerProjectileEntity::new, MobCategory.MISC)
@@ -565,8 +565,6 @@ public class SololevelingModEntities {
 			EntityType.Builder.<MagicMissileEntity>of(MagicMissileEntity::new, MobCategory.MISC).setCustomClientFactory(MagicMissileEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<NecroBlastEntity>> NECRO_BLAST = register("projectile_necro_blast",
 			EntityType.Builder.<NecroBlastEntity>of(NecroBlastEntity::new, MobCategory.MISC).setCustomClientFactory(NecroBlastEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
-	public static final RegistryObject<EntityType<FireArrowEntity>> FIRE_ARROW = register("projectile_fire_arrow",
-			EntityType.Builder.<FireArrowEntity>of(FireArrowEntity::new, MobCategory.MISC).setCustomClientFactory(FireArrowEntity::new).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(1).sized(0.5f, 0.5f));
 	public static final RegistryObject<EntityType<DemonEntity>> DEMON = register("demon",
 			EntityType.Builder.<DemonEntity>of(DemonEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(DemonEntity::new).fireImmune().sized(0.6f, 2.5f));
 	public static final RegistryObject<EntityType<DemonKnightEntity>> DEMON_KNIGHT = register("demon_knight",
@@ -660,6 +658,7 @@ public class SololevelingModEntities {
 			PortalSewersEntity.init();
 			PortalLabEntity.init();
 			PortalJobChangeEntity.init();
+			CartenonGateEntity.init();
 			PortalCemeteryEntity.init();
 			TrainingBotEntity.init();
 			ShadowSoulEntity.init();
@@ -686,8 +685,6 @@ public class SololevelingModEntities {
 			SlasheffectswordEntity.init();
 			IgrisDeadBodyEntity.init();
 			BeruDeadBodyEntity.init();
-			FireTornadoEntity.init();
-			FlameVortexEntity.init();
 			CursedChainsEntity.init();
 			DragonheadEntity.init();
 			CurseMagicEntity.init();
@@ -780,6 +777,7 @@ public class SololevelingModEntities {
 		event.put(PORTAL_SEWERS.get(), PortalSewersEntity.createAttributes().build());
 		event.put(PORTAL_LAB.get(), PortalLabEntity.createAttributes().build());
 		event.put(PORTAL_JOB_CHANGE.get(), PortalJobChangeEntity.createAttributes().build());
+		event.put(CARTENON_GATE.get(), CartenonGateEntity.createAttributes().build());
 		event.put(PORTAL_CEMETERY.get(), PortalCemeteryEntity.createAttributes().build());
 		event.put(TRAINING_BOT.get(), TrainingBotEntity.createAttributes().build());
 		event.put(SHADOW_SOUL.get(), ShadowSoulEntity.createAttributes().build());
@@ -806,8 +804,6 @@ public class SololevelingModEntities {
 		event.put(SLASHEFFECTSWORD.get(), SlasheffectswordEntity.createAttributes().build());
 		event.put(IGRIS_DEAD_BODY.get(), IgrisDeadBodyEntity.createAttributes().build());
 		event.put(BERU_DEAD_BODY.get(), BeruDeadBodyEntity.createAttributes().build());
-		event.put(FIRE_TORNADO.get(), FireTornadoEntity.createAttributes().build());
-		event.put(FLAME_VORTEX.get(), FlameVortexEntity.createAttributes().build());
 		event.put(CURSED_CHAINS.get(), CursedChainsEntity.createAttributes().build());
 		event.put(DRAGONHEAD.get(), DragonheadEntity.createAttributes().build());
 		event.put(CURSE_MAGIC.get(), CurseMagicEntity.createAttributes().build());

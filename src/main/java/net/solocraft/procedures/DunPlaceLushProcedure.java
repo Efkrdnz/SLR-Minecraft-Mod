@@ -22,6 +22,12 @@ import java.util.List;
 import java.util.Comparator;
 
 public class DunPlaceLushProcedure {
+	private static final ThreadLocal<Boolean> PLACING_LUSH_DUNGEON = ThreadLocal.withInitial(() -> false);
+
+	public static boolean isPlacingLushDungeon() {
+		return PLACING_LUSH_DUNGEON.get();
+	}
+
 	public static void execute(LevelAccessor world, double x, double y, double z) {
 		{
 			final Vec3 _center = new Vec3(x, y, z);
@@ -38,8 +44,13 @@ public class DunPlaceLushProcedure {
 			if (world instanceof ServerLevel _serverworld) {
 				StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "lushcave"));
 				if (template != null) {
-					template.placeInWorld(_serverworld, BlockPos.containing(x - 15, y, z - 150), BlockPos.containing(x - 15, y, z - 150), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-							_serverworld.random, 2);
+					PLACING_LUSH_DUNGEON.set(true);
+					try {
+						template.placeInWorld(_serverworld, BlockPos.containing(x - 15, y, z - 150), BlockPos.containing(x - 15, y, z - 150),
+								new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
+					} finally {
+						PLACING_LUSH_DUNGEON.remove();
+					}
 				}
 			}
 		});

@@ -1,6 +1,8 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.dungeon.runtime.DungeonLevelHelper;
+import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -41,10 +43,11 @@ public class BeforePlayerHurtProcedure {
 			if (!(damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:magic_beast")))) {
 				if (entity instanceof Player) {
 					if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Player) {
-						if (!sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("soloboss")))) {
-							if (sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("dm")))) {// Ensure Level is treated as an integer
+						boolean runtimeDungeonMob = sourceentity.getPersistentData().getBoolean(DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG);
+						if (!sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("soloboss"))) || runtimeDungeonMob) {
+							if (sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("dm"))) || runtimeDungeonMob) {// Ensure Level is treated as an integer
 								int takerLevel = (int) entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).Level;
-								int dealerLevel = (int) sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).Level;
+								int dealerLevel = (int) DungeonLevelHelper.levelOf(sourceentity);
 								// Calculate level difference
 								int levelDifference = takerLevel - dealerLevel;
 								// Calculate damage reduction (clamped between 0 and 1)

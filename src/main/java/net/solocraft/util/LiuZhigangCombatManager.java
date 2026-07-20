@@ -90,7 +90,6 @@ public final class LiuZhigangCombatManager {
 	private static final String EXECUTION_SLOW_UNTIL = "liu_execution_slow_until";
 	private static final int EXECUTION_DELAY_TICKS = 50;
 	private static final int EXECUTION_IMPACT_TICKS = 16;
-	private static final double EXECUTION_WITNESS_RANGE_SQR = 96.0D * 96.0D;
 	private static final int EXECUTION_FIRE_RED = 0xE23818;
 	private static final int EXECUTION_FIRE_YELLOW = 0xFFD84A;
 	private static final int EXECUTION_PARTICLE_TARGET_LIMIT = 10;
@@ -952,25 +951,15 @@ public final class LiuZhigangCombatManager {
 	}
 
 	private static void sendExecutionImpactFrame(ServerPlayer owner, ExecutionState state) {
-		Set<ServerPlayer> viewers = new HashSet<>();
-		boolean hasLiveTarget = false;
 		for (UUID targetId : state.targets) {
 			LivingEntity target = living(owner.serverLevel(), targetId);
-			if (!isValidTarget(owner, target))
-				continue;
-			hasLiveTarget = true;
-			for (ServerPlayer viewer : owner.serverLevel().players()) {
-				if (viewer.distanceToSqr(target) <= EXECUTION_WITNESS_RANGE_SQR)
-					viewers.add(viewer);
+			if (isValidTarget(owner, target)) {
+				LiuExecutionImpactMessage message = new LiuExecutionImpactMessage(EXECUTION_IMPACT_TICKS,
+						state.primaryColor, state.secondaryColor);
+				SololevelingMod.PACKET_HANDLER.send(PacketDistributor.PLAYER.with(() -> owner), message);
+				return;
 			}
 		}
-		if (!hasLiveTarget)
-			return;
-		viewers.add(owner);
-		LiuExecutionImpactMessage message = new LiuExecutionImpactMessage(EXECUTION_IMPACT_TICKS,
-				state.primaryColor, state.secondaryColor);
-		for (ServerPlayer viewer : viewers)
-			SololevelingMod.PACKET_HANDLER.send(PacketDistributor.PLAYER.with(() -> viewer), message);
 	}
 
 	private static void releaseExecutionRestraint(ServerPlayer owner, LivingEntity target) {

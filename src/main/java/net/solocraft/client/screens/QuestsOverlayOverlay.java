@@ -91,7 +91,7 @@ public class QuestsOverlayOverlay {
 		}
 
 		String status = switch (UrgentQuestClientState.kind()) {
-			case "kill", "pvp" -> "Progress: " + UrgentQuestClientState.progress() + "/" + UrgentQuestClientState.target();
+			case "kill", "pvp", "kang" -> "Progress: " + UrgentQuestClientState.progress() + "/" + UrgentQuestClientState.target();
 			case "no_skills" -> "Status: Active - No skills used";
 			default -> "Status: Active";
 		};

@@ -1,6 +1,8 @@
 package net.solocraft.client.gui.system;
 
+import net.solocraft.client.gui.ResponsiveGuiScale;
 import net.solocraft.client.renderer.shader.SystemBackgroundRenderTypes;
+import net.solocraft.util.SystemPlayerAccess;
 
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
@@ -43,6 +45,7 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 	private State state = State.OPENING;
 	private long animStart;
 	private boolean closed;
+	private boolean accessDenied;
 	private float reveal;
 
 	protected SystemContainerScreen(T menu, Inventory inv, Component title) {
@@ -52,7 +55,15 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 	@Override
 	protected void init() {
 		super.init();
-		SystemGuiSounds.enter();
+		this.accessDenied = !SystemPlayerAccess.hasSystem(this.minecraft == null ? null : this.minecraft.player)
+				&& !allowsNonSystemAccess();
+		if (accessDenied) {
+			if (this.minecraft != null && this.minecraft.player != null)
+				this.minecraft.player.closeContainer();
+			return;
+		}
+		if (shouldPlaySystemSounds())
+			SystemGuiSounds.enter();
 		// Center the panel on screen. The screens use imageWidth/Height = 0, so
 		// vanilla puts the origin at the screen centre; shift it so the panel's
 		// own centre lands on the screen centre. Slots share this origin, so they
@@ -89,7 +100,8 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 
 	protected void beginClose() {
 		if (state != State.CLOSING) {
-			SystemGuiSounds.exit();
+			if (shouldPlaySystemSounds())
+				SystemGuiSounds.exit();
 			state = State.CLOSING;
 			animStart = Util.getMillis();
 		}
@@ -97,16 +109,46 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 
 	protected void openSystemScreen(Screen screen) {
 		if (this.minecraft != null) {
-			SystemGuiSounds.switchInsideSystem();
+			if (shouldPlaySystemSounds())
+				SystemGuiSounds.switchInsideSystem();
 			this.minecraft.setScreen(screen);
 		}
+	}
+
+	protected boolean allowsNonSystemAccess() {
+		return false;
+	}
+
+	protected boolean shouldPlaySystemSounds() {
+		return SystemPlayerAccess.hasSystem(this.minecraft == null ? null : this.minecraft.player);
 	}
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (!isOpen())
 			return true; // swallow clicks during the animation
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(logicalMouseX(mouseX), logicalMouseY(mouseY), button);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		return super.mouseReleased(logicalMouseX(mouseX), logicalMouseY(mouseY), button);
+	}
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		float scale = responsiveTransform().scale();
+		return super.mouseDragged(logicalMouseX(mouseX), logicalMouseY(mouseY), button, dragX / scale, dragY / scale);
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+		return super.mouseScrolled(logicalMouseX(mouseX), logicalMouseY(mouseY), delta);
+	}
+
+	@Override
+	public void mouseMoved(double mouseX, double mouseY) {
+		super.mouseMoved(logicalMouseX(mouseX), logicalMouseY(mouseY));
 	}
 
 	private void updateAnimation() {
@@ -143,13 +185,19 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 
 	@Override
 	public void render(GuiGraphics g, int mouseX, int mouseY, float partialTicks) {
+		if (accessDenied)
+			return;
 		updateAnimation();
 		if (closed)
 			return;
 		setWidgetsVisible(state == State.OPEN);
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		int logicalMouseX = transform.logicalMouseX(mouseX);
+		int logicalMouseY = transform.logicalMouseY(mouseY);
 
 		this.renderBackground(g);
 		g.flush();
+		ResponsiveGuiScale.push(g, transform);
 
 		int ax = leftPos + pRelX, ay = topPos + pRelY;
 		int centerY = ay + pH / 2;
@@ -157,9 +205,9 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 		int top = centerY - halfH, bottom = centerY + halfH;
 		int sx0 = ax - 3, sx1 = ax + pW + 3;
 
-		g.enableScissor(sx0, top, sx1, bottom);
-		drawShaderBackground(g, ax, ay, mouseX, mouseY);
-		super.render(g, mouseX, mouseY, partialTicks); // renderBg (panel+cells) + slots/items + labels + widgets
+		ResponsiveGuiScale.enableScissor(g, transform, sx0, top, sx1, bottom);
+		drawShaderBackground(g, ax, ay, logicalMouseX, logicalMouseY);
+		super.render(g, logicalMouseX, logicalMouseY, partialTicks); // renderBg (panel+cells) + slots/items + labels + widgets
 		g.disableScissor();
 
 		if (reveal < 1.0f) {
@@ -170,9 +218,24 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 		}
 
 		if (state == State.OPEN) {
-			renderExtras(g, mouseX, mouseY);
-			this.renderTooltip(g, mouseX, mouseY);
+			renderExtras(g, logicalMouseX, logicalMouseY);
 		}
+		ResponsiveGuiScale.pop(g);
+
+		if (state == State.OPEN)
+			this.renderTooltip(g, mouseX, mouseY);
+	}
+
+	protected ResponsiveGuiScale.Transform responsiveTransform() {
+		return ResponsiveGuiScale.fit(this.width, this.height, pW + 8, pH + 8);
+	}
+
+	protected double logicalMouseX(double mouseX) {
+		return responsiveTransform().logicalX(mouseX);
+	}
+
+	protected double logicalMouseY(double mouseY) {
+		return responsiveTransform().logicalY(mouseY);
 	}
 
 	/** Subclass hook for hover highlights / extra tooltips, drawn on top when fully open. */

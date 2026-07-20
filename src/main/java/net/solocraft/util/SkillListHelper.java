@@ -38,6 +38,11 @@ public class SkillListHelper {
 			JobSkillManager.DOPPELGANGER,
 			JobSkillManager.HELLS_ARMY,
 			JobSkillManager.WHITE_FLAME_SPIRITUALIZATION,
+			JobSkillManager.BEAST_CLAW_RIFT,
+			JobSkillManager.BEAST_RUBBLE_JAW,
+			JobSkillManager.BEAST_KINGS_MAUL,
+			JobSkillManager.BEAST_RECONSTITUTION,
+			JobSkillManager.BEAST_WHITE_FANG,
 			JobSkillManager.MONARCH_BEAM,
 			JobSkillManager.LIGHTNING_STORM,
 			JobSkillManager.STORM_BURST);

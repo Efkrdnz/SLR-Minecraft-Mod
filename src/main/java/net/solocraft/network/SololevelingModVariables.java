@@ -111,6 +111,7 @@ public class SololevelingModVariables {
 			clone.BossKilled = original.BossKilled;
 			clone.Call4Death = original.Call4Death;
 			clone.Classes = original.Classes;
+			clone.mageSpecialization = original.mageSpecialization;
 			clone.combatmode = original.combatmode;
 			clone.commanddeath = original.commanddeath;
 			clone.dailykilltyppe = original.dailykilltyppe;
@@ -139,6 +140,7 @@ public class SololevelingModVariables {
 			clone.igris = original.igris;
 			clone.IgrisSpawned = original.IgrisSpawned;
 			clone.Intelligence = original.Intelligence;
+			clone.Mana = original.Mana;
 			clone.investvalue = original.investvalue;
 			clone.JOB = original.JOB;
 			clone.vesselType = original.vesselType;
@@ -193,6 +195,7 @@ public class SololevelingModVariables {
 			clone.xpmultiplier = original.xpmultiplier;
 			clone.Money = original.Money;
 			clone.CustomHUD = original.CustomHUD;
+			clone.pvpUrgentQuests = original.pvpUrgentQuests;
 			clone.ShadowGoblinArcherAmount = original.ShadowGoblinArcherAmount;
 			clone.ShadowGoblinMageAmount = original.ShadowGoblinMageAmount;
 			clone.ShadowGoblinArcherMax = original.ShadowGoblinArcherMax;
@@ -299,7 +302,6 @@ public class SololevelingModVariables {
 				clone.kamishcharge = original.kamishcharge;
 				clone.leapjump = original.leapjump;
 				clone.leftpunch = original.leftpunch;
-				clone.Mana = original.Mana;
 				clone.MP = original.MP;
 				clone.paralyzenot = original.paralyzenot;
 				clone.PhantomName = original.PhantomName;
@@ -610,6 +612,7 @@ public class SololevelingModVariables {
 		public boolean BossKilled = false;
 		public boolean Call4Death = false;
 		public double Classes = 0;
+		public String mageSpecialization = "";
 		public boolean combatmode = false;
 		public boolean commanddeath = false;
 		public double dailykilltyppe = 0;
@@ -659,7 +662,7 @@ public class SololevelingModVariables {
 		public ItemStack overridelegs = ItemStack.EMPTY;
 		public ItemStack overridetorso = ItemStack.EMPTY;
 		public double perception = 0;
-		public boolean Player = true;
+		public boolean Player = false;
 		public double polarbear = 0;
 		public double polarbearmax = 0;
 		public double pushup = 0;
@@ -692,6 +695,7 @@ public class SololevelingModVariables {
 		public double xpmultiplier = 1.0;
 		public double Money = 0;
 		public boolean CustomHUD = true;
+		public boolean pvpUrgentQuests = true;
 		public double ShadowGoblinArcherAmount = 0;
 		public double ShadowGoblinMageAmount = 0;
 		public double ShadowGoblinArcherMax = 0;
@@ -878,6 +882,7 @@ public class SololevelingModVariables {
 			nbt.putBoolean("BossKilled", BossKilled);
 			nbt.putBoolean("Call4Death", Call4Death);
 			nbt.putDouble("Classes", Classes);
+			nbt.putString("mageSpecialization", mageSpecialization);
 			nbt.putBoolean("combatmode", combatmode);
 			nbt.putBoolean("commanddeath", commanddeath);
 			nbt.putDouble("dailykilltyppe", dailykilltyppe);
@@ -960,6 +965,7 @@ public class SololevelingModVariables {
 			nbt.putDouble("xpmultiplier", xpmultiplier);
 			nbt.putDouble("Money", Money);
 			nbt.putBoolean("CustomHUD", CustomHUD);
+			nbt.putBoolean("pvpUrgentQuests", pvpUrgentQuests);
 			nbt.putDouble("ShadowGoblinArcherAmount", ShadowGoblinArcherAmount);
 			nbt.putDouble("ShadowGoblinMageAmount", ShadowGoblinMageAmount);
 			nbt.putDouble("ShadowGoblinArcherMax", ShadowGoblinArcherMax);
@@ -1130,6 +1136,7 @@ public class SololevelingModVariables {
 			BossKilled = nbt.getBoolean("BossKilled");
 			Call4Death = nbt.getBoolean("Call4Death");
 			Classes = nbt.getDouble("Classes");
+			mageSpecialization = nbt.getString("mageSpecialization");
 			combatmode = nbt.getBoolean("combatmode");
 			commanddeath = nbt.getBoolean("commanddeath");
 			dailykilltyppe = nbt.getDouble("dailykilltyppe");
@@ -1212,6 +1219,7 @@ public class SololevelingModVariables {
 			xpmultiplier = nbt.getDouble("xpmultiplier");
 			Money = nbt.getDouble("Money");
 			CustomHUD = nbt.getBoolean("CustomHUD");
+			pvpUrgentQuests = !nbt.contains("pvpUrgentQuests") || nbt.getBoolean("pvpUrgentQuests");
 			ShadowGoblinArcherAmount = nbt.getDouble("ShadowGoblinArcherAmount");
 			ShadowGoblinMageAmount = nbt.getDouble("ShadowGoblinMageAmount");
 			ShadowGoblinArcherMax = nbt.getDouble("ShadowGoblinArcherMax");
@@ -1407,6 +1415,7 @@ public class SololevelingModVariables {
 					variables.BossKilled = message.data.BossKilled;
 					variables.Call4Death = message.data.Call4Death;
 					variables.Classes = message.data.Classes;
+					variables.mageSpecialization = message.data.mageSpecialization;
 					variables.combatmode = message.data.combatmode;
 					variables.commanddeath = message.data.commanddeath;
 					variables.dailykilltyppe = message.data.dailykilltyppe;
@@ -1489,6 +1498,7 @@ public class SololevelingModVariables {
 					variables.xpmultiplier = message.data.xpmultiplier;
 					variables.Money = message.data.Money;
 					variables.CustomHUD = message.data.CustomHUD;
+					variables.pvpUrgentQuests = message.data.pvpUrgentQuests;
 					variables.ShadowGoblinArcherAmount = message.data.ShadowGoblinArcherAmount;
 					variables.ShadowGoblinMageAmount = message.data.ShadowGoblinMageAmount;
 					variables.ShadowGoblinArcherMax = message.data.ShadowGoblinArcherMax;

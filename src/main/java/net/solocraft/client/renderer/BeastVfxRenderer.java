@@ -35,6 +35,11 @@ public final class BeastVfxRenderer extends EntityRenderer<BeastVfxEntity> {
 			case BeastVfxEntity.INTERCEPT -> renderIntercept(entity, poseStack, surface, glow, fade);
 			case BeastVfxEntity.QUARRY -> renderQuarry(entity, poseStack, surface, glow, fade);
 			case BeastVfxEntity.OPENING -> renderOpening(entity, poseStack, surface, glow, fade);
+			case BeastVfxEntity.RIFT -> renderRift(entity, poseStack, surface, glow, fade);
+			case BeastVfxEntity.RUBBLE_JAW -> renderRubbleJaw(entity, poseStack, surface, glow, fade);
+			case BeastVfxEntity.KINGS_MAUL -> renderKingsMaul(entity, poseStack, surface, glow, fade);
+			case BeastVfxEntity.RECONSTITUTION -> renderReconstitution(entity, poseStack, surface, glow, fade);
+			case BeastVfxEntity.WHITE_FANG -> renderWhiteFang(entity, poseStack, surface, glow, fade);
 			default -> renderClaw(entity, poseStack, surface, glow, fade);
 		}
 		poseStack.popPose();
@@ -44,15 +49,24 @@ public final class BeastVfxRenderer extends EntityRenderer<BeastVfxEntity> {
 	private void renderClaw(BeastVfxEntity entity, PoseStack stack, VertexConsumer surface,
 			VertexConsumer glow, float fade) {
 		orientForward(entity, stack);
-		int count = entity.getVariant() >= 3 ? 2 : 1;
-		for (int i = 0; i < count; i++) {
-			stack.pushPose();
-			float roll = entity.getRoll() + (count == 2 ? (i == 0 ? -18.0F : 18.0F) : 0.0F);
-			stack.mulPose(Axis.ZP.rotationDegrees(roll));
-			stack.translate(0.0D, (i - (count - 1) * 0.5D) * 0.16D, i * -0.012D);
-			drawLayered(stack, surface, glow, entity.getScale(), entity.getLength() * 0.32F,
-					0.0F, entity.getPrimaryColor(), entity.getSecondaryColor(), fade, 230, 96);
-			stack.popPose();
+		int fans = entity.getVariant() >= 3 ? 2 : 1;
+		for (int fan = 0; fan < fans; fan++) {
+			float baseRoll = switch (entity.getVariant()) {
+				case 1 -> -27.0F;
+				case 2 -> 27.0F;
+				default -> fan == 0 ? -31.0F : 31.0F;
+			};
+			for (int claw = -1; claw <= 1; claw++) {
+				stack.pushPose();
+				stack.translate(claw * entity.getScale() * 0.1D,
+						claw * entity.getScale() * 0.13D, -fan * 0.014D - Math.abs(claw) * 0.004D);
+				stack.mulPose(Axis.ZP.rotationDegrees(entity.getRoll() + baseRoll + claw * 2.2F));
+				float outerScale = claw == 0 ? 1.0F : 0.9F;
+				drawLayered(stack, surface, glow, entity.getScale() * outerScale,
+						entity.getLength() * 0.105F, 0.0F, entity.getPrimaryColor(),
+						entity.getSecondaryColor(), fade * (claw == 0 ? 1.0F : 0.88F), 224, 78);
+				stack.popPose();
+			}
 		}
 	}
 
@@ -109,6 +123,85 @@ public final class BeastVfxRenderer extends EntityRenderer<BeastVfxEntity> {
 			drawLayered(stack, surface, glow, entity.getScale() * expansion,
 					entity.getLength() * 0.16F, 4.0F, entity.getPrimaryColor(),
 					entity.getSecondaryColor(), fade, 228, 86);
+			stack.popPose();
+		}
+	}
+
+	private void renderRift(BeastVfxEntity entity, PoseStack stack, VertexConsumer surface,
+			VertexConsumer glow, float fade) {
+		orientForward(entity, stack);
+		float pulse = 0.94F + 0.06F * (float) Math.sin((entity.tickCount + entity.getVariant() * 3) * 0.9F);
+		for (int claw = -1; claw <= 1; claw++) {
+			stack.pushPose();
+			stack.translate(claw * entity.getScale() * 0.24D, claw * 0.045D, claw * -0.006D);
+			stack.mulPose(Axis.ZP.rotationDegrees(claw * 3.5F + entity.getRoll()));
+			drawLayered(stack, surface, glow, entity.getScale() * 0.56F * pulse,
+					entity.getLength(), 0.0F, entity.getPrimaryColor(), entity.getSecondaryColor(),
+					fade * (claw == 0 ? 1.0F : 0.82F), 218, 122);
+			stack.popPose();
+		}
+	}
+
+	private void renderRubbleJaw(BeastVfxEntity entity, PoseStack stack, VertexConsumer surface,
+			VertexConsumer glow, float fade) {
+		stack.mulPose(Axis.YP.rotationDegrees(-entity.getYRot()));
+		stack.mulPose(Axis.XP.rotationDegrees(90.0F));
+		float opening = 42.0F - entity.getProgress(0.0F) * 13.0F;
+		for (int side = -1; side <= 1; side += 2) {
+			stack.pushPose();
+			stack.translate(side * entity.getScale() * 0.33D, 0.0D, 0.008D);
+			stack.mulPose(Axis.ZP.rotationDegrees(side * opening));
+			drawLayered(stack, surface, glow, entity.getLength(), entity.getScale() * 0.16F,
+					4.0F, entity.getPrimaryColor(), entity.getSecondaryColor(), fade, 196, 92);
+			stack.popPose();
+		}
+	}
+
+	private void renderKingsMaul(BeastVfxEntity entity, PoseStack stack, VertexConsumer surface,
+			VertexConsumer glow, float fade) {
+		stack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+		float snap = 0.72F + entity.getProgress(0.0F) * 0.34F;
+		for (int side = -1; side <= 1; side += 2) {
+			for (int claw = -1; claw <= 1; claw++) {
+				stack.pushPose();
+				stack.translate(claw * entity.getScale() * 0.1D, side * entity.getScale() * 0.08D,
+						claw * 0.004D);
+				stack.mulPose(Axis.ZP.rotationDegrees(side * 38.0F + claw * 2.0F));
+				drawLayered(stack, surface, glow, entity.getScale() * snap,
+						entity.getLength() * 0.09F, 0.0F, entity.getPrimaryColor(),
+						entity.getSecondaryColor(), fade * (claw == 0 ? 1.0F : 0.84F), 238, 94);
+				stack.popPose();
+			}
+		}
+	}
+
+	private void renderReconstitution(BeastVfxEntity entity, PoseStack stack, VertexConsumer surface,
+			VertexConsumer glow, float fade) {
+		stack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+		float close = 1.25F - entity.getProgress(0.0F) * 0.48F;
+		for (int i = 0; i < 5; i++) {
+			stack.pushPose();
+			stack.mulPose(Axis.ZP.rotationDegrees(i * 72.0F + entity.tickCount * 2.8F));
+			stack.translate(0.0D, entity.getScale() * close, i * -0.004D);
+			stack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+			drawLayered(stack, surface, glow, entity.getScale() * 0.58F,
+					entity.getLength() * 0.11F, 4.0F, entity.getPrimaryColor(),
+					entity.getSecondaryColor(), fade * 0.78F, 186, 74);
+			stack.popPose();
+		}
+	}
+
+	private void renderWhiteFang(BeastVfxEntity entity, PoseStack stack, VertexConsumer surface,
+			VertexConsumer glow, float fade) {
+		stack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+		float burst = 0.62F + entity.getProgress(0.0F) * 1.2F;
+		for (int i = 0; i < 6; i++) {
+			stack.pushPose();
+			stack.mulPose(Axis.ZP.rotationDegrees(i * 60.0F + entity.getRoll()));
+			stack.translate(0.0D, entity.getScale() * burst, i * -0.004D);
+			drawLayered(stack, surface, glow, entity.getScale() * 0.9F,
+					entity.getLength() * 0.09F, 4.0F, entity.getPrimaryColor(),
+					entity.getSecondaryColor(), fade, 236, 82);
 			stack.popPose();
 		}
 	}

@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.VesselManager;
 
 import net.minecraft.world.entity.Entity;
 
@@ -8,6 +9,9 @@ public class ReturnJobProcedure {
 	public static String execute(Entity entity) {
 		if (entity == null)
 			return "";
+		VesselManager.VesselDefinition vessel = VesselManager.currentDefinition(entity);
+		if (vessel != null)
+			return "\u00A7f\u00A7l" + "Job: " + vessel.powerName();
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
 			return "\u00A7f\u00A7l" + "Job: " + "Shadow Monarch";
 		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 2) {

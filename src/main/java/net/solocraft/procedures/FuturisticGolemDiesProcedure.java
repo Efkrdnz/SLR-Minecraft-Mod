@@ -36,6 +36,8 @@ public class FuturisticGolemDiesProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
+		if (entity.getPersistentData().getBoolean(net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG))
+			return;
 		double uplvl = 0;
 		if (entity instanceof FuturisticGolemEntity) {
 			if (sourceentity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) {

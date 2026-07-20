@@ -36,11 +36,18 @@ public final class MageQTEHelper {
     // ── Which powers trigger QTE instead of instant cast ─────────────────────
 
     public static final Set<String> MAGE_SKILLS = Set.of(
-            "Fireball",
-            "Fire Rain",
-            "Heavy Flame",
-            "Flame Tornado",
-            "Flame Vortex",
+            FireMageSpellManager.IGNITION_ORB,
+            FireMageSpellManager.INFERNO_LANCE,
+            FireMageSpellManager.FLASHFIRE,
+            FireMageSpellManager.CREMATION,
+            FireMageSpellManager.FURNACE_DOMINION,
+            FireMageSpellManager.HEAVENFALL,
+            BarrierMageSpellManager.SEALING_PRISM,
+            BarrierMageSpellManager.RESONANT_COLLAPSE,
+            BarrierMageSpellManager.ABSOLUTE_BASTION,
+			ArcaneMageSpellManager.ASTRAL_ARSENAL,
+			ArcaneMageSpellManager.DIMENSIONAL_REND,
+			ArcaneMageSpellManager.CONVERGENCE,
             "Water Slash",
             "Curse Sphere",
             "Curse Smoke",
@@ -84,13 +91,13 @@ public final class MageQTEHelper {
 
     /**
      * Mana-cost multiplier for a QTE result.
-     * PERFECT scales from 50 % down to 10 % as Intelligence grows.
-     *   perfect_cost = clamp(0.50 - INT/400, 0.10, 0.50)
+     * QTE is a precision reward, not a second Intelligence scaling curve.
+     * Keeping these fixed makes spell costs predictable at every output stage.
      */
     public static double getManaCostMultiplier(QTEResult result, double intelligence) {
         return switch (result) {
-            case PERFECT -> Math.max(0.10, 0.50 - intelligence / 400.0);
-            case GOOD    -> 0.75;
+            case PERFECT -> 0.70;
+            case GOOD    -> 0.85;
             case MISS    -> 1.00;
         };
     }

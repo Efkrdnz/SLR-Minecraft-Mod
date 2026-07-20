@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.SystemNotifications;
+import net.solocraft.util.SystemPlayerAccess;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -33,7 +34,7 @@ public class DailytaskTimerProcedure {
 	}
 
 	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity) {
-		if (entity == null)
+		if (entity == null || !SystemPlayerAccess.hasSystem(entity))
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dailytimer > 0) {
 			{

@@ -1,0 +1,30 @@
+{
+  "type": "sololeveling:dimensional_rift",
+  "generator": {
+    "type": "minecraft:noise",
+    "biome_source": {
+      "type": "sololeveling:dimensional_rift",
+      "battlefield": "sololeveling:rift_battlefield",
+      "wasteland": "sololeveling:monarch_war_wasteland",
+      "rift_scar": "sololeveling:dimensional_rift_scar",
+      "void_biome": "sololeveling:rift_void",
+      "territories": [
+        "sololeveling:territory_destruction",
+        "sololeveling:territory_frost",
+        "sololeveling:territory_fangs",
+        "sololeveling:territory_plagues",
+        "sololeveling:territory_iron_body",
+        "sololeveling:territory_white_flames",
+        "sololeveling:territory_transfiguration",
+        "sololeveling:territory_beginning"
+      ],
+      "safe_center_radius": 256.0,
+      "star_core_radius": 600.0,
+      "star_tip_radius": 1200.0,
+      "star_exponent": 1.7,
+      "scar_half_width": 56.0,
+      "playable_radius": 3500.0
+    },
+    "settings": "sololeveling:dimensional_rift"
+  }
+}

@@ -1,5 +1,7 @@
 package net.solocraft.dungeon;
 
+import java.util.Optional;
+
 public enum ProceduralDungeonRank {
 	E(1, 8, 11, 13, 17, 5, 4, 1),
 	D(2, 9, 12, 15, 19, 5, 5, 2),
@@ -29,10 +31,17 @@ public enum ProceduralDungeonRank {
 	}
 
 	public static ProceduralDungeonRank fromString(String value) {
-		for (ProceduralDungeonRank rank : values()) {
-			if (rank.name().equalsIgnoreCase(value))
-				return rank;
+		return tryParse(value).orElse(E);
+	}
+
+	/** Strict parser for authoring/datapack validation. Runtime legacy data still uses {@link #fromString}. */
+	public static Optional<ProceduralDungeonRank> tryParse(String value) {
+		if (value != null) {
+			for (ProceduralDungeonRank rank : values()) {
+				if (rank.name().equalsIgnoreCase(value))
+					return Optional.of(rank);
+			}
 		}
-		return E;
+		return Optional.empty();
 	}
 }

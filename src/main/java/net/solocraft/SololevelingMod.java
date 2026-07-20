@@ -14,6 +14,7 @@ import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.init.SololevelingModBlocks;
 import net.solocraft.init.SololevelingModBlockEntities;
+import net.solocraft.world.dimension.rift.RiftWorldgenRegistries;
 
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.network.NetworkRegistry;
@@ -45,6 +46,7 @@ public class SololevelingMod {
 	public SololevelingMod() {
 		MinecraftForge.EVENT_BUS.register(this);
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
+		RiftWorldgenRegistries.register(bus);
 		SololevelingModSounds.REGISTRY.register(bus);
 		SololevelingModBlocks.REGISTRY.register(bus);
 		SololevelingModBlockEntities.REGISTRY.register(bus);

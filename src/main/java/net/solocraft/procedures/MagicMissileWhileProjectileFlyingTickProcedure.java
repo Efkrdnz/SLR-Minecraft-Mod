@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModParticleTypes;
+import net.solocraft.util.MageCombatHelper;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -68,42 +69,22 @@ public class MagicMissileWhileProjectileFlyingTickProcedure {
 			return null;
 		}
 		// PRIORITY 1: Check if the owner has a target (if owner is a Mob)
+		Entity caster = owner != null ? owner : shooter;
 		if (owner instanceof Mob ownerMob && ownerMob.getTarget() != null) {
 			Entity ownerTarget = ownerMob.getTarget();
-			if (ownerTarget.isAlive() && ownerTarget.distanceToSqr(pos) <= range * range) {
+			if (MageCombatHelper.isValidTarget(caster, ownerTarget) && ownerTarget.distanceToSqr(pos) <= range * range) {
 				return ownerTarget;
 			}
 		}
 		// PRIORITY 2: Check if the shooter has a target (if shooter is a Mob and different from owner)
 		if (shooter instanceof Mob shooterMob && shooter != owner && shooterMob.getTarget() != null) {
 			Entity shooterTarget = shooterMob.getTarget();
-			if (shooterTarget.isAlive() && shooterTarget.distanceToSqr(pos) <= range * range) {
+			if (MageCombatHelper.isValidTarget(caster, shooterTarget) && shooterTarget.distanceToSqr(pos) <= range * range) {
 				return shooterTarget;
 			}
 		}
 		// PRIORITY 3: Default to nearest valid entity
-		return serverLevel.getEntitiesOfClass(Entity.class, new AABB(pos, pos).inflate(range), entity -> {
-			// Exclude the projectile itself
-			if (entity instanceof Projectile) {
-				return false;
-			}
-			// Exclude the shooter
-			if (shooter != null && entity.equals(shooter)) {
-				return false;
-			}
-			// Exclude the owner
-			if (owner != null && entity.equals(owner)) {
-				return false;
-			}
-			//Exclude item entities
-			if ((entity instanceof ItemEntity)) {
-				return false;
-			}
-			if ((entity instanceof ExperienceOrb)) {
-				return false;
-			}
-			// Can target any living entity
-			return entity.isAlive();
-		}).stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(pos))).orElse(null);
+		return serverLevel.getEntitiesOfClass(Entity.class, new AABB(pos, pos).inflate(range), entity -> MageCombatHelper.isValidTarget(caster, entity))
+				.stream().min(Comparator.comparingDouble(e -> e.distanceToSqr(pos))).orElse(null);
 	}
 }

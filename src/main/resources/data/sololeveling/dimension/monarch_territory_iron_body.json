@@ -1,0 +1,11 @@
+{
+  "type": "sololeveling:dimensional_rift",
+  "generator": {
+    "type": "minecraft:noise",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "sololeveling:monarch_territory_iron_body_dungeon"
+    },
+    "settings": "sololeveling:monarch_territory_iron_body"
+  }
+}

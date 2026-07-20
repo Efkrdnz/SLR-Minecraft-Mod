@@ -28,15 +28,13 @@ import net.solocraft.entity.FangedKasakaEntity;
 import net.solocraft.entity.DKnight3Entity;
 import net.solocraft.entity.DKnight2Entity;
 import net.solocraft.entity.DKnight1Entity;
-import net.solocraft.entity.ChoijongEntity;
-import net.solocraft.entity.ChaHaeInEntity;
 import net.solocraft.entity.CentipedeEntity;
 import net.solocraft.entity.BloodRedComIgrisEntity;
 import net.solocraft.entity.BeruBossEntity;
 import net.solocraft.entity.BarukaEntity;
-import net.solocraft.entity.BaekYoonhoEntity;
 import net.solocraft.entity.AncientSamuraiEntity;
 import net.solocraft.entity.AncientGolemEntity;
+import net.solocraft.util.NamedHunterCombatManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -58,6 +56,9 @@ import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber
 public class EntityLoadedLevelPresetProcedure {
+	public static final String LEVEL_STAT_MULTIPLIER_TAG = "SLRLevelStatMultiplier";
+	private static final double LUSH_CAVE_LEVEL_SCALING = 0.8D;
+
 	@SubscribeEvent
 	public static void onEntityJoin(EntityJoinLevelEvent event) {
 		execute(event, event.getLevel(), event.getEntity().getX(), event.getEntity().getY(), event.getEntity().getZ(), event.getEntity());
@@ -70,8 +71,12 @@ public class EntityLoadedLevelPresetProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		if (NamedHunterCombatManager.isNamedHunter(entity))
+			return;
 		double rand = 0;
 		double rank_addition = 0;
+		double baseMaxHealth = getBaseAttributeValue(entity, net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+		double baseAttackDamage = getBaseAttributeValue(entity, net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
 		if (entity.getPersistentData().getDouble("Level") == 0) {
 			if (!(entity instanceof HunterEntity)) {
 				if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("dund")))) {
@@ -237,13 +242,15 @@ public class EntityLoadedLevelPresetProcedure {
 					_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 			}
 			if (entity instanceof BloodRedComIgrisEntity) {
-				rand = Mth.nextInt(RandomSource.create(), 45, 60);
+				rand = Mth.nextInt(RandomSource.create(), 58, 70);
 				entity.setCustomName(Component.literal((entity.getDisplayName().getString() + " (Level: " + new java.text.DecimalFormat("##").format(rand) + ")")));
 				entity.getPersistentData().putDouble("Level", rand);
 				((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
-						.setBaseValue((((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).getBaseValue() + (rand - 52) * 1));
+						.setBaseValue(BloodRedComIgrisEntity.DUNGEON_MAX_HEALTH);
 				((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
-						.setBaseValue((((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getBaseValue() + (rand - 52) * 0.2));
+						.setBaseValue(BloodRedComIgrisEntity.DUNGEON_ATTACK_DAMAGE);
+				((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR)
+						.setBaseValue(BloodRedComIgrisEntity.DUNGEON_ARMOR);
 				if (entity instanceof LivingEntity _entity)
 					_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 			}
@@ -346,25 +353,6 @@ public class EntityLoadedLevelPresetProcedure {
 				if (entity instanceof LivingEntity _entity)
 					_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 			}
-			if (entity instanceof ChoijongEntity) {
-				rand = Mth.nextInt(RandomSource.create(), 65, 75);
-				entity.getPersistentData().putDouble("Level", rand);
-				entity.getPersistentData().putDouble("int", rand);
-				if (entity instanceof LivingEntity _entity)
-					_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
-			}
-			if (entity instanceof ChaHaeInEntity) {
-				rand = Mth.nextInt(RandomSource.create(), 75, 85);
-				entity.getPersistentData().putDouble("Level", rand);
-				if (entity instanceof LivingEntity _entity)
-					_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
-			}
-			if (entity instanceof BaekYoonhoEntity) {
-				rand = Mth.nextInt(RandomSource.create(), 60, 70);
-				entity.getPersistentData().putDouble("Level", rand);
-				if (entity instanceof LivingEntity _entity)
-					_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
-			}
 			if (entity instanceof KangTaeshikEntity) {
 				rand = Mth.nextInt(RandomSource.create(), 30, 40);
 				entity.getPersistentData().putDouble("Level", rand);
@@ -415,6 +403,63 @@ public class EntityLoadedLevelPresetProcedure {
 				if (entity instanceof LivingEntity _entity)
 					_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 			}
+			applyLevelDifficultyBoost(entity);
+			recordLevelStatMultiplier(entity, baseMaxHealth, baseAttackDamage);
 		}
 	}
+
+	private static double getBaseAttributeValue(Entity entity, net.minecraft.world.entity.ai.attributes.Attribute attribute) {
+		if (!(entity instanceof LivingEntity living) || living.getAttribute(attribute) == null)
+			return 0;
+		return living.getAttribute(attribute).getBaseValue();
+	}
+
+	private static void recordLevelStatMultiplier(Entity entity, double baseMaxHealth, double baseAttackDamage) {
+		if (!(entity instanceof LivingEntity living) || entity.getPersistentData().getDouble("Level") <= 0)
+			return;
+		double multiplier = 1;
+		double scaledMaxHealth = getBaseAttributeValue(living, net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH);
+		double scaledAttackDamage = getBaseAttributeValue(living, net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
+		if (baseMaxHealth > 0)
+			multiplier = Math.max(multiplier, scaledMaxHealth / baseMaxHealth);
+		if (baseAttackDamage > 0)
+			multiplier = Math.max(multiplier, scaledAttackDamage / baseAttackDamage);
+		entity.getPersistentData().putDouble(LEVEL_STAT_MULTIPLIER_TAG, Math.max(1, multiplier));
+	}
+
+	private static void applyLevelDifficultyBoost(Entity entity) {
+		if (!(entity instanceof LivingEntity living))
+			return;
+		// The Job Change encounter is hand-balanced; its displayed level must not
+		// silently add a second layer of health and damage scaling.
+		if (entity instanceof BloodRedComIgrisEntity)
+			return;
+		double level = Math.max(0, entity.getPersistentData().getDouble("Level"));
+		if (level <= 0)
+			return;
+		boolean boss = entity instanceof BloodRedComIgrisEntity || entity instanceof FangedKasakaEntity || entity instanceof GoblinKingEntity
+				|| entity instanceof SpiderBossEntity || entity instanceof GemGolemEntity || entity instanceof FuturisticGolemEntity
+				|| entity instanceof AncientGolemEntity || entity instanceof KargalganEntity || entity instanceof BarukaEntity || entity instanceof BeruBossEntity
+				|| entity instanceof ThomasAndreEntity;
+		double dungeonScaling = DunPlaceLushProcedure.isPlacingLushDungeon() ? LUSH_CAVE_LEVEL_SCALING : 1.0D;
+		if (dungeonScaling < 1.0D)
+			entity.getPersistentData().putBoolean("SLRLushDungeonMob", true);
+		double healthPerLevel = (boss ? 1.9D : 1.15D) * dungeonScaling;
+		double damagePerLevel = (boss ? 0.18D : 0.11D) * dungeonScaling;
+		double armorPerLevel = (boss ? 0.035D : 0.025D) * dungeonScaling;
+		if (living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH) != null)
+			living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH)
+					.setBaseValue(living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).getBaseValue() + level * healthPerLevel);
+		if (living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null)
+			living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
+					.setBaseValue(living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getBaseValue() + level * damagePerLevel);
+		if (living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR) != null)
+			living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR)
+					.setBaseValue(living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR).getBaseValue() + level * armorPerLevel);
+		if (living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE) != null)
+			living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE)
+					.setBaseValue(Math.min(0.95D, living.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).getBaseValue() + level * 0.0025D * dungeonScaling));
+		living.setHealth(living.getMaxHealth());
+	}
+
 }

@@ -1,0 +1,24 @@
+{
+  "has_precipitation": true,
+  "temperature": -0.8,
+  "downfall": 0.9,
+  "effects": {
+    "sky_color": 8955647,
+    "fog_color": 10004991,
+    "water_color": 3750089,
+    "water_fog_color": 329011,
+    "grass_color": 9682656,
+    "foliage_color": 8502896,
+    "particle": { "options": { "type": "minecraft:snowflake" }, "probability": 0.01 }
+  },
+  "spawners": {
+    "monster": [
+      { "type": "sololeveling:steel_fang_wolf", "weight": 55, "minCount": 2, "maxCount": 5 },
+      { "type": "sololeveling:steel_fanged_lycan", "weight": 18, "minCount": 1, "maxCount": 3 }
+    ],
+    "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [[], [], [], [], [], [], [], [], [], [], []]
+}

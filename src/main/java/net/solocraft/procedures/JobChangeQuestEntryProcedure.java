@@ -20,6 +20,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -35,16 +36,29 @@ public class JobChangeQuestEntryProcedure {
 			player.displayClientMessage(Component.literal("\u00A75No active Job Change Quest."), true);
 			return;
 		}
+		if (JobChangeQuestManager.isSelectionPending(player)) {
+			JobChangeQuestManager.requestSelectionScreen(player);
+			return;
+		}
+		if (JobChangeQuestManager.isShadowPresentation(player)) {
+			player.displayClientMessage(Component.literal("\u00A75Your Job assignment is still in progress."), true);
+			return;
+		}
 		if (player.level().dimension() == IGRIS_DIMENSION) {
 			player.displayClientMessage(Component.literal("\u00A75Job Change Quest is already active."), true);
 			return;
 		}
-		saveEntryState(player);
+		boolean resume = JobChangeQuestManager.canResumeDungeon(player);
+		if (!resume)
+			saveEntryState(player);
+		player.getPersistentData().putBoolean("slr_job_change_dungeon", true);
 		player.setNoGravity(true);
 		ResourceKey<Level> destinationType = IGRIS_DIMENSION;
 		ServerLevel nextLevel = player.server.getLevel(destinationType);
-		if (nextLevel == null)
+		if (nextLevel == null) {
+			player.setNoGravity(false);
 			return;
+		}
 		player.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0));
 		player.teleportTo(nextLevel, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
 		player.connection.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
@@ -52,15 +66,39 @@ public class JobChangeQuestEntryProcedure {
 			player.connection.send(new ClientboundUpdateMobEffectPacket(player.getId(), effect));
 		player.connection.send(new ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false));
 		SololevelingMod.queueServerWork(70, () -> {
-			if (!player.isAlive() || player.level().dimension() != IGRIS_DIMENSION)
+			if (!player.isAlive() || player.level().dimension() != IGRIS_DIMENSION) {
+				player.setNoGravity(false);
 				return;
+			}
 			SololevelingModVariables.PlayerVariables vars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 			player.connection.teleport(vars.randplayerx + PLAYER_PORTAL_ENTRY_X_OFFSET, vars.randplayery, vars.randplayerz, player.getYRot(), player.getXRot());
-			SololevelingMod.queueServerWork(10, () -> {
-				if (player.isAlive() && player.level().dimension() == IGRIS_DIMENSION)
+			protectDuringDungeonLoad(player);
+			if (!resume && player.isAlive() && player.level().dimension() == IGRIS_DIMENSION)
+				spawnIgrisDungeon(player);
+			SololevelingMod.queueServerWork(resume ? 10 : 35, () -> {
+				if (player.isAlive() && player.level().dimension() == IGRIS_DIMENSION) {
+					protectDuringDungeonLoad(player);
+					player.setNoGravity(false);
+				} else {
+					player.setNoGravity(false);
+				}
+				SololevelingMod.queueServerWork(10, () -> {
+					if (player.isAlive())
+						player.fallDistance = 0;
+				});
+			});
+			SololevelingMod.queueServerWork(55, () -> {
+				if (!resume && player.isAlive() && player.level().dimension() == IGRIS_DIMENSION)
 					spawnIgrisDungeon(player);
 			});
 		});
+	}
+
+	private static void protectDuringDungeonLoad(ServerPlayer player) {
+		player.fallDistance = 0;
+		player.setDeltaMovement(0.0D, 0.0D, 0.0D);
+		player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 100, 1, false, false));
+		player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 100, 4, false, false));
 	}
 
 	private static void saveEntryState(ServerPlayer player) {
@@ -74,11 +112,9 @@ public class JobChangeQuestEntryProcedure {
 			capability.instancecomplete = false;
 			capability.BossKilled = false;
 			capability.tpd = false;
-			capability.jobtimer = 0;
-			capability.JobChange_timer = 0;
 			capability.syncPlayerVariables(player);
 		});
-		player.getPersistentData().putBoolean("slr_job_change_dungeon", true);
+		JobChangeQuestManager.startDungeonRun(player);
 	}
 
 	private static void spawnIgrisDungeon(ServerPlayer player) {

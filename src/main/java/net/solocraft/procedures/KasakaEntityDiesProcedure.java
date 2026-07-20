@@ -39,6 +39,8 @@ public class KasakaEntityDiesProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
+		if (entity.getPersistentData().getBoolean(net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG))
+			return;
 		double uplvl = 0;
 		{
 			boolean _setval = true;

@@ -1,0 +1,25 @@
+{
+  "has_precipitation": false,
+  "temperature": 1.8,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 7379967,
+    "fog_color": 5134958,
+    "water_color": 6749951,
+    "water_fog_color": 1776468,
+    "grass_color": 7827568,
+    "foliage_color": 6908275,
+    "particle": { "options": { "type": "minecraft:soul_fire_flame" }, "probability": 0.012 }
+  },
+  "spawners": {
+    "monster": [
+      { "type": "sololeveling:demon", "weight": 56, "minCount": 2, "maxCount": 5 },
+      { "type": "sololeveling:demon_knight", "weight": 25, "minCount": 1, "maxCount": 3 },
+      { "type": "sololeveling:fire_fly", "weight": 18, "minCount": 2, "maxCount": 4 }
+    ],
+    "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [[], [], [], [], [], [], [], [], [], [], []]
+}

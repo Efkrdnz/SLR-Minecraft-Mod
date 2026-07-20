@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.world.inventory.DailyQuestsMenu;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.SystemPlayerAccess;
 
 import net.minecraftforge.network.NetworkHooks;
 
@@ -20,7 +21,7 @@ import io.netty.buffer.Unpooled;
 
 public class DailyQuestGUIOpenProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
-		if (entity == null)
+		if (entity == null || !SystemPlayerAccess.hasSystem(entity))
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).ActiveDaily) {
 			if (entity instanceof ServerPlayer _ent) {

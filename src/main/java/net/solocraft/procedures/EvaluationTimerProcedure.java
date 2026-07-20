@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
+import net.solocraft.util.AwakeningStatCurves;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -365,8 +366,8 @@ public class EvaluationTimerProcedure {
 					}
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence
-								+ Math.pow((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).HunterRank,
-										(entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).LoreAccurateRankStart) * 6;
+								+ AwakeningStatCurves.intelligenceBonus(2,
+										(entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).HunterRank);
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 							capability.Intelligence = _setval;
 							capability.syncPlayerVariables(entity);
@@ -544,8 +545,8 @@ public class EvaluationTimerProcedure {
 					}
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence
-								+ Math.pow((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).HunterRank,
-										(entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).LoreAccurateRankStart) * 5;
+								+ AwakeningStatCurves.intelligenceBonus(5,
+										(entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).HunterRank);
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 							capability.Intelligence = _setval;
 							capability.syncPlayerVariables(entity);
@@ -609,8 +610,8 @@ public class EvaluationTimerProcedure {
 					}
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence
-								+ Math.pow((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).HunterRank,
-										(entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).LoreAccurateRankStart) * 5;
+								+ AwakeningStatCurves.intelligenceBonus(6,
+										(entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).HunterRank);
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 							capability.Intelligence = _setval;
 							capability.syncPlayerVariables(entity);
@@ -654,6 +655,7 @@ public class EvaluationTimerProcedure {
 					}
 					PowerAppendRangerProcedure.execute(entity);
 				}
+				applyLowRankEvaluationBonus(entity);
 			}
 		}
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).sl_EVA >= 150) {
@@ -665,5 +667,22 @@ public class EvaluationTimerProcedure {
 				});
 			}
 		}
+	}
+
+	private static void applyLowRankEvaluationBonus(Entity entity) {
+		if (entity.level().isClientSide())
+			return;
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			int rank = (int) capability.HunterRank;
+			if (rank < 1 || rank > 4)
+				return;
+			final double multiplier = 1.15D;
+			capability.Strength = Math.ceil(capability.Strength * multiplier);
+			capability.Speed = Math.ceil(capability.Speed * multiplier);
+			capability.Intelligence = Math.ceil(capability.Intelligence * multiplier);
+			capability.Vitality = Math.ceil(capability.Vitality * multiplier);
+			capability.perception = Math.ceil(capability.perception * multiplier);
+			capability.syncPlayerVariables(entity);
+		});
 	}
 }

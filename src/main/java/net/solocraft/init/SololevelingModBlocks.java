@@ -1,6 +1,8 @@
 package net.solocraft.init;
 
 import net.solocraft.block.GuildComputerBlock;
+import net.solocraft.block.ManaCrystalDepositBlock;
+import net.solocraft.block.BeastRubbleBlock;
 import net.solocraft.block.FrostCausewayBlock;
 import net.solocraft.block.WoodenPassageOpenBlock;
 import net.solocraft.block.UnbreakableDeepslateBlock;
@@ -52,6 +54,7 @@ public class SololevelingModBlocks {
 	public static final RegistryObject<Block> DEEPSLATE_KEYBLOCK_RED = REGISTRY.register("deepslate_keyblock_red", () -> new DeepslateKeyblockRedBlock());
 	public static final RegistryObject<Block> CRYSTAL_GOLEM_SPAWNER = REGISTRY.register("crystal_golem_spawner", () -> new CrystalGolemSpawnerBlock());
 	public static final RegistryObject<Block> GOLEM_DROP_BLOCK_GEM = REGISTRY.register("golem_drop_block_gem", () -> new GolemDropBlockGemBlock());
+	public static final RegistryObject<Block> MANA_CRYSTAL_DEPOSIT = REGISTRY.register("mana_crystal_deposit", ManaCrystalDepositBlock::new);
 	public static final RegistryObject<Block> INSTANCE_DUNGEON_KEY_LOGGER = REGISTRY.register("instance_dungeon_key_logger", () -> new InstanceDungeonKeyLoggerBlock());
 	public static final RegistryObject<Block> INSTANCE_COVER = REGISTRY.register("instance_cover", () -> new InstanceCoverBlock());
 	public static final RegistryObject<Block> HUNTER_RANK_EVALUATOR = REGISTRY.register("hunter_rank_evaluator", () -> new HunterRankEvaluatorBlock());
@@ -73,6 +76,7 @@ public class SololevelingModBlocks {
 	public static final RegistryObject<Block> SHADOW = REGISTRY.register("shadow", () -> new ShadowBlock());
 	public static final RegistryObject<Block> DEEPSLATE_KEYBLOCK_DKC = REGISTRY.register("deepslate_keyblock_dkc", () -> new DeepslateKeyblockDKCBlock());
 	public static final RegistryObject<Block> FROST_CAUSEWAY = REGISTRY.register("frost_causeway", FrostCausewayBlock::new);
+	public static final RegistryObject<Block> BEAST_RUBBLE = REGISTRY.register("beast_rubble", BeastRubbleBlock::new);
 
 	// â”€â”€ Guild System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 	public static final RegistryObject<Block> GUILD_COMPUTER = REGISTRY.register("guild_computer", GuildComputerBlock::new);

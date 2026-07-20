@@ -4,64 +4,42 @@ import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraftforge.items.ItemHandlerHelper;
 
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 public class SLRshopgetProcedure {
-	public static void execute(CommandContext<CommandSourceStack> arguments, Entity entity) {
-		if (entity == null)
-			return;
-		double slot = 0;
-		slot = DoubleArgumentType.getDouble(arguments, "amount") - 1;
+	public static void execute(CommandContext<CommandSourceStack> arguments) {
+		int slot = (int) DoubleArgumentType.getDouble(arguments, "amount") - 1;
 		try {
-			for (Entity entityiterator : EntityArgument.getEntities(arguments, "name")) {
-				if (slot == 0) {
-					if (entity instanceof Player _player) {
-						ItemStack _setstack = ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shopitem1);
-						_setstack.setCount(1);
-						ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
-					}
-				} else if (slot == 1) {
-					if (entity instanceof Player _player) {
-						ItemStack _setstack = ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shopitem2);
-						_setstack.setCount(1);
-						ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
-					}
-				} else if (slot == 2) {
-					if (entity instanceof Player _player) {
-						ItemStack _setstack = ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shopitem3);
-						_setstack.setCount(1);
-						ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
-					}
-				} else if (slot == 3) {
-					if (entity instanceof Player _player) {
-						ItemStack _setstack = ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shopitem4);
-						_setstack.setCount(1);
-						ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
-					}
-				} else if (slot == 4) {
-					if (entity instanceof Player _player) {
-						ItemStack _setstack = ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shopitem5);
-						_setstack.setCount(1);
-						ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
-					}
-				} else if (slot == 5) {
-					if (entity instanceof Player _player) {
-						ItemStack _setstack = ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).shopitem6);
-						_setstack.setCount(1);
-						ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
-					}
+			for (Entity target : EntityArgument.getEntities(arguments, "name")) {
+				if (!(target instanceof Player player))
+					continue;
+				SololevelingModVariables.PlayerVariables variables = target.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+						.orElse(new SololevelingModVariables.PlayerVariables());
+				ItemStack stored = switch (slot) {
+					case 0 -> variables.shopitem1;
+					case 1 -> variables.shopitem2;
+					case 2 -> variables.shopitem3;
+					case 3 -> variables.shopitem4;
+					case 4 -> variables.shopitem5;
+					case 5 -> variables.shopitem6;
+					default -> ItemStack.EMPTY;
+				};
+				if (!stored.isEmpty()) {
+					ItemStack granted = stored.copy();
+					granted.setCount(1);
+					ItemHandlerHelper.giveItemToPlayer(player, granted);
 				}
 			}
-		} catch (CommandSyntaxException e) {
-			e.printStackTrace();
+		} catch (CommandSyntaxException exception) {
+			exception.printStackTrace();
 		}
 	}
 }

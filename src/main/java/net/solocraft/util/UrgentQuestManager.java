@@ -1,6 +1,10 @@
 package net.solocraft.util;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.entity.KangTaeshikEntity;
+import net.solocraft.guild.GuildData;
+import net.solocraft.guild.GuildSavedData;
+import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.network.UrgentQuestStatusMessage;
 
@@ -18,6 +22,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,6 +33,7 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
@@ -73,11 +79,13 @@ public final class UrgentQuestManager {
 	private static final String PVP_RUNESTONES = "sl_urgent_pvp_runestones";
 	private static final String PVP_LAST_QUEST_TICK = "sl_urgent_pvp_last_quest_tick";
 	private static final String PVP_FIRST_REWARD_CLAIMED = "sl_urgent_pvp_first_reward_claimed";
+	private static final String KANG_TARGET = "sl_urgent_kang_target";
 
 	private static final String KIND_KILL = "kill";
 	private static final String KIND_CLEAR = "clear";
 	private static final String KIND_NO_SKILLS = "no_skills";
 	private static final String KIND_PVP = "pvp";
+	private static final String KIND_KANG = "kang";
 
 	private static final Map<AttackPair, Long> RECENT_CRITICALS = new HashMap<>();
 	private static final Map<AttackPair, HitWindow> WEAPON_HITS = new HashMap<>();
@@ -93,7 +101,6 @@ public final class UrgentQuestManager {
 			Map.entry("physical_buff", "runestone_physical"),
 			Map.entry("ruler_s_hand", "telekinesis_stone"),
 			Map.entry("rulers_hand", "telekinesis_stone"),
-			Map.entry("stealth", "stealth_stone"),
 			Map.entry("slash_dash", "runestone_slashdash"),
 			Map.entry("sword_of_light", "runestone_swordof_light"),
 			Map.entry("water_slash", "runestone_waterslash"));
@@ -104,6 +111,34 @@ public final class UrgentQuestManager {
 	public static void markDungeonId(Entity entity, String dungeonId) {
 		if (entity != null && dungeonId != null && !dungeonId.isBlank())
 			entity.getPersistentData().putString(DUNGEON_ID, dungeonId);
+	}
+
+	public static boolean hasActiveQuest(ServerPlayer player) {
+		return player != null && player.getPersistentData().getBoolean(ACTIVE);
+	}
+
+	public static boolean startKangAmbushQuest(ServerPlayer player, KangTaeshikEntity kang) {
+		if (player == null || kang == null || hasActiveQuest(player) || !SystemPlayerAccess.hasSystem(player))
+			return false;
+		player.getPersistentData().putBoolean(ACTIVE, true);
+		player.getPersistentData().putString(ID, "kang_taeshik_ambush");
+		player.getPersistentData().putString(KIND, KIND_KANG);
+		player.getPersistentData().putString(TITLE, "Killing Intent");
+		player.getPersistentData().putString(OBJECTIVE, "Defeat Kang Taeshik and ensure your safety");
+		player.getPersistentData().putInt(PROGRESS, 0);
+		player.getPersistentData().putInt(TARGET, 1);
+		player.getPersistentData().putInt(TIME_LIMIT, 0);
+		player.getPersistentData().putInt(XP_REWARD, 0);
+		player.getPersistentData().putLong(START_TICK, player.level().getGameTime());
+		player.getPersistentData().putString(KANG_TARGET, kang.getUUID().toString());
+		syncQuestStatus(player);
+
+		Component undertext = Component.literal("System detected a hunter\n").withStyle(ChatFormatting.GRAY)
+				.append(Component.literal("with killing intent towards the player\n").withStyle(ChatFormatting.DARK_RED))
+				.append(Component.literal("Defeat him and ensure your safety\n").withStyle(ChatFormatting.GRAY))
+				.append(Component.literal("Defeat Kang Taeshik [0/1]").withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+		SystemNotifications.showNegativeTitleUnder(player, ACCENT, 180, Component.literal("Warning!").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD), undertext);
+		return true;
 	}
 
 	public static void onSkillUsed(Entity entity, String skillName) {
@@ -121,6 +156,8 @@ public final class UrgentQuestManager {
 	public static void onCriticalHit(CriticalHitEvent event) {
 		if (!(event.getEntity() instanceof ServerPlayer attacker) || !(event.getTarget() instanceof ServerPlayer victim))
 			return;
+		if (!pvpUrgentQuestsEnabled(victim) || sameParty(attacker, victim) || sameGuild(attacker, victim))
+			return;
 		if (!event.isVanillaCritical() && event.getDamageModifier() <= 1.0F)
 			return;
 		RECENT_CRITICALS.put(new AttackPair(attacker.getUUID(), victim.getUUID()), attacker.level().getGameTime());
@@ -131,7 +168,7 @@ public final class UrgentQuestManager {
 		if (!(event.getEntity() instanceof ServerPlayer victim) || victim.level().isClientSide() || event.getAmount() <= 0.0F)
 			return;
 		ServerPlayer attacker = attackingPlayer(event.getSource());
-		if (attacker == null || attacker == victim || sameParty(attacker, victim))
+		if (attacker == null || attacker == victim || !pvpUrgentQuestsEnabled(victim) || sameParty(attacker, victim) || sameGuild(attacker, victim))
 			return;
 		if (victim.getPersistentData().getBoolean(ACTIVE))
 			return;
@@ -195,7 +232,8 @@ public final class UrgentQuestManager {
 		boolean urgentActive = player.getPersistentData().getBoolean(ACTIVE);
 		if (urgentActive)
 			syncQuestStatus(player);
-		if (urgentActive && KIND_PVP.equals(player.getPersistentData().getString(KIND)))
+		String urgentKind = player.getPersistentData().getString(KIND);
+		if (urgentActive && (KIND_PVP.equals(urgentKind) || KIND_KANG.equals(urgentKind)))
 			return;
 		if (!isDungeonDimension(player.level())) {
 			if (player.getPersistentData().getBoolean(ACTIVE))
@@ -222,13 +260,19 @@ public final class UrgentQuestManager {
 	public static void onLivingDeath(LivingDeathEvent event) {
 		if (event == null || event.getEntity() == null || event.getSource() == null)
 			return;
-		ServerPlayer player = creditedPlayer(event.getEntity().level(), event.getSource().getEntity());
 		Entity killed = event.getEntity();
+		if (killed instanceof KangTaeshikEntity kang && completeKangAmbush(kang))
+			return;
+		ServerPlayer player = creditedPlayer(event.getEntity().level(), event.getSource().getEntity());
 
 		if (killed instanceof ServerPlayer killedPlayer) {
 			if (player != null && player.getPersistentData().getBoolean(ACTIVE) && KIND_PVP.equals(player.getPersistentData().getString(KIND)) && recordPvpDefeat(player, killedPlayer))
 				return;
 			if (killedPlayer.getPersistentData().getBoolean(ACTIVE) && KIND_PVP.equals(killedPlayer.getPersistentData().getString(KIND)) && player != null && isPvpTarget(killedPlayer, player.getUUID())) {
+				fail(killedPlayer, "You were defeated");
+				return;
+			}
+			if (killedPlayer.getPersistentData().getBoolean(ACTIVE) && KIND_KANG.equals(killedPlayer.getPersistentData().getString(KIND))) {
 				fail(killedPlayer, "You were defeated");
 				return;
 			}
@@ -259,6 +303,46 @@ public final class UrgentQuestManager {
 			else
 				complete(player);
 		}
+	}
+
+	private static boolean completeKangAmbush(KangTaeshikEntity kang) {
+		if (!KangTaeshikAmbushManager.isAmbush(kang) || !(kang.level() instanceof ServerLevel level))
+			return false;
+		UUID ownerId = KangTaeshikAmbushManager.ownerId(kang);
+		ServerPlayer owner = ownerId == null ? null : level.getServer().getPlayerList().getPlayer(ownerId);
+		if (owner == null)
+			return true;
+		if (!SystemPlayerAccess.hasSystem(owner)) {
+			if (hasActiveQuest(owner) && KIND_KANG.equals(owner.getPersistentData().getString(KIND)))
+				fail(owner, "System Player status required");
+			return true;
+		}
+
+		boolean stealthReward = shouldAwardStealthRunestone(owner);
+		if (stealthReward)
+			RewardManager.appendReward(owner, "ITEM:sololeveling:stealth_stone");
+		RewardManager.appendReward(owner, "FR");
+		if (hasActiveQuest(owner) && KIND_KANG.equals(owner.getPersistentData().getString(KIND)))
+			clearActive(owner);
+
+		MutableComponent rewards = Component.literal("Rewards added to System Rewards\n").withStyle(ChatFormatting.GRAY);
+		if (stealthReward)
+			rewards.append(Component.literal("Stealth Runestone\n").withStyle(ChatFormatting.LIGHT_PURPLE));
+		rewards.append(Component.literal("Full Recovery").withStyle(ChatFormatting.AQUA));
+		SystemNotifications.showTitleUnder(owner, 0xFF55FF9A, 150,
+				Component.literal("URGENT QUEST COMPLETE").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD), rewards);
+		return true;
+	}
+
+	private static boolean shouldAwardStealthRunestone(ServerPlayer player) {
+		boolean learned = SkillListHelper.skills(player).stream().anyMatch(skill -> "Stealth".equalsIgnoreCase(skill));
+		String abilities = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables()).abilities;
+		if (learned || abilities != null && abilities.toLowerCase(Locale.ROOT).contains("stealth"))
+			return false;
+		if (RewardManager.allRewards(player).contains("ITEM:sololeveling:stealth_stone"))
+			return false;
+		return !player.getInventory().contains(new ItemStack(SololevelingModItems.STEALTH_STONE.get()));
 	}
 
 	private static void startPvpQuest(ServerPlayer victim, ServerPlayer attacker) {
@@ -346,7 +430,7 @@ public final class UrgentQuestManager {
 		if (party.isBlank() || attacker.getServer() == null)
 			return targets;
 		for (ServerPlayer candidate : attacker.getServer().getPlayerList().getPlayers()) {
-			if (candidate != attacker && candidate != victim && party.equals(partyOf(candidate)))
+			if (candidate != attacker && candidate != victim && party.equals(partyOf(candidate)) && !sameGuild(candidate, victim))
 				targets.add(candidate);
 		}
 		return targets;
@@ -535,6 +619,7 @@ public final class UrgentQuestManager {
 		player.getPersistentData().remove(PVP_DEFEATED);
 		player.getPersistentData().remove(PVP_ATTACKER);
 		player.getPersistentData().remove(PVP_RUNESTONES);
+		player.getPersistentData().remove(KANG_TARGET);
 		syncQuestStatus(player);
 	}
 
@@ -558,7 +643,9 @@ public final class UrgentQuestManager {
 
 	private static boolean isDungeonDimension(Level level) {
 		ResourceLocation id = level.dimension().location();
-		return "sololeveling".equals(id.getNamespace()) && id.getPath().startsWith("dungeon_dimension");
+		return "sololeveling".equals(id.getNamespace())
+				&& (id.getPath().startsWith("dungeon_dimension")
+						|| id.getPath().startsWith("monarch_territory_"));
 	}
 
 	private static String dungeonId(ServerPlayer player) {
@@ -568,6 +655,8 @@ public final class UrgentQuestManager {
 		if (player.getPersistentData().getBoolean(PROCEDURAL_DUNGEON))
 			return player.getPersistentData().getBoolean(PROCEDURAL_RED) ? "red_gate" : "procedural";
 		String path = player.level().dimension().location().getPath();
+		if (path.startsWith("monarch_territory_"))
+			return "red_gate";
 		return switch (path) {
 			case "dungeon_dimension_d" -> "goblin_sewers";
 			case "dungeon_dimension_b" -> "cemetery";
@@ -623,6 +712,20 @@ public final class UrgentQuestManager {
 	private static boolean sameParty(ServerPlayer first, ServerPlayer second) {
 		String party = partyOf(first);
 		return !party.isBlank() && party.equals(partyOf(second));
+	}
+
+	private static boolean sameGuild(ServerPlayer first, ServerPlayer second) {
+		if (first == null || second == null)
+			return false;
+		GuildSavedData data = GuildSavedData.get(first.serverLevel());
+		GuildData firstGuild = data.getGuildForPlayer(first.getUUID());
+		GuildData secondGuild = data.getGuildForPlayer(second.getUUID());
+		return firstGuild != null && secondGuild != null && firstGuild.id.equals(secondGuild.id);
+	}
+
+	private static boolean pvpUrgentQuestsEnabled(ServerPlayer player) {
+		return player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables()).pvpUrgentQuests;
 	}
 
 	private static String partyOf(ServerPlayer player) {

@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.SololevelingMod;
+import net.solocraft.util.SystemPlayerAccess;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.player.Player;
@@ -19,7 +20,7 @@ import dev.kosmx.playerAnim.api.layered.IAnimation;
 
 public class TrainingOnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
-		if (entity == null)
+		if (entity == null || !SystemPlayerAccess.hasSystem(entity))
 			return;
 		if (!(entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).isdailytraining) {
 			{

@@ -4,6 +4,8 @@ package net.solocraft.entity;
 import net.solocraft.procedures.ChoijongRightClickedOnEntityProcedure;
 import net.solocraft.procedures.ChoijongOnEntityTickUpdateProcedure;
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.FireMageSpellManager;
+import net.solocraft.util.NamedHunterCombatManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.network.PlayMessages;
@@ -78,9 +80,9 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.targetSelector.addGoal(1, new NearestAttackableTargetGoal(this, Monster.class, false, false));
+		this.targetSelector.addGoal(0, new HurtByTargetGoal(this));
+		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal(this, Monster.class, false, false));
 		this.goalSelector.addGoal(2, new RandomStrollGoal(this, 1));
-		this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
 		this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(5, new FloatGoal(this));
 	}
@@ -151,13 +153,15 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 	@Override
 	public void baseTick() {
 		super.baseTick();
-		if (!this.level().isClientSide())
+		if (!this.level().isClientSide()) {
+			NamedHunterCombatManager.tick(this);
 			ChoijongOnEntityTickUpdateProcedure.execute(this.level(), this);
+		}
 	}
 
 	@Override
 	public void performRangedAttack(LivingEntity target, float flval) {
-		FireBallProjectileEntity.shoot(this, target);
+		FireMageSpellManager.castNpc(this, FireMageSpellManager.FLAME_WEAVING);
 	}
 
 	public static void init() {
@@ -167,12 +171,12 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 
 	public static AttributeSupplier.Builder createAttributes() {
 		AttributeSupplier.Builder builder = Mob.createMobAttributes();
-		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.32);
-		builder = builder.add(Attributes.MAX_HEALTH, 180);
-		builder = builder.add(Attributes.ARMOR, 32);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, 8);
-		builder = builder.add(Attributes.FOLLOW_RANGE, 48);
-		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.25);
+		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.34);
+		builder = builder.add(Attributes.MAX_HEALTH, 240);
+		builder = builder.add(Attributes.ARMOR, 8);
+		builder = builder.add(Attributes.ATTACK_DAMAGE, 12);
+		builder = builder.add(Attributes.FOLLOW_RANGE, 64);
+		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.2);
 		return builder;
 	}
 }

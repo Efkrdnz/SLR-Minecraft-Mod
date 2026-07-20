@@ -23,14 +23,14 @@
       "name": "sololeveling:dungeon_dimension_snow",
       "sea_level": 63,
       "legacy_random_source": false,
-      "disable_mob_generation": false,
-      "aquifers_enabled": true,
-      "ore_veins_enabled": true,
+      "disable_mob_generation": true,
+      "aquifers_enabled": false,
+      "ore_veins_enabled": false,
       "default_block": {
-        "Name": "minecraft:dirt"
+        "Name": "minecraft:stone"
       },
       "default_fluid": {
-        "Name": "minecraft:ice"
+        "Name": "minecraft:water"
       },
       "spawn_target": [],
       "noise": {

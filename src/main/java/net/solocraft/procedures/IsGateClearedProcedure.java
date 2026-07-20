@@ -1,5 +1,6 @@
 package net.solocraft.procedures;
 
+import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraftforge.fml.common.Mod;
@@ -34,7 +35,8 @@ public class IsGateClearedProcedure {
 			if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals")))) {
 				if (SololevelingModVariables.MapVariables.get(world).GatesCleared.contains(entity.getStringUUID())) {
 					if (entity.getPersistentData().getBoolean("slr_is_red_gate")) {
-						SololevelingModVariables.MapVariables.get(world).RedGate = false;
+						SololevelingModVariables.MapVariables.get(world).RedGate = world.getServer() != null
+								&& SnowRedGateArenaManager.hasActiveArena(world.getServer());
 					}
 					if (!entity.level().isClientSide())
 						entity.discard();

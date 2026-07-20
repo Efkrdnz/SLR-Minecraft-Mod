@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -49,7 +50,7 @@ public class IgrisSpinProcedure {
 							if (!(entityiterator == entity) && entityiterator instanceof LivingEntity) {
 								if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
 									_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, false));
-								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 8);
+								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), scaledDamage(entity, 0.75F, 11.2F));
 								if (world instanceof ServerLevel _level)
 									_level.sendParticles(ParticleTypes.SWEEP_ATTACK, (entityiterator.getX()), (entityiterator.getY() + entity.getBbHeight() / 2), (entityiterator.getZ()), 3, 0.1, 0.1, 0.1, 0);
 							}
@@ -69,7 +70,7 @@ public class IgrisSpinProcedure {
 						List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(20 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 						for (Entity entityiterator : _entfound) {
 							if (!(entityiterator == entity) && entityiterator.onGround() && entityiterator instanceof LivingEntity) {
-								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 12);
+								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), scaledDamage(entity, 1.10F, 15.4F));
 								if (world instanceof ServerLevel _level)
 									_level.sendParticles(ParticleTypes.EXPLOSION, (entityiterator.getX()), (entityiterator.getY() + entity.getBbHeight() / 2), (entityiterator.getZ()), 1, 0.1, 0.1, 0.1, 0);
 							}
@@ -85,5 +86,11 @@ public class IgrisSpinProcedure {
 			entity.getPersistentData().putString("state", "idle");
 			entity.getPersistentData().putDouble("MF", 0);
 		}
+	}
+
+	private static float scaledDamage(Entity entity, float multiplier, float minimum) {
+		if (entity instanceof LivingEntity living && living.getAttribute(Attributes.ATTACK_DAMAGE) != null)
+			return (float) Math.max(minimum, living.getAttributeValue(Attributes.ATTACK_DAMAGE) * multiplier);
+		return minimum;
 	}
 }

@@ -12,6 +12,7 @@ import software.bernie.geckolib.animatable.GeoEntity;
 
 import net.solocraft.procedures.ChaHaeInOnEntityTickUpdateProcedure;
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.NamedHunterCombatManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.network.PlayMessages;
@@ -95,7 +96,8 @@ public class ChaHaeInEntity extends PathfinderMob implements GeoEntity {
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.targetSelector.addGoal(1, new NearestAttackableTargetGoal(this, Monster.class, false, false));
+		this.targetSelector.addGoal(0, new HurtByTargetGoal(this));
+		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal(this, Monster.class, false, false));
 		this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
@@ -104,7 +106,6 @@ public class ChaHaeInEntity extends PathfinderMob implements GeoEntity {
 			}
 		});
 		this.goalSelector.addGoal(3, new RandomStrollGoal(this, 1));
-		this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
 		this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(6, new FloatGoal(this));
 	}
@@ -154,8 +155,10 @@ public class ChaHaeInEntity extends PathfinderMob implements GeoEntity {
 	@Override
 	public void baseTick() {
 		super.baseTick();
-		if (!this.level().isClientSide())
+		if (!this.level().isClientSide()) {
+			NamedHunterCombatManager.tick(this);
 			ChaHaeInOnEntityTickUpdateProcedure.execute(this.level(), this.getX(), this.getY(), this.getZ(), this);
+		}
 		this.refreshDimensions();
 	}
 
@@ -175,13 +178,13 @@ public class ChaHaeInEntity extends PathfinderMob implements GeoEntity {
 
 	public static AttributeSupplier.Builder createAttributes() {
 		AttributeSupplier.Builder builder = Mob.createMobAttributes();
-		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.36);
-		builder = builder.add(Attributes.MAX_HEALTH, 175);
-		builder = builder.add(Attributes.ARMOR, 28);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, 18);
+		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.42);
+		builder = builder.add(Attributes.MAX_HEALTH, 300);
+		builder = builder.add(Attributes.ARMOR, 22);
+		builder = builder.add(Attributes.ATTACK_DAMAGE, 30);
 		builder = builder.add(Attributes.FOLLOW_RANGE, 64);
 		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.35);
-		builder = builder.add(Attributes.ATTACK_KNOCKBACK, 0.8);
+		builder = builder.add(Attributes.ATTACK_KNOCKBACK, 0.85);
 		return builder;
 	}
 

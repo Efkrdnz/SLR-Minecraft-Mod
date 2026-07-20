@@ -22,6 +22,7 @@ import net.solocraft.procedures.SkillSlotHelper;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -64,17 +65,38 @@ public class ShadowMonarchManager {
 	public static final String COMMAND_BERSERK = "berserk";
 	public static final String COMMAND_FOLLOW = "follow";
 	public static final String COMMAND_CLEAR_DUNGEON = "clear_dungeon";
+	public static final int RANK_NORMAL = 0;
+	public static final int RANK_ELITE = 1;
+	public static final int RANK_KNIGHT = 2;
+	public static final int RANK_ELITE_KNIGHT = 3;
+	public static final int RANK_GENERAL = 4;
+	public static final int RANK_MARSHAL = 5;
+	public static final int RANK_GRAND_MARSHAL = 6;
+	public static final int BASE_SHADOW_LEVEL_CAP = 10;
+	private static final int PLAYER_LEVEL_CAP_START = 40;
+	private static final int PLAYER_LEVELS_PER_CAP_INCREASE = 20;
+	private static final int SHADOW_LEVELS_PER_CAP_INCREASE = 10;
+	private static final int MAX_SAFE_SHADOW_LEVEL = (Integer.MAX_VALUE - 35) / 15;
 	private static final String ROOT = "sololeveling_shadow_monarch";
 	private static final String SHADOWS = "shadows";
 	private static final String FORMATIONS = "formations";
+	private static final String RANK = "rank";
+	private static final String STARTING_RANK = "starting_rank";
+	private static final String RANK_SCHEMA = "rank_schema";
+	private static final int RANK_SCHEMA_VERSION = 1;
+	private static final String GRAND_MARSHAL_ID = "grand_marshal_id";
 	private static final String SHADOW_ID = "sl_shadow_id";
 	private static final String SHADOW_TYPE = "sl_shadow_type";
 	private static final String SHADOW_OWNER = "sl_shadow_owner";
 	private static final String SHADOW_COMMAND = "sl_shadow_command";
 	private static final String PLAYER_COMMAND = "sl_shadow_command_mode";
 	private static final String SHADOW_INVENTORY = "sl_shadow_inventory";
+	private static final String CACHED_LEVEL_CAP = "shadow_level_cap";
 	private static final String BASE_HEALTH = "sl_shadow_base_health";
 	private static final String BASE_ATTACK = "sl_shadow_base_attack";
+	private static final String APPLIED_LEVEL = "sl_shadow_applied_level";
+	private static final String APPLIED_RANK = "sl_shadow_applied_rank";
+	private static final String INSUFFICIENT_MANA_NOTICE = "sl_shadow_mana_notice";
 	private static final String SAVED_HEALTH = "health";
 	private static final String SAVED_HEALTH_AT = "health_saved_at";
 	private static final TagKey<EntityType<?>> SHADOW_ENTITY_TAG = TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows"));
@@ -260,15 +282,27 @@ public class ShadowMonarchManager {
 		if (shadow == null)
 			return;
 		int level = Math.max(1, shadow.getInt("level"));
-		int xp = shadow.getInt("xp") + Math.max(5, (int) Math.ceil(killed.getBbWidth() * killed.getBbHeight() * 4.0));
-		int needed = xpNeeded(level);
+		int levelCap = shadowLevelCap(owner);
+		int xp = Math.max(0, shadow.getInt("xp"));
+		if (shadowEntity.getPersistentData().getInt(APPLIED_LEVEL) != level || shadowEntity.getPersistentData().getInt(APPLIED_RANK) != rankOf(shadow))
+			applyLevelStatsPreservingHealth(shadowEntity, shadow);
+		if (level >= levelCap) {
+			return;
+		}
+		long earnedXp = Math.max(5, (int) Math.ceil(killed.getBbWidth() * killed.getBbHeight() * 4.0));
+		xp = (int) Math.min(Integer.MAX_VALUE, xp + earnedXp);
+		int needed = xpNeeded(level, shadow.getString("type"));
 		boolean leveled = false;
-		while (xp >= needed) {
+		while (level < levelCap && xp >= needed) {
 			xp -= needed;
 			level++;
-			needed = xpNeeded(level);
+			if (level % 10 == 0)
+				promoteShadow(owner, shadow, true);
+			needed = xpNeeded(level, shadow.getString("type"));
 			leveled = true;
 		}
+		if (level >= levelCap)
+			xp = Math.min(xp, needed - 1);
 		shadow.putInt("level", level);
 		shadow.putInt("xp", xp);
 		owner.getPersistentData().put(ROOT, root(owner));
@@ -449,9 +483,13 @@ public class ShadowMonarchManager {
 			Entity entity = serverPlayer.serverLevel().getEntity(shadow.getUUID("summoned"));
 			if (entity == null || !entity.isAlive())
 				continue;
-			entity.getPersistentData().putString(SHADOW_COMMAND, command);
-			if (entity instanceof Mob mob)
+			if (entity instanceof Mob mob) {
+				resetShadowCommandState(mob);
+				entity.getPersistentData().putString(SHADOW_COMMAND, command);
 				applyCommandTarget(mob, player, command);
+			} else {
+				entity.getPersistentData().putString(SHADOW_COMMAND, command);
+			}
 		}
 		serverPlayer.displayClientMessage(Component.literal("Shadow Command: " + commandDisplayName(command) + " (" + summoned.size() + " shadows)"), true);
 		return true;
@@ -467,6 +505,86 @@ public class ShadowMonarchManager {
 		int owned = ownedCountForDisplay(player, type);
 		int summoned = Math.min(owned, summonedCountForDisplay(player, type));
 		return summoned + "/" + owned;
+	}
+
+	public static void prepareRosterForDisplay(Player player) {
+		if (player != null && !player.level().isClientSide())
+			ensureRoster(player);
+	}
+
+	public static int highestRankForDisplay(Player player, String requestedType) {
+		if (player == null)
+			return RANK_NORMAL;
+		String type = normalizeShadowType(requestedType);
+		int highest = startingRank(type);
+		ListTag roster = shadows(player);
+		for (int i = 0; i < roster.size(); i++) {
+			CompoundTag shadow = roster.getCompound(i);
+			if (type.equals(shadow.getString("type")))
+				highest = Math.max(highest, rankOf(shadow));
+		}
+		return highest;
+	}
+
+	public static int highestLevelForDisplay(Player player, String requestedType) {
+		if (player == null)
+			return 1;
+		String type = normalizeShadowType(requestedType);
+		int highest = 1;
+		ListTag roster = shadows(player);
+		for (int i = 0; i < roster.size(); i++) {
+			CompoundTag shadow = roster.getCompound(i);
+			if (type.equals(shadow.getString("type")))
+				highest = Math.max(highest, Math.max(1, shadow.getInt("level")));
+		}
+		return highest;
+	}
+
+	public static String typeForSummonButton(int buttonId) {
+		return switch (buttonId) {
+			case 0 -> "goblin_club";
+			case 1 -> "goblin_archer";
+			case 2 -> "goblin_mage";
+			case 3 -> "wolf";
+			case 4 -> "knight";
+			case 5 -> "polar_bear";
+			case 6 -> "orc";
+			case 7 -> "igris";
+			case 8 -> "beru";
+			case 9 -> "kamish";
+			case 10 -> "high_orc";
+			case 11 -> "tusk";
+			case 12 -> "kaisel";
+			default -> "";
+		};
+	}
+
+	public static int startingRankForType(String type) {
+		return startingRank(normalizeShadowType(type));
+	}
+
+	public static String rankDisplayName(int rank) {
+		return switch (Math.max(RANK_NORMAL, Math.min(RANK_GRAND_MARSHAL, rank))) {
+			case RANK_ELITE -> "Elite";
+			case RANK_KNIGHT -> "Knight";
+			case RANK_ELITE_KNIGHT -> "Elite Knight";
+			case RANK_GENERAL -> "General";
+			case RANK_MARSHAL -> "Marshal";
+			case RANK_GRAND_MARSHAL -> "Grand Marshal";
+			default -> "Normal";
+		};
+	}
+
+	public static int rankColor(int rank) {
+		return switch (rank) {
+			case RANK_ELITE -> 0xFF62D6FF;
+			case RANK_KNIGHT -> 0xFF79A7FF;
+			case RANK_ELITE_KNIGHT -> 0xFFB47CFF;
+			case RANK_GENERAL -> 0xFFE36CFF;
+			case RANK_MARSHAL -> 0xFFFF5CA8;
+			case RANK_GRAND_MARSHAL -> 0xFFFFC84A;
+			default -> 0xFFB8C1D9;
+		};
 	}
 
 	private static int ownedCountForDisplay(Player player, String type) {
@@ -501,6 +619,8 @@ public class ShadowMonarchManager {
 		if (!data.hasUUID(SHADOW_OWNER))
 			return;
 		Player owner = findOnlineOwner(level, data.getUUID(SHADOW_OWNER));
+		if (owner != null && (level.getGameTime() + entity.getId()) % 20L == 0L)
+			synchronizeShadowLevel(owner, entity);
 		if (owner != null && !isCurrentSummonedInstance(owner, entity)) {
 			entity.discard();
 			return;
@@ -533,11 +653,17 @@ public class ShadowMonarchManager {
 		EntityType<?> type = entityType(shadow.getString("type"));
 		if (type == null)
 			return false;
+		int manaCost = summonManaCost(shadow);
+		if (!hasSummonMana(owner, manaCost)) {
+			notifyInsufficientSummonMana(owner, shadow, manaCost);
+			return false;
+		}
 		Entity spawned = type.spawn(level, BlockPos.containing(pos), MobSpawnType.MOB_SUMMONED);
 		if (spawned == null)
 			return false;
 		spawned.moveTo(pos.x, pos.y, pos.z, owner.getYRot(), 0);
 		tagSummonedEntity(owner, shadow, spawned);
+		consumeSummonMana(owner, manaCost);
 		updateLegacySpawnCounter(owner, shadow.getString("type"), 1);
 		playSummonEffects(level, pos);
 		return true;
@@ -547,14 +673,20 @@ public class ShadowMonarchManager {
 		EntityType<?> type = entityType(shadow.getString("type"));
 		if (type == null)
 			return false;
+		int manaCost = summonManaCost(shadow);
+		if (!hasSummonMana(owner, manaCost)) {
+			notifyInsufficientSummonMana(owner, shadow, manaCost);
+			return false;
+		}
 		ListTag carriedInventory = copyShadowInventory(existing);
 		saveBossHealthBeforeDespawn(owner, existing);
-		existing.discard();
 		Entity spawned = type.spawn(level, BlockPos.containing(pos), MobSpawnType.MOB_SUMMONED);
 		if (spawned == null)
 			return false;
+		existing.discard();
 		spawned.moveTo(pos.x, pos.y, pos.z, owner.getYRot(), 0);
 		tagSummonedEntity(owner, shadow, spawned);
+		consumeSummonMana(owner, manaCost);
 		if (carriedInventory != null)
 			spawned.getPersistentData().put(SHADOW_INVENTORY, carriedInventory);
 		playSummonEffects(level, pos);
@@ -578,6 +710,57 @@ public class ShadowMonarchManager {
 		level.sendParticles(ParticleTypes.SQUID_INK, pos.x, pos.y + 1.0D, pos.z, 80, 1.3D, 1.2D, 1.3D, 0.18D);
 		level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, pos.x, pos.y + 0.8D, pos.z, 24, 0.8D, 0.8D, 0.8D, 0.04D);
 		level.sendParticles(ParticleTypes.ELECTRIC_SPARK, pos.x, pos.y + 1.2D, pos.z, 35, 0.6D, 0.9D, 0.6D, 0.15D);
+	}
+
+	private static int summonManaCost(CompoundTag shadow) {
+		String type = shadow.getString("type");
+		int baseCost = switch (type) {
+			case "goblin_club" -> 8;
+			case "goblin_archer" -> 10;
+			case "goblin_mage", "wolf" -> 14;
+			case "knight" -> 18;
+			case "polar_bear", "orc" -> 22;
+			case "high_orc" -> 32;
+			case "igris" -> 90;
+			case "tusk" -> 120;
+			case "kaisel" -> 140;
+			case "beru" -> 180;
+			case "kamish" -> 260;
+			default -> 12;
+		};
+		double rankMultiplier = switch (rankOf(shadow)) {
+			case RANK_ELITE -> 1.35D;
+			case RANK_KNIGHT -> 1.8D;
+			case RANK_ELITE_KNIGHT -> 2.35D;
+			case RANK_GENERAL -> 3.0D;
+			case RANK_MARSHAL -> 3.8D;
+			case RANK_GRAND_MARSHAL -> 5.0D;
+			default -> 1.0D;
+		};
+		double levelMultiplier = 1.0D + Math.max(0, shadow.getInt("level") - 1) * 0.0125D;
+		return Math.max(1, (int) Math.ceil(baseCost * rankMultiplier * levelMultiplier));
+	}
+
+	private static boolean hasSummonMana(Player player, int cost) {
+		return player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(variables -> variables.MP >= cost).orElse(false);
+	}
+
+	private static void consumeSummonMana(Player player, int cost) {
+		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			capability.MP = Math.max(0.0D, capability.MP - cost);
+			capability.syncPlayerVariables(player);
+		});
+	}
+
+	private static void notifyInsufficientSummonMana(ServerPlayer player, CompoundTag shadow, int cost) {
+		long now = player.level().getGameTime();
+		if (player.getPersistentData().getLong(INSUFFICIENT_MANA_NOTICE) > now)
+			return;
+		player.getPersistentData().putLong(INSUFFICIENT_MANA_NOTICE, now + 20L);
+		SystemNotifications.showNegativeTitleUnder(player, 0xFFFF3D6E, 70,
+				Component.literal("NOT ENOUGH MANA").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
+				Component.literal(shadow.getString("name") + " requires " + cost + " MP").withStyle(ChatFormatting.GRAY));
 	}
 
 	private static void tagSummonedEntity(Player owner, CompoundTag shadow, Entity spawned) {
@@ -642,6 +825,19 @@ public class ShadowMonarchManager {
 			shadow.getNavigation().stop();
 	}
 
+	private static void resetShadowCommandState(Mob shadow) {
+		shadow.setTarget(null);
+		shadow.getNavigation().stop();
+		CompoundTag data = shadow.getPersistentData();
+		data.putDouble("MF", 0.0D);
+		data.putBoolean("sprint", false);
+		if (shadow instanceof IgrisShadowEntity igris) {
+			data.putString("state", "idle");
+			igris.animationprocedure = "empty";
+			igris.setAnimation("empty");
+		}
+	}
+
 	public static LivingEntity findDefaultCommandTarget(Mob shadow, Player owner) {
 		if (shadow == null || owner == null)
 			return null;
@@ -663,7 +859,7 @@ public class ShadowMonarchManager {
 			return isValidOwnerDirectedTarget(target, shadow, owner);
 		if (!isValidShadowTarget(target, shadow, owner))
 			return false;
-		return target == owner.getLastHurtByMob() || target instanceof Mob mob && mob.getTarget() == owner;
+		return target == owner.getLastHurtByMob() || target instanceof Mob mob && isProtectTarget(mob.getTarget(), owner);
 	}
 
 	private static boolean isValidOwnerDirectedTarget(LivingEntity target, Mob shadow, Player owner) {
@@ -678,13 +874,26 @@ public class ShadowMonarchManager {
 
 	private static LivingEntity findOwnerThreat(Mob shadow, Player owner) {
 		LivingEntity current = shadow.getTarget();
-		if (current instanceof Mob mob && mob.getTarget() == owner && isValidShadowTarget(current, shadow, owner))
+		if (isProtectThreat(current, shadow, owner))
 			return current;
 		LivingEntity attacker = owner.getLastHurtByMob();
 		if (isValidShadowTarget(attacker, shadow, owner))
 			return attacker;
-		return shadow.level().getEntitiesOfClass(Mob.class, owner.getBoundingBox().inflate(48.0D), mob -> mob.getTarget() == owner && isValidShadowTarget(mob, shadow, owner)).stream()
+		AABB searchArea = owner.getBoundingBox().minmax(shadow.getBoundingBox()).inflate(48.0D);
+		return shadow.level().getEntitiesOfClass(Mob.class, searchArea, mob -> isProtectThreat(mob, shadow, owner)).stream()
 				.min((a, b) -> Double.compare(a.distanceToSqr(shadow), b.distanceToSqr(shadow))).orElse(null);
+	}
+
+	private static boolean isProtectThreat(LivingEntity candidate, Mob shadow, Player owner) {
+		if (!isValidShadowTarget(candidate, shadow, owner))
+			return false;
+		if (candidate == owner.getLastHurtByMob())
+			return true;
+		return candidate instanceof Mob mob && isProtectTarget(mob.getTarget(), owner);
+	}
+
+	private static boolean isProtectTarget(LivingEntity target, Player owner) {
+		return target == owner || isOwnedShadow(target, owner);
 	}
 
 	private static LivingEntity findNearestHostile(Mob shadow, Player owner, double range, boolean requireReachablePath) {
@@ -701,7 +910,7 @@ public class ShadowMonarchManager {
 			return false;
 		if (target instanceof TamableAnimal tame && owner.getUUID().equals(tame.getOwnerUUID()))
 			return false;
-		return target instanceof Monster || target instanceof Mob mob && mob.getTarget() == owner;
+		return target instanceof Monster || target instanceof Mob mob && isProtectTarget(mob.getTarget(), owner);
 	}
 
 	public static boolean canReachShadowTarget(Mob shadow, LivingEntity target) {
@@ -762,7 +971,17 @@ public class ShadowMonarchManager {
 			double base = data.getDouble(BASE_ATTACK);
 			living.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(base + (level - 1) * attackGain(type));
 		}
-		entity.setCustomName(Component.literal(shadow.getString("name") + " Lv." + level));
+		entity.getPersistentData().putInt(APPLIED_LEVEL, level);
+		entity.getPersistentData().putInt(APPLIED_RANK, rankOf(shadow));
+		entity.setCustomName(Component.literal(shadow.getString("name") + " [" + rankDisplayName(rankOf(shadow)) + "] Lv." + level));
+	}
+
+	private static void applyLevelStatsPreservingHealth(Entity entity, CompoundTag shadow) {
+		if (!(entity instanceof LivingEntity living))
+			return;
+		float currentHealth = living.getHealth();
+		applyLevelStats(entity, shadow, false);
+		living.setHealth(Math.max(1.0F, Math.min(currentHealth, living.getMaxHealth())));
 	}
 
 	private static void applyBossHealth(LivingEntity living, CompoundTag shadow, boolean restoreSavedHealth) {
@@ -875,6 +1094,9 @@ public class ShadowMonarchManager {
 	}
 
 	private static int compareStrongestFirst(CompoundTag first, CompoundTag second) {
+		int byRank = Integer.compare(rankOf(second), rankOf(first));
+		if (byRank != 0)
+			return byRank;
 		int byLevel = Integer.compare(Math.max(1, second.getInt("level")), Math.max(1, first.getInt("level")));
 		if (byLevel != 0)
 			return byLevel;
@@ -911,6 +1133,10 @@ public class ShadowMonarchManager {
 	private static boolean isBetterShadow(CompoundTag candidate, CompoundTag current) {
 		if (current == null)
 			return true;
+		int candidateRank = rankOf(candidate);
+		int currentRank = rankOf(current);
+		if (candidateRank != currentRank)
+			return candidateRank > currentRank;
 		int candidateLevel = Math.max(1, candidate.getInt("level"));
 		int currentLevel = Math.max(1, current.getInt("level"));
 		if (candidateLevel != currentLevel)
@@ -929,6 +1155,8 @@ public class ShadowMonarchManager {
 		shadow.putString("name", defaultName(type, number));
 		shadow.putInt("level", 1);
 		shadow.putInt("xp", 0);
+		shadow.putInt(STARTING_RANK, startingRank(type));
+		shadow.putInt(RANK, startingRank(type));
 		shadow.putBoolean("boss", isBoss(type));
 		shadows(player).add(shadow);
 		return shadow;
@@ -942,6 +1170,194 @@ public class ShadowMonarchManager {
 			while (countOwned(player, type) < max)
 				createShadow(player, type, countOwned(player, type) + 1);
 		}
+		CompoundTag root = root(player);
+		if (root.getInt(RANK_SCHEMA) != RANK_SCHEMA_VERSION)
+			migrateShadowRanks(player, root);
+		else
+			repairGrandMarshalClaim(player, root);
+		int levelCap = shadowLevelCap(player);
+		if (root.getInt(CACHED_LEVEL_CAP) != levelCap) {
+			ListTag roster = shadows(player);
+			for (int i = 0; i < roster.size(); i++)
+				normalizeShadowProgress(player, roster.getCompound(i));
+			root.putInt(CACHED_LEVEL_CAP, levelCap);
+			player.getPersistentData().put(ROOT, root);
+		}
+	}
+
+	private static void migrateShadowRanks(Player player, CompoundTag root) {
+		ListTag roster = shadows(player);
+		CompoundTag grandCandidate = null;
+		for (int i = 0; i < roster.size(); i++) {
+			CompoundTag shadow = roster.getCompound(i);
+			String type = shadow.getString("type");
+			int starting = startingRank(type);
+			int earnedPromotions = Math.max(0, shadow.getInt("level")) / 10;
+			int desired = starting + earnedPromotions;
+			shadow.putInt(STARTING_RANK, starting);
+			shadow.putInt(RANK, Math.min(desired, isBoss(type) ? RANK_MARSHAL : RANK_ELITE_KNIGHT));
+			if (isBoss(type) && desired >= RANK_GRAND_MARSHAL && isBetterGrandMarshalCandidate(shadow, grandCandidate))
+				grandCandidate = shadow;
+		}
+		root.remove(GRAND_MARSHAL_ID);
+		if (grandCandidate != null) {
+			grandCandidate.putInt(RANK, RANK_GRAND_MARSHAL);
+			root.putString(GRAND_MARSHAL_ID, grandCandidate.getString("id"));
+		}
+		root.putInt(RANK_SCHEMA, RANK_SCHEMA_VERSION);
+		player.getPersistentData().put(ROOT, root);
+	}
+
+	private static void repairGrandMarshalClaim(Player player, CompoundTag root) {
+		ListTag roster = shadows(player);
+		String claimedId = root.getString(GRAND_MARSHAL_ID);
+		CompoundTag claimed = claimedId.isEmpty() ? null : getShadow(player, claimedId);
+		if (claimed == null || !isBoss(claimed.getString("type")) || rankOf(claimed) != RANK_GRAND_MARSHAL) {
+			claimed = null;
+			root.remove(GRAND_MARSHAL_ID);
+		}
+		for (int i = 0; i < roster.size(); i++) {
+			CompoundTag shadow = roster.getCompound(i);
+			if (rankOf(shadow) != RANK_GRAND_MARSHAL)
+				continue;
+			if (claimed == null) {
+				claimed = shadow;
+				root.putString(GRAND_MARSHAL_ID, shadow.getString("id"));
+			} else if (!claimed.getString("id").equals(shadow.getString("id"))) {
+				shadow.putInt(RANK, RANK_MARSHAL);
+			}
+		}
+	}
+
+	private static boolean isBetterGrandMarshalCandidate(CompoundTag candidate, CompoundTag current) {
+		if (current == null)
+			return true;
+		int byPower = Integer.compare(bossPower(candidate.getString("type")), bossPower(current.getString("type")));
+		if (byPower != 0)
+			return byPower > 0;
+		int byLevel = Integer.compare(candidate.getInt("level"), current.getInt("level"));
+		if (byLevel != 0)
+			return byLevel > 0;
+		return candidate.getInt("xp") > current.getInt("xp");
+	}
+
+	private static int bossPower(String type) {
+		return switch (type) {
+			case "kamish" -> 5;
+			case "beru" -> 4;
+			case "tusk" -> 3;
+			case "kaisel" -> 2;
+			case "igris" -> 1;
+			default -> 0;
+		};
+	}
+
+	private static int startingRank(String type) {
+		return switch (type) {
+			case "igris", "kaisel" -> RANK_KNIGHT;
+			case "tusk" -> RANK_ELITE_KNIGHT;
+			case "beru", "kamish" -> RANK_GENERAL;
+			default -> RANK_NORMAL;
+		};
+	}
+
+	private static int rankOf(CompoundTag shadow) {
+		if (shadow == null)
+			return RANK_NORMAL;
+		String type = shadow.getString("type");
+		int starting = shadow.contains(STARTING_RANK, Tag.TAG_INT) ? shadow.getInt(STARTING_RANK) : startingRank(type);
+		int rank = shadow.contains(RANK, Tag.TAG_INT) ? shadow.getInt(RANK) : starting;
+		int maximum = isBoss(type) ? RANK_GRAND_MARSHAL : RANK_ELITE_KNIGHT;
+		return Math.max(starting, Math.min(maximum, rank));
+	}
+
+	private static boolean promoteShadow(Player owner, CompoundTag shadow, boolean showPopup) {
+		if (owner == null || shadow == null)
+			return false;
+		String type = shadow.getString("type");
+		int oldRank = rankOf(shadow);
+		int newRank;
+		CompoundTag ownerRoot = root(owner);
+		if (!isBoss(type)) {
+			if (oldRank >= RANK_ELITE_KNIGHT)
+				return false;
+			newRank = oldRank + 1;
+		} else if (oldRank < RANK_MARSHAL) {
+			newRank = oldRank + 1;
+		} else if (oldRank == RANK_MARSHAL) {
+			String claimedId = ownerRoot.getString(GRAND_MARSHAL_ID);
+			if (!claimedId.isEmpty() && !claimedId.equals(shadow.getString("id")))
+				return false;
+			newRank = RANK_GRAND_MARSHAL;
+			ownerRoot.putString(GRAND_MARSHAL_ID, shadow.getString("id"));
+		} else {
+			return false;
+		}
+		shadow.putInt(STARTING_RANK, startingRank(type));
+		shadow.putInt(RANK, newRank);
+		owner.getPersistentData().put(ROOT, ownerRoot);
+		if (showPopup && owner instanceof ServerPlayer serverPlayer) {
+			Component title = Component.literal("SHADOW RANK UP").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD);
+			Component under = Component.literal(shadow.getString("name") + "\n")
+					.withStyle(ChatFormatting.LIGHT_PURPLE)
+					.append(Component.literal(rankDisplayName(oldRank) + " -> " + rankDisplayName(newRank)).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+			SystemNotifications.showTitleUnder(serverPlayer, rankColor(newRank), 100, title, under);
+		}
+		return true;
+	}
+
+	/**
+	 * Shadows begin with a level cap of 10. Starting after player level 40, every
+	 * additional 20 player levels unlock another 10 shadow levels.
+	 */
+	public static int shadowLevelCap(Player player) {
+		if (player == null)
+			return BASE_SHADOW_LEVEL_CAP;
+		double playerLevel = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(variables -> variables.Level).orElse(0.0D);
+		if (!Double.isFinite(playerLevel) || playerLevel <= PLAYER_LEVEL_CAP_START)
+			return BASE_SHADOW_LEVEL_CAP;
+		double rawTiers = Math.floor((playerLevel - PLAYER_LEVEL_CAP_START) / PLAYER_LEVELS_PER_CAP_INCREASE);
+		long maximumTiers = (MAX_SAFE_SHADOW_LEVEL - BASE_SHADOW_LEVEL_CAP) / SHADOW_LEVELS_PER_CAP_INCREASE;
+		long tiers = (long) Math.min(maximumTiers, Math.max(0.0D, rawTiers));
+		return BASE_SHADOW_LEVEL_CAP + (int) tiers * SHADOW_LEVELS_PER_CAP_INCREASE;
+	}
+
+	private static boolean normalizeShadowProgress(Player player, CompoundTag shadow) {
+		int cap = shadowLevelCap(player);
+		int originalLevel = shadow.getInt("level");
+		int originalXp = shadow.getInt("xp");
+		int level = Math.max(1, Math.min(cap, originalLevel));
+		int xp = Math.max(0, originalXp);
+		String type = shadow.getString("type");
+		while (level < cap && xp >= xpNeeded(level, type)) {
+			xp -= xpNeeded(level, type);
+			level++;
+			if (level % 10 == 0)
+				promoteShadow(player, shadow, false);
+		}
+		if (level >= cap)
+			xp = Math.min(xp, xpNeeded(level, type) - 1);
+		if (level == originalLevel && xp == originalXp)
+			return false;
+		shadow.putInt("level", level);
+		shadow.putInt("xp", xp);
+		return true;
+	}
+
+	private static void synchronizeShadowLevel(Player owner, Entity shadowEntity) {
+		String id = shadowEntity.getPersistentData().getString(SHADOW_ID);
+		if (id.isEmpty())
+			return;
+		CompoundTag shadow = getShadow(owner, id);
+		if (shadow == null)
+			return;
+		boolean changed = normalizeShadowProgress(owner, shadow);
+		int level = Math.max(1, shadow.getInt("level"));
+		if (shadowEntity.getPersistentData().getInt(APPLIED_LEVEL) != level || shadowEntity.getPersistentData().getInt(APPLIED_RANK) != rankOf(shadow))
+			applyLevelStatsPreservingHealth(shadowEntity, shadow);
+		if (changed)
+			owner.getPersistentData().put(ROOT, root(owner));
 	}
 
 	private static List<CompoundTag> summonedOwnedShadows(Player player) {
@@ -1139,8 +1555,18 @@ public class ShadowMonarchManager {
 		return split >= 0 && split + 1 < skill.length() ? skill.substring(split + 1) : "";
 	}
 
-	private static int xpNeeded(int level) {
-		return 35 + level * 15;
+	private static int xpNeeded(int level, String type) {
+		long base = 35L + Math.max(1L, level) * 15L;
+		double multiplier = switch (type) {
+			case "igris" -> 1.75D;
+			case "kaisel" -> 2.0D;
+			case "tusk" -> 2.25D;
+			case "beru" -> 3.0D;
+			case "kamish" -> 4.0D;
+			case "high_orc" -> 1.2D;
+			default -> 1.0D;
+		};
+		return Math.max(1, (int) Math.min(Integer.MAX_VALUE, Math.ceil(base * multiplier)));
 	}
 
 	private static double healthGain(String type) {
@@ -1360,6 +1786,10 @@ public class ShadowMonarchManager {
 	private static boolean isWeakerShadow(CompoundTag candidate, CompoundTag current) {
 		if (current == null)
 			return true;
+		int candidateRank = rankOf(candidate);
+		int currentRank = rankOf(current);
+		if (candidateRank != currentRank)
+			return candidateRank < currentRank;
 		int candidateLevel = Math.max(1, candidate.getInt("level"));
 		int currentLevel = Math.max(1, current.getInt("level"));
 		if (candidateLevel != currentLevel)

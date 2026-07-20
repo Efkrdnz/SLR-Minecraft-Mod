@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.SystemNotifications;
+import net.solocraft.util.SystemPlayerAccess;
 import net.solocraft.util.DkcQuestManager;
 
 import net.minecraftforge.fml.common.Mod;
@@ -39,7 +40,7 @@ public class TrainingOnTickProcedure {
 	}
 
 	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity) {
-		if (entity == null)
+		if (entity == null || !SystemPlayerAccess.hasSystem(entity))
 			return;
 		boolean cancel = false;
 		String r1 = "";

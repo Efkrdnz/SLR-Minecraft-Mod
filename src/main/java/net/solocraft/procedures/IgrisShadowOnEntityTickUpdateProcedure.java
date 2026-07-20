@@ -26,6 +26,11 @@ public class IgrisShadowOnEntityTickUpdateProcedure {
 		double hei = 0;
 		double rand2 = 0;
 		if ((entity instanceof LivingEntity _livEnt ? _livEnt.getHealth() : -1) > 0) {
+			String combatState = entity.getPersistentData().getString("state");
+			if (!(combatState.equals("idle") || combatState.equals("spin") || combatState.equals("stab") || combatState.equals("slam"))) {
+				entity.getPersistentData().putString("state", "idle");
+				entity.getPersistentData().putDouble("MF", 0);
+			}
 			if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
 				entity.getPersistentData().putBoolean("sprint", true);
 				entity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY()),
@@ -39,7 +44,7 @@ public class IgrisShadowOnEntityTickUpdateProcedure {
 				entity.getPersistentData().putString("state", "idle");
 			}
 			if ((entity.getPersistentData().getString("state")).equals("idle")) {
-				if (entity.getPersistentData().getDouble("MF") == 10) {
+				if (entity.getPersistentData().getDouble("MF") >= 10) {
 					ShadowIgrisStateChangerProcedure.execute(entity);
 				}
 			}

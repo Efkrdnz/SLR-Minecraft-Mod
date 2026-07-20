@@ -53,6 +53,7 @@ public class GuildBossKillProcedure {
 
     @SubscribeEvent
     public static void onBossDeath(LivingDeathEvent event) {
+        if (event.getEntity().getPersistentData().getBoolean(net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG)) return;
         if (!event.getEntity().getType().is(SOLOBOSS)) return;
 
         Entity source = event.getSource().getEntity();

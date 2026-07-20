@@ -55,6 +55,9 @@ import net.minecraft.nbt.CompoundTag;
 import java.util.EnumSet;
 
 public class BloodRedComIgrisEntity extends Monster implements GeoEntity {
+	public static final double DUNGEON_MAX_HEALTH = 150.0D;
+	public static final double DUNGEON_ATTACK_DAMAGE = 14.0D;
+	public static final double DUNGEON_ARMOR = 18.0D;
 
     public static final EntityDataAccessor<Boolean>  SHOOT      = SynchedEntityData.defineId(BloodRedComIgrisEntity.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<String>   ANIMATION  = SynchedEntityData.defineId(BloodRedComIgrisEntity.class, EntityDataSerializers.STRING);
@@ -243,7 +246,20 @@ public class BloodRedComIgrisEntity extends Monster implements GeoEntity {
         if (compound.contains("Texture"))    this.setTexture(compound.getString("Texture"));
         if (compound.contains("Datastate"))  this.entityData.set(DATA_state, compound.getString("Datastate"));
         if (compound.contains("DataIA"))     this.entityData.set(DATA_IA, compound.getInt("DataIA"));
+		if (!this.level().isClientSide())
+			enforceDungeonBalance();
     }
+
+	private void enforceDungeonBalance() {
+		float savedHealth = this.getHealth();
+		if (this.getAttribute(Attributes.MAX_HEALTH) != null)
+			this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(DUNGEON_MAX_HEALTH);
+		if (this.getAttribute(Attributes.ATTACK_DAMAGE) != null)
+			this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(DUNGEON_ATTACK_DAMAGE);
+		if (this.getAttribute(Attributes.ARMOR) != null)
+			this.getAttribute(Attributes.ARMOR).setBaseValue(DUNGEON_ARMOR);
+		this.setHealth(Math.max(0.0F, Math.min(savedHealth, this.getMaxHealth())));
+	}
 
     // ── Tick ─────────────────────────────────────────────────────────────────
 
@@ -276,11 +292,11 @@ public class BloodRedComIgrisEntity extends Monster implements GeoEntity {
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MOVEMENT_SPEED,      0.58)
-                .add(Attributes.MAX_HEALTH,          110)
-                .add(Attributes.ARMOR,               24)
-                .add(Attributes.ATTACK_DAMAGE,       0)
-                .add(Attributes.FOLLOW_RANGE,        32)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.75)
+                .add(Attributes.MAX_HEALTH,          DUNGEON_MAX_HEALTH)
+                .add(Attributes.ARMOR,               DUNGEON_ARMOR)
+                .add(Attributes.ATTACK_DAMAGE,       DUNGEON_ATTACK_DAMAGE)
+                .add(Attributes.FOLLOW_RANGE,        48)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.85)
                 .add(Attributes.ATTACK_KNOCKBACK,    1);
     }
 

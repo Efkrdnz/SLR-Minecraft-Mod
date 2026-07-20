@@ -1,6 +1,5 @@
 package net.solocraft.client.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.solocraft.client.gui.system.SystemTooltip;
 import net.solocraft.guild.GuildData;
 import net.solocraft.guild.GuildBuffRegistry;
@@ -11,7 +10,6 @@ import net.solocraft.network.GuildActionMessage;
 import net.solocraft.SololevelingMod;
 import net.solocraft.world.inventory.GuildComputerMenu;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -133,10 +131,13 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
         addMemberBox.setHint(Component.literal("Online player name..."));
         addWidget(addMemberBox);
 
-        addMemberBtn = Button.builder(Component.literal("Add Member"),
+        addMemberBtn = Button.builder(Component.literal("Send Invite"),
                 btn -> {
                     String n = addMemberBox.getValue().trim();
-                    if (!n.isEmpty()) sendAction("add_member", n, "");
+                    if (!n.isEmpty()) {
+                        sendAction("invite_member", n, "");
+                        addMemberBox.setValue("");
+                    }
                 })
                 .bounds(guiLeft + 165, guiTop + GUI_H - 39, 90, 18)
                 .build();
@@ -216,6 +217,9 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
 
     @Override
     public boolean mouseClicked(double mx, double my, int btn) {
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		mx = transform.logicalX(mx);
+		my = transform.logicalY(my);
         if (menu.hasGuild && canAccessAnyTab()) {
             int ty = guiTop + TAB_Y_OFFSET;
             if (my >= ty && my <= ty + TAB_H) {
@@ -242,6 +246,9 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
 
     @Override
     public boolean mouseScrolled(double mx, double my, double delta) {
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		mx = transform.logicalX(mx);
+		my = transform.logicalY(my);
         if (activeTab == TAB_MANAGEMENT)  { managementScrollOffset  = Math.max(0, managementScrollOffset  - (int)(delta*6)); return true; }
         if (activeTab == TAB_ROSTER)      { rosterScrollOffset       = Math.max(0, rosterScrollOffset       - (int)(delta*6)); return true; }
         if (activeTab == TAB_TEAMS) {
@@ -256,6 +263,25 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
         }
         return super.mouseScrolled(mx, my, delta);
     }
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		return super.mouseReleased(transform.logicalX(mouseX), transform.logicalY(mouseY), button);
+	}
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		return super.mouseDragged(transform.logicalX(mouseX), transform.logicalY(mouseY), button,
+				dragX / transform.scale(), dragY / transform.scale());
+	}
+
+	@Override
+	public void mouseMoved(double mouseX, double mouseY) {
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		super.mouseMoved(transform.logicalX(mouseX), transform.logicalY(mouseY));
+	}
 
     // ── Management click ──────────────────────────────────────────────────────
 
@@ -503,10 +529,19 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
     @Override
     public void render(GuiGraphics gg, int mouseX, int mouseY, float pt) {
         renderBackground(gg);
-        super.render(gg, mouseX, mouseY, pt);
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		int logicalMouseX = transform.logicalMouseX(mouseX);
+		int logicalMouseY = transform.logicalMouseY(mouseY);
+		ResponsiveGuiScale.push(gg, transform);
+		super.render(gg, logicalMouseX, logicalMouseY, pt);
+		ResponsiveGuiScale.pop(gg);
         if (activeTab == TAB_STORAGE) renderTooltip(gg, mouseX, mouseY);
-        if (activeTab == TAB_BUFFS) renderBuffTooltip(gg, mouseX, mouseY);
+		if (activeTab == TAB_BUFFS) renderBuffTooltip(gg, logicalMouseX, logicalMouseY, mouseX, mouseY);
     }
+
+	private ResponsiveGuiScale.Transform responsiveTransform() {
+		return ResponsiveGuiScale.fit(this.width, this.height, GUI_W + 8, GUI_H + 8);
+	}
 
     @Override protected void renderLabels(GuiGraphics gg, int mouseX, int mouseY) {}
 
@@ -629,7 +664,7 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
                 }
             }
         }
-        disableScissor();
+        disableScissor(gg);
 
         // Right: recruit pool
         int rPanelX = divX+5, poolListEndY = guiTop+GUI_H-28;
@@ -657,7 +692,7 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
                 }
             }
         }
-        disableScissor();
+        disableScissor(gg);
         if (menu.viewerIsOwner) {
             int rby = guiTop+GUI_H-26, rbx = rPanelX, rbw = GUI_W-DIVIDER_X-12;
             boolean hovRef = mx>=rbx&&mx<=rbx+rbw&&my>=rby&&my<=rby+16;
@@ -792,7 +827,7 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
                         +GuildHunter.classColor(h.hunterClass)+h.hunterClass, rPanelX+4, rowY+2, 0xFFFFFFFF, false);
             }
         }
-        disableScissor();
+        disableScissor(gg);
     }
 
     // ── Dungeons tab ──────────────────────────────────────────────────────────
@@ -913,7 +948,7 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
                     gg.drawString(font, "§f"+rl, bx+(40-font.width(rl))/2, ry+11, 0xFFFFFFFF, false);
                 }
             }
-            disableScissor();
+            disableScissor(gg);
         }
     }
 
@@ -977,7 +1012,7 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
                 gg.drawString(font, (unlocked && !active ? "§f" : "§8") + text, bx + (46 - font.width(text)) / 2, y + 3, 0xFFFFFFFF, false);
             }
         }
-        disableScissor();
+        disableScissor(gg);
         if (maxBuffsScroll() > 0) {
             int trackX = guiLeft + GUI_W - 6;
             int visibleH = listEndY - listY;
@@ -1037,9 +1072,9 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
             gg.fill(rx, ry+3, rx+12, ry+13, hx ? 0xFFAA2222 : 0xFF772222);
             gg.drawString(font, "×", rx+2, ry+3, 0xFFFFFFFF, false);
         }
-        disableScissor();
+        disableScissor(gg);
         gg.fill(guiLeft+6, guiTop+GUI_H-42, guiLeft+GUI_W-6, guiTop+GUI_H-41, 0xFF2A2A3A);
-        gg.drawString(font, "§7Add member:", startX, guiTop+GUI_H-38, 0xFFFFFFFF, false);
+        gg.drawString(font, "§7Invite player:", startX, guiTop+GUI_H-38, 0xFFFFFFFF, false);
         addMemberBox.render(gg, mx, my, 0);
     }
 
@@ -1150,7 +1185,7 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
         return Math.max(0, GuildBuffRegistry.all().size() * 16 - visibleH);
     }
 
-    private void renderBuffTooltip(GuiGraphics gg, int mx, int my) {
+    private void renderBuffTooltip(GuiGraphics gg, int mx, int my, int screenMouseX, int screenMouseY) {
         int contentY = guiTop + TAB_Y_OFFSET + TAB_H + 4;
         int listY = contentY + 76;
         int listEndY = buffListEndY();
@@ -1170,7 +1205,7 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
             }
             if (active) lines.add(Component.literal("§aCurrently active."));
             else if (unlocked && menu.viewerIsOwner) lines.add(Component.literal("§7Click Equip to activate this passive."));
-            SystemTooltip.render(gg, font, lines, mx, my, width, height);
+            SystemTooltip.render(gg, font, lines, screenMouseX, screenMouseY, width, height);
             return;
         }
     }
@@ -1281,12 +1316,10 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
     }
 
     private void enableScissor(GuiGraphics gg, int x, int y, int w, int h) {
-        double scale = Minecraft.getInstance().getWindow().getGuiScale();
-        int screenH  = Minecraft.getInstance().getWindow().getHeight();
-        RenderSystem.enableScissor((int)(x*scale),(int)(screenH-(y+h)*scale),(int)(w*scale),(int)(h*scale));
+		ResponsiveGuiScale.enableScissor(gg, responsiveTransform(), x, y, x + w, y + h);
     }
 
-    private void disableScissor() { RenderSystem.disableScissor(); }
+    private void disableScissor(GuiGraphics gg) { gg.disableScissor(); }
 
     private String guildLevelBadge(int level) {
         return switch (level) {

@@ -24,6 +24,11 @@ public class BeastVfxEntity extends Entity {
 	public static final int INTERCEPT = 2;
 	public static final int QUARRY = 3;
 	public static final int OPENING = 4;
+	public static final int RIFT = 5;
+	public static final int RUBBLE_JAW = 6;
+	public static final int KINGS_MAUL = 7;
+	public static final int RECONSTITUTION = 8;
+	public static final int WHITE_FANG = 9;
 
 	private static final EntityDataAccessor<Integer> STYLE = SynchedEntityData.defineId(BeastVfxEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> PRIMARY_COLOR = SynchedEntityData.defineId(BeastVfxEntity.class, EntityDataSerializers.INT);

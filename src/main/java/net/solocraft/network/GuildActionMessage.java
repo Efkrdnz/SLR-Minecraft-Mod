@@ -6,6 +6,7 @@ import net.solocraft.guild.GuildData;
 import net.solocraft.guild.GuildDeployment;
 import net.solocraft.guild.GuildGateHelper;
 import net.solocraft.guild.GuildHunter;
+import net.solocraft.guild.GuildInvitationManager;
 import net.solocraft.guild.GuildTeam;
 import net.solocraft.guild.HunterRecruitManager;
 import net.solocraft.guild.GuildMemberPermissions;
@@ -37,7 +38,7 @@ import java.util.function.Supplier;
  *
  * Actions:
  *   "create"            – create a new guild with given name
- *   "add_member"        – add a player (by name) to the member list
+ *   "invite_member"     – invite an online player by name
  *   "remove_member"     – remove a member by UUID string
  *   "toggle_perm"       – toggle one permission flag for a member
  */
@@ -131,29 +132,19 @@ public class GuildActionMessage {
                     reopenScreen(player, level, msg.computerPos);
                 }
 
-                case "add_member" -> {
+                case "invite_member" -> {
                     // param1 = target player name
                     GuildData guild = data.getGuildForPlayer(playerUUID);
                     if (guild == null || !guild.canOperate(playerUUID)) return;
-                    guild.pruneTeamMembers();
 
                     String targetName = msg.param1.trim();
-                    // Find online player by name
                     ServerPlayer target = level.getServer().getPlayerList().getPlayerByName(targetName);
                     if (target == null) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                                 "§cPlayer \"" + targetName + "\" is not online."));
                         return;
                     }
-                    if (target.getUUID().equals(playerUUID)) return; // can't add self
-
-                    // Check not already a member
-                    if (guild.getPermissions(target.getUUID()) != null) return;
-
-                    guild.memberPermissions.add(new GuildMemberPermissions(
-                            target.getUUID(), target.getName().getString()));
-                    data.markDirty();
-                    reopenScreen(player, level, msg.computerPos);
+                    GuildInvitationManager.sendInvitation(player, target);
                 }
 
                 case "delete_guild" -> {

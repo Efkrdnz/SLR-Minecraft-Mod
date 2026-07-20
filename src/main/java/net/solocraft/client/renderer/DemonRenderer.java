@@ -29,7 +29,8 @@ public class DemonRenderer extends GeoEntityRenderer<DemonEntity> {
 	@Override
 	public void preRender(PoseStack poseStack, DemonEntity entity, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green,
 			float blue, float alpha) {
-		float scale = 0.8f;
+		float bodyScale = entity.isThinVariant() ? 0.56f : 0.72f;
+		float scale = bodyScale * entity.getVisualScale();
 		this.scaleHeight = scale;
 		this.scaleWidth = scale;
 		super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);

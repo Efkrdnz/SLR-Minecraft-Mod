@@ -1,6 +1,8 @@
 package net.solocraft.client.gui.system;
 
+import net.solocraft.client.gui.ResponsiveGuiScale;
 import net.solocraft.client.renderer.shader.SystemBackgroundRenderTypes;
+import net.solocraft.util.SystemPlayerAccess;
 
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -64,6 +66,7 @@ public abstract class SystemScreen extends Screen {
 	private State state = State.OPENING;
 	private long animStart;
 	private boolean closed;
+	private boolean accessDenied;
 	private float reveal; // 0..1 vertical expansion factor for this frame
 
 	protected SystemScreen(Component title) {
@@ -73,7 +76,15 @@ public abstract class SystemScreen extends Screen {
 	@Override
 	protected void init() {
 		super.init();
-		SystemGuiSounds.enter();
+		this.accessDenied = !SystemPlayerAccess.hasSystem(this.minecraft == null ? null : this.minecraft.player)
+				&& !allowsNonSystemAccess();
+		if (accessDenied) {
+			if (this.minecraft != null)
+				this.minecraft.setScreen(null);
+			return;
+		}
+		if (shouldPlaySystemSounds())
+			SystemGuiSounds.enter();
 		this.panelX = (this.width - panelW) / 2;
 		this.panelY = (this.height - panelH) / 2;
 		this.state = State.OPENING;
@@ -104,7 +115,8 @@ public abstract class SystemScreen extends Screen {
 	/** Start the collapse animation; the real close happens when it finishes. */
 	protected void beginClose() {
 		if (state != State.CLOSING) {
-			SystemGuiSounds.exit();
+			if (shouldPlaySystemSounds())
+				SystemGuiSounds.exit();
 			state = State.CLOSING;
 			animStart = Util.getMillis();
 		}
@@ -147,9 +159,14 @@ public abstract class SystemScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+		if (accessDenied)
+			return;
 		updateAnimation();
 		if (closed)
 			return;
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		int logicalMouseX = transform.logicalMouseX(mouseX);
+		int logicalMouseY = transform.logicalMouseY(mouseY);
 
 		// widgets only interactive/visible when fully open
 		setWidgetsVisible(state == State.OPEN);
@@ -157,6 +174,7 @@ public abstract class SystemScreen extends Screen {
 		// full-screen dim, committed before the scissor so it isn't clipped
 		this.renderBackground(guiGraphics);
 		guiGraphics.flush();
+		ResponsiveGuiScale.push(guiGraphics, transform);
 
 		int centerY = panelY + panelH / 2;
 		int halfH = Math.round((panelH / 2f + 4f) * reveal);
@@ -165,11 +183,11 @@ public abstract class SystemScreen extends Screen {
 		int sx0 = panelX - 2;
 		int sx1 = panelX + panelW + 2;
 
-		guiGraphics.enableScissor(sx0, top, sx1, bottom);
-		renderAnimatedBackground(guiGraphics, mouseX, mouseY);
+		ResponsiveGuiScale.enableScissor(guiGraphics, transform, sx0, top, sx1, bottom);
+		renderAnimatedBackground(guiGraphics, logicalMouseX, logicalMouseY);
 		renderFrame(guiGraphics);
-		renderContent(guiGraphics, mouseX, mouseY, partialTicks);
-		super.render(guiGraphics, mouseX, mouseY, partialTicks); // widgets on top
+		renderContent(guiGraphics, logicalMouseX, logicalMouseY, partialTicks);
+		super.render(guiGraphics, logicalMouseX, logicalMouseY, partialTicks); // widgets on top
 		guiGraphics.disableScissor();
 
 		// bright leading-edge seams while expanding/collapsing
@@ -180,13 +198,53 @@ public abstract class SystemScreen extends Screen {
 			guiGraphics.fill(sx0, bottom - 2, sx1, bottom - 1, ACCENT_SOFT);
 		}
 
-		// System-styled tooltip (only when fully open; drawn on top, unclipped)
+		ResponsiveGuiScale.pop(guiGraphics);
+
+		// Tooltips stay at the configured GUI scale for readability.
 		if (state == State.OPEN) {
-			List<Component> tip = getHoverTooltip(mouseX, mouseY);
+			List<Component> tip = getHoverTooltip(logicalMouseX, logicalMouseY);
 			if (tip != null && !tip.isEmpty()) {
 				SystemTooltip.render(guiGraphics, this.font, tip, mouseX, mouseY, this.width, this.height);
 			}
 		}
+	}
+
+	protected ResponsiveGuiScale.Transform responsiveTransform() {
+		return ResponsiveGuiScale.fit(this.width, this.height, panelW + 6, panelH + 6);
+	}
+
+	protected double logicalMouseX(double mouseX) {
+		return responsiveTransform().logicalX(mouseX);
+	}
+
+	protected double logicalMouseY(double mouseY) {
+		return responsiveTransform().logicalY(mouseY);
+	}
+
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		return super.mouseClicked(logicalMouseX(mouseX), logicalMouseY(mouseY), button);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		return super.mouseReleased(logicalMouseX(mouseX), logicalMouseY(mouseY), button);
+	}
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		float scale = responsiveTransform().scale();
+		return super.mouseDragged(logicalMouseX(mouseX), logicalMouseY(mouseY), button, dragX / scale, dragY / scale);
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+		return super.mouseScrolled(logicalMouseX(mouseX), logicalMouseY(mouseY), delta);
+	}
+
+	@Override
+	public void mouseMoved(double mouseX, double mouseY) {
+		super.mouseMoved(logicalMouseX(mouseX), logicalMouseY(mouseY));
 	}
 
 	/** Concrete panels draw their labels/data here (over the frame). */
@@ -200,9 +258,20 @@ public abstract class SystemScreen extends Screen {
 	/** Swap to another System screen (used by nav / back buttons). */
 	protected void openChild(Screen screen) {
 		if (this.minecraft != null) {
-			SystemGuiSounds.switchInsideSystem();
+			if (shouldPlaySystemSounds())
+				SystemGuiSounds.switchInsideSystem();
 			this.minecraft.setScreen(screen);
 		}
+	}
+
+	/** Screens used to obtain or configure the System may opt in before awakening. */
+	protected boolean allowsNonSystemAccess() {
+		return false;
+	}
+
+	/** Cartenon's awakening prompt overrides this because it is the first System contact. */
+	protected boolean shouldPlaySystemSounds() {
+		return SystemPlayerAccess.hasSystem(this.minecraft == null ? null : this.minecraft.player);
 	}
 
 	/** True if the cursor is over the axis-aligned text box at (x,y) sized (w,h). */
@@ -212,7 +281,7 @@ public abstract class SystemScreen extends Screen {
 
 	// ── Background (contained to the panel rect) ───────────────────────────────
 
-	private void renderAnimatedBackground(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+	protected void renderAnimatedBackground(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 		float localX = clamp01((mouseX - panelX) / (float) panelW);
 		float localY = clamp01((mouseY - panelY) / (float) panelH);
 

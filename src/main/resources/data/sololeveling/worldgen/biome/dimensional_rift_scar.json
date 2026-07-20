@@ -1,0 +1,25 @@
+{
+  "has_precipitation": false,
+  "temperature": 1.2,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 1315900,
+    "fog_color": 616050,
+    "water_color": 5243030,
+    "water_fog_color": 1310740,
+    "grass_color": 3026228,
+    "foliage_color": 2361378,
+    "particle": { "options": { "type": "minecraft:portal" }, "probability": 0.012 }
+  },
+  "spawners": {
+    "monster": [
+      { "type": "sololeveling:mutated", "weight": 42, "minCount": 1, "maxCount": 3 },
+      { "type": "sololeveling:magic_eye", "weight": 18, "minCount": 1, "maxCount": 2 },
+      { "type": "sololeveling:skeleton_brute", "weight": 12, "minCount": 1, "maxCount": 2 }
+    ],
+    "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [[], [], [], [], [], [], [], [], [], [], []]
+}

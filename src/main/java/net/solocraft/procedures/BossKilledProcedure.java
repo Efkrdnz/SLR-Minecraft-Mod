@@ -2,6 +2,8 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.FangedKasakaEntity;
+import net.solocraft.util.CartenonTempleManager;
+import net.solocraft.util.KangTaeshikAmbushManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -11,6 +13,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.tags.TagKey;
@@ -37,10 +40,16 @@ public class BossKilledProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
+		if (entity.getPersistentData().getBoolean(net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG))
+			return;
 		sourceentity = ShadowKillCreditHelper.creditedSource(world, sourceentity);
 		final Entity creditedSourceentity = sourceentity;
 		if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dungeoning == true || !((entity.level().dimension()) == Level.OVERWORLD)) {
 			if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("soloboss")))) {
+				if (sourceentity instanceof ServerPlayer player)
+					KangTaeshikAmbushManager.trySchedule(player, entity);
+				CartenonTempleManager.onDungeonBossDefeated(world, entity, sourceentity,
+						resolveDungeonTag(world, entity, sourceentity));
 				// Guild XP is handled by GuildBossKillProcedure (separate event subscriber)
 				if (sourceentity instanceof Player) {
 					if (((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party).equals("")) {

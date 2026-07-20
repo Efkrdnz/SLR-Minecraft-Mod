@@ -1,0 +1,25 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.45,
+  "downfall": 0.1,
+  "effects": {
+    "sky_color": 6974820,
+    "fog_color": 5526612,
+    "water_color": 3553346,
+    "water_fog_color": 1118481,
+    "grass_color": 6316128,
+    "foliage_color": 5329233,
+    "particle": { "options": { "type": "minecraft:campfire_cosy_smoke" }, "probability": 0.0015 }
+  },
+  "spawners": {
+    "monster": [
+      { "type": "sololeveling:stone_golem", "weight": 52, "minCount": 1, "maxCount": 3 },
+      { "type": "sololeveling:mini_gem_golem", "weight": 32, "minCount": 2, "maxCount": 4 },
+      { "type": "sololeveling:futuristic_golem", "weight": 10, "minCount": 1, "maxCount": 1 }
+    ],
+    "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [[], [], [], [], [], [], [], [], [], [], []]
+}

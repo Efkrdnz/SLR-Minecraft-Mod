@@ -1,0 +1,71 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:match_tool",
+          "predicate": {
+            "enchantments": [
+              {
+                "enchantment": "minecraft:silk_touch",
+                "levels": { "min": 1 }
+              }
+            ]
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "sololeveling:mana_crystal_deposit"
+        }
+      ]
+    },
+    {
+      "rolls": 1,
+      "conditions": [
+        {
+          "condition": "minecraft:inverted",
+          "term": {
+            "condition": "minecraft:match_tool",
+            "predicate": {
+              "enchantments": [
+                {
+                  "enchantment": "minecraft:silk_touch",
+                  "levels": { "min": 1 }
+                }
+              ]
+            }
+          }
+        },
+        { "condition": "minecraft:survives_explosion" }
+      ],
+      "entries": [
+        { "type": "minecraft:item", "name": "sololeveling:mana_crystal_e", "weight": 111 },
+        { "type": "minecraft:item", "name": "sololeveling:mana_crystal_d", "weight": 50 },
+        { "type": "minecraft:item", "name": "sololeveling:mana_crystal_c", "weight": 24 },
+        { "type": "minecraft:item", "name": "sololeveling:mana_crystal_b", "weight": 10 },
+        { "type": "minecraft:item", "name": "sololeveling:mana_crystal_a", "weight": 4 },
+        { "type": "minecraft:item", "name": "sololeveling:mana_crystal_s", "weight": 1 }
+      ],
+      "functions": [
+        {
+          "function": "minecraft:set_count",
+          "count": {
+            "type": "minecraft:uniform",
+            "min": 1,
+            "max": 2
+          }
+        },
+        {
+          "function": "minecraft:apply_bonus",
+          "enchantment": "minecraft:fortune",
+          "formula": "minecraft:ore_drops"
+        }
+      ]
+    }
+  ],
+  "random_sequence": "sololeveling:blocks/mana_crystal_deposit"
+}

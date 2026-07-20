@@ -108,17 +108,21 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		updateAnimation();
 		if (closed)
 			return;
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		int logicalMouseX = transform.logicalMouseX(mouseX);
+		int logicalMouseY = transform.logicalMouseY(mouseY);
 		this.renderBackground(guiGraphics);
 		layoutSummonButtons();
 		guiGraphics.flush();
+		ResponsiveGuiScale.push(guiGraphics, transform);
 		int centerY = topPos + imageHeight / 2;
 		int halfH = Math.round((imageHeight / 2f + 4f) * reveal);
 		int top = centerY - halfH;
 		int bottom = centerY + halfH;
 		int sx0 = leftPos - 3;
 		int sx1 = leftPos + imageWidth + 3;
-		guiGraphics.enableScissor(sx0, top, sx1, bottom);
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		ResponsiveGuiScale.enableScissor(guiGraphics, transform, sx0, top, sx1, bottom);
+		super.render(guiGraphics, logicalMouseX, logicalMouseY, partialTicks);
 		guiGraphics.disableScissor();
 		if (reveal < 1.0f) {
 			guiGraphics.fill(sx0, top, sx1, top + 1, ACCENT);
@@ -126,8 +130,21 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			guiGraphics.fill(sx0, top + 1, sx1, top + 2, 0x77B75CFF);
 			guiGraphics.fill(sx0, bottom - 2, sx1, bottom - 1, 0x7743C8FF);
 		}
+		ResponsiveGuiScale.pop(guiGraphics);
 		if (state == State.OPEN)
 			this.renderTooltip(guiGraphics, mouseX, mouseY);
+	}
+
+	private ResponsiveGuiScale.Transform responsiveTransform() {
+		return ResponsiveGuiScale.fit(this.width, this.height, PANEL_W + 8, PANEL_H + 8);
+	}
+
+	private double logicalMouseX(double mouseX) {
+		return responsiveTransform().logicalX(mouseX);
+	}
+
+	private double logicalMouseY(double mouseY) {
+		return responsiveTransform().logicalY(mouseY);
 	}
 
 	@Override
@@ -159,19 +176,21 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
 		if (state != State.OPEN)
 			return true;
-		if (isOverBox(mouseX, mouseY, leftPos + NORMAL_X, topPos + NORMAL_Y, NORMAL_W, NORMAL_H)) {
+		double logicalMouseX = logicalMouseX(mouseX);
+		double logicalMouseY = logicalMouseY(mouseY);
+		if (isOverBox(logicalMouseX, logicalMouseY, leftPos + NORMAL_X, topPos + NORMAL_Y, NORMAL_W, NORMAL_H)) {
 			int max = maxScroll(visibleEntries(normalEntries).size(), visibleNormalRows(), true);
 			normalScroll = clamp(normalScroll - (int) Math.signum(delta), 0, max);
 			layoutSummonButtons();
 			return true;
 		}
-		if (isOverBox(mouseX, mouseY, leftPos + BOSS_X, topPos + BOSS_Y, BOSS_W, BOSS_H)) {
+		if (isOverBox(logicalMouseX, logicalMouseY, leftPos + BOSS_X, topPos + BOSS_Y, BOSS_W, BOSS_H)) {
 			int max = maxScroll(visibleEntries(bossEntries).size(), visibleBossRows(), false);
 			bossScroll = clamp(bossScroll - (int) Math.signum(delta), 0, max);
 			layoutSummonButtons();
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, delta);
+		return super.mouseScrolled(logicalMouseX, logicalMouseY, delta);
 	}
 
 	@Override
@@ -194,7 +213,23 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (state != State.OPEN)
 			return true;
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(logicalMouseX(mouseX), logicalMouseY(mouseY), button);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		return super.mouseReleased(logicalMouseX(mouseX), logicalMouseY(mouseY), button);
+	}
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		float scale = responsiveTransform().scale();
+		return super.mouseDragged(logicalMouseX(mouseX), logicalMouseY(mouseY), button, dragX / scale, dragY / scale);
+	}
+
+	@Override
+	public void mouseMoved(double mouseX, double mouseY) {
+		super.mouseMoved(logicalMouseX(mouseX), logicalMouseY(mouseY));
 	}
 
 	@Override
@@ -373,6 +408,15 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			if (ShadowMonarchManager.hasShadowForDisplay(entity, entry.type))
 				visible.add(entry);
 		}
+		visible.sort((first, second) -> {
+			int byRank = Integer.compare(menu.shadowRank(second.id), menu.shadowRank(first.id));
+			if (byRank != 0)
+				return byRank;
+			int byLevel = Integer.compare(menu.shadowLevel(second.id), menu.shadowLevel(first.id));
+			if (byLevel != 0)
+				return byLevel;
+			return first.name.compareToIgnoreCase(second.name);
+		});
 		return visible;
 	}
 
@@ -546,7 +590,7 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	private record SummonEntry(int id, String name, String type) {
 	}
 
-	private static class SummonButton extends Button {
+	private class SummonButton extends Button {
 		private final SummonEntry entry;
 		private final boolean boss;
 		private int clipX;
@@ -571,17 +615,33 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTicks) {
 			if (!visible)
 				return;
-			g.enableScissor(clipX, clipY, clipX + clipW, clipY + clipH);
+			ResponsiveGuiScale.Transform transform = ResponsiveGuiScale.fit(
+					Minecraft.getInstance().getWindow().getGuiScaledWidth(),
+					Minecraft.getInstance().getWindow().getGuiScaledHeight(), PANEL_W + 8, PANEL_H + 8);
+			ResponsiveGuiScale.enableScissor(g, transform, clipX, clipY, clipX + clipW, clipY + clipH);
 			boolean hovered = this.isHoveredOrFocused();
 			int border = hovered ? 0xFFFFFFFF : (boss ? ACCENT : ACCENT_BLUE);
 			g.fill(getX(), getY(), getX() + width, getY() + height, hovered ? 0x884A1D68 : 0x55102338);
 			outline(g, getX(), getY(), width, height, border);
 			Font font = Minecraft.getInstance().font;
-			g.drawString(font, entry.name, getX() + 7, getY() + 5, TEXT_MAIN, false);
 			Player player = Minecraft.getInstance().player;
 			String count = player == null ? "0/0" : ShadowMonarchManager.shadowCountText(player, entry.type);
-			g.drawString(font, count, getX() + width - font.width(count) - 7, getY() + 16, boss ? 0xFFDBA6FF : 0xFF9EDFFF, false);
+			int countWidth = font.width(count);
+			String fittedName = trimToWidth(font, entry.name, Math.max(12, width - countWidth - 20));
+			g.drawString(font, fittedName, getX() + 7, getY() + 4, TEXT_MAIN, false);
+			g.drawString(font, count, getX() + width - countWidth - 7, getY() + 4, boss ? 0xFFDBA6FF : 0xFF9EDFFF, false);
+			int rank = menu.shadowRank(entry.id);
+			String rankName = ShadowMonarchManager.rankDisplayName(rank);
+			g.drawCenteredString(font, rankName, getX() + width / 2, getY() + 15, ShadowMonarchManager.rankColor(rank));
 			g.disableScissor();
+		}
+
+		private String trimToWidth(Font font, String text, int maximumWidth) {
+			if (font.width(text) <= maximumWidth)
+				return text;
+			String suffix = "...";
+			int allowed = Math.max(0, maximumWidth - font.width(suffix));
+			return font.plainSubstrByWidth(text, allowed) + suffix;
 		}
 	}
 

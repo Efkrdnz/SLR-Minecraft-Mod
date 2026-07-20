@@ -12,6 +12,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.List;
+
 /**
  * System Settings. Combat Mode stays keybind-only and is not shown here.
  */
@@ -19,17 +21,31 @@ public class SystemSettingsScreen extends SystemScreen {
 
 	private static final int ROW0 = 42;
 	private static final int ROW_STEP = 40;
+	private final boolean returnToSkills;
 
 	public SystemSettingsScreen() {
+		this(false);
+	}
+
+	public SystemSettingsScreen(boolean returnToSkills) {
 		super(Component.literal("SETTINGS"));
+		this.returnToSkills = returnToSkills;
 		this.panelW = 220;
-		this.panelH = 286;
+		this.panelH = 326;
 	}
 
 	@Override
 	protected void init() {
+		boolean hasSystem = hasSystemPlayer();
+		this.panelH = hasSystem ? 326 : 246;
 		super.init();
-		addRenderableWidget(new SystemButton(panelX + 3, panelY + 3, 40, 12, Component.literal("< Back"), b -> openChild(new SystemPanelScreen())));
+		addRenderableWidget(new SystemButton(panelX + 3, panelY + 3, 40, 12, Component.literal("< Back"),
+				b -> {
+					if (returnToSkills)
+						openSkills();
+					else
+						openChild(new SystemPanelScreen());
+				}));
 
 		int toggleX = panelX + panelW - 70;
 		addRenderableWidget(new SystemButton(toggleX, panelY + ROW0 - 2, 58, 18, Component.literal("Toggle"), b -> settingToggle(1)));
@@ -40,15 +56,33 @@ public class SystemSettingsScreen extends SystemScreen {
 		addRenderableWidget(new SystemButton(panelX + panelW - 38, speedY, 30, 18, Component.literal("+"), b -> abilityAction(2)));
 		addRenderableWidget(new SystemButton(toggleX, panelY + ROW0 + 3 * ROW_STEP - 2, 58, 18, Component.literal("Toggle"), b -> SystemClientConfig.toggleDamageNumbers()));
 		addRenderableWidget(new SystemButton(toggleX, panelY + ROW0 + 4 * ROW_STEP - 2, 58, 18, Component.literal("Toggle"), b -> SystemClientConfig.toggleLegacyOverlay()));
+		if (hasSystem) {
+			addRenderableWidget(new SystemButton(toggleX, panelY + ROW0 + 5 * ROW_STEP - 2, 58, 18, Component.literal("Toggle"), b -> settingToggle(2)));
 
-		float min = SystemClientConfig.MIN_SCALE, max = SystemClientConfig.MAX_SCALE;
-		double init01 = (SystemClientConfig.getNotificationScale() - min) / (max - min);
-		int sliderY = panelY + ROW0 + 5 * ROW_STEP + 11;
-		addRenderableWidget(new SystemSlider(panelX + 16, sliderY, panelW - 32, 14, init01,
-				v -> Component.literal("\u00A7bSize: " + Math.round((min + v * (max - min)) * 100) + "%"),
-				v -> SystemClientConfig.setNotificationScale((float) (min + v * (max - min))),
-				() -> SystemNotificationManager.INSTANCE.push(0xFF3FC6FF, 40,
-						Component.literal("\u00A7eSYSTEM"), Component.literal("\u00A77Notification preview"))));
+			float min = SystemClientConfig.MIN_SCALE, max = SystemClientConfig.MAX_SCALE;
+			double init01 = (SystemClientConfig.getNotificationScale() - min) / (max - min);
+			int sliderY = panelY + ROW0 + 6 * ROW_STEP + 11;
+			addRenderableWidget(new SystemSlider(panelX + 16, sliderY, panelW - 32, 14, init01,
+					v -> Component.literal("\u00A7bSize: " + Math.round((min + v * (max - min)) * 100) + "%"),
+					v -> SystemClientConfig.setNotificationScale((float) (min + v * (max - min))),
+					() -> SystemNotificationManager.INSTANCE.push(0xFF3FC6FF, 40,
+							Component.literal("\u00A7eSYSTEM"), Component.literal("\u00A77Notification preview"))));
+		}
+	}
+
+	@Override
+	protected boolean allowsNonSystemAccess() {
+		return true;
+	}
+
+	private void openSkills() {
+		Player player = Minecraft.getInstance().player;
+		if (player == null)
+			return;
+		BlockPos bp = player.blockPosition();
+		if (this.minecraft != null)
+			this.minecraft.setScreen(null);
+		SololevelingMod.PACKET_HANDLER.sendToServer(new AbilitiesGUIButtonMessage(5, bp.getX(), bp.getY(), bp.getZ()));
 	}
 
 	private void settingToggle(int id) {
@@ -80,7 +114,25 @@ public class SystemSettingsScreen extends SystemScreen {
 		drawRow(g, 2, "Move Speed", "\u00A7b" + (int) Math.round(vars.speedpercent) + "%");
 		drawRow(g, 3, "Damage Numbers", onOff(SystemClientConfig.isDamageNumbersEnabled()));
 		drawRow(g, 4, "Legacy Overlay", onOff(SystemClientConfig.isLegacyOverlayEnabled()));
-		g.drawString(this.font, "Notification Size", panelX + 16, panelY + ROW0 + 5 * ROW_STEP, TEXT_MAIN, false);
+		if (vars.Player) {
+			drawRow(g, 5, "PvP Urgent Quests", onOff(vars.pvpUrgentQuests));
+			g.drawString(this.font, "Notification Size", panelX + 16, panelY + ROW0 + 6 * ROW_STEP, TEXT_MAIN, false);
+		}
+	}
+
+	@Override
+	protected List<Component> getHoverTooltip(int mouseX, int mouseY) {
+		int rowY = panelY + ROW0 + 5 * ROW_STEP;
+		if (hasSystemPlayer() && mouseX >= panelX + 12 && mouseX <= panelX + panelW - 12 && mouseY >= rowY && mouseY <= rowY + 27)
+			return List.of(Component.literal("Toggle urgent quests caused by hostile players."), Component.literal("NPC ambush quests are always enabled."));
+		return super.getHoverTooltip(mouseX, mouseY);
+	}
+
+	private static boolean hasSystemPlayer() {
+		Player player = Minecraft.getInstance().player;
+		return player != null && player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(variables -> variables.Player)
+				.orElse(false);
 	}
 
 	private static String onOff(boolean on) {

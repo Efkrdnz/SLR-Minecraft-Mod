@@ -25,7 +25,9 @@ public class GateSpawnerUtil {
 	}
 
 	public static void spawnNearRandomOverworldPlayer(LevelAccessor world) {
-		if (!(world instanceof ServerLevel serverLevel) || serverLevel.dimension() != Level.OVERWORLD)
+		if (DungeonBuilderMode.isActive(world)
+				|| !(world instanceof ServerLevel serverLevel)
+				|| serverLevel.dimension() != Level.OVERWORLD)
 			return;
 		List<Entity> players = new ArrayList<>();
 		for (Entity player : new ArrayList<>(world.players())) {

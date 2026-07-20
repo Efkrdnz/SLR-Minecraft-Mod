@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "sololeveling:golem_drop_block_gem",
+    "sololeveling:mana_crystal_deposit",
     "sololeveling:wooden_passage_open",
     "sololeveling:cell_door_closed",
     "sololeveling:cell_door_open",

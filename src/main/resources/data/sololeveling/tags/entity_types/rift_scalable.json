@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:skeleton_warrior",
+    "sololeveling:skeleton_brute",
+    "sololeveling:mutated",
+    "sololeveling:magic_eye",
+    "sololeveling:demon",
+    "sololeveling:demon_knight",
+    "sololeveling:fire_fly",
+    "sololeveling:steel_fang_wolf",
+    "sololeveling:steel_fanged_lycan",
+    "sololeveling:orc",
+    "sololeveling:red_ants",
+    "sololeveling:centipede",
+    "sololeveling:stone_golem",
+    "sololeveling:mini_gem_golem",
+    "sololeveling:futuristic_golem",
+    "sololeveling:green_orc",
+    "sololeveling:high_orc"
+  ]
+}

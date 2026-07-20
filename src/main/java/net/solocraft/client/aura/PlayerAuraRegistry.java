@@ -47,6 +47,13 @@ public final class PlayerAuraRegistry {
 			PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 1.0F, 1.28F,
 			1.6F, 1, 9, 0, null, false, 0xEDF9FF));
 
+	public static final PlayerAuraDefinition BEAST_WHITE_FANG = register(new PlayerAuraDefinition(
+			"beast_white_fang", 0xFFF8E7, 0x9F101A, GOLD_GLOW,
+			PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 0.9F, 1.52F,
+			1.34F, 0, 0, 0,
+			new PlayerAuraDefinition.FluidProfile(24, 10, 7, 1.12F, 0.68F, 1.58F, 1.46F,
+					PlayerAuraDefinition.FluidStyle.LIQUID_FLAME), false, 0xD8D3C5));
+
 	public static final PlayerAuraDefinition RULER_BLUE = register(new PlayerAuraDefinition(
 			"ruler_blue", 0xE6FAFF, 0x168DFF, BLUE_GLOW,
 			PlayerAuraDefinition.Facing.CAMERA, 0.76F, 1.12F,

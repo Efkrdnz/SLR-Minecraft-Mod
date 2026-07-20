@@ -1,35 +1,33 @@
 
 package net.solocraft.world.dimension;
 
+import net.solocraft.SololevelingMod;
+import net.solocraft.client.dimension.SnowDungeonSpecialEffects;
+
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
 
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.client.renderer.DimensionSpecialEffects;
 
-@Mod.EventBusSubscriber
+@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
 public class DungeonDimensionSnowDimension {
-	@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+	private static final ResourceLocation EFFECTS_ID = new ResourceLocation(SololevelingMod.MODID, "dungeon_dimension_snow");
+
+	private DungeonDimensionSnowDimension() {
+	}
+
+	@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 	public static class DimensionSpecialEffectsHandler {
+		private DimensionSpecialEffectsHandler() {
+		}
+
 		@SubscribeEvent
 		@OnlyIn(Dist.CLIENT)
 		public static void registerDimensionSpecialEffects(RegisterDimensionSpecialEffectsEvent event) {
-			DimensionSpecialEffects customEffect = new DimensionSpecialEffects(Float.NaN, true, DimensionSpecialEffects.SkyType.NONE, false, false) {
-				@Override
-				public Vec3 getBrightnessDependentFogColor(Vec3 color, float sunHeight) {
-					return new Vec3(0.8, 1, 1);
-				}
-
-				@Override
-				public boolean isFoggyAt(int x, int y) {
-					return true;
-				}
-			};
-			event.register(new ResourceLocation("sololeveling:dungeon_dimension_snow"), customEffect);
+			event.register(EFFECTS_ID, new SnowDungeonSpecialEffects());
 		}
 	}
 }

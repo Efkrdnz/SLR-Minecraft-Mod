@@ -23,7 +23,7 @@ public class DummyPortalPurpleRenderer extends GeoEntityRenderer<DummyPortalPurp
 
 	@Override
 	public RenderType getRenderType(DummyPortalPurpleEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucent(getTextureLocation(animatable));
+		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
 	}
 
 	@Override

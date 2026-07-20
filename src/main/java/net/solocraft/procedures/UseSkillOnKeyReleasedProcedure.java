@@ -7,6 +7,10 @@ import net.solocraft.util.MageQTEHelper;
 import net.solocraft.util.MageQTEState;
 import net.solocraft.util.QTEResult;
 import net.solocraft.util.JobSkillManager;
+import net.solocraft.util.FireMageSpellManager;
+import net.solocraft.util.BarrierMageSpellManager;
+import net.solocraft.util.ArcaneMageSpellManager;
+import net.solocraft.util.OrbOfAvariceManager;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -45,21 +49,28 @@ public class UseSkillOnKeyReleasedProcedure {
         if (MageQTEHelper.MAGE_SKILLS.contains(power)) {
 
             // Client: end the ring animation and show the result flash immediately
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                MageQTEState state = MageQTEState.INSTANCE;
-                float zoneStart = state.isActive() ? state.getGoodZoneStart() : MageQTEHelper.computeZoneStart(entity);
-                state.endQTE();
-                QTEResult clientResult = MageQTEHelper.computeResult(zoneStart, pressedMs);
-                state.showResult(clientResult);
-            });
+            if (world instanceof Level clientLevel && clientLevel.isClientSide()) {
+                DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+                    MageQTEState state = MageQTEState.INSTANCE;
+					if (state.isActive()) {
+						float zoneStart = state.getGoodZoneStart();
+						state.endQTE();
+						QTEResult clientResult = MageQTEHelper.computeResult(zoneStart, pressedMs);
+						state.showResult(clientResult);
+					}
+                });
+            }
 
             // Server: compute result, apply mana discount, cast the spell
             if (world instanceof Level _lvl && !_lvl.isClientSide()) {
+				boolean qteStarted = entity.getPersistentData().getBoolean("mage_casting");
                 entity.getPersistentData().putBoolean("mage_casting", false);
-                float zoneStart = entity.getPersistentData().contains("mage_qte_zone_start")
-                        ? entity.getPersistentData().getFloat("mage_qte_zone_start")
-                        : MageQTEHelper.computeZoneStart(entity);
-                castMageSpellWithQTE(world, entity, power, pressedMs, zoneStart);
+				if (qteStarted) {
+					float zoneStart = entity.getPersistentData().contains("mage_qte_zone_start")
+							? entity.getPersistentData().getFloat("mage_qte_zone_start")
+							: MageQTEHelper.computeZoneStart(entity);
+					castMageSpellWithQTE(world, entity, power, pressedMs, zoneStart);
+				}
                 entity.getPersistentData().remove("mage_qte_zone_start");
             }
             return; // skip Critical Attack / Mutilation handlers below
@@ -98,56 +109,20 @@ public class UseSkillOnKeyReleasedProcedure {
 
         QTEResult result   = MageQTEHelper.computeResult(zoneStart, pressedMs);
         double   mult      = MageQTEHelper.getManaCostMultiplier(result, cap.Intelligence);
+        double   effectiveMult = mult * OrbOfAvariceManager.manaCostMultiplier(entity);
 
         double ex = entity.getX(), ey = entity.getY(), ez = entity.getZ();
         boolean cast = false;
 
-        switch (power) {
-            case "Fireball" -> {
-                int cost = (int) Math.ceil(300 * mult);
-                if (cap.MP < cost)          { mpMsg(entity); return; }
-                if (isCd(entity, "Fireball")) { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                FireballProcedure.execute(entity); // sets cooldown "Fireball" 140 internally
-                cast = true;
-            }
-            case "Fire Rain" -> {
-                int cost = (int) Math.ceil(1000 * mult);
-                if (cap.MP < cost)            { mpMsg(entity); return; }
-                if (isCd(entity, "Fire Rain")) { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                FireArrowCastProcedure.execute(world, entity);
-                cast = true;
-            }
-            case "Heavy Flame" -> {
-                int cost = (int) Math.ceil(550 * mult);
-                if (cap.MP < cost)               { mpMsg(entity); return; }
-                if (isCd(entity, "Heavy Flame"))  { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                CooldownManager.set(entity, "Heavy Flame", 80);
-                HeavyFlameCastProcedure.execute(entity);
-                cast = true;
-            }
-            case "Flame Tornado" -> {
-                int cost = (int) Math.ceil(500 * mult);
-                if (cap.MP < cost)                { mpMsg(entity); return; }
-                if (isCd(entity, "Flame Tornado")) { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                CooldownManager.set(entity, "Flame Tornado", 50);
-                FireTornadoShootProcedure.execute(world, entity);
-                cast = true;
-            }
-            case "Flame Vortex" -> {
-                int cost = (int) Math.ceil(500 * mult);
-                if (cap.MP < cost)               { mpMsg(entity); return; }
-                if (isCd(entity, "Flame Vortex")) { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                CooldownManager.set(entity, "Flame Vortex", 50);
-                FlameVortexShootProcedure.execute(entity);
-                cast = true;
-            }
+        if (FireMageSpellManager.isQteSkill(power)) {
+            cast = FireMageSpellManager.cast(entity, power, result);
+        } else if (BarrierMageSpellManager.isQteSkill(power)) {
+            cast = BarrierMageSpellManager.cast(entity, power, result);
+		} else if (ArcaneMageSpellManager.isQteSkill(power)) {
+			cast = ArcaneMageSpellManager.cast(entity, power, result);
+        } else switch (power) {
             case "Water Slash" -> {
-                int cost = (int) Math.ceil(600 * mult);
+                int cost = (int) Math.ceil(600 * effectiveMult);
                 if (cap.MP < cost)               { mpMsg(entity); return; }
                 if (isCd(entity, "Water Slash"))  { cdMsg(entity); return; }
                 deductMP(entity, cost);
@@ -157,16 +132,16 @@ public class UseSkillOnKeyReleasedProcedure {
             }
             case "Curse Sphere" -> {
                 // Dynamic mana cost scales with Intelligence
-                int cost = (int) Math.ceil((600 + cap.Intelligence * 4) * mult);
+                int cost = (int) Math.ceil((600 + cap.Intelligence * 4) * effectiveMult);
                 if (cap.MP < cost) { mpMsg(entity); return; }
-                // Curse Sphere has no per-skill cooldown, only mana_refresh
+                if (isCd(entity, "Curse Sphere")) { cdMsg(entity); return; }
                 deductMP(entity, cost);
                 CooldownManager.set(entity, "mana_refresh", 60);
                 AirVacuumsProcedure.execute(world, entity);
                 cast = true;
             }
             case "Curse Smoke" -> {
-                int cost = (int) Math.ceil(600 * mult);
+                int cost = (int) Math.ceil(600 * effectiveMult);
                 if (cap.MP < cost)               { mpMsg(entity); return; }
                 if (isCd(entity, "Curse Smoke"))  { cdMsg(entity); return; }
                 deductMP(entity, cost);
@@ -175,7 +150,7 @@ public class UseSkillOnKeyReleasedProcedure {
                 cast = true;
             }
             case "Curse Chains" -> {
-                int cost = (int) Math.ceil(300 * mult);
+                int cost = (int) Math.ceil(300 * effectiveMult);
                 if (cap.MP < cost)                { mpMsg(entity); return; }
                 if (isCd(entity, "Curse Chains"))  { cdMsg(entity); return; }
                 deductMP(entity, cost);
@@ -184,7 +159,7 @@ public class UseSkillOnKeyReleasedProcedure {
                 cast = true;
             }
             case "Magic Missiles" -> {
-                int cost = (int) Math.ceil(500 * mult);
+                int cost = (int) Math.ceil(500 * effectiveMult);
                 if (cap.MP < cost)                  { mpMsg(entity); return; }
                 if (isCd(entity, "Magic Missiles"))  { cdMsg(entity); return; }
                 deductMP(entity, cost);
@@ -196,10 +171,11 @@ public class UseSkillOnKeyReleasedProcedure {
 
         // QTE result feedback — only shown when the spell actually cast
         if (cast && entity instanceof Player _player && !_player.level().isClientSide()) {
+            String manaPercent = String.format("%.0f", effectiveMult * 100);
             String msg = switch (result) {
-                case PERFECT -> "§bPERFECT! §7(×" + String.format("%.0f", mult * 100) + "% mana)";
-                case GOOD    -> "§eGOOD! §7(×75% mana)";
-                case MISS    -> "§cMISS! §7(full mana cost)";
+                case PERFECT -> "§bPERFECT! §7(×" + manaPercent + "% mana)";
+                case GOOD    -> "§eGOOD! §7(×" + manaPercent + "% mana)";
+                case MISS    -> "§cMISS! §7(×" + manaPercent + "% mana)";
             };
             _player.displayClientMessage(Component.literal(msg), true);
         }

@@ -3,6 +3,7 @@ package net.solocraft.entity;
 
 import net.solocraft.procedures.MagicMissileWhileProjectileFlyingTickProcedure;
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.MageCombatHelper;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.network.PlayMessages;
@@ -16,6 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.projectile.ItemSupplier;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.util.RandomSource;
 import net.minecraft.sounds.SoundSource;
@@ -41,6 +43,11 @@ public class MagicMissileEntity extends AbstractArrow implements ItemSupplier {
 
 	public MagicMissileEntity(EntityType<? extends MagicMissileEntity> type, LivingEntity entity, Level world) {
 		super(type, entity, world);
+	}
+
+	@Override
+	protected boolean canHitEntity(Entity target) {
+		return super.canHitEntity(target) && MageCombatHelper.isValidTarget(this.getOwner(), target);
 	}
 
 	@Override

@@ -90,7 +90,7 @@ public class StorePotionNewScreen extends SystemContainerScreen<StorePotionNewMe
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (isOpen() && button == 0) {
-			int slot = shopSlotAt(mouseX, mouseY);
+			int slot = shopSlotAt(logicalMouseX(mouseX), logicalMouseY(mouseY));
 			if (slot >= 0) {
 				int id = slot + 1;
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorePotionNewButtonMessage(id, x, y, z));

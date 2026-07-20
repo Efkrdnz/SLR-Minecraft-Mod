@@ -1,9 +1,17 @@
 package net.solocraft.dungeon;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.dungeon.data.DungeonDataManager;
+import net.solocraft.dungeon.runtime.DungeonRuntimeGenerator;
+import net.solocraft.dungeon.runtime.DungeonInstanceSavedData;
+import net.solocraft.dungeon.runtime.DungeonEncounterRuntime;
+import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
+import net.solocraft.dungeon.runtime.DungeonReturnPortalSpawner;
+import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 import net.solocraft.entity.Portal1Entity;
 import net.solocraft.guild.GuildGateHelper;
 import net.solocraft.init.SololevelingModItems;
+import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.UrgentQuestManager;
 
@@ -21,6 +29,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -32,6 +41,8 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class ProceduralDungeonGateHandler {
 	private static final String PROCEDURAL_GATE = "slr_procedural_gate";
@@ -44,6 +55,8 @@ public class ProceduralDungeonGateHandler {
 	private static final String START_Y = "slr_procedural_start_y";
 	private static final String START_Z = "slr_procedural_start_z";
 	private static final String PROCEDURAL_DUNGEON = "slr_procedural_dungeon";
+	private static final String DATAPACK_DUNGEON = "slr_datapack_dungeon";
+	private static final String DATAPACK_INSTANCE = "slr_datapack_instance";
 	private static final float RED_GATE_CHANCE = 0.02F;
 
 	private ProceduralDungeonGateHandler() {
@@ -57,6 +70,35 @@ public class ProceduralDungeonGateHandler {
 		return gate != null && gate.getPersistentData().getBoolean(PROCEDURAL_RED);
 	}
 
+	/** Binds one procedural gate to an addon dungeon without changing unbound legacy gates. */
+	public static boolean bindDatapackDungeon(Entity gate, ResourceLocation dungeonId) {
+		var dungeon = dungeonId == null ? Optional.<net.solocraft.dungeon.data.DungeonDefinition>empty()
+				: DungeonDataManager.dungeon(dungeonId);
+		if (!isProceduralGate(gate) || gate.getPersistentData().getBoolean(GENERATED)
+				|| dungeon.isEmpty() || !dungeon.get().supportsRank(rankFor(gate)))
+			return false;
+		gate.getPersistentData().putString(DATAPACK_DUNGEON, dungeonId.toString());
+		return true;
+	}
+
+	public static boolean unbindDatapackDungeon(Entity gate) {
+		if (!isProceduralGate(gate) || gate.getPersistentData().getBoolean(GENERATED))
+			return false;
+		gate.getPersistentData().remove(DATAPACK_DUNGEON);
+		return true;
+	}
+
+	public static boolean isGenerated(Entity gate) {
+		return isProceduralGate(gate) && gate.getPersistentData().getBoolean(GENERATED);
+	}
+
+	public static Optional<ResourceLocation> datapackDungeon(Entity gate) {
+		if (!isProceduralGate(gate))
+			return Optional.empty();
+		ResourceLocation id = ResourceLocation.tryParse(gate.getPersistentData().getString(DATAPACK_DUNGEON));
+		return Optional.ofNullable(id);
+	}
+
 	public static void enter(LevelAccessor world, double x, double y, double z, Entity gate, Entity sourceentity) {
 		if (gate == null || sourceentity == null)
 			return;
@@ -64,16 +106,38 @@ public class ProceduralDungeonGateHandler {
 			showMagicReading(gate, sourceentity);
 			return;
 		}
-		if (GuildGateHelper.prepareGateEntry(world, gate, sourceentity))
-			return;
 		if (!(sourceentity instanceof ServerPlayer player))
 			return;
+		if (isDungeonBound(player)) {
+			player.displayClientMessage(Component.literal("You are already bound to a dungeon."), true);
+			return;
+		}
+		if (GuildGateHelper.prepareGateEntry(world, gate, sourceentity))
+			return;
+		Optional<ResourceLocation> boundDungeon = datapackDungeon(gate);
+		if (boundDungeon.isPresent()) {
+			var definition = DungeonDataManager.dungeon(boundDungeon.get());
+			if (definition.isEmpty()) {
+				player.sendSystemMessage(Component.literal("This gate's custom dungeon is missing or invalid after datapack reload. Ask an operator to re-enable the pack or unbind the gate."));
+				return;
+			}
+			ProceduralDungeonRank gateRank = rankFor(gate);
+			if (!definition.get().supportsRank(gateRank)) {
+				player.sendSystemMessage(Component.literal("This " + gateRank.name() + "-rank gate cannot open "
+						+ boundDungeon.get() + "; the dungeon allows ranks " + rankText(definition.get().allowedRanks()) + "."));
+				return;
+			}
+		}
 		if (isProceduralRedGate(gate) && isLocked(gate))
 			return;
 		boolean turnsRed = !gate.getPersistentData().getBoolean(GENERATED) && shouldTurnRed(world);
 		if (turnsRed)
 			turnRed(world, gate);
 		List<ServerPlayer> entrants = turnsRed ? nearbyPartyMembers(world, gate, player) : List.of(player);
+		if (isProceduralRedGate(gate)) {
+			SnowRedGateArenaManager.enterProcedural(world, gate, player, entrants);
+			return;
+		}
 		for (ServerPlayer entrant : entrants)
 			prepareEntrant(world, x, y, z, gate, entrant);
 		Runnable teleport = () -> teleportEntrants(gate, entrants);
@@ -94,7 +158,16 @@ public class ProceduralDungeonGateHandler {
 		return gate instanceof Portal1Entity portal && portal.getEntityData().get(Portal1Entity.DATA_usedbefore);
 	}
 
+	private static boolean isDungeonBound(ServerPlayer player) {
+		if (!player.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank())
+			return true;
+		return player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(capability -> capability.dungeoning)
+				.orElse(false);
+	}
+
 	private static void turnRed(LevelAccessor world, Entity gate) {
+		SnowRedGateArenaManager.assignTerritoryIfMissing(gate);
 		gate.getPersistentData().putBoolean(PROCEDURAL_RED, true);
 		gate.getPersistentData().putBoolean("slr_is_red_gate", true);
 		gate.getPersistentData().putString(THEME, DungeonTheme.ICE.name());
@@ -111,14 +184,17 @@ public class ProceduralDungeonGateHandler {
 		if (party.equals(""))
 			return List.of(player);
 		List<ServerPlayer> entrants = new ArrayList<>();
+		entrants.add(player);
 		for (Entity candidate : new ArrayList<>(world.players())) {
 			if (!(candidate instanceof ServerPlayer partyMember))
+				continue;
+			if (partyMember.getUUID().equals(player.getUUID()))
 				continue;
 			String candidateParty = partyMember.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).party;
 			if (party.equals(candidateParty) && partyMember.distanceTo(gate) <= 10)
 				entrants.add(partyMember);
 		}
-		return entrants.isEmpty() ? List.of(player) : entrants;
+		return entrants;
 	}
 
 	private static void prepareEntrant(LevelAccessor world, double x, double y, double z, Entity gate, ServerPlayer entrant) {
@@ -127,6 +203,7 @@ public class ProceduralDungeonGateHandler {
 		entrant.getPersistentData().putString("dungeon_tag", gate.getStringUUID());
 		entrant.getPersistentData().putBoolean(PROCEDURAL_DUNGEON, true);
 		entrant.getPersistentData().putBoolean(PROCEDURAL_RED, isProceduralRedGate(gate));
+		entrant.getPersistentData().remove("slr_dungeon_instance");
 		UrgentQuestManager.markDungeonId(entrant, isProceduralRedGate(gate) ? "red_gate" : "procedural");
 		entrant.setNoGravity(true);
 	}
@@ -144,28 +221,117 @@ public class ProceduralDungeonGateHandler {
 		if (firstPlayer == null)
 			return;
 		ServerLevel nextLevel = firstPlayer.server.getLevel(destination);
-		if (nextLevel == null)
+		if (nextLevel == null) {
+			failEntrants(entrants, "The dungeon destination dimension is unavailable.");
 			return;
+		}
 
 		BlockPos targetPos = storedTarget(gate);
-		for (ServerPlayer entrant : entrants)
-			entrant.teleportTo(nextLevel, targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5, entrant.getYRot(), entrant.getXRot());
+		Optional<ResourceLocation> customDungeon = datapackDungeon(gate);
+		if (customDungeon.isPresent()) {
+			var definition = DungeonDataManager.dungeon(customDungeon.get());
+			if (definition.isEmpty() || !definition.get().supportsRank(rankFor(gate))) {
+				failEntrants(entrants, "The gate's custom dungeon no longer supports this "
+						+ rankFor(gate).name() + "-rank destination. Ask an operator to repair its datapack or binding.");
+				return;
+			}
+		}
+		if (customDungeon.isEmpty()) {
+			for (ServerPlayer entrant : entrants)
+				entrant.teleportTo(nextLevel, targetPos.getX() + 0.5, targetPos.getY(), targetPos.getZ() + 0.5, entrant.getYRot(), entrant.getXRot());
+		}
 		SololevelingMod.queueServerWork(5, () -> {
 			if (!gate.getPersistentData().getBoolean(GENERATED)) {
-				ProceduralDungeonResult result = ProceduralDungeonGenerator.generate(nextLevel, targetPos, settingsFor(gate), firstPlayer);
-				gate.getPersistentData().putBoolean(GENERATED, true);
-				gate.getPersistentData().putDouble(START_X, result.startPos.getX() + 0.5);
-				gate.getPersistentData().putDouble(START_Y, result.startPos.getY());
-				gate.getPersistentData().putDouble(START_Z, result.startPos.getZ() + 0.5);
+				if (customDungeon.isPresent()) {
+					long seed = gate.getUUID().getMostSignificantBits() ^ gate.getUUID().getLeastSignificantBits() ^ nextLevel.getSeed();
+					DungeonRuntimeGenerator.GenerationResult generated = DungeonRuntimeGenerator.generate(nextLevel,
+							customDungeon.get(), targetPos, seed, entrants, null);
+					if (!generated.success() || generated.instanceId() == null || generated.playerStart() == null) {
+						for (ServerPlayer entrant : entrants) {
+							entrant.setNoGravity(false);
+							entrant.getPersistentData().putBoolean(PROCEDURAL_DUNGEON, false);
+							entrant.getPersistentData().putBoolean(PROCEDURAL_RED, false);
+							entrant.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+								capability.dungeoning = false;
+								capability.syncPlayerVariables(entrant);
+							});
+							entrant.sendSystemMessage(Component.literal("Custom dungeon generation failed: " + generated.message()));
+						}
+						SololevelingMod.LOGGER.error("Bound gate {} failed to generate {}: {}", gate.getUUID(), customDungeon.get(), generated.message());
+						return;
+					}
+					gate.getPersistentData().putString(DATAPACK_INSTANCE, generated.instanceId().toString());
+					gate.getPersistentData().putBoolean(GENERATED, true);
+					gate.getPersistentData().putDouble(START_X, generated.playerStart().getX() + 0.5);
+					gate.getPersistentData().putDouble(START_Y, generated.playerStart().getY());
+					gate.getPersistentData().putDouble(START_Z, generated.playerStart().getZ() + 0.5);
+					BlockPos portalPos = generated.exit() == null ? generated.playerStart() : generated.exit();
+					Entity portal = DungeonReturnPortalSpawner.spawn(nextLevel, portalPos,
+							generated.exitFacing(), generated.instanceId(), gate.getStringUUID());
+					if (portal == null) {
+						failEntrants(entrants, "The custom dungeon was generated, but its return portal could not spawn. Ask an operator to run /slrdungeon portal "
+								+ generated.instanceId() + " before entering again.");
+						return;
+					}
+				} else {
+					ProceduralDungeonResult result = ProceduralDungeonGenerator.generate(nextLevel, targetPos, settingsFor(gate), firstPlayer);
+					gate.getPersistentData().putBoolean(GENERATED, true);
+					gate.getPersistentData().putDouble(START_X, result.startPos.getX() + 0.5);
+					gate.getPersistentData().putDouble(START_Y, result.startPos.getY());
+					gate.getPersistentData().putDouble(START_Z, result.startPos.getZ() + 0.5);
+				}
+			}
+			DungeonInstanceSavedData.Instance boundInstance = null;
+			if (customDungeon.isPresent()) {
+				try {
+					UUID instanceId = UUID.fromString(gate.getPersistentData().getString(DATAPACK_INSTANCE));
+					boundInstance = DungeonInstanceSavedData.get(nextLevel).getInstance(instanceId).orElse(null);
+				} catch (IllegalArgumentException ignored) {
+				}
+				if (boundInstance == null) {
+					for (ServerPlayer entrant : entrants) {
+						entrant.setNoGravity(false);
+						entrant.getPersistentData().remove("slr_dungeon_instance");
+						entrant.sendSystemMessage(Component.literal("This generated gate no longer has valid dungeon instance state. Ask an operator to remove or replace the gate."));
+					}
+					return;
+				}
 			}
 			double startX = gate.getPersistentData().getDouble(START_X);
 			double startY = gate.getPersistentData().getDouble(START_Y);
 			double startZ = gate.getPersistentData().getDouble(START_Z);
 			for (ServerPlayer entrant : entrants) {
-				if (entrant.level().dimension() == destination)
-					entrant.connection.teleport(startX, startY, startZ, entrant.getYRot(), entrant.getXRot());
+				if (boundInstance != null) {
+					entrant.getPersistentData().putString("slr_dungeon_instance", gate.getPersistentData().getString(DATAPACK_INSTANCE));
+					if (!boundInstance.participants().contains(entrant.getUUID())
+							&& !boundInstance.addParticipant(entrant.getUUID())) {
+						entrant.setNoGravity(false);
+						entrant.getPersistentData().remove("slr_dungeon_instance");
+						entrant.sendSystemMessage(Component.literal("This dungeon already has the maximum number of participants."));
+						continue;
+					}
+					DungeonEncounterRuntime.restoreCompletionFor(entrant, boundInstance);
+				}
+				entrant.teleportTo(nextLevel, startX, startY, startZ, entrant.getYRot(), entrant.getXRot());
+				entrant.setNoGravity(false);
+				entrant.fallDistance = 0.0F;
 			}
 		});
+	}
+
+	private static void failEntrants(List<ServerPlayer> entrants, String message) {
+		for (ServerPlayer entrant : entrants) {
+			entrant.setNoGravity(false);
+			entrant.fallDistance = 0.0F;
+			entrant.getPersistentData().putBoolean(PROCEDURAL_DUNGEON, false);
+			entrant.getPersistentData().putBoolean(PROCEDURAL_RED, false);
+			entrant.getPersistentData().remove("slr_dungeon_instance");
+			entrant.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+				capability.dungeoning = false;
+				capability.syncPlayerVariables(entrant);
+			});
+			entrant.sendSystemMessage(Component.literal(message));
+		}
 	}
 
 	private static boolean isMagicReader(Entity entity) {
@@ -231,13 +397,16 @@ public class ProceduralDungeonGateHandler {
 		return new ProceduralDungeonSettings(rankFor(gate), DungeonTheme.fromString(gate.getPersistentData().getString(THEME)), gate.getPersistentData().getInt(COMPLEXITY));
 	}
 
-	private static ProceduralDungeonRank rankFor(Entity gate) {
+	public static ProceduralDungeonRank rankFor(Entity gate) {
 		return ProceduralDungeonRank.fromString(gate.getPersistentData().getString(RANK));
 	}
 
+	private static String rankText(java.util.Set<ProceduralDungeonRank> ranks) {
+		return java.util.Arrays.stream(ProceduralDungeonRank.values()).filter(ranks::contains)
+				.map(Enum::name).collect(java.util.stream.Collectors.joining(","));
+	}
+
 	private static ResourceKey<Level> destinationFor(Entity gate) {
-		if (isProceduralRedGate(gate))
-			return ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_snow"));
 		return switch (rankFor(gate)) {
 			case E, D -> ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_d"));
 			case C -> ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_c"));

@@ -23,7 +23,7 @@ public class SpawnerPortalRenderer extends GeoEntityRenderer<SpawnerPortalEntity
 
 	@Override
 	public RenderType getRenderType(SpawnerPortalEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucent(getTextureLocation(animatable));
+		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
 	}
 
 	@Override

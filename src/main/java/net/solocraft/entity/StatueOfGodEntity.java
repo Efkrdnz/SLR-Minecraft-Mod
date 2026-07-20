@@ -16,15 +16,13 @@ import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraftforge.network.PlayMessages;
 import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -35,10 +33,15 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -60,6 +63,7 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	private boolean swinging;
 	private boolean lastloop;
+	private boolean dimensionsInitialized;
 	private long lastSwing;
 	public String animationprocedure = "empty";
 
@@ -103,16 +107,16 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.targetSelector.addGoal(1, new NearestAttackableTargetGoal(this, Player.class, false, false));
-		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal(this, ServerPlayer.class, false, false));
-		this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.2, false) {
+		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
 				return 25;
 			}
 		});
-		this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, (float) 32));
-		this.goalSelector.addGoal(5, new RandomLookAroundGoal(this));
+	}
+
+	private boolean isValidCombatTarget(LivingEntity candidate) {
+		return candidate instanceof Player player && player.isAlive() && !player.isCreative() && !player.isSpectator();
 	}
 
 	@Override
@@ -127,9 +131,31 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
-		if (source.is(DamageTypes.CACTUS))
+		if (source.is(DamageTypes.CACTUS) || amount < 25.0F || isSharpDamage(source))
 			return false;
 		return super.hurt(source, amount);
+	}
+
+	private static boolean isSharpDamage(DamageSource source) {
+		if (source.getDirectEntity() instanceof AbstractArrow)
+			return true;
+		if (!(source.getEntity() instanceof LivingEntity attacker))
+			return false;
+		return isSharpWeapon(attacker.getMainHandItem()) || isSharpWeapon(attacker.getOffhandItem());
+	}
+
+	private static boolean isSharpWeapon(ItemStack stack) {
+		if (stack.getItem() instanceof SwordItem
+				|| stack.getItem() instanceof AxeItem
+				|| stack.getItem() instanceof TridentItem)
+			return true;
+		var itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
+		if (itemId == null)
+			return false;
+		String path = itemId.getPath();
+		return path.contains("sword") || path.contains("dagger") || path.contains("knife")
+				|| path.contains("blade") || path.contains("katana") || path.contains("spear")
+				|| path.contains("scythe") || path.contains("sai") || path.contains("trident");
 	}
 
 	@Override
@@ -170,13 +196,46 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	@Override
 	public void baseTick() {
 		super.baseTick();
+		if (!dimensionsInitialized) {
+			refreshDimensions();
+			dimensionsInitialized = true;
+		}
 		StatueOfGodOnEntityTickUpdateProcedure.execute(this.level(), this.getX(), this.getY(), this.getZ(), this);
-		this.refreshDimensions();
+	}
+
+	@Override
+	public void aiStep() {
+		super.aiStep();
+		if (!this.level().isClientSide() && this.getPersistentData().getString("state").equals("aggresive")
+				&& isValidCombatTarget(this.getTarget()))
+			faceTarget(this.getTarget());
+	}
+
+	public void faceTarget(LivingEntity target) {
+		if (target == null)
+			return;
+		double dx = target.getX() - this.getX();
+		double dz = target.getZ() - this.getZ();
+		if (dx * dx + dz * dz < 1.0E-6D)
+			return;
+		faceYaw((float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F);
+	}
+
+	public void faceYaw(float yaw) {
+		float wrappedYaw = Mth.wrapDegrees(yaw);
+		this.setYRot(wrappedYaw);
+		this.yRotO = wrappedYaw;
+		this.yBodyRot = wrappedYaw;
+		this.yBodyRotO = wrappedYaw;
+		this.yHeadRot = wrappedYaw;
+		this.yHeadRotO = wrappedYaw;
 	}
 
 	@Override
 	public EntityDimensions getDimensions(Pose p_33597_) {
-		return super.getDimensions(p_33597_).scale((float) 3);
+		// The rendered Blockbench model is roughly 23 blocks tall at its 3x render scale.
+		// Keep the width around the body instead of including the full throne silhouette.
+		return EntityDimensions.scalable(5.25F, 23.25F);
 	}
 
 	public static void init() {
@@ -194,29 +253,41 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 
 	private PlayState movementPredicate(AnimationState event) {
 		if (this.animationprocedure.equals("empty")) {
-			if ((this.entityData.get(DATA_state)).equals("aggresive")) {
+			String state = this.entityData.get(DATA_state);
+			if (state.equals("aggresive")) {
 				if (isActuallyMoving()) {
 					return event.setAndContinue(RawAnimation.begin().thenLoop("walk"));
 				}
 				return event.setAndContinue(RawAnimation.begin().thenLoop("idle"));
 			}
+			// If the synced procedure animation arrives a frame after the waking
+			// state, remain seated instead of flashing into the standing idle pose.
 			return event.setAndContinue(RawAnimation.begin().thenLoop("sitting"));
 		}
 		return PlayState.STOP;
 	}
 
 	private boolean isActuallyMoving() {
-		return this.getDeltaMovement().horizontalDistanceSqr() > 1.0E-5D;
+		double dx = this.getX() - this.xOld;
+		double dz = this.getZ() - this.zOld;
+		return dx * dx + dz * dz > 1.0E-6D
+				|| this.getDeltaMovement().horizontalDistanceSqr() > 1.0E-5D;
 	}
 
 	private PlayState procedurePredicate(AnimationState event) {
-		if (!animationprocedure.equals("empty") && event.getController().getAnimationState() == AnimationController.State.STOPPED) {
-			event.getController().setAnimation(RawAnimation.begin().thenPlay(this.animationprocedure));
-			if (event.getController().getAnimationState() == AnimationController.State.STOPPED) {
-				this.animationprocedure = "empty";
-				event.getController().forceAnimationReset();
-			}
-		} else if (animationprocedure.equals("empty")) {
+		if (animationprocedure.equals("empty")) {
+			lastloop = false;
+			return PlayState.STOP;
+		}
+		if (!lastloop) {
+			lastloop = true;
+			event.getController().forceAnimationReset();
+			return event.setAndContinue(RawAnimation.begin().thenPlay(this.animationprocedure));
+		}
+		if (event.getController().getAnimationState() == AnimationController.State.STOPPED) {
+			this.animationprocedure = "empty";
+			lastloop = false;
+			event.getController().forceAnimationReset();
 			return PlayState.STOP;
 		}
 		return PlayState.CONTINUE;

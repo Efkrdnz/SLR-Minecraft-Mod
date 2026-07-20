@@ -2,6 +2,7 @@ package net.solocraft.network;
 
 import net.solocraft.procedures.CustomHudToggleProcedure;
 import net.solocraft.SololevelingMod;
+import net.solocraft.util.SystemPlayerAccess;
 
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -68,6 +69,12 @@ public class SystemSettingsButtonMessage {
 		}
 		if (buttonID == 1) {
 			CustomHudToggleProcedure.execute(entity);
+		}
+		if (buttonID == 2 && SystemPlayerAccess.hasSystem(entity)) {
+			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+				capability.pvpUrgentQuests = !capability.pvpUrgentQuests;
+				capability.syncPlayerVariables(entity);
+			});
 		}
 	}
 

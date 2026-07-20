@@ -9,8 +9,10 @@
     "SMixin"
   ],
   "client": [
+    "CreateWorldScreenMixin",
     "GoliathFirstPersonHandMixin",
-    "GoliathThirdPersonHandMixin"
+    "GoliathThirdPersonHandMixin",
+    "VesselCombatAttackMixin"
   ],
   "minVersion": "0.8"
 }

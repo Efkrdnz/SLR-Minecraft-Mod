@@ -27,15 +27,17 @@ import java.util.Optional;
 import java.util.List;
 import java.util.Comparator;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.OrbOfAvariceManager;
 
 public class SummonBeastProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 2500) {
+		int manaCost = OrbOfAvariceManager.adjustManaCost(entity, 2500);
+		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= manaCost) {
 			if (!CooldownManager.isOnCooldown(entity, "Light Golem")) {
 				{
-					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 2500;
+					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - manaCost;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.MP = _setval;
 						capability.syncPlayerVariables(entity);

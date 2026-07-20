@@ -1,6 +1,7 @@
 
 package net.solocraft.entity;
 
+import net.solocraft.dungeon.DungeonScalableEntity;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -43,10 +44,11 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.nbt.CompoundTag;
 
-public class GreenOrcEntity extends Monster implements GeoEntity {
+public class GreenOrcEntity extends Monster implements GeoEntity, DungeonScalableEntity {
 	public static final EntityDataAccessor<Boolean> SHOOT = SynchedEntityData.defineId(GreenOrcEntity.class, EntityDataSerializers.BOOLEAN);
 	public static final EntityDataAccessor<String> ANIMATION = SynchedEntityData.defineId(GreenOrcEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> TEXTURE = SynchedEntityData.defineId(GreenOrcEntity.class, EntityDataSerializers.STRING);
+	public static final EntityDataAccessor<Float> DATA_DUNGEON_SCALE = SynchedEntityData.defineId(GreenOrcEntity.class, EntityDataSerializers.FLOAT);
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	private boolean swinging;
 	private boolean lastloop;
@@ -70,6 +72,7 @@ public class GreenOrcEntity extends Monster implements GeoEntity {
 		this.entityData.define(SHOOT, false);
 		this.entityData.define(ANIMATION, "undefined");
 		this.entityData.define(TEXTURE, "orc_green");
+		this.entityData.define(DATA_DUNGEON_SCALE, 1.0F);
 	}
 
 	public void setTexture(String texture) {
@@ -78,6 +81,16 @@ public class GreenOrcEntity extends Monster implements GeoEntity {
 
 	public String getTexture() {
 		return this.entityData.get(TEXTURE);
+	}
+
+	@Override
+	public float getDungeonScale() {
+		return this.entityData.get(DATA_DUNGEON_SCALE);
+	}
+
+	@Override
+	public void setDungeonScale(float scale) {
+		this.entityData.set(DATA_DUNGEON_SCALE, Math.max(0.90F, Math.min(1.68F, scale)));
 	}
 
 	@Override
@@ -129,6 +142,7 @@ public class GreenOrcEntity extends Monster implements GeoEntity {
 	public void addAdditionalSaveData(CompoundTag compound) {
 		super.addAdditionalSaveData(compound);
 		compound.putString("Texture", this.getTexture());
+		compound.putFloat("DungeonScale", this.getDungeonScale());
 	}
 
 	@Override
@@ -136,17 +150,25 @@ public class GreenOrcEntity extends Monster implements GeoEntity {
 		super.readAdditionalSaveData(compound);
 		if (compound.contains("Texture"))
 			this.setTexture(compound.getString("Texture"));
+		if (compound.contains("DungeonScale"))
+			this.setDungeonScale(compound.getFloat("DungeonScale"));
+	}
+
+	@Override
+	public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+		super.onSyncedDataUpdated(key);
+		if (DATA_DUNGEON_SCALE.equals(key))
+			this.refreshDimensions();
 	}
 
 	@Override
 	public void baseTick() {
 		super.baseTick();
-		this.refreshDimensions();
 	}
 
 	@Override
 	public EntityDimensions getDimensions(Pose p_33597_) {
-		return super.getDimensions(p_33597_).scale((float) 0.7);
+		return super.getDimensions(p_33597_).scale(0.7F * this.getDungeonScale());
 	}
 
 	public static void init() {

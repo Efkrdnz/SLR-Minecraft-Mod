@@ -3,6 +3,7 @@ package net.solocraft.entity;
 
 import net.solocraft.procedures.BaekYoonhoRightClickedOnEntityProcedure;
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.NamedHunterCombatManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.network.PlayMessages;
@@ -60,14 +61,14 @@ public class BaekYoonhoEntity extends PathfinderMob {
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.targetSelector.addGoal(1, new NearestAttackableTargetGoal(this, Monster.class, false, false));
+		this.targetSelector.addGoal(0, new HurtByTargetGoal(this));
+		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal(this, Monster.class, false, false));
 		this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
 				return 5.76;
 			}
 		});
-		this.targetSelector.addGoal(3, new HurtByTargetGoal(this));
 		this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(5, new FloatGoal(this));
 	}
@@ -117,18 +118,25 @@ public class BaekYoonhoEntity extends PathfinderMob {
 		return super.getDimensions(pose).scale(1.2f);
 	}
 
+	@Override
+	public void baseTick() {
+		super.baseTick();
+		if (!this.level().isClientSide())
+			NamedHunterCombatManager.tick(this);
+	}
+
 	public static void init() {
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {
 		AttributeSupplier.Builder builder = Mob.createMobAttributes();
-		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.4);
-		builder = builder.add(Attributes.MAX_HEALTH, 175);
-		builder = builder.add(Attributes.ARMOR, 60);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, 12);
-		builder = builder.add(Attributes.FOLLOW_RANGE, 16);
-		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.5);
-		builder = builder.add(Attributes.ATTACK_KNOCKBACK, 0.1);
+		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.41);
+		builder = builder.add(Attributes.MAX_HEALTH, 340);
+		builder = builder.add(Attributes.ARMOR, 34);
+		builder = builder.add(Attributes.ATTACK_DAMAGE, 27);
+		builder = builder.add(Attributes.FOLLOW_RANGE, 64);
+		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.55);
+		builder = builder.add(Attributes.ATTACK_KNOCKBACK, 1.0);
 		return builder;
 	}
 }

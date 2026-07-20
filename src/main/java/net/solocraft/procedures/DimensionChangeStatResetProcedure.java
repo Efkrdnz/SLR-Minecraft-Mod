@@ -1,19 +1,23 @@
 package net.solocraft.procedures;
 
+import net.solocraft.SololevelingMod;
+import net.solocraft.util.PlayerVitalSync;
+
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber
 public class DimensionChangeStatResetProcedure {
-	@SubscribeEvent
-	public static void onEntityTravelToDimension(EntityTravelToDimensionEvent event) {
+	@SubscribeEvent(priority = EventPriority.LOWEST)
+	public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
 		execute(event, event.getEntity());
 	}
 
@@ -22,9 +26,12 @@ public class DimensionChangeStatResetProcedure {
 	}
 
 	private static void execute(@Nullable Event event, Entity entity) {
-		if (entity == null)
+		if (!(entity instanceof ServerPlayer player))
 			return;
-		if (entity instanceof LivingEntity _entity)
-			_entity.setHealth((float) ((entity instanceof LivingEntity _livEnt ? _livEnt.getHealth() : -1) + 0.5));
+		PlayerVitalSync.refreshClientState(player);
+		SololevelingMod.queueServerWork(1, () -> {
+			if (!player.isRemoved())
+				PlayerVitalSync.refreshClientState(player);
+		});
 	}
 }

@@ -23,7 +23,7 @@ public class PortalCemeteryRenderer extends GeoEntityRenderer<PortalCemeteryEnti
 
 	@Override
 	public RenderType getRenderType(PortalCemeteryEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucent(getTextureLocation(animatable));
+		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
 	}
 
 	@Override

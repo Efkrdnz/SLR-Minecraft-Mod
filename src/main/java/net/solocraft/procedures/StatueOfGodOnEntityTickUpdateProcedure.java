@@ -1,116 +1,179 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.StatueOfGodEntity;
-import net.solocraft.util.CombatRangeHelper;
 
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.core.registries.Registries;
-
-import java.util.Comparator;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.phys.Vec3;
 
 public class StatueOfGodOnEntityTickUpdateProcedure {
+	private static final String AGGRESSIVE_STATE = "aggresive";
+	private static final String WAKING_STATE = "waking";
+	private static final String THRONE_STATE = "throne";
+	private static final int PLAYER_SCAN_INTERVAL = 10;
+	// "standing and smiling" lasts 3.5417 seconds, or just under 71 ticks.
+	private static final int WAKE_ANIMATION_TICKS = 72;
+	private static final double CHASE_SPEED = 1.2D;
+	private static final double DIRECT_CHASE_SPEED = 0.22D;
+	private static final double STOP_CHASING_DISTANCE_SQR = 6.0D * 6.0D;
+	private static final double ACTIVATION_RANGE_SQR = 32.0D * 32.0D;
+	private static final double LEASH_RANGE_SQR = 96.0D * 96.0D;
+
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
-		if (entity == null)
+		if (!(world instanceof ServerLevel level) || !(entity instanceof StatueOfGodEntity statue) || !statue.isAlive())
 			return;
-		if (!world.isClientSide()) {
-			if (!(entity.getPersistentData().getString("state")).equals("aggresive")) {
-				if (!world.getEntitiesOfClass(Player.class, AABB.ofSize(new Vec3(x, y, z), 32, 32, 32), e -> true).isEmpty()) {
-					if (new Object() {
-						public boolean checkGamemode(Entity _ent) {
-							if (_ent instanceof ServerPlayer _serverPlayer) {
-								return _serverPlayer.gameMode.getGameModeForPlayer() == GameType.SURVIVAL;
-							}
-							return false;
-						}
-					}.checkGamemode(((Entity) world.getEntitiesOfClass(Player.class, AABB.ofSize(new Vec3(x, y, z), 32, 32, 32), e -> true).stream().sorted(new Object() {
-						Comparator<Entity> compareDistOf(double _x, double _y, double _z) {
-							return Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_x, _y, _z));
-						}
-					}.compareDistOf(x, y, z)).findFirst().orElse(null)))) {
-						entity.getPersistentData().putString("state", "aggresive");
-						if (entity instanceof StatueOfGodEntity _datEntSetS)
-							_datEntSetS.getEntityData().set(StatueOfGodEntity.DATA_state, "aggresive");
-					}
-				}
+
+		CompoundTag data = statue.getPersistentData();
+		String state = data.getString("state");
+		if (!state.isEmpty() && !state.equals(statue.getEntityData().get(StatueOfGodEntity.DATA_state)))
+			statue.getEntityData().set(StatueOfGodEntity.DATA_state, state);
+		if (WAKING_STATE.equals(state)) {
+			tickWaking(level, statue, data);
+			return;
+		}
+
+		if (!AGGRESSIVE_STATE.equals(state)) {
+			if (!statue.isNoAi())
+				statue.setNoAi(true);
+			if (!shouldScan(statue))
+				return;
+
+			ServerPlayer player = findNearestPlayer(level, statue, ACTIVATION_RANGE_SQR, true);
+			if (player != null)
+				activate(statue, player);
+			return;
+		}
+
+		if (statue.isNoAi())
+			statue.setNoAi(false);
+
+		if (shouldScan(statue)) {
+			ServerPlayer nearest = findNearestPlayer(level, statue, LEASH_RANGE_SQR, false);
+			if (nearest == null) {
+				resetToThrone(statue);
+				return;
 			}
-			if ((entity.getPersistentData().getString("state")).equals("aggresive")) {
-				entity.getPersistentData().putDouble("IA", (entity.getPersistentData().getDouble("IA") + 1));
-				if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
-					if (entity instanceof Mob _mob && _mob.getTarget() != null) {
-						LivingEntity target = _mob.getTarget();
-						double deltaX = target.getX() - entity.getX();
-						double deltaZ = target.getZ() - entity.getZ();
-						float targetYaw = (float) (Math.toDegrees(Math.atan2(deltaZ, deltaX))) - 90.0F;
-						entity.setYRot(targetYaw);
-						entity.yRotO = targetYaw;
-						if (entity instanceof LivingEntity _livingEntity) {
-							_livingEntity.yBodyRot = targetYaw;
-							_livingEntity.yHeadRot = targetYaw;
-						}
-					}
-					if (entity instanceof Mob _entity)
-						_entity.getNavigation().moveTo(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY()),
-								((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ()), 1);
-					if (entity.getPersistentData().getDouble("IA") > 101) {
-						entity.setDeltaMovement(new Vec3((((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX() - entity.getX()) * 0.01), (entity.getDeltaMovement().y()),
-								(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ() - entity.getZ()) * 0.01)));
-						if (CombatRangeHelper.withinSurfaceRange(entity,
-								(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 3.0D)) {
-							(entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 65);
-						}
-					}
-				}
-				if (!(!world.getEntitiesOfClass(Player.class, AABB.ofSize(new Vec3(x, y, z), 85, 85, 85), e -> true).isEmpty())) {
-					entity.getPersistentData().putString("state", "throne");
-					if (entity instanceof StatueOfGodEntity _datEntSetS)
-						_datEntSetS.getEntityData().set(StatueOfGodEntity.DATA_state, "throne");
-					entity.getPersistentData().putDouble("IA", 0);
-					{
-						Entity _ent = entity;
-						_ent.teleportTo((entity instanceof StatueOfGodEntity _datEntI ? _datEntI.getEntityData().get(StatueOfGodEntity.DATA_default_x) : 0),
-								(entity instanceof StatueOfGodEntity _datEntI ? _datEntI.getEntityData().get(StatueOfGodEntity.DATA_default_y) : 0),
-								(entity instanceof StatueOfGodEntity _datEntI ? _datEntI.getEntityData().get(StatueOfGodEntity.DATA_default_z) : 0));
-						if (_ent instanceof ServerPlayer _serverPlayer)
-							_serverPlayer.connection.teleport((entity instanceof StatueOfGodEntity _datEntI ? _datEntI.getEntityData().get(StatueOfGodEntity.DATA_default_x) : 0),
-									(entity instanceof StatueOfGodEntity _datEntI ? _datEntI.getEntityData().get(StatueOfGodEntity.DATA_default_y) : 0),
-									(entity instanceof StatueOfGodEntity _datEntI ? _datEntI.getEntityData().get(StatueOfGodEntity.DATA_default_z) : 0), _ent.getYRot(), _ent.getXRot());
-					}
-					{
-						Entity _ent = entity;
-						_ent.setYRot(180);
-						_ent.setXRot(0);
-						_ent.setYBodyRot(_ent.getYRot());
-						_ent.setYHeadRot(_ent.getYRot());
-						_ent.yRotO = _ent.getYRot();
-						_ent.xRotO = _ent.getXRot();
-						if (_ent instanceof LivingEntity _entity) {
-							_entity.yBodyRotO = _entity.getYRot();
-							_entity.yHeadRotO = _entity.getYRot();
-						}
-					}
-				}
+			LivingEntity currentTarget = statue.getTarget();
+			if (!isValidPlayer(currentTarget) || statue.distanceToSqr(currentTarget) > LEASH_RANGE_SQR)
+				statue.setTarget(nearest);
+			statue.getNavigation().moveTo(statue.getTarget(), CHASE_SPEED);
+		}
+
+		LivingEntity target = statue.getTarget();
+		if (isValidPlayer(target)) {
+			statue.faceTarget(target);
+			chaseTarget(statue, target);
+		}
+	}
+
+	private static void tickWaking(ServerLevel level, StatueOfGodEntity statue, CompoundTag data) {
+		statue.setNoAi(true);
+		statue.getNavigation().stop();
+		statue.setDeltaMovement(Vec3.ZERO);
+		statue.fallDistance = 0.0F;
+
+		LivingEntity target = statue.getTarget();
+		if (!isValidPlayer(target) || statue.distanceToSqr(target) > LEASH_RANGE_SQR) {
+			target = findNearestPlayer(level, statue, LEASH_RANGE_SQR, false);
+			if (target == null) {
+				resetToThrone(statue);
+				return;
 			}
-			if (entity.getPersistentData().getDouble("IA") == 40) {
-				if (entity instanceof StatueOfGodEntity) {
-					((StatueOfGodEntity) entity).setAnimation("standing and smiling");
-				}
-			}
-			if (entity.getPersistentData().getDouble("IA") == 101) {
-				((Mob) entity).setNoAi(false);
-			}
-			if ((entity.getPersistentData().getString("state")).equals("throne")) {
-				((Mob) entity).setNoAi(true);
+			statue.setTarget(target);
+		}
+		statue.faceTarget(target);
+
+		int wakeTicks = data.getInt("IA") + 1;
+		data.putInt("IA", wakeTicks);
+		if (wakeTicks < WAKE_ANIMATION_TICKS)
+			return;
+
+		data.putString("state", AGGRESSIVE_STATE);
+		data.putInt("IA", 0);
+		statue.getEntityData().set(StatueOfGodEntity.DATA_state, AGGRESSIVE_STATE);
+		statue.setNoAi(false);
+		statue.setTarget(target);
+		statue.getNavigation().moveTo(target, CHASE_SPEED);
+		chaseTarget(statue, target);
+	}
+
+	private static void chaseTarget(StatueOfGodEntity statue, LivingEntity target) {
+		double dx = target.getX() - statue.getX();
+		double dz = target.getZ() - statue.getZ();
+		double horizontalDistanceSqr = dx * dx + dz * dz;
+		if (horizontalDistanceSqr <= STOP_CHASING_DISTANCE_SQR)
+			return;
+
+		statue.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), CHASE_SPEED);
+		Vec3 movement = statue.getDeltaMovement();
+		if (movement.horizontalDistanceSqr() > 1.0E-5D)
+			return;
+
+		// The Statue's 5.25 x 23.25 hitbox can make vanilla path creation fail on
+		// the throne steps. Supply a small direct impulse only while navigation is
+		// stalled; normal entity collision still prevents it walking through walls.
+		double horizontalDistance = Math.sqrt(horizontalDistanceSqr);
+		statue.setDeltaMovement(dx / horizontalDistance * DIRECT_CHASE_SPEED, movement.y(),
+				dz / horizontalDistance * DIRECT_CHASE_SPEED);
+	}
+
+	private static boolean shouldScan(StatueOfGodEntity statue) {
+		return Math.floorMod(statue.tickCount + statue.getId(), PLAYER_SCAN_INTERVAL) == 0;
+	}
+
+	private static ServerPlayer findNearestPlayer(ServerLevel level, StatueOfGodEntity statue, double rangeSqr,
+			boolean requireBowing) {
+		ServerPlayer nearest = null;
+		double nearestDistance = rangeSqr;
+		for (ServerPlayer player : level.players()) {
+			if (!isValidPlayer(player) || requireBowing && !player.isShiftKeyDown())
+				continue;
+			double distance = statue.distanceToSqr(player);
+			if (distance <= nearestDistance) {
+				nearestDistance = distance;
+				nearest = player;
 			}
 		}
+		return nearest;
+	}
+
+	private static boolean isValidPlayer(LivingEntity entity) {
+		return entity instanceof ServerPlayer player && player.isAlive() && !player.isCreative() && !player.isSpectator();
+	}
+
+	private static void activate(StatueOfGodEntity statue, ServerPlayer target) {
+		statue.getPersistentData().putString("state", WAKING_STATE);
+		statue.getPersistentData().putInt("IA", 0);
+		statue.getEntityData().set(StatueOfGodEntity.DATA_state, WAKING_STATE);
+		statue.setNoAi(true);
+		statue.setTarget(target);
+		statue.faceTarget(target);
+		statue.getNavigation().stop();
+		statue.setDeltaMovement(Vec3.ZERO);
+		statue.setAnimation("standing and smiling");
+	}
+
+	private static void resetToThrone(StatueOfGodEntity statue) {
+		CompoundTag data = statue.getPersistentData();
+		data.putString("state", THRONE_STATE);
+		data.putInt("IA", 0);
+		statue.getEntityData().set(StatueOfGodEntity.DATA_state, THRONE_STATE);
+		statue.setNoAi(true);
+		statue.setTarget(null);
+		statue.getNavigation().stop();
+		statue.setDeltaMovement(Vec3.ZERO);
+		statue.fallDistance = 0.0F;
+
+		int homeX = statue.getEntityData().get(StatueOfGodEntity.DATA_default_x);
+		int homeY = statue.getEntityData().get(StatueOfGodEntity.DATA_default_y);
+		int homeZ = statue.getEntityData().get(StatueOfGodEntity.DATA_default_z);
+		statue.teleportTo(homeX + 0.5D, homeY, homeZ + 0.5D);
+		statue.setXRot(0.0F);
+		statue.xRotO = 0.0F;
+		statue.faceYaw(data.contains("CartenonHomeYaw") ? data.getFloat("CartenonHomeYaw") : 180.0F);
 	}
 }

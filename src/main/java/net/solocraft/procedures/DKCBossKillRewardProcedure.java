@@ -97,6 +97,8 @@ public class DKCBossKillRewardProcedure {
 							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
 									"slr " + player.getGameProfile().getName() + " rewards set 2 Item sololeveling:spring_water_of_the_echoing_forest true");
 							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(), "slr " + player.getGameProfile().getName() + " rewards set 3 FullRecovery true");
+							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
+									"slr " + player.getGameProfile().getName() + " rewards set 4 Item sololeveling:orb_of_avarice true");
 						} catch (Exception e) {
 						}
 						grantAdvancement(player, "monarchs_domain");

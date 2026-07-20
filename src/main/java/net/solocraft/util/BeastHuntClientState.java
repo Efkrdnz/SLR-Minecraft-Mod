@@ -17,7 +17,7 @@ public final class BeastHuntClientState {
 		quarryName = name == null ? "" : name;
 		hunt = Math.max(0, Math.min(100, huntValue));
 		openings = Math.max(0, Math.min(2, openingCount));
-		combo = Math.max(0, Math.min(3, comboStep));
+		combo = Math.max(0, Math.min(4, comboStep));
 		stance = inStance;
 	}
 

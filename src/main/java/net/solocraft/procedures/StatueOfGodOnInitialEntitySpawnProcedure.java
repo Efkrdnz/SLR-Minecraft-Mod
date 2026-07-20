@@ -18,6 +18,8 @@ public class StatueOfGodOnInitialEntitySpawnProcedure {
 			_datEntSetI.getEntityData().set(StatueOfGodEntity.DATA_default_y, (int) entity.getY());
 		if (entity instanceof StatueOfGodEntity _datEntSetI)
 			_datEntSetI.getEntityData().set(StatueOfGodEntity.DATA_default_z, (int) entity.getZ());
+		entity.getPersistentData().putFloat("CartenonHomeYaw", entity.getYRot());
+		entity.getPersistentData().putInt("IA", 0);
 		((Mob) entity).setNoAi(true);
 	}
 }

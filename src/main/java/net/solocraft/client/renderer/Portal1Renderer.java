@@ -23,7 +23,7 @@ public class Portal1Renderer extends GeoEntityRenderer<Portal1Entity> {
 
 	@Override
 	public RenderType getRenderType(Portal1Entity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucent(getTextureLocation(animatable));
+		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -42,7 +43,7 @@ public class IgrisSlamProcedure {
 						List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(8 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 						for (Entity entityiterator : _entfound) {
 							if (!(entityiterator == entity) && entityiterator instanceof LivingEntity) {
-								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 9);
+								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), scaledDamage(entity, 1.20F, 16.8F));
 								if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
 									_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, false));
 								if (world instanceof Level _level) {
@@ -65,5 +66,11 @@ public class IgrisSlamProcedure {
 			entity.getPersistentData().putString("state", "idle");
 			entity.getPersistentData().putDouble("MF", 0);
 		}
+	}
+
+	private static float scaledDamage(Entity entity, float multiplier, float minimum) {
+		if (entity instanceof LivingEntity living && living.getAttribute(Attributes.ATTACK_DAMAGE) != null)
+			return (float) Math.max(minimum, living.getAttributeValue(Attributes.ATTACK_DAMAGE) * multiplier);
+		return minimum;
 	}
 }

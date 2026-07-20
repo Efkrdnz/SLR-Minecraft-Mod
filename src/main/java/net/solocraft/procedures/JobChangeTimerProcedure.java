@@ -4,26 +4,19 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.JobChangeQuestManager;
 import net.solocraft.util.SystemNotifications;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
-import net.minecraft.core.BlockPos;
 import net.minecraft.ChatFormatting;
-
-import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.LevelAccessor;
 
 @Mod.EventBusSubscriber
 public class JobChangeTimerProcedure {
@@ -33,118 +26,53 @@ public class JobChangeTimerProcedure {
 
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player.level(), event.player.getX(), event.player.getY(), event.player.getZ(), event.player);
-		}
+		if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player)
+			execute(player.level(), player.getX(), player.getY(), player.getZ(), player);
 	}
 
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
-		execute(null, world, x, y, z, entity);
-	}
-
-	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity) {
-		if (entity == null)
+		if (!(entity instanceof ServerPlayer player) || !JobChangeQuestManager.isShadowPresentation(player))
 			return;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer > 0
-				&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer < 9) {
-			if (world.getLevelData().getGameTime() % 60 == 0) {
-				{
-					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer + 1;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.JobChange_timer = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-				if (world instanceof Level _level) {
-					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:panelopen")), SoundSource.NEUTRAL, 1, 1);
-					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:panelopen")), SoundSource.NEUTRAL, 1, 1, false);
-					}
-				}
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 100, 3, false, false));
-				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 3, false, false));
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer == 2) {
-					showJobChangeMessage(entity,
-							systemTitle("JOB CHANGE"),
-							systemUnder("Wherever the player goes, angel of death follows..."),
-							RIDDLE_DURATION);
-				}
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer == 3) {
-					showJobChangeMessage(entity,
-							systemTitle("JOB CHANGE"),
-							systemUnder("Wherever path the player takes it is littered with corpses, and the stench of blood remains."),
-							RIDDLE_DURATION);
-				}
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer == 4) {
-					showJobChangeMessage(entity,
-							systemTitle("JOB CHANGE"),
-							systemUnder("In addition the player craves geat power and blazed his own trail without relying on others."),
-							RIDDLE_DURATION);
-				}
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer == 5) {
-					showJobChangeMessage(entity,
-							systemTitle("JOB CHANGE"),
-							systemUnder("Its thirst for strength calls forth the ghost that roam the valley of death."),
-							RIDDLE_DURATION);
-				}
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer == 6) {
-					showJobChangeMessage(entity,
-							systemTitle("JOB CHANGE"),
-							systemUnder("The ghosts summoned by the shadow army will follow the player's orders as the shadow army and make way only for the player."),
-							RIDDLE_DURATION);
-				}
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer == 7) {
-					showJobChangeMessage(entity,
-							systemTitle("JOB ASSIGNED"),
-							Component.literal("[Necromancer]").withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD),
-							RESULT_DURATION);
-				}
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer == 8) {
-					showJobChangeMessage(entity,
-							systemTitle("ADVANCEMENT"),
-							systemUnder("Depending on the advancement points acquired, you may progress to a higher class."),
-							RIDDLE_DURATION);
+		SololevelingModVariables.PlayerVariables data = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables());
+		if (data.JobChange_timer > 0 && data.JobChange_timer < 9 && world.getLevelData().getGameTime() % 60 == 0) {
+			int next = (int) data.JobChange_timer + 1;
+			player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+				capability.JobChange_timer = next;
+				capability.syncPlayerVariables(player);
+			});
+			playPanelSound(player, "sololeveling:panelopen");
+			switch (next) {
+				case 2 -> show(player, systemTitle("JOB CHANGE"), systemUnder("Wherever the player goes, the angel of death follows..."), RIDDLE_DURATION);
+				case 3 -> show(player, systemTitle("JOB CHANGE"), systemUnder("Every path the player takes is littered with corpses, and the stench of blood remains."), RIDDLE_DURATION);
+				case 4 -> show(player, systemTitle("JOB CHANGE"), systemUnder("The player craves great power and blazed a trail without relying on others."), RIDDLE_DURATION);
+				case 5 -> show(player, systemTitle("JOB CHANGE"), systemUnder("That thirst for strength calls forth the ghosts that roam the valley of death."), RIDDLE_DURATION);
+				case 6 -> show(player, systemTitle("JOB CHANGE"), systemUnder("Those ghosts will become a shadow army, obeying the player and making way for no one else."), RIDDLE_DURATION);
+				case 7 -> show(player, systemTitle("JOB ASSIGNED"), Component.literal("[Necromancer]").withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD), RESULT_DURATION);
+				case 8 -> show(player, systemTitle("ADVANCEMENT"), systemUnder("The advancement points acquired have opened the path to an exceptional class."), RIDDLE_DURATION);
+				default -> {
 				}
 			}
-		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JobChange_timer == 9) {
-			if (entity instanceof LivingEntity living && !living.level().isClientSide())
-				living.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+			return;
+		}
+
+		if (data.JobChange_timer == 9) {
 			JobChangeCleanupProcedure.execute(world, x, y, z);
-			showJobChangeMessage(entity,
+			Component evolution = Component.empty()
+					.append(Component.literal("[Necromancer]").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD))
+					.append(Component.literal("\nV\n").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD))
+					.append(Component.literal("[Shadow Monarch]").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
+			show(player,
 					Component.literal("CLASS EVOLUTION").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD),
-					Component.literal("[Necromancer] -> [Shadow Monarch]").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
+					evolution,
 					RESULT_DURATION);
-			{
-				double _setval = 0;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.JobChange_timer = _setval;
-					capability.syncPlayerVariables(entity);
-				});
-			}
-			{
-				double _setval = 1;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.JOB = _setval;
-					capability.syncPlayerVariables(entity);
-				});
-			}
-			JobChangeQuestManager.finish(entity);
-			if (world instanceof Level _level) {
-				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:panelclose")), SoundSource.NEUTRAL, 1, 1);
-				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:panelclose")), SoundSource.NEUTRAL, 1, 1, false);
-				}
-			}
+			JobChangeQuestManager.finish(player);
+			playPanelSound(player, "sololeveling:panelclose");
 		}
 	}
 
-	private static void showJobChangeMessage(Entity entity, Component popupTitle, Component popupUnder, int durationTicks) {
-		if (entity instanceof ServerPlayer player)
-			SystemNotifications.showTitleUnder(player, JOB_CHANGE_ACCENT, durationTicks, popupTitle, popupUnder);
+	private static void show(ServerPlayer player, Component title, Component under, int durationTicks) {
+		SystemNotifications.showTitleUnder(player, JOB_CHANGE_ACCENT, durationTicks, title, under);
 	}
 
 	private static Component systemTitle(String text) {
@@ -153,5 +81,11 @@ public class JobChangeTimerProcedure {
 
 	private static Component systemUnder(String text) {
 		return Component.literal(text).withStyle(ChatFormatting.GRAY);
+	}
+
+	private static void playPanelSound(ServerPlayer player, String soundId) {
+		if (ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(soundId)) != null)
+			player.serverLevel().playSound(null, BlockPos.containing(player.position()),
+					ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(soundId)), SoundSource.NEUTRAL, 1.0F, 1.0F);
 	}
 }

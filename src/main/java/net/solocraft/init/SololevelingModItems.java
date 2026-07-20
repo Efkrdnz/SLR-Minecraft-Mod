@@ -1,6 +1,11 @@
 package net.solocraft.init;
 
 import net.solocraft.item.YellowkeyItem;
+import net.solocraft.item.ArcaneMageRunestoneItem;
+import net.solocraft.item.BarrierMageRunestoneItem;
+import net.solocraft.item.FireMageRunestoneItem;
+import net.solocraft.util.BarrierMageSpellManager;
+import net.solocraft.util.ArcaneMageSpellManager;
 import net.solocraft.item.WorldTreesFragmentItem;
 import net.solocraft.item.WarAxeItem;
 import net.solocraft.item.TestParticlesItem;
@@ -56,14 +61,9 @@ import net.solocraft.item.RunestoneLightballItem;
 import net.solocraft.item.RunestoneLightGolemItem;
 import net.solocraft.item.RunestoneHyperfocusItem;
 import net.solocraft.item.RunestoneHighValueTargetItem;
-import net.solocraft.item.RunestoneHeavyFlameItem;
 import net.solocraft.item.RunestoneHealBeamItem;
 import net.solocraft.item.RunestoneHawkeyeItem;
 import net.solocraft.item.RunestoneHasteItem;
-import net.solocraft.item.RunestoneFlameVortexItem;
-import net.solocraft.item.RunestoneFlameTornadoItem;
-import net.solocraft.item.RunestoneFireballItem;
-import net.solocraft.item.RunestoneFireRainItem;
 import net.solocraft.item.RunestoneDualwieldItem;
 import net.solocraft.item.RunestoneDetectionItem;
 import net.solocraft.item.RunestoneCursedSmokeItem;
@@ -80,6 +80,7 @@ import net.solocraft.item.RangerStarterpackItem;
 import net.solocraft.item.RangerMasteryItemItem;
 import net.solocraft.item.RandomSpecialBoxItem;
 import net.solocraft.item.PurifiedBloodOfTheDemonKingItem;
+import net.solocraft.item.OrbOfAvariceItem;
 import net.solocraft.item.MythicDaggerItem;
 import net.solocraft.item.MurderiousIntentStoneItem;
 import net.solocraft.item.MediumManaPotionItem;
@@ -92,6 +93,7 @@ import net.solocraft.item.ManaCrystalDItem;
 import net.solocraft.item.ManaCrystalCItem;
 import net.solocraft.item.ManaCrystalBItem;
 import net.solocraft.item.ManaCrystalAItem;
+import net.solocraft.item.MonarchTerritoryGateSpawnEggItem;
 import net.solocraft.item.MagicReaderItem;
 import net.solocraft.item.MageStarterpackItem;
 import net.solocraft.item.MageMasteryItemItem;
@@ -136,6 +138,8 @@ import net.solocraft.item.EmeraldDaggerItem;
 import net.solocraft.item.ETierSwordItem;
 import net.solocraft.item.DungeonSpawnerItem;
 import net.solocraft.item.DungeonNostalgiaItem;
+import net.solocraft.item.DungeonBuilderWandItem;
+import net.solocraft.dungeon.builder.DungeonBuilderTool;
 import net.solocraft.item.Dun1Item;
 import net.solocraft.item.DragonShortswordItem;
 import net.solocraft.item.DemonKingsLongSwordItem;
@@ -166,6 +170,7 @@ import net.solocraft.block.display.InstanceCoverDisplayItem;
 import net.solocraft.block.display.HunterRankEvaluatorDisplayItem;
 import net.solocraft.block.display.DungeonWallDisplayItem;
 import net.solocraft.SololevelingMod;
+import net.solocraft.world.dimension.rift.RiftTerritory;
 
 import net.minecraftforge.registries.RegistryObject;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -264,7 +269,22 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> JOB_KEY = REGISTRY.register("job_key", () -> new JobKeyItem());
 	public static final RegistryObject<Item> INSTANCE_DUNGEON_KEY = REGISTRY.register("instance_dungeon_key", () -> new InstanceDungeonKeyItem());
 	public static final RegistryObject<Item> PORTAL_BERU_SPAWN_EGG = REGISTRY.register("portal_beru_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_BERU, -34304, -6400, new Item.Properties()));
-	public static final RegistryObject<Item> RED_GATE_SPAWN_EGG = REGISTRY.register("red_gate_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.RED_GATE, -10092544, -3407770, new Item.Properties()));
+	public static final RegistryObject<Item> MONARCH_TERRITORY_DESTRUCTION_GATE_SPAWN_EGG = REGISTRY.register("monarch_territory_destruction_gate_spawn_egg",
+			() -> new MonarchTerritoryGateSpawnEggItem(RiftTerritory.DESTRUCTION, -9699050, -331776));
+	public static final RegistryObject<Item> MONARCH_TERRITORY_FROST_GATE_SPAWN_EGG = REGISTRY.register("monarch_territory_frost_gate_spawn_egg",
+			() -> new MonarchTerritoryGateSpawnEggItem(RiftTerritory.FROST, -10092544, -3407770));
+	public static final RegistryObject<Item> MONARCH_TERRITORY_FANGS_GATE_SPAWN_EGG = REGISTRY.register("monarch_territory_fangs_gate_spawn_egg",
+			() -> new MonarchTerritoryGateSpawnEggItem(RiftTerritory.FANGS, -13421773, -43776));
+	public static final RegistryObject<Item> MONARCH_TERRITORY_PLAGUES_GATE_SPAWN_EGG = REGISTRY.register("monarch_territory_plagues_gate_spawn_egg",
+			() -> new MonarchTerritoryGateSpawnEggItem(RiftTerritory.PLAGUES, -10066330, -11730944));
+	public static final RegistryObject<Item> MONARCH_TERRITORY_IRON_BODY_GATE_SPAWN_EGG = REGISTRY.register("monarch_territory_iron_body_gate_spawn_egg",
+			() -> new MonarchTerritoryGateSpawnEggItem(RiftTerritory.IRON_BODY, -6710887, -263173));
+	public static final RegistryObject<Item> MONARCH_TERRITORY_WHITE_FLAMES_GATE_SPAWN_EGG = REGISTRY.register("monarch_territory_white_flames_gate_spawn_egg",
+			() -> new MonarchTerritoryGateSpawnEggItem(RiftTerritory.WHITE_FLAMES, -1, -26317));
+	public static final RegistryObject<Item> MONARCH_TERRITORY_TRANSFIGURATION_GATE_SPAWN_EGG = REGISTRY.register("monarch_territory_transfiguration_gate_spawn_egg",
+			() -> new MonarchTerritoryGateSpawnEggItem(RiftTerritory.TRANSFIGURATION, -13421569, -39271));
+	public static final RegistryObject<Item> MONARCH_TERRITORY_BEGINNING_GATE_SPAWN_EGG = REGISTRY.register("monarch_territory_beginning_gate_spawn_egg",
+			() -> new MonarchTerritoryGateSpawnEggItem(RiftTerritory.BEGINNING, -16777216, -5592406));
 	public static final RegistryObject<Item> PORTAL_1_SPAWN_EGG = REGISTRY.register("portal_1_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_1, -35072, -16711681, new Item.Properties()));
 	public static final RegistryObject<Item> PORTAL_LUSH_SPAWN_EGG = REGISTRY.register("portal_lush_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_LUSH, -35072, -65536, new Item.Properties()));
 	public static final RegistryObject<Item> PORTAL_KARGALGANS_THRONE_ROOM_SPAWN_EGG = REGISTRY.register("portal_kargalgans_throne_room_spawn_egg",
@@ -301,6 +321,7 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> PURIFIED_BLOOD_OF_THE_DEMON_KING = REGISTRY.register("purified_blood_of_the_demon_king", () -> new PurifiedBloodOfTheDemonKingItem());
 	public static final RegistryObject<Item> WORLD_TREES_FRAGMENT = REGISTRY.register("world_trees_fragment", () -> new WorldTreesFragmentItem());
 	public static final RegistryObject<Item> SPRING_WATER_OF_THE_ECHOING_FOREST = REGISTRY.register("spring_water_of_the_echoing_forest", () -> new SpringWaterOfTheEchoingForestItem());
+	public static final RegistryObject<Item> ORB_OF_AVARICE = REGISTRY.register("orb_of_avarice", OrbOfAvariceItem::new);
 	public static final RegistryObject<Item> GIVE_BERU = REGISTRY.register("give_beru", () -> new GiveBeruItem());
 	public static final RegistryObject<Item> GIVE_IGRIS = REGISTRY.register("give_igris", () -> new GiveIgrisItem());
 	public static final RegistryObject<Item> GRAND_MAGE = REGISTRY.register("grand_mage", () -> new GrandMageItem());
@@ -350,12 +371,49 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> RUNESTONE_CURSED_SMOKE = REGISTRY.register("runestone_cursed_smoke", () -> new RunestoneCursedSmokeItem());
 	public static final RegistryObject<Item> RUNESTONE_WATERSLASH = REGISTRY.register("runestone_waterslash", () -> new RunestoneWaterslashItem());
 	public static final RegistryObject<Item> RUNESTONE_LIGHTBALL = REGISTRY.register("runestone_lightball", () -> new RunestoneLightballItem());
-	public static final RegistryObject<Item> RUNESTONE_FIREBALL = REGISTRY.register("runestone_fireball", () -> new RunestoneFireballItem());
+	public static final RegistryObject<Item> RUNESTONE_FLAME_WEAVING = REGISTRY.register("runestone_flame_weaving",
+			() -> new FireMageRunestoneItem("Flame Weaving", "Weave fast, mana-free fire bolts from raw magical output."));
+	public static final RegistryObject<Item> RUNESTONE_IGNITION_ORB = REGISTRY.register("runestone_ignition_orb",
+			() -> new FireMageRunestoneItem("Ignition Orb", "Launch a volatile orb that expands from impact blast to miniature sun."));
+	public static final RegistryObject<Item> RUNESTONE_INFERNO_LANCE = REGISTRY.register("runestone_inferno_lance",
+			() -> new FireMageRunestoneItem("Inferno Lance", "Fire a piercing solar lance that detonates Scorch at higher output."));
+	public static final RegistryObject<Item> RUNESTONE_FLASHFIRE = REGISTRY.register("runestone_flashfire",
+			() -> new FireMageRunestoneItem("Flashfire", "Become a rushing flame and carve through enemies in your path."));
+	public static final RegistryObject<Item> RUNESTONE_CREMATION = REGISTRY.register("runestone_cremation",
+			() -> new FireMageRunestoneItem("Cremation", "Consume Scorch to execute marked enemies in a linked combustion chain."));
+	public static final RegistryObject<Item> RUNESTONE_FURNACE_DOMINION = REGISTRY.register("runestone_furnace_dominion",
+			() -> new FireMageRunestoneItem("Furnace Dominion", "Enclose an area in a furnace that pulls, burns, and erupts."));
+	public static final RegistryObject<Item> RUNESTONE_HEAVENFALL = REGISTRY.register("runestone_heavenfall",
+			() -> new FireMageRunestoneItem("Heavenfall", "Call descending fire that evolves into the Day of Ruin."));
+	public static final RegistryObject<Item> RUNESTONE_FRACTURE_BOLT = REGISTRY.register("runestone_fracture_bolt",
+			() -> new BarrierMageRunestoneItem(BarrierMageSpellManager.FRACTURE_BOLT, "Fire a razor-fast prism shard that Fractures magical defenses."));
+	public static final RegistryObject<Item> RUNESTONE_PRISM_RAMPART = REGISTRY.register("runestone_prism_rampart",
+			() -> new BarrierMageRunestoneItem(BarrierMageSpellManager.PRISM_RAMPART, "Raise a breakable wall that catches hostile force and projectiles."));
+	public static final RegistryObject<Item> RUNESTONE_REPULSION_FRAME = REGISTRY.register("runestone_repulsion_frame",
+			() -> new BarrierMageRunestoneItem(BarrierMageSpellManager.REPULSION_FRAME, "Drive a moving frame through enemy lines and violently reposition them."));
+	public static final RegistryObject<Item> RUNESTONE_SEALING_PRISM = REGISTRY.register("runestone_sealing_prism",
+			() -> new BarrierMageRunestoneItem(BarrierMageSpellManager.SEALING_PRISM, "Imprison Fractured targets inside a pressure-sealed prism."));
+	public static final RegistryObject<Item> RUNESTONE_MIRROR_WARD = REGISTRY.register("runestone_mirror_ward",
+			() -> new BarrierMageRunestoneItem(BarrierMageSpellManager.MIRROR_WARD, "Catch incoming pressure and return it as retaliatory shards."));
+	public static final RegistryObject<Item> RUNESTONE_RESONANT_COLLAPSE = REGISTRY.register("runestone_resonant_collapse",
+			() -> new BarrierMageRunestoneItem(BarrierMageSpellManager.RESONANT_COLLAPSE, "Collapse constructs and Fracture marks into synchronized destruction."));
+	public static final RegistryObject<Item> RUNESTONE_ABSOLUTE_BASTION = REGISTRY.register("runestone_absolute_bastion",
+			() -> new BarrierMageRunestoneItem(BarrierMageSpellManager.ABSOLUTE_BASTION, "Enclose the battlefield in an immense fortress domain."));
+	public static final RegistryObject<Item> RUNESTONE_AETHER_BOLT = REGISTRY.register("runestone_aether_bolt",
+			() -> new ArcaneMageRunestoneItem(ArcaneMageSpellManager.AETHER_BOLT, "Condense raw mana into a correcting precision bolt."));
+	public static final RegistryObject<Item> RUNESTONE_VECTOR_STEP = REGISTRY.register("runestone_vector_step",
+			() -> new ArcaneMageRunestoneItem(ArcaneMageSpellManager.VECTOR_STEP, "Rewrite movement into a collision-safe phase vector."));
+	public static final RegistryObject<Item> RUNESTONE_POLARITY_SPHERE = REGISTRY.register("runestone_polarity_sphere",
+			() -> new ArcaneMageRunestoneItem(ArcaneMageSpellManager.POLARITY_SPHERE, "Shape a gravity node that pulls or repels the battlefield."));
+	public static final RegistryObject<Item> RUNESTONE_RUNIC_RELAY = REGISTRY.register("runestone_runic_relay",
+			() -> new ArcaneMageRunestoneItem(ArcaneMageSpellManager.RUNIC_RELAY, "Route Arcane attacks through a distant linked formula."));
+	public static final RegistryObject<Item> RUNESTONE_ASTRAL_ARSENAL = REGISTRY.register("runestone_astral_arsenal",
+			() -> new ArcaneMageRunestoneItem(ArcaneMageSpellManager.ASTRAL_ARSENAL, "Maintain an orbiting formation of intelligent mana blades."));
+	public static final RegistryObject<Item> RUNESTONE_DIMENSIONAL_REND = REGISTRY.register("runestone_dimensional_rend",
+			() -> new ArcaneMageRunestoneItem(ArcaneMageSpellManager.DIMENSIONAL_REND, "Cut space itself with a persistent piercing plane."));
+	public static final RegistryObject<Item> RUNESTONE_GRAND_FORMULA_CONVERGENCE = REGISTRY.register("runestone_grand_formula_convergence",
+			() -> new ArcaneMageRunestoneItem(ArcaneMageSpellManager.CONVERGENCE, "Assemble a battlefield-scale formula and collapse its center."));
 	public static final RegistryObject<Item> RUNESTONE_LIGHT_GOLEM = REGISTRY.register("runestone_light_golem", () -> new RunestoneLightGolemItem());
-	public static final RegistryObject<Item> RUNESTONE_FLAME_TORNADO = REGISTRY.register("runestone_flame_tornado", () -> new RunestoneFlameTornadoItem());
-	public static final RegistryObject<Item> RUNESTONE_HEAVY_FLAME = REGISTRY.register("runestone_heavy_flame", () -> new RunestoneHeavyFlameItem());
-	public static final RegistryObject<Item> RUNESTONE_FLAME_VORTEX = REGISTRY.register("runestone_flame_vortex", () -> new RunestoneFlameVortexItem());
-	public static final RegistryObject<Item> RUNESTONE_FIRE_RAIN = REGISTRY.register("runestone_fire_rain", () -> new RunestoneFireRainItem());
 	public static final RegistryObject<Item> RUNESTONE_DETECTION = REGISTRY.register("runestone_detection", () -> new RunestoneDetectionItem());
 	public static final RegistryObject<Item> RUNESTONE_MAGIC_MISSILES = REGISTRY.register("runestone_magic_missiles", () -> new RunestoneMagicMissilesItem());
 	public static final RegistryObject<Item> RUNESTONE_SLASHDASH = REGISTRY.register("runestone_slashdash", () -> new RunestoneSlashdashItem());
@@ -390,6 +448,7 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> DEEPSLATE_KEYBLOCK_RED = block(SololevelingModBlocks.DEEPSLATE_KEYBLOCK_RED);
 	public static final RegistryObject<Item> CRYSTAL_GOLEM_SPAWNER = block(SololevelingModBlocks.CRYSTAL_GOLEM_SPAWNER);
 	public static final RegistryObject<Item> GOLEM_DROP_BLOCK_GEM = block(SololevelingModBlocks.GOLEM_DROP_BLOCK_GEM);
+	public static final RegistryObject<Item> MANA_CRYSTAL_DEPOSIT = block(SololevelingModBlocks.MANA_CRYSTAL_DEPOSIT);
 	public static final RegistryObject<Item> INSTANCE_DUNGEON_KEY_LOGGER = REGISTRY.register(SololevelingModBlocks.INSTANCE_DUNGEON_KEY_LOGGER.getId().getPath(),
 			() -> new InstanceDungeonKeyLoggerDisplayItem(SololevelingModBlocks.INSTANCE_DUNGEON_KEY_LOGGER.get(), new Item.Properties()));
 	public static final RegistryObject<Item> INSTANCE_COVER = REGISTRY.register(SololevelingModBlocks.INSTANCE_COVER.getId().getPath(), () -> new InstanceCoverDisplayItem(SololevelingModBlocks.INSTANCE_COVER.get(), new Item.Properties()));
@@ -452,6 +511,11 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> DEEPSLATE_KEYBLOCK_DKC = block(SololevelingModBlocks.DEEPSLATE_KEYBLOCK_DKC);
 	public static final RegistryObject<Item> ENTRY_PERMIT = REGISTRY.register("entry_permit", () -> new EntryPermitItem());
 	public static final RegistryObject<Item> DKC_TRAVEL = REGISTRY.register("dkc_travel", () -> new DKCTravelItem());
+	public static final RegistryObject<Item> DUNGEON_SURVEYOR_WAND = REGISTRY.register("dungeon_surveyor_wand", () -> new DungeonBuilderWandItem(DungeonBuilderTool.SURVEYOR));
+	public static final RegistryObject<Item> DUNGEON_SOCKET_WAND = REGISTRY.register("dungeon_socket_wand", () -> new DungeonBuilderWandItem(DungeonBuilderTool.SOCKET));
+	public static final RegistryObject<Item> DUNGEON_ENCOUNTER_WAND = REGISTRY.register("dungeon_encounter_wand", () -> new DungeonBuilderWandItem(DungeonBuilderTool.ENCOUNTER));
+	public static final RegistryObject<Item> DUNGEON_FEATURE_WAND = REGISTRY.register("dungeon_feature_wand", () -> new DungeonBuilderWandItem(DungeonBuilderTool.FEATURE));
+	public static final RegistryObject<Item> DUNGEON_BUILDER_WAND = REGISTRY.register("dungeon_builder_wand", () -> new DungeonBuilderWandItem(DungeonBuilderTool.BUILDER));
 
 	// â”€â”€ Guild System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 	public static final RegistryObject<Item> GUILD_COMPUTER = block(SololevelingModBlocks.GUILD_COMPUTER);

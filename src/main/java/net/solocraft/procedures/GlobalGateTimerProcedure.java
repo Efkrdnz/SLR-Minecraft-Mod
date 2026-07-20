@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.util.GateSpawnerUtil;
+import net.solocraft.util.DungeonBuilderMode;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -28,6 +29,8 @@ public class GlobalGateTimerProcedure {
 	}
 
 	private static void execute(@Nullable Event event, LevelAccessor world) {
+		if (DungeonBuilderMode.isActive(world))
+			return;
 		if (!world.isClientSide()) {
 			if ((world instanceof Level _lvl ? _lvl.dimension() : Level.OVERWORLD) == Level.OVERWORLD) {
 				if (world.getLevelData().getGameTime() % 20 == 0) {

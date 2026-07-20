@@ -51,6 +51,8 @@ public class GiveKillAdvancementsProcedure {
 		if (event.getEntity() == null)
 			return;
 		Entity deadEntity = event.getEntity();
+		if (deadEntity.getPersistentData().getBoolean(net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG))
+			return;
 		// Check if the dead entity is in the soloboss tag
 		if (!isSoloBoss(deadEntity))
 			return;

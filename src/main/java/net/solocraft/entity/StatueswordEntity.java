@@ -56,6 +56,7 @@ public class StatueswordEntity extends Monster implements GeoEntity {
 	public static final EntityDataAccessor<Boolean> SHOOT = SynchedEntityData.defineId(StatueswordEntity.class, EntityDataSerializers.BOOLEAN);
 	public static final EntityDataAccessor<String> ANIMATION = SynchedEntityData.defineId(StatueswordEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> TEXTURE = SynchedEntityData.defineId(StatueswordEntity.class, EntityDataSerializers.STRING);
+	public static final EntityDataAccessor<Float> TEMPLE_SCALE = SynchedEntityData.defineId(StatueswordEntity.class, EntityDataSerializers.FLOAT);
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	private boolean swinging;
 	private boolean lastloop;
@@ -79,6 +80,7 @@ public class StatueswordEntity extends Monster implements GeoEntity {
 		this.entityData.define(SHOOT, false);
 		this.entityData.define(ANIMATION, "undefined");
 		this.entityData.define(TEXTURE, "statue_sword");
+		this.entityData.define(TEMPLE_SCALE, 1.0F);
 	}
 
 	public void setTexture(String texture) {
@@ -87,6 +89,15 @@ public class StatueswordEntity extends Monster implements GeoEntity {
 
 	public String getTexture() {
 		return this.entityData.get(TEXTURE);
+	}
+
+	public void setTempleScale(float scale) {
+		this.entityData.set(TEMPLE_SCALE, Math.max(1.0F, Math.min(2.0F, scale)));
+		this.refreshDimensions();
+	}
+
+	public float getTempleScale() {
+		return this.entityData.get(TEMPLE_SCALE);
 	}
 
 	@Override
@@ -151,6 +162,7 @@ public class StatueswordEntity extends Monster implements GeoEntity {
 	public void addAdditionalSaveData(CompoundTag compound) {
 		super.addAdditionalSaveData(compound);
 		compound.putString("Texture", this.getTexture());
+		compound.putFloat("TempleScale", this.getTempleScale());
 	}
 
 	@Override
@@ -158,17 +170,25 @@ public class StatueswordEntity extends Monster implements GeoEntity {
 		super.readAdditionalSaveData(compound);
 		if (compound.contains("Texture"))
 			this.setTexture(compound.getString("Texture"));
+		if (compound.contains("TempleScale"))
+			this.setTempleScale(compound.getFloat("TempleScale"));
 	}
 
 	@Override
-	public void baseTick() {
-		super.baseTick();
-		this.refreshDimensions();
+	public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+		super.onSyncedDataUpdated(key);
+		if (TEMPLE_SCALE.equals(key))
+			this.refreshDimensions();
 	}
 
 	@Override
 	public EntityDimensions getDimensions(Pose p_33597_) {
-		return super.getDimensions(p_33597_).scale((float) 1);
+		float scale = this.getTempleScale();
+		return EntityDimensions.scalable(2.1F * scale, 6.2F * scale);
+	}
+
+	@Override
+	public void knockback(double strength, double x, double z) {
 	}
 
 	public static void init() {
@@ -181,6 +201,7 @@ public class StatueswordEntity extends Monster implements GeoEntity {
 		builder = builder.add(Attributes.ARMOR, 0);
 		builder = builder.add(Attributes.ATTACK_DAMAGE, 0);
 		builder = builder.add(Attributes.FOLLOW_RANGE, 32);
+		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 1);
 		return builder;
 	}
 

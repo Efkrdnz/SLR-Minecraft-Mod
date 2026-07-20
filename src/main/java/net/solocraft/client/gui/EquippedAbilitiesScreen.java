@@ -3,6 +3,7 @@ package net.solocraft.client.gui;
 import net.solocraft.SololevelingMod;
 import net.solocraft.client.gui.system.SystemContainerScreen;
 import net.solocraft.client.gui.system.SystemScreen;
+import net.solocraft.client.gui.system.SystemSettingsScreen;
 import net.solocraft.client.gui.system.SystemTooltip;
 import net.solocraft.network.EquippedAbilitiesButtonMessage;
 import net.solocraft.network.SololevelingModVariables;
@@ -10,6 +11,7 @@ import net.solocraft.procedures.ReturnAbilitySlotColorProcedure;
 import net.solocraft.procedures.ReturnAbilitySlotProcedure;
 import net.solocraft.procedures.SkillSlotHelper;
 import net.solocraft.util.JobSkillManager;
+import net.solocraft.util.SystemPlayerAccess;
 import net.solocraft.world.inventory.EquippedAbilitiesMenu;
 
 import net.minecraft.client.gui.GuiGraphics;
@@ -109,12 +111,20 @@ public class EquippedAbilitiesScreen extends SystemContainerScreen<EquippedAbili
 	@Override
 	public void init() {
 		super.init();
-		this.addRenderableWidget(new SystemScreen.SystemButton(leftPos + pRelX + 3, topPos + pRelY + 2, 40, 12, Component.literal("< Back"), b -> {
-			if (this.minecraft != null && this.minecraft.player != null) {
+		boolean systemPlayer = SystemPlayerAccess.hasSystem(entity);
+		this.addRenderableWidget(new SystemScreen.SystemButton(leftPos + pRelX + 3, topPos + pRelY + 2, 42, 12,
+				Component.literal(systemPlayer ? "< Back" : "Close"), b -> {
+			if (systemPlayer && this.minecraft != null && this.minecraft.player != null) {
 				this.minecraft.player.closeContainer();
 				openSystemScreen(new net.solocraft.client.gui.system.SystemPanelScreen());
+			} else {
+				beginClose();
 			}
 		}));
+		if (!systemPlayer) {
+			this.addRenderableWidget(new SystemScreen.SystemButton(leftPos + pRelX + pW - 58, topPos + pRelY + 2,
+					55, 12, Component.literal("Settings"), b -> openNonSystemSettings()));
+		}
 
 		pageButton = new SystemScreen.SystemButton(leftPos + pRelX + pW - 72, topPos + pRelY + 20, 60, 16, Component.literal("Page 2"), b -> togglePage());
 		this.addRenderableWidget(pageButton);
@@ -129,6 +139,18 @@ public class EquippedAbilitiesScreen extends SystemContainerScreen<EquippedAbili
 			this.addRenderableWidget(clearButtons[i]);
 		}
 		refreshPageButton();
+	}
+
+	@Override
+	protected boolean allowsNonSystemAccess() {
+		return true;
+	}
+
+	private void openNonSystemSettings() {
+		if (this.minecraft == null || this.minecraft.player == null)
+			return;
+		this.minecraft.player.closeContainer();
+		this.minecraft.setScreen(new SystemSettingsScreen(true));
 	}
 
 	private int displaySlot(int row) {

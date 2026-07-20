@@ -4,7 +4,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7.+'
 }
 
-version = '1.0'
+version = '1.0.0'
 group = 'com.yourname.modid'
 archivesBaseName = 'modid'
 
@@ -118,6 +118,9 @@ mixin {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+    // This project generates many anonymous/nested classes. A full javac pass
+    // prevents stale incremental output from producing an incomplete release jar.
+    options.incremental = false
 }
 
 tasks.register('auditProcedureReferences') {
@@ -158,11 +161,96 @@ tasks.register('auditProcedureReferences') {
     }
 }
 
+tasks.register('auditShaderDefinitions') {
+    group = 'verification'
+    description = 'Fails the build when a shader JSON uniform has the wrong number of default values.'
+
+    doLast {
+        def failures = []
+        fileTree('src/main/resources/assets/sololeveling/shaders') {
+            include '**/*.json'
+        }.each { shaderFile ->
+            def definition = new groovy.json.JsonSlurper().parse(shaderFile)
+            (definition.uniforms ?: []).each { uniform ->
+                if (uniform.count != null && uniform.values != null && uniform.values.size() != uniform.count as int) {
+                    failures << "${project.relativePath(shaderFile)}: ${uniform.name} expects ${uniform.count} values but has ${uniform.values.size()}"
+                }
+            }
+        }
+
+        if (!failures.isEmpty()) {
+            throw new GradleException("Invalid shader definitions:\n - " + failures.join('\n - '))
+        }
+
+        logger.lifecycle('Shader definition audit passed.')
+    }
+}
+
 tasks.named('check') {
-    dependsOn 'auditProcedureReferences'
+    dependsOn 'auditProcedureReferences', 'auditShaderDefinitions'
 }
 
 tasks.named('jar') {
-    dependsOn 'auditProcedureReferences'
+    dependsOn 'auditProcedureReferences', 'auditShaderDefinitions'
     archiveFileName = 'SLR1.0.0.jar'
+}
+
+// ForgeGradle writes the production-remapped jar to build/reobfJar/output.jar.
+// Copy it over the development-mapped jar so build/libs always contains the
+// artifact that can be installed in a normal Forge/CurseForge instance.
+tasks.matching { it.name == 'reobfJar' }.configureEach {
+    doLast {
+        def reobfuscatedJar = file("${buildDir}/reobfJar/output.jar")
+        if (!reobfuscatedJar.isFile()) {
+            throw new GradleException("Reobfuscated jar was not produced: ${reobfuscatedJar}")
+        }
+
+        copy {
+            from reobfuscatedJar
+            into file("${buildDir}/libs")
+            rename { 'SLR1.0.0.jar' }
+        }
+        logger.lifecycle('Production jar copied to build/libs/SLR1.0.0.jar')
+    }
+}
+
+tasks.register('auditJarClassCompleteness') {
+    group = 'verification'
+    description = 'Fails when any compiled class, including nested classes, is absent from the reobfuscated release jar.'
+    dependsOn 'reobfJar'
+
+    doLast {
+        def classesRoot = file("${buildDir}/classes/java/main")
+        def releaseJar = file("${buildDir}/libs/SLR1.0.0.jar")
+        if (!releaseJar.isFile())
+            throw new GradleException("Release jar was not produced: ${releaseJar}")
+
+        def compiledClasses = fileTree(classesRoot) {
+            include '**/*.class'
+        }.files.collect { classesRoot.toPath().relativize(it.toPath()).toString().replace('\\', '/') } as Set
+
+        def packagedClasses = new LinkedHashSet<String>()
+        new java.util.zip.ZipFile(releaseJar).withCloseable { zip ->
+            zip.entries().each { entry ->
+                if (!entry.directory && entry.name.endsWith('.class'))
+                    packagedClasses.add(entry.name)
+            }
+        }
+
+        def missing = (compiledClasses - packagedClasses).sort()
+        def unexpected = (packagedClasses - compiledClasses).sort()
+        if (!missing.isEmpty() || !unexpected.isEmpty()) {
+            throw new GradleException(
+                    "Incomplete release jar.\n" +
+                            "Missing compiled classes: ${missing.isEmpty() ? 'none' : missing.join(', ')}\n" +
+                            "Unexpected class entries: ${unexpected.isEmpty() ? 'none' : unexpected.join(', ')}"
+            )
+        }
+
+        logger.lifecycle("Release jar class audit passed: ${compiledClasses.size()} classes packaged, including nested classes.")
+    }
+}
+
+tasks.named('build') {
+    dependsOn 'auditJarClassCompleteness'
 }

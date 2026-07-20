@@ -1,5 +1,7 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.DungeonBuilderMode;
+
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -34,6 +36,8 @@ public class ClassSelectorGiveProcedure {
 
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
+			return;
+		if (DungeonBuilderMode.isActive(world))
 			return;
 		if (!(entity instanceof ServerPlayer _plr0 && _plr0.level() instanceof ServerLevel && _plr0.getAdvancements().getOrStartProgress(_plr0.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:awakened"))).isDone())) {
 			if (entity instanceof ServerPlayer _player) {

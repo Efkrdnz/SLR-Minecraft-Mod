@@ -1,0 +1,213 @@
+{
+  "credit": "SoloCraft mana crystal deposit",
+  "ambientocclusion": true,
+  "textures": {
+    "base": "sololeveling:block/mana_crystal_deposit",
+    "vein": "sololeveling:block/mana_crystal_deposit",
+    "crystal": "sololeveling:block/mana_crystal_shard",
+    "particle": "sololeveling:block/mana_crystal_deposit"
+  },
+  "elements": [
+    {
+      "from": [1, 0, 1],
+      "to": [15, 3, 15],
+      "faces": {
+        "down": { "texture": "#base", "cullface": "down" },
+        "up": { "texture": "#vein" },
+        "north": { "texture": "#base", "cullface": "north" },
+        "south": { "texture": "#base", "cullface": "south" },
+        "west": { "texture": "#base", "cullface": "west" },
+        "east": { "texture": "#base", "cullface": "east" }
+      }
+    },
+    {
+      "from": [0.75, 3, 1.5],
+      "to": [6.75, 4, 7.75],
+      "faces": {
+        "down": { "texture": "#base" },
+        "up": { "texture": "#vein" },
+        "north": { "texture": "#base" },
+        "south": { "texture": "#base" },
+        "west": { "texture": "#base" },
+        "east": { "texture": "#base" }
+      }
+    },
+    {
+      "from": [9, 3, 8],
+      "to": [15.25, 3.75, 14.75],
+      "faces": {
+        "down": { "texture": "#base" },
+        "up": { "texture": "#vein" },
+        "north": { "texture": "#base" },
+        "south": { "texture": "#base" },
+        "west": { "texture": "#base" },
+        "east": { "texture": "#base" }
+      }
+    },
+    {
+      "from": [4.75, 3, 4.75],
+      "to": [11.25, 13, 11.25],
+      "faces": {
+        "down": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "up": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "north": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "west": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "east": { "uv": [0, 0, 16, 16], "texture": "#crystal" }
+      }
+    },
+    {
+      "from": [1.75, 3, 3],
+      "to": [6, 10.75, 7.25],
+      "rotation": {
+        "origin": [4, 3, 5.25],
+        "axis": "z",
+        "angle": -22.5,
+        "rescale": true
+      },
+      "faces": {
+        "down": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "up": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "north": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "west": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "east": { "uv": [0, 0, 16, 16], "texture": "#crystal" }
+      }
+    },
+    {
+      "from": [9.75, 3, 8.25],
+      "to": [14.25, 10.5, 12.75],
+      "rotation": {
+        "origin": [12, 3, 10.5],
+        "axis": "z",
+        "angle": 22.5,
+        "rescale": true
+      },
+      "faces": {
+        "down": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "up": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "north": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "west": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "east": { "uv": [0, 0, 16, 16], "texture": "#crystal" }
+      }
+    },
+    {
+      "from": [8.25, 3, 1.25],
+      "to": [12, 9.5, 5],
+      "rotation": {
+        "origin": [10.25, 3, 3.25],
+        "axis": "x",
+        "angle": -22.5,
+        "rescale": true
+      },
+      "faces": {
+        "down": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "up": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "north": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "west": { "uv": [0, 0, 16, 16], "texture": "#crystal" },
+        "east": { "uv": [0, 0, 16, 16], "texture": "#crystal" }
+      }
+    },
+    {
+      "from": [5.75, 13, 5.75],
+      "to": [10.25, 15, 10.25],
+      "faces": {
+        "down": { "texture": "#crystal" },
+        "up": { "texture": "#crystal" },
+        "north": { "texture": "#crystal" },
+        "south": { "texture": "#crystal" },
+        "west": { "texture": "#crystal" },
+        "east": { "texture": "#crystal" }
+      }
+    },
+    {
+      "from": [7, 15, 7],
+      "to": [9, 16, 9],
+      "faces": {
+        "down": { "texture": "#crystal" },
+        "up": { "texture": "#crystal" },
+        "north": { "texture": "#crystal" },
+        "south": { "texture": "#crystal" },
+        "west": { "texture": "#crystal" },
+        "east": { "texture": "#crystal" }
+      }
+    },
+    {
+      "from": [2.6, 10.75, 3.85],
+      "to": [5.15, 13.25, 6.4],
+      "rotation": {
+        "origin": [4, 3, 5.25],
+        "axis": "z",
+        "angle": -22.5,
+        "rescale": true
+      },
+      "faces": {
+        "down": { "texture": "#crystal" },
+        "up": { "texture": "#crystal" },
+        "north": { "texture": "#crystal" },
+        "south": { "texture": "#crystal" },
+        "west": { "texture": "#crystal" },
+        "east": { "texture": "#crystal" }
+      }
+    },
+    {
+      "from": [10.75, 10.5, 9.25],
+      "to": [13.25, 13, 11.75],
+      "rotation": {
+        "origin": [12, 3, 10.5],
+        "axis": "z",
+        "angle": 22.5,
+        "rescale": true
+      },
+      "faces": {
+        "down": { "texture": "#crystal" },
+        "up": { "texture": "#crystal" },
+        "north": { "texture": "#crystal" },
+        "south": { "texture": "#crystal" },
+        "west": { "texture": "#crystal" },
+        "east": { "texture": "#crystal" }
+      }
+    },
+    {
+      "from": [9.1, 9.5, 2.1],
+      "to": [11.15, 11.75, 4.15],
+      "rotation": {
+        "origin": [10.25, 3, 3.25],
+        "axis": "x",
+        "angle": -22.5,
+        "rescale": true
+      },
+      "faces": {
+        "down": { "texture": "#crystal" },
+        "up": { "texture": "#crystal" },
+        "north": { "texture": "#crystal" },
+        "south": { "texture": "#crystal" },
+        "west": { "texture": "#crystal" },
+        "east": { "texture": "#crystal" }
+      }
+    }
+  ],
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [75, 45, 0],
+      "translation": [0, 2.5, 0],
+      "scale": [0.35, 0.35, 0.35]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 45, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.4, 0.4, 0.4]
+    },
+    "gui": {
+      "rotation": [30, 225, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.75, 0.75, 0.75]
+    },
+    "ground": {
+      "translation": [0, 3, 0],
+      "scale": [0.4, 0.4, 0.4]
+    }
+  }
+}

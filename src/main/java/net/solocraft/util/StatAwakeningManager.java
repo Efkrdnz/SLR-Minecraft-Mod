@@ -156,6 +156,10 @@ public final class StatAwakeningManager {
 
         // 2. Grant starter skills for the class
         grantStarterSkills(sp, classNum);
+		if (classNum == 2) {
+			name = MageSpellProgression.displayName(sp);
+			color = MageSpellProgression.isBarrierMage(sp) ? "aqua" : "red";
+		}
 
         SystemNotifications.showTitleUnder(sp, CLASS_ACCENTS[classNum - 1], 140,
             Component.literal("STAT AWAKENING").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
@@ -201,6 +205,11 @@ public final class StatAwakeningManager {
      * Skills not yet in Plist are appended; duplicates are skipped.
      */
     private static void grantStarterSkills(ServerPlayer sp, int classNum) {
+		if (classNum == 2) {
+			MageSpellProgression.assignRandomSpecialization(sp);
+			MageSpellProgression.grantStarterSpells(sp);
+			return;
+		}
         String[] skills = STARTER_SKILLS[classNum - 1];
         for (String skill : skills) {
             addSkillIfMissing(sp, skill);
@@ -257,7 +266,7 @@ public final class StatAwakeningManager {
         // 1 Assassin
         { "Shadowstep", "Backstab" },
         // 2 Mage
-        { "Fireball", "Water Slash" },
+        { FireMageSpellManager.IGNITION_ORB, "Water Slash" },
         // 3 Fighter
         { "Slash Dash", "Ground Slam" },
         // 4 Tanker

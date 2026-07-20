@@ -1,0 +1,25 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.8,
+  "downfall": 0.0,
+  "effects": {
+    "sky_color": 3422525,
+    "fog_color": 2364718,
+    "water_color": 3026487,
+    "water_fog_color": 920330,
+    "grass_color": 7103847,
+    "foliage_color": 5924412,
+    "particle": { "options": { "type": "minecraft:ash" }, "probability": 0.00625 }
+  },
+  "spawners": {
+    "monster": [
+      { "type": "sololeveling:skeleton_warrior", "weight": 55, "minCount": 2, "maxCount": 5 },
+      { "type": "sololeveling:skeleton_brute", "weight": 16, "minCount": 1, "maxCount": 2 },
+      { "type": "sololeveling:mutated", "weight": 12, "minCount": 1, "maxCount": 2 }
+    ],
+    "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": [[], [], [], [], [], [], [], [], [], [], []]
+}

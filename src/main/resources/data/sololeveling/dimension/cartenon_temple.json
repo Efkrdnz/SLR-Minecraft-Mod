@@ -1,0 +1,18 @@
+{
+  "type": "sololeveling:cartenon_temple",
+  "generator": {
+    "type": "minecraft:flat",
+    "settings": {
+      "biome": "sololeveling:dungeon_biome_igris",
+      "features": false,
+      "lakes": false,
+      "layers": [
+        {
+          "block": "minecraft:air",
+          "height": 1
+        }
+      ],
+      "structure_overrides": []
+    }
+  }
+}

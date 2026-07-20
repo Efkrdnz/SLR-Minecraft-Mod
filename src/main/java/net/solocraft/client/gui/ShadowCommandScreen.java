@@ -84,16 +84,20 @@ public class ShadowCommandScreen extends AbstractContainerScreen<ShadowCommandMe
 		updateAnimation();
 		if (closed)
 			return;
+		ResponsiveGuiScale.Transform transform = responsiveTransform();
+		int logicalMouseX = transform.logicalMouseX(mouseX);
+		int logicalMouseY = transform.logicalMouseY(mouseY);
 		this.renderBackground(guiGraphics);
 		guiGraphics.flush();
+		ResponsiveGuiScale.push(guiGraphics, transform);
 		int centerY = topPos + imageHeight / 2;
 		int halfH = Math.round((imageHeight / 2f + 4f) * reveal);
 		int top = centerY - halfH;
 		int bottom = centerY + halfH;
 		int sx0 = leftPos - 3;
 		int sx1 = leftPos + imageWidth + 3;
-		guiGraphics.enableScissor(sx0, top, sx1, bottom);
-		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		ResponsiveGuiScale.enableScissor(guiGraphics, transform, sx0, top, sx1, bottom);
+		super.render(guiGraphics, logicalMouseX, logicalMouseY, partialTicks);
 		guiGraphics.disableScissor();
 		if (reveal < 1.0f) {
 			guiGraphics.fill(sx0, top, sx1, top + 1, ACCENT);
@@ -101,11 +105,26 @@ public class ShadowCommandScreen extends AbstractContainerScreen<ShadowCommandMe
 			guiGraphics.fill(sx0, top + 1, sx1, top + 2, 0x77B75CFF);
 			guiGraphics.fill(sx0, bottom - 2, sx1, bottom - 1, 0x7743C8FF);
 		}
+		boolean unavailableHovered = state == State.OPEN && clearDungeonButton != null && !clearDungeonButton.active
+				&& clearDungeonButton.isMouseOver(logicalMouseX, logicalMouseY);
+		ResponsiveGuiScale.pop(guiGraphics);
 		if (state == State.OPEN) {
-			if (clearDungeonButton != null && !clearDungeonButton.active && clearDungeonButton.isMouseOver(mouseX, mouseY))
+			if (unavailableHovered)
 				guiGraphics.renderTooltip(this.font, Component.literal("Only available inside a dungeon"), mouseX, mouseY);
 			this.renderTooltip(guiGraphics, mouseX, mouseY);
 		}
+	}
+
+	private ResponsiveGuiScale.Transform responsiveTransform() {
+		return ResponsiveGuiScale.fit(this.width, this.height, PANEL_W + 8, PANEL_H + 8);
+	}
+
+	private double logicalMouseX(double mouseX) {
+		return responsiveTransform().logicalX(mouseX);
+	}
+
+	private double logicalMouseY(double mouseY) {
+		return responsiveTransform().logicalY(mouseY);
 	}
 
 	@Override
@@ -145,7 +164,28 @@ public class ShadowCommandScreen extends AbstractContainerScreen<ShadowCommandMe
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
 		if (state != State.OPEN)
 			return true;
-		return super.mouseClicked(mouseX, mouseY, button);
+		return super.mouseClicked(logicalMouseX(mouseX), logicalMouseY(mouseY), button);
+	}
+
+	@Override
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
+		return super.mouseReleased(logicalMouseX(mouseX), logicalMouseY(mouseY), button);
+	}
+
+	@Override
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		float scale = responsiveTransform().scale();
+		return super.mouseDragged(logicalMouseX(mouseX), logicalMouseY(mouseY), button, dragX / scale, dragY / scale);
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+		return super.mouseScrolled(logicalMouseX(mouseX), logicalMouseY(mouseY), delta);
+	}
+
+	@Override
+	public void mouseMoved(double mouseX, double mouseY) {
+		super.mouseMoved(logicalMouseX(mouseX), logicalMouseY(mouseY));
 	}
 
 	@Override

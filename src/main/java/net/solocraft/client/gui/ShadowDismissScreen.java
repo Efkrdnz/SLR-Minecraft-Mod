@@ -94,7 +94,9 @@ public class ShadowDismissScreen extends ShadowStyledScreen<ShadowDismissMenu> {
 	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
 		if (!isOpeningOrOpen())
 			return true;
-		if (isOverBox(mouseX, mouseY, leftPos + LIST_X, topPos + LIST_Y, LIST_W, LIST_H)) {
+		double logicalMouseX = logicalMouseX(mouseX);
+		double logicalMouseY = logicalMouseY(mouseY);
+		if (isOverBox(logicalMouseX, logicalMouseY, leftPos + LIST_X, topPos + LIST_Y, LIST_W, LIST_H)) {
 			int max = maxScroll(visibleEntries().size(), visibleRows());
 			scroll = clamp(scroll - (int) Math.signum(delta), 0, max);
 			layoutDismissButtons();
@@ -229,7 +231,10 @@ public class ShadowDismissScreen extends ShadowStyledScreen<ShadowDismissMenu> {
 		protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTicks) {
 			if (!visible)
 				return;
-			g.enableScissor(clipX, clipY, clipX + clipW, clipY + clipH);
+			ResponsiveGuiScale.Transform transform = ResponsiveGuiScale.fit(
+					Minecraft.getInstance().getWindow().getGuiScaledWidth(),
+					Minecraft.getInstance().getWindow().getGuiScaledHeight(), PANEL_W + 8, PANEL_H + 8);
+			ResponsiveGuiScale.enableScissor(g, transform, clipX, clipY, clipX + clipW, clipY + clipH);
 			boolean hovered = this.isHoveredOrFocused();
 			g.fill(getX(), getY(), getX() + width, getY() + height, hovered ? 0x8843C8FF : 0x55102338);
 			outline(g, getX(), getY(), width, height, hovered ? 0xFFFFFFFF : ACCENT_BLUE);

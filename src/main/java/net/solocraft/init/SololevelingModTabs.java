@@ -121,6 +121,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.PURIFIED_BLOOD_OF_THE_DEMON_KING.get());
 				tabData.accept(SololevelingModItems.WORLD_TREES_FRAGMENT.get());
 				tabData.accept(SololevelingModItems.SPRING_WATER_OF_THE_ECHOING_FOREST.get());
+				tabData.accept(SololevelingModItems.ORB_OF_AVARICE.get());
 				tabData.accept(SololevelingModItems.GIVE_BERU.get());
 				tabData.accept(SololevelingModItems.GIVE_IGRIS.get());
 				tabData.accept(SololevelingModItems.GRAND_MAGE.get());
@@ -171,6 +172,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModBlocks.DEEPSLATE_KEYBLOCK_RED.get().asItem());
 				tabData.accept(SololevelingModBlocks.CRYSTAL_GOLEM_SPAWNER.get().asItem());
 				tabData.accept(SololevelingModBlocks.GOLEM_DROP_BLOCK_GEM.get().asItem());
+				tabData.accept(SololevelingModBlocks.MANA_CRYSTAL_DEPOSIT.get().asItem());
 				tabData.accept(SololevelingModBlocks.INSTANCE_DUNGEON_KEY_LOGGER.get().asItem());
 				tabData.accept(SololevelingModBlocks.INSTANCE_COVER.get().asItem());
 				tabData.accept(SololevelingModBlocks.HUNTER_RANK_EVALUATOR.get().asItem());
@@ -198,7 +200,14 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.JOB_KEY.get());
 				tabData.accept(SololevelingModItems.INSTANCE_DUNGEON_KEY.get());
 				tabData.accept(SololevelingModItems.PORTAL_BERU_SPAWN_EGG.get());
-				tabData.accept(SololevelingModItems.RED_GATE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_DESTRUCTION_GATE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_FROST_GATE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_FANGS_GATE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_PLAGUES_GATE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_IRON_BODY_GATE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_WHITE_FLAMES_GATE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_TRANSFIGURATION_GATE_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_BEGINNING_GATE_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.PORTAL_1_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.PORTAL_LUSH_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.PORTAL_KARGALGANS_THRONE_ROOM_SPAWN_EGG.get());
@@ -240,12 +249,28 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.RUNESTONE_CURSED_SMOKE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_WATERSLASH.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_LIGHTBALL.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_FIREBALL.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_FLAME_WEAVING.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_IGNITION_ORB.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_INFERNO_LANCE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_FLASHFIRE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_CREMATION.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_FURNACE_DOMINION.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_HEAVENFALL.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_FRACTURE_BOLT.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_PRISM_RAMPART.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_REPULSION_FRAME.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_SEALING_PRISM.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_MIRROR_WARD.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_RESONANT_COLLAPSE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_ABSOLUTE_BASTION.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_AETHER_BOLT.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_VECTOR_STEP.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_POLARITY_SPHERE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_RUNIC_RELAY.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_ASTRAL_ARSENAL.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_DIMENSIONAL_REND.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_GRAND_FORMULA_CONVERGENCE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_LIGHT_GOLEM.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_FLAME_TORNADO.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_HEAVY_FLAME.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_FLAME_VORTEX.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_FIRE_RAIN.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_DETECTION.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_MAGIC_MISSILES.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SLASHDASH.get());
@@ -279,6 +304,13 @@ public class SololevelingModTabs {
 
 	@SubscribeEvent
 	public static void buildTabContentsVanilla(BuildCreativeModeTabContentsEvent tabData) {
+		if (CreativeModeTabs.OP_BLOCKS.equals(tabData.getTabKey()) && tabData.hasPermissions()) {
+			tabData.accept(SololevelingModItems.DUNGEON_SURVEYOR_WAND.get());
+			tabData.accept(SololevelingModItems.DUNGEON_SOCKET_WAND.get());
+			tabData.accept(SololevelingModItems.DUNGEON_ENCOUNTER_WAND.get());
+			tabData.accept(SololevelingModItems.DUNGEON_FEATURE_WAND.get());
+			tabData.accept(SololevelingModItems.DUNGEON_BUILDER_WAND.get());
+		}
 
 		if (tabData.getTabKey() == CreativeModeTabs.REDSTONE_BLOCKS) {
 			tabData.accept(SololevelingModBlocks.DUNGEON_BLOCK.get().asItem());

@@ -2,89 +2,48 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MasterylvlupassassinProcedure {
+	private static final List<String> MASTERY_SKILLS = List.of("Quickslashes", "Shadowstep", "Backstab", "Dualwield");
+
 	public static void execute(Entity entity) {
 		if (entity == null)
 			return;
-		while (true) {
-			if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Stealth")
-					&& ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Quickslashes")
-					&& ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Shadowstep")
-					&& ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Backstab")
-					&& ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Dualwield")) {
-				break;
-			} else {
-				if (Math.random() < (1) / ((float) 6)) {
-					if (!((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Stealth")) {
-						{
-							String _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist + "Stealth" + ",";
-							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-								capability.Plist = _setval;
-								capability.syncPlayerVariables(entity);
-							});
-						}
-						if (entity instanceof Player _player && !_player.level().isClientSide())
-							_player.displayClientMessage(Component.literal(("Gained skill: " + "Stealth")), false);
-						break;
-					}
-				} else if (Math.random() < (1) / ((float) 4)) {
-					if (!((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Quickslashes")) {
-						{
-							String _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist + "Quickslashes" + ",";
-							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-								capability.Plist = _setval;
-								capability.syncPlayerVariables(entity);
-							});
-						}
-						if (entity instanceof Player _player && !_player.level().isClientSide())
-							_player.displayClientMessage(Component.literal(("Gained skill: " + "Quickslashes")), false);
-						break;
-					}
-				} else if (Math.random() < (1) / ((float) 3)) {
-					if (!((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Shadowstep")) {
-						{
-							String _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist + "Shadowstep" + ",";
-							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-								capability.Plist = _setval;
-								capability.syncPlayerVariables(entity);
-							});
-						}
-						if (entity instanceof Player _player && !_player.level().isClientSide())
-							_player.displayClientMessage(Component.literal(("Gained skill: " + "Shadowstep")), false);
-						break;
-					}
-				} else if (Math.random() < (1) / ((float) 2)) {
-					if (!((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Backstab")) {
-						{
-							String _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist + "Backstab" + ",";
-							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-								capability.Plist = _setval;
-								capability.syncPlayerVariables(entity);
-							});
-						}
-						if (entity instanceof Player _player && !_player.level().isClientSide())
-							_player.displayClientMessage(Component.literal(("Gained skill: " + "Backstab")), false);
-						break;
-					}
-				} else {
-					if (!((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Dualwield")) {
-						{
-							String _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist + "Dualwield" + ",";
-							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-								capability.Plist = _setval;
-								capability.syncPlayerVariables(entity);
-							});
-						}
-						if (entity instanceof Player _player && !_player.level().isClientSide())
-							_player.displayClientMessage(Component.literal(("Gained skill: " + "Dualwield")), false);
-						break;
-					}
-				}
-			}
+		String current = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables()).Plist;
+		if (current == null)
+			current = ".";
+		List<String> missing = new ArrayList<>();
+		for (String skill : MASTERY_SKILLS) {
+			if (!containsSkill(current, skill))
+				missing.add(skill);
 		}
+		if (missing.isEmpty())
+			return;
+
+		String unlocked = missing.get(entity.level().random.nextInt(missing.size()));
+		String updated = current + unlocked + ",";
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			capability.Plist = updated;
+			capability.syncPlayerVariables(entity);
+		});
+		if (entity instanceof Player player && !player.level().isClientSide())
+			player.displayClientMessage(Component.literal("Gained skill: " + unlocked), false);
+	}
+
+	private static boolean containsSkill(String encoded, String skill) {
+		if (encoded == null || encoded.isBlank())
+			return false;
+		for (String entry : encoded.split(",")) {
+			if (entry.replaceFirst("^\\.", "").trim().equalsIgnoreCase(skill))
+				return true;
+		}
+		return false;
 	}
 }

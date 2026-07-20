@@ -23,7 +23,7 @@ public class RedGateRenderer extends GeoEntityRenderer<RedGateEntity> {
 
 	@Override
 	public RenderType getRenderType(RedGateEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucent(getTextureLocation(animatable));
+		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
 	}
 
 	@Override

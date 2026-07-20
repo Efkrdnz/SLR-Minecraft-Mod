@@ -18,6 +18,8 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.phys.Vec3;
 
@@ -217,9 +219,21 @@ public class SystemNotificationWorldRenderer {
 		List<FormattedCharSequence> lines = new ArrayList<>();
 		if (under == null)
 			return lines;
-		String text = under.getString().replace("\\n", "\n");
-		for (String paragraph : text.split("\n", -1)) {
-			List<FormattedCharSequence> split = font.split(Component.literal(paragraph.isEmpty() ? " " : paragraph), UNDER_MAX_WIDTH);
+		List<MutableComponent> paragraphs = new ArrayList<>();
+		paragraphs.add(Component.empty());
+		under.visit((style, text) -> {
+			String[] parts = text.replace("\\n", "\n").split("\n", -1);
+			for (int i = 0; i < parts.length; i++) {
+				if (!parts[i].isEmpty())
+					paragraphs.get(paragraphs.size() - 1).append(Component.literal(parts[i]).withStyle(style));
+				if (i < parts.length - 1)
+					paragraphs.add(Component.empty());
+			}
+			return java.util.Optional.empty();
+		}, Style.EMPTY);
+		for (MutableComponent paragraph : paragraphs) {
+			Component line = paragraph.getString().isEmpty() ? Component.literal(" ") : paragraph;
+			List<FormattedCharSequence> split = font.split(line, UNDER_MAX_WIDTH);
 			lines.addAll(split);
 		}
 		return lines;

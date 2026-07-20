@@ -23,6 +23,8 @@ public class BarukaEntityDiesProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
+		if (entity.getPersistentData().getBoolean(net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG))
+			return;
 		double uplvl = 0;
 		if (entity instanceof BarukaEntity) {
 			if (sourceentity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) {

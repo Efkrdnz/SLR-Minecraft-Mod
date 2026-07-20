@@ -35,6 +35,25 @@ public class CooldownRemainingOnTickProcedure {
 		return remaining > 0 ? String.valueOf(remaining) : "";
 	}
 
+	/** Returns a compact cooldown label suitable for rendering directly on a skill slot. */
+	public static String executeForSkill(Entity entity, String power) {
+		if (entity == null || power == null || power.isBlank())
+			return "";
+
+		var cap = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables());
+		String cooldownKey = normalizeCooldownKey(power);
+		if (cooldownKey.equals("Back Step")) {
+			if (cap.rangerleapnum >= 3)
+				return "";
+			int remaining = Math.max(1, (int) Math.ceil(cap.rangerleaptimer / 20.0));
+			return String.valueOf(remaining);
+		}
+
+		int remaining = CooldownManager.getRemainingSeconds(entity, cooldownKey);
+		return remaining > 0 ? String.valueOf(remaining) : "";
+	}
+
 	private static String normalizeCooldownKey(String power) {
 		if (JobSkillManager.isJobSkill(power))
 			return JobSkillManager.cooldownKey(power);

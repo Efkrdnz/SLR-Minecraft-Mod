@@ -51,6 +51,8 @@ import net.solocraft.guild.GuildSavedData;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.VesselManager;
+import net.solocraft.util.CartenonTempleGenerator;
+import net.solocraft.util.DkcStructurePreviewBuilder;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -69,6 +71,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.Commands;
@@ -80,10 +84,14 @@ import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Mod.EventBusSubscriber
 public class SlrCommand {
@@ -228,9 +236,10 @@ public class SlrCommand {
 					if (entity != null)
 						direction = entity.getDirection();
 
-					SLRResetProcedure.execute(world, arguments, entity);
+					SLRResetProcedure.execute(world, arguments);
 					return 0;
 				})).then(Commands.literal("vessel")
+						.then(Commands.literal("select").executes(VesselManager::openSelection))
 						.then(Commands.literal("reset").executes(VesselManager::reset))
 						.then(Commands.literal("ruler")
 								.then(Commands.literal("ashborn").executes(arguments -> VesselManager.assign(arguments, "ruler", "ashborn")))
@@ -238,111 +247,22 @@ public class SlrCommand {
 								.then(Commands.literal("liu_zhigang").executes(arguments -> VesselManager.assign(arguments, "ruler", "liu_zhigang")))
 								.then(Commands.literal("christopher_reed").executes(arguments -> VesselManager.assign(arguments, "ruler", "christopher_reed")))
 								.then(Commands.literal("sung_il_hwan").executes(arguments -> VesselManager.assign(arguments, "ruler", "sung_il_hwan")))
-								.then(Commands.literal("sung_il_whan").executes(arguments -> VesselManager.assign(arguments, "ruler", "sung_il_whan")))
 								.then(Commands.literal("go_gunhee").executes(arguments -> VesselManager.assign(arguments, "ruler", "go_gunhee"))))
 						.then(Commands.literal("monarch")
 								.then(Commands.literal("sillad").executes(arguments -> VesselManager.assign(arguments, "monarch", "sillad")))
 								.then(Commands.literal("baran").executes(arguments -> VesselManager.assign(arguments, "monarch", "baran")))
 								.then(Commands.literal("rakan").executes(arguments -> VesselManager.assign(arguments, "monarch", "rakan")))))
-					.then(Commands.literal("rank").then(Commands.literal("E").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRERankProcedure.execute(entity);
-					return 0;
-				})).then(Commands.literal("D").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRDRankProcedure.execute(entity);
-					return 0;
-				})).then(Commands.literal("C").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRCRankProcedure.execute(entity);
-					return 0;
-				})).then(Commands.literal("B").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRBRankProcedure.execute(entity);
-					return 0;
-				})).then(Commands.literal("A").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRARankProcedure.execute(entity);
-					return 0;
-				})).then(Commands.literal("S").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRSRankProcedure.execute(world, x, y, z, entity);
-					return 0;
-				}))).then(Commands.literal("OP").then(Commands.literal("DungeonBreak").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRDungeonBreakProcedure.execute(world, x, y, z, entity);
-					return 0;
-				})).then(Commands.literal("TriggerPenaltyZone").executes(arguments -> {
+					.then(Commands.literal("rank")
+							.then(Commands.literal("E").executes(arguments -> forEachTarget(arguments, SLRERankProcedure::execute)))
+							.then(Commands.literal("D").executes(arguments -> forEachTarget(arguments, SLRDRankProcedure::execute)))
+							.then(Commands.literal("C").executes(arguments -> forEachTarget(arguments, SLRCRankProcedure::execute)))
+							.then(Commands.literal("B").executes(arguments -> forEachTarget(arguments, SLRBRankProcedure::execute)))
+							.then(Commands.literal("A").executes(arguments -> forEachTarget(arguments, SLRARankProcedure::execute)))
+							.then(Commands.literal("S").executes(arguments -> forEachTarget(arguments,
+									target -> SLRSRankProcedure.execute(target.level(), target.getX(), target.getY(), target.getZ(), target)))))
+					.then(Commands.literal("OP").then(Commands.literal("DungeonBreak").executes(arguments -> forEachTarget(arguments,
+							target -> SLRDungeonBreakProcedure.execute(target.level(), target.getX(), target.getY(), target.getZ(), target))))
+							.then(Commands.literal("TriggerPenaltyZone").executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
 					double x = arguments.getSource().getPosition().x();
 					double y = arguments.getSource().getPosition().y();
@@ -382,7 +302,7 @@ public class SlrCommand {
 					if (entity != null)
 						direction = entity.getDirection();
 
-					SLRshopsetProcedure.execute(arguments, entity);
+					SLRshopsetProcedure.execute(arguments);
 					return 0;
 				})))).then(Commands.literal("get").then(Commands.argument("amount", DoubleArgumentType.doubleArg(1, 6)).executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
@@ -396,7 +316,7 @@ public class SlrCommand {
 					if (entity != null)
 						direction = entity.getDirection();
 
-					SLRshopgetProcedure.execute(arguments, entity);
+					SLRshopgetProcedure.execute(arguments);
 					return 0;
 				})))).then(Commands.literal("gold").then(Commands.literal("Set").then(Commands.argument("amount", DoubleArgumentType.doubleArg(0)).executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
@@ -452,7 +372,7 @@ public class SlrCommand {
 					if (entity != null)
 						direction = entity.getDirection();
 
-					SLRstatsspsetProcedure.execute(arguments, entity);
+					SLRstatsspsetProcedure.execute(arguments);
 					return 0;
 				}))).then(Commands.literal("Add").then(Commands.argument("amount", DoubleArgumentType.doubleArg(1)).executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
@@ -466,7 +386,7 @@ public class SlrCommand {
 					if (entity != null)
 						direction = entity.getDirection();
 
-					SLRstatsspaddProcedure.execute(arguments, entity);
+					SLRstatsspaddProcedure.execute(arguments);
 					return 0;
 				})))).then(Commands.literal("strength").then(Commands.literal("Set").then(Commands.argument("amount", DoubleArgumentType.doubleArg(0)).executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
@@ -594,49 +514,13 @@ public class SlrCommand {
 
 					SLRstatsintelligenceaddProcedure.execute(arguments);
 					return 0;
-				}))))).then(Commands.literal("debug").then(Commands.literal("Dimension").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRdimensionProcedure.execute(entity);
-					return 0;
-				})).then(Commands.literal("ClearedGates").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRcompletedDungeonsProcedure.execute(world, entity);
-					return 0;
-				})).then(Commands.literal("CurrentGatesStatus").executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SLRcompletedDungeonPlayerProcedure.execute(world, entity);
-					return 0;
-				}))).then(Commands.literal("rewards").then(Commands.literal("collect").executes(arguments -> {
+				}))))).then(Commands.literal("debug")
+						.then(Commands.literal("Dimension").executes(arguments -> forEachTarget(arguments, SLRdimensionProcedure::execute)))
+						.then(Commands.literal("ClearedGates").executes(arguments -> forEachTarget(arguments,
+								target -> SLRcompletedDungeonsProcedure.execute(target.level(), target))))
+						.then(Commands.literal("CurrentGatesStatus").executes(arguments -> forEachTarget(arguments,
+								target -> SLRcompletedDungeonPlayerProcedure.execute(target.level(), target)))))
+					.then(Commands.literal("rewards").then(Commands.literal("collect").executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
 					double x = arguments.getSource().getPosition().x();
 					double y = arguments.getSource().getPosition().y();
@@ -794,30 +678,30 @@ public class SlrCommand {
 					.then(Commands.literal("leave").executes(arguments -> {
 						var source = arguments.getSource();
 						ServerLevel sl = source.getLevel();
-						net.minecraft.server.level.ServerPlayer self;
-						try { self = source.getPlayerOrException(); }
-						catch (Exception e) { source.sendFailure(net.minecraft.network.chat.Component.literal("§cMust be run as a player.")); return 0; }
 						GuildSavedData data = GuildSavedData.get(sl);
-						var guild = data.getGuildForPlayer(self.getUUID());
-						if (guild == null) {
-							source.sendFailure(net.minecraft.network.chat.Component.literal("§cYou are not in any guild."));
-							return 0;
-						}
-						if (guild.ownerUUID.equals(self.getUUID())) {
-							// Owner leaving = delete the guild entirely
+						int changed = 0;
+						for (var target : EntityArgument.getPlayers(arguments, "name")) {
+							var guild = data.getGuildForPlayer(target.getUUID());
+							if (guild == null) {
+								source.sendFailure(net.minecraft.network.chat.Component.literal(
+										"§c" + target.getName().getString() + " is not in any guild."));
+								continue;
+							}
 							String guildName = guild.name;
-							data.deleteGuild(guild.id);
-							source.sendSuccess(() -> net.minecraft.network.chat.Component.literal(
-								"§c§lGuild §e" + guildName + " §c§lhas been disbanded."), false);
-						} else {
-							// Regular member — just remove them
-							String guildName = guild.name;
-							guild.memberPermissions.removeIf(p -> p.playerUUID.equals(self.getUUID()));
-							data.markDirty();
-							source.sendSuccess(() -> net.minecraft.network.chat.Component.literal(
-								"§7You have left §e" + guildName + "§7."), false);
+							String targetName = target.getName().getString();
+							if (guild.ownerUUID.equals(target.getUUID())) {
+								data.deleteGuild(guild.id);
+								source.sendSuccess(() -> net.minecraft.network.chat.Component.literal(
+										"§c§lGuild §e" + guildName + " §c§lwas disbanded for §f" + targetName + "§c§l."), false);
+							} else {
+								guild.memberPermissions.removeIf(permission -> permission.playerUUID.equals(target.getUUID()));
+								data.markDirty();
+								source.sendSuccess(() -> net.minecraft.network.chat.Component.literal(
+										"§aRemoved §f" + targetName + " §afrom §e" + guildName + "§a."), false);
+							}
+							changed++;
 						}
-						return 1;
+						return changed;
 					}))
 					.then(Commands.literal("remove").then(Commands.argument("target", EntityArgument.player()).executes(arguments -> {
 						ServerLevel sl = arguments.getSource().getLevel();
@@ -852,8 +736,32 @@ public class SlrCommand {
 				)
 				.then(Commands.literal("structure")
 					.then(Commands.argument("dungeon", StringArgumentType.word())
+						.suggests((context, builder) -> SharedSuggestionProvider.suggest(structureSuggestions(), builder))
 						.executes(arguments -> {
 							String dungeonName = StringArgumentType.getString(arguments, "dungeon");
+							String normalizedDungeon = normalizeDungeonName(dungeonName);
+							if (DkcStructurePreviewBuilder.handles(normalizedDungeon)) {
+								int started = 0;
+								for (var target : EntityArgument.getPlayers(arguments, "name")) {
+									if (DkcStructurePreviewBuilder.start(target, normalizedDungeon))
+										started++;
+								}
+								final int startedBuilds = started;
+								arguments.getSource().sendSuccess(() -> Component.literal("Started " + startedBuilds
+										+ " connected DKC structure preview(s)."), false);
+								return started > 0 ? 1 : 0;
+							}
+							if (isCartenonTempleName(normalizedDungeon)) {
+								int started = 0;
+								for (var target : EntityArgument.getPlayers(arguments, "name")) {
+									if (CartenonTempleGenerator.start(target))
+										started++;
+								}
+								final int startedBuilds = started;
+								arguments.getSource().sendSuccess(() -> Component.literal("Started " + startedBuilds
+										+ " Cartenon Temple build(s)."), false);
+								return started > 0 ? 1 : 0;
+							}
 							List<String> structures = structuresForDungeon(dungeonName);
 							if (structures == null || structures.isEmpty()) {
 								arguments.getSource().sendFailure(Component.literal("§cUnknown dungeon structure set: §e" + dungeonName
@@ -875,43 +783,39 @@ public class SlrCommand {
 				.then(Commands.literal("generate")
 					.then(Commands.literal("dungeon")
 						.then(Commands.argument("complexity", IntegerArgumentType.integer(1, 10))
-							.executes(arguments -> {
-								net.minecraft.server.level.ServerPlayer target;
-								try { target = EntityArgument.getPlayer(arguments, "name"); }
-								catch (Exception e) {
-									arguments.getSource().sendFailure(net.minecraft.network.chat.Component.literal("§cTarget player not found."));
-									return 0;
-								}
+							.executes(arguments -> forEachTarget(arguments, target -> {
 								DungeonTheme theme = DungeonTheme.random();
-								net.minecraft.core.BlockPos origin = target.blockPosition();
-								String result = DungeonGenerator.generate(target.serverLevel(), origin,
+								String result = DungeonGenerator.generate(target.serverLevel(), target.blockPosition(),
 										IntegerArgumentType.getInteger(arguments, "complexity"), theme);
-								arguments.getSource().sendSuccess(
-										() -> net.minecraft.network.chat.Component.literal(result), false);
-								return 1;
-							})
+								arguments.getSource().sendSuccess(() -> Component.literal(target.getName().getString() + ": " + result), false);
+							}))
 							.then(Commands.argument("theme", StringArgumentType.word())
 								.executes(arguments -> {
-									net.minecraft.server.level.ServerPlayer target;
-									try { target = EntityArgument.getPlayer(arguments, "name"); }
-									catch (Exception e) {
-										arguments.getSource().sendFailure(net.minecraft.network.chat.Component.literal("§cTarget player not found."));
-										return 0;
-									}
 									DungeonTheme theme = DungeonTheme.fromString(
 											StringArgumentType.getString(arguments, "theme"));
-									net.minecraft.core.BlockPos origin = target.blockPosition();
-									String result = DungeonGenerator.generate(target.serverLevel(), origin,
-											IntegerArgumentType.getInteger(arguments, "complexity"), theme);
-									arguments.getSource().sendSuccess(
-											() -> net.minecraft.network.chat.Component.literal(result), false);
-									return 1;
+									return forEachTarget(arguments, target -> {
+										String result = DungeonGenerator.generate(target.serverLevel(), target.blockPosition(),
+												IntegerArgumentType.getInteger(arguments, "complexity"), theme);
+										arguments.getSource().sendSuccess(() -> Component.literal(target.getName().getString() + ": " + result), false);
+									});
 								})
 							)
 						)
 					)
 				)
 			));
+	}
+
+	private static int forEachTarget(CommandContext<CommandSourceStack> arguments, Consumer<net.minecraft.server.level.ServerPlayer> action) {
+		try {
+			var targets = EntityArgument.getPlayers(arguments, "name");
+			for (var target : targets)
+				action.accept(target);
+			return targets.size();
+		} catch (CommandSyntaxException exception) {
+			arguments.getSource().sendFailure(Component.literal("Unable to resolve target players"));
+			return 0;
+		}
 	}
 
 	private static int modifyShadowSoldiers(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> arguments, int amount) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
@@ -956,6 +860,19 @@ public class SlrCommand {
 
 	private static List<String> structuresForDungeon(String dungeonName) {
 		return STRUCTURE_SETS.get(normalizeDungeonName(dungeonName));
+	}
+
+	private static List<String> structureSuggestions() {
+		List<String> suggestions = new ArrayList<>(STRUCTURE_SETS.keySet());
+		suggestions.add("cartenon");
+		suggestions.addAll(DkcStructurePreviewBuilder.suggestions());
+		suggestions.sort(String::compareTo);
+		return suggestions;
+	}
+
+	private static boolean isCartenonTempleName(String normalizedName) {
+		return normalizedName.equals("cartenon") || normalizedName.equals("cartenontemple")
+				|| normalizedName.equals("doubletemple") || normalizedName.equals("doubleungeon");
 	}
 
 	private static String normalizeDungeonName(String dungeonName) {

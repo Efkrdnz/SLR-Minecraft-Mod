@@ -23,7 +23,7 @@ public class PortalAncientGolemRenderer extends GeoEntityRenderer<PortalAncientG
 
 	@Override
 	public RenderType getRenderType(PortalAncientGolemEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucent(getTextureLocation(animatable));
+		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
 	}
 
 	@Override

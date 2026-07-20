@@ -30,6 +30,9 @@ public class Ability1OnKeyReleasedProcedure {
 			LiuZhigangCombatManager.releaseDragonFlash(entity, 0);
 			return;
 		}
+		if (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables()).combatmode)
+			return;
 		{
 			double _setval = 0;
 			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {

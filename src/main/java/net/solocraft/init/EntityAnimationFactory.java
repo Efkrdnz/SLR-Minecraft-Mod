@@ -67,9 +67,7 @@ import net.solocraft.entity.GemGolemEntity;
 import net.solocraft.entity.FxspikEntity;
 import net.solocraft.entity.FxPuddleEntity;
 import net.solocraft.entity.FuturisticGolemEntity;
-import net.solocraft.entity.FlameVortexEntity;
 import net.solocraft.entity.FlagOfProtectionEntity;
-import net.solocraft.entity.FireTornadoEntity;
 import net.solocraft.entity.FireFlyEntity;
 import net.solocraft.entity.FangedKasakaEntity;
 import net.solocraft.entity.ElderBeastEntity;
@@ -676,20 +674,6 @@ public class EntityAnimationFactory {
 				}
 			}
 			if (event.getEntity() instanceof BeruDeadBodyEntity syncable) {
-				String animation = syncable.getSyncedAnimation();
-				if (!animation.equals("undefined")) {
-					syncable.setAnimation("undefined");
-					syncable.animationprocedure = animation;
-				}
-			}
-			if (event.getEntity() instanceof FireTornadoEntity syncable) {
-				String animation = syncable.getSyncedAnimation();
-				if (!animation.equals("undefined")) {
-					syncable.setAnimation("undefined");
-					syncable.animationprocedure = animation;
-				}
-			}
-			if (event.getEntity() instanceof FlameVortexEntity syncable) {
 				String animation = syncable.getSyncedAnimation();
 				if (!animation.equals("undefined")) {
 					syncable.setAnimation("undefined");

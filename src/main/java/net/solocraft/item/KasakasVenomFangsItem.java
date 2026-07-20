@@ -2,7 +2,7 @@
 package net.solocraft.item;
 
 import net.solocraft.procedures.KasakasVenomFangsLivingEntityIsHitWithToolProcedure;
-import net.solocraft.procedures.DemonKingsLongSwordHasItemGlowingEffectProcedure;
+import net.solocraft.init.SololevelingModMobEffects;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
@@ -53,7 +53,7 @@ public class KasakasVenomFangsItem extends SwordItem {
 	@Override
 	public boolean hurtEnemy(ItemStack itemstack, LivingEntity entity, LivingEntity sourceentity) {
 		boolean retval = super.hurtEnemy(itemstack, entity, sourceentity);
-		KasakasVenomFangsLivingEntityIsHitWithToolProcedure.execute(entity.level(), entity, sourceentity);
+		KasakasVenomFangsLivingEntityIsHitWithToolProcedure.execute(entity.level(), entity, sourceentity, 3);
 		return retval;
 	}
 
@@ -64,14 +64,14 @@ public class KasakasVenomFangsItem extends SwordItem {
 		list.add(Component.literal("Type: Dagger"));
 		list.add(Component.literal("Attack: \u00A76+25"));
 		list.add(Component.literal("A DAGGER MADE FROM KASAKAS VENOM FANG. KASAKAS VENOM STILL REMAINS WITHIN IT, THUS CAUSING PARALYZATION AND BLEEDING WHEN USED UPON AN OPONENT."));
-		list.add(Component.literal("-Effect: \"\u00A76PARALYZE\": The oponent will be paralyzed for certain rate."));
+		list.add(Component.literal("-Effect: \"\u00A76PARALYZE\": Effective against C-rank targets and below."));
 		list.add(Component.literal("-Effect: \"\u00A76BLEED\": The oponent will be bleeding for certain rate."));
 	}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public boolean isFoil(ItemStack itemstack) {
-		Entity entity = Minecraft.getInstance().player;
-		return DemonKingsLongSwordHasItemGlowingEffectProcedure.execute(entity);
+		return Minecraft.getInstance().player != null
+				&& Minecraft.getInstance().player.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get());
 	}
 }

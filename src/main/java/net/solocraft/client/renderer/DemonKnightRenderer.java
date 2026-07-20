@@ -32,7 +32,7 @@ public class DemonKnightRenderer extends GeoEntityRenderer<DemonKnightEntity> {
 			MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
 			float partialTick, int packedLight, int packedOverlay,
 			float red, float green, float blue, float alpha) {
-		float scale = 1.0f;
+		float scale = entity.getVisualScale();
 		this.scaleHeight = scale;
 		this.scaleWidth = scale;
 		super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,

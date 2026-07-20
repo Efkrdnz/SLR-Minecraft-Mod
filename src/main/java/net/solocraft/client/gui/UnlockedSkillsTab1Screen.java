@@ -8,6 +8,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.network.UnlockedSkillsTab1ButtonMessage;
 import net.solocraft.procedures.SkillSlotHelper;
 import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.SkillCategoryRegistry;
 import net.solocraft.util.SkillListHelper;
 import net.solocraft.util.JobSkillManager;
 import net.solocraft.world.inventory.UnlockedSkillsTab1Menu;
@@ -77,7 +78,9 @@ public class UnlockedSkillsTab1Screen extends SystemContainerScreen<UnlockedSkil
 		String target = selectedSlot > 0 ? "TARGET SLOT " + selectedSlot : "TARGET SLOT";
 		g.drawString(this.font, target, pRelX + 12, pRelY + 22, ShopStyle.ACCENT, false);
 		String currentLabel = current == null || current.isBlank() ? "Empty" : ShadowMonarchManager.displaySkillName(entity, current);
-		Component currentText = Component.literal(currentLabel);
+		Component currentText = current == null || current.isBlank()
+				? Component.literal(currentLabel)
+				: SkillCategoryRegistry.decorate(current, currentLabel);
 		if (JobSkillManager.isWhiteFlameSkill(current))
 			currentText = currentText.copy().withStyle(ChatFormatting.BOLD);
 		g.drawString(this.font, currentText, pRelX + 12, pRelY + 33,
@@ -88,12 +91,13 @@ public class UnlockedSkillsTab1Screen extends SystemContainerScreen<UnlockedSkil
 			int index = page * ROWS + i + 1;
 			String raw = SkillListHelper.rawSkillAt(entity, index);
 			String label = SkillListHelper.displaySkillAt(entity, index);
-			if (label.length() > 24)
-				label = label.substring(0, 23) + "...";
 			int color = SkillListHelper.colorAt(entity, index);
 			int rowY = pRelY + 47 + i * ROW_H;
 			g.drawString(this.font, index < 10 ? "0" + index : String.valueOf(index), pRelX + 16, rowY, 0xFF8FB8D8, false);
-			Component skillText = Component.literal("empty".equals(raw) ? "-" : label);
+			int availableWidth = ShadowMonarchManager.isFormationSkill(raw) ? pW - 136 : pW - 104;
+			Component skillText = "empty".equals(raw)
+					? Component.literal("-")
+					: fitSkillText(raw, label, availableWidth);
 			if (JobSkillManager.isWhiteFlameSkill(raw))
 				skillText = skillText.copy().withStyle(ChatFormatting.BOLD);
 			g.drawString(this.font, skillText, pRelX + 44, rowY,
@@ -153,6 +157,25 @@ public class UnlockedSkillsTab1Screen extends SystemContainerScreen<UnlockedSkil
 		this.addRenderableWidget(previousButton);
 		this.addRenderableWidget(nextButton);
 		refreshButtons();
+	}
+
+	private Component fitSkillText(String rawSkill, String label, int maxWidth) {
+		Component result = SkillCategoryRegistry.decorate(rawSkill, label);
+		if (this.font.width(result) <= maxWidth)
+			return result;
+		String shortened = label;
+		while (!shortened.isEmpty()) {
+			shortened = shortened.substring(0, shortened.length() - 1);
+			result = SkillCategoryRegistry.decorate(rawSkill, shortened + "...");
+			if (this.font.width(result) <= maxWidth)
+				return result;
+		}
+		return SkillCategoryRegistry.decorate(rawSkill, "...");
+	}
+
+	@Override
+	protected boolean allowsNonSystemAccess() {
+		return true;
 	}
 
 	private void openSlotScreen() {

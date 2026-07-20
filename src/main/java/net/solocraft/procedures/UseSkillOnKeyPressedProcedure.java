@@ -10,6 +10,10 @@ import net.solocraft.util.ClassPassiveManager;
 import net.solocraft.util.JobSkillManager;
 import net.solocraft.util.MageQTEHelper;
 import net.solocraft.util.MageQTEState;
+import net.solocraft.util.BarrierMageSpellManager;
+import net.solocraft.util.ArcaneMageSpellManager;
+import net.solocraft.util.FireMageSpellManager;
+import net.solocraft.util.QTEResult;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.UrgentQuestManager;
 
@@ -47,6 +51,21 @@ public class UseSkillOnKeyPressedProcedure {
 		// (UseSkillOnKeyReleasedProcedure) with a mana discount based on timing.
 		String _selectedPower = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 				.orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower;
+		if (MageQTEHelper.MAGE_SKILLS.contains(_selectedPower)
+				&& CooldownManager.isOnCooldown(entity, _selectedPower)) {
+			if (world instanceof Level level) {
+				if (level.isClientSide()) {
+					DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MageQTEState.INSTANCE.endQTE());
+				} else {
+					entity.getPersistentData().putBoolean("mage_casting", false);
+					entity.getPersistentData().remove("mage_qte_zone_start");
+					if (entity instanceof Player player)
+						player.displayClientMessage(Component.literal("Ability on cooldown! "
+								+ CooldownManager.getRemainingSeconds(entity, _selectedPower) + "s"), true);
+				}
+			}
+			return;
+		}
 		UrgentQuestManager.onSkillUsed(entity, _selectedPower);
 		if (ShadowMonarchManager.isFormationSkill(_selectedPower)) {
 			ShadowFormationCastProcedure.execute(world, x, y, z, entity, _selectedPower);
@@ -55,14 +74,32 @@ public class UseSkillOnKeyPressedProcedure {
 		if (JobSkillManager.cast(world, x, y, z, entity, _selectedPower)) {
 			return;
 		}
+		if (FireMageSpellManager.FLAME_WEAVING.equals(_selectedPower)) {
+			if (world instanceof Level level && !level.isClientSide())
+				FireMageSpellManager.cast(entity, _selectedPower, QTEResult.MISS);
+			return;
+		}
+		if (BarrierMageSpellManager.isInstantSkill(_selectedPower)) {
+			if (world instanceof Level level && !level.isClientSide())
+				BarrierMageSpellManager.cast(entity, _selectedPower, QTEResult.MISS);
+			return;
+		}
+		if (ArcaneMageSpellManager.isInstantSkill(_selectedPower)) {
+			if (world instanceof Level level && !level.isClientSide())
+				ArcaneMageSpellManager.cast(entity, _selectedPower, QTEResult.MISS);
+			return;
+		}
 		if (MageQTEHelper.MAGE_SKILLS.contains(_selectedPower)) {
 			float qteZoneStart = MageQTEHelper.computeZoneStart(entity);
-			if (world instanceof Level _lvl && !_lvl.isClientSide()) {
-				entity.getPersistentData().putBoolean("mage_casting", true);
-				entity.getPersistentData().putFloat("mage_qte_zone_start", qteZoneStart);
+			if (world instanceof Level _lvl) {
+				if (_lvl.isClientSide()) {
+					DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+							MageQTEState.INSTANCE.startQTE(qteZoneStart));
+				} else {
+					entity.getPersistentData().putBoolean("mage_casting", true);
+					entity.getPersistentData().putFloat("mage_qte_zone_start", qteZoneStart);
+				}
 			}
-			DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
-					MageQTEState.INSTANCE.startQTE(qteZoneStart));
 			return;
 		}
 		// ─────────────────────────────────────────────────────────────────────

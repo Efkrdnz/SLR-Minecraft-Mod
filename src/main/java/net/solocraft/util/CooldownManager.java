@@ -2,104 +2,94 @@ package net.solocraft.util;
 
 import net.solocraft.network.SololevelingModVariables;
 
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
+
 /**
- * Centralized cooldown system. Replaces the 52-effect MobEffect hack.
- *
- * Cooldowns are stored as game-time expiry ticks in player PersistentData
- * under the key "cd_<abilityKey>". The server is authoritative; the client
- * gets a compact snapshot string ("key1:expiry1;key2:expiry2") via the
- * PlayerVariables capability sync so the HUD can display remaining time.
- *
- * Ability key conventions (use consistently everywhere):
- *   - For PselectedPower abilities:  use the exact PselectedPower string
- *     e.g.  "Stealth", "Fireball", "Slash Dash", "Murderious Intent"
- *   - For weapon/other abilities:    use a short lowercase snake_case key
- *     e.g.  "dagger_rush", "counter", "mana_refresh", "job_1"
+ * Server-authoritative cooldown storage with a clock-independent client snapshot.
+ * Server values remain absolute game-time expiries in player persistent data.
  */
+@Mod.EventBusSubscriber
 public final class CooldownManager {
-
     private static final String PREFIX = "cd_";
+    private static final String SNAPSHOT_V2 = "v2@";
+    private static final Map<Entity, ClientSnapshotClock> CLIENT_SNAPSHOT_CLOCKS =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
-    private CooldownManager() {}
+    private CooldownManager() {
+    }
 
-    // ── Server-side write ─────────────────────────────────────────────────────
-
-    /**
-     * Starts a cooldown for {@code durationTicks} ticks.
-     * Call this server-side only. Syncs the snapshot to the client automatically.
-     */
+    /** Starts or replaces a cooldown. Duration is measured in ticks. */
     public static void set(Entity entity, String key, int durationTicks) {
-        if (entity == null) return;
-        if (isCreativePlayer(entity)) durationTicks = Math.min(durationTicks, 10);
-        long expiry = entity.level().getGameTime() + durationTicks;
+        if (entity == null || entity.level().isClientSide())
+            return;
+        if (isCreativePlayer(entity))
+            durationTicks = Math.min(durationTicks, 10);
+        long expiry = entity.level().getGameTime() + Math.max(0, durationTicks);
         entity.getPersistentData().putLong(PREFIX + key, expiry);
         pushSnapshot(entity);
     }
 
-    /** Clears a specific cooldown immediately. */
     public static void clear(Entity entity, String key) {
-        if (entity == null) return;
+        if (entity == null || entity.level().isClientSide())
+            return;
         entity.getPersistentData().remove(PREFIX + key);
         pushSnapshot(entity);
     }
 
-    /** Clears every cooldown at once (e.g. on full reset / death if desired). */
+    /** Removes persisted state that is longer than this ability can legitimately create. */
+    public static void discardIfRemainingExceeds(Entity entity, String key, int maximumTicks) {
+        if (entity == null || entity.level().isClientSide())
+            return;
+        long now = entity.level().getGameTime();
+        long expiry = entity.getPersistentData().getLong(PREFIX + key);
+        if (expiry - now > maximumTicks)
+            clear(entity, key);
+    }
+
     public static void clearAll(Entity entity) {
-        if (entity == null) return;
+        if (entity == null || entity.level().isClientSide())
+            return;
         entity.getPersistentData().getAllKeys().stream()
-                .filter(k -> k.startsWith(PREFIX))
+                .filter(key -> key.startsWith(PREFIX))
                 .toList()
                 .forEach(entity.getPersistentData()::remove);
-        if (!entity.level().isClientSide() && entity instanceof Player player) {
-            player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(cap -> {
-                cap.cooldownData = "";
-                cap.syncPlayerVariables(player);
-            });
-        }
+        pushSnapshot(entity);
     }
 
-    // ── Both-side read ────────────────────────────────────────────────────────
-
-    /** Returns {@code true} if the cooldown has not yet expired. Works on both sides. */
     public static boolean isOnCooldown(Entity entity, String key) {
-        if (entity == null) return false;
+        if (entity == null)
+            return false;
         trimCreativeCooldown(entity, key);
-        return expiryFor(entity, key) > entity.level().getGameTime();
+        return getRemainingTicks(entity, key) > 0;
     }
 
-    /** Remaining ticks (0 if ready). Works on both sides. */
     public static int getRemainingTicks(Entity entity, String key) {
-        if (entity == null) return 0;
-        return (int) Math.max(0, expiryFor(entity, key) - entity.level().getGameTime());
+        if (entity == null)
+            return 0;
+        if (entity.level().isClientSide())
+            return getClientRemainingTicks(entity, key);
+        long expiry = entity.getPersistentData().getLong(PREFIX + key);
+        return (int) Math.max(0, expiry - entity.level().getGameTime());
     }
 
-    /** Remaining seconds, rounded up (0 if ready). Works on both sides. */
     public static int getRemainingSeconds(Entity entity, String key) {
         int ticks = getRemainingTicks(entity, key);
-        return ticks == 0 ? 0 : (int) Math.ceil(ticks / 20.0);
-    }
-
-    // ── Internals ─────────────────────────────────────────────────────────────
-
-    /** Returns the raw expiry game-time for {@code key}, or 0 if none. */
-    private static long expiryFor(Entity entity, String key) {
-        if (!entity.level().isClientSide()) {
-            // Server: read directly from PersistentData
-            return entity.getPersistentData().getLong(PREFIX + key);
-        } else {
-            // Client: read from synced capability snapshot
-            String snapshot = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-                    .map(cap -> cap.cooldownData)
-                    .orElse("");
-            return parseExpiry(snapshot, key);
-        }
+        return ticks == 0 ? 0 : (int) Math.ceil(ticks / 20.0D);
     }
 
     private static void trimCreativeCooldown(Entity entity, String key) {
-        if (entity == null || entity.level().isClientSide() || !isCreativePlayer(entity)) return;
+        if (entity == null || entity.level().isClientSide() || !isCreativePlayer(entity))
+            return;
         long now = entity.level().getGameTime();
         long expiry = entity.getPersistentData().getLong(PREFIX + key);
         if (expiry > now + 10) {
@@ -112,46 +102,115 @@ public final class CooldownManager {
         return entity instanceof Player player && player.isCreative();
     }
 
-    /**
-     * Rebuilds the compact snapshot string from all active PersistentData cooldowns
-     * and pushes it to the client via the existing PlayerVariables sync.
-     */
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        pushSnapshot(event.getEntity());
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        pushSnapshot(event.getEntity());
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        pushSnapshot(event.getEntity());
+    }
+
     private static void pushSnapshot(Entity entity) {
-        if (entity.level().isClientSide() || !(entity instanceof Player player)) return;
-        player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(cap -> {
-            cap.cooldownData = buildSnapshot(entity);
-            cap.syncPlayerVariables(player);
+        if (entity == null || entity.level().isClientSide() || !(entity instanceof Player player))
+            return;
+        player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+            capability.cooldownData = buildSnapshot(entity);
+            capability.syncPlayerVariables(player);
         });
     }
 
-    /** "key1:expiry1;key2:expiry2" — only active (not yet expired) entries. */
+    /** V2 stores remaining ticks so client/server world-clock offsets cannot distort the HUD. */
     private static String buildSnapshot(Entity entity) {
         long now = entity.level().getGameTime();
-        StringBuilder sb = new StringBuilder();
+        StringBuilder snapshot = new StringBuilder(SNAPSHOT_V2).append(now);
         for (String nbtKey : entity.getPersistentData().getAllKeys()) {
-            if (!nbtKey.startsWith(PREFIX)) continue;
+            if (!nbtKey.startsWith(PREFIX))
+                continue;
             long expiry = entity.getPersistentData().getLong(nbtKey);
-            if (expiry <= now) continue;
-            if (sb.length() > 0) sb.append(';');
-            sb.append(nbtKey, PREFIX.length(), nbtKey.length())
-              .append(':')
-              .append(expiry);
+            if (expiry <= now)
+                continue;
+            snapshot.append(';')
+                    .append(nbtKey, PREFIX.length(), nbtKey.length())
+                    .append(':')
+                    .append(expiry - now);
         }
-        return sb.toString();
+        return snapshot.toString();
     }
 
-    /** Parses expiry for {@code key} out of the snapshot string, or returns 0. */
-    private static long parseExpiry(String snapshot, String key) {
-        if (snapshot == null || snapshot.isEmpty()) return 0;
+    private static int getClientRemainingTicks(Entity entity, String key) {
+        String snapshot = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+                .map(capability -> capability.cooldownData)
+                .orElse("");
+        if (snapshot == null || snapshot.isEmpty()) {
+            CLIENT_SNAPSHOT_CLOCKS.remove(entity);
+            return 0;
+        }
+
+        // Old saves are accepted until the login refresh replaces their snapshot.
+        if (!snapshot.startsWith(SNAPSHOT_V2)) {
+            long expiry = parseSnapshotValue(snapshot, key);
+            return (int) Math.max(0, expiry - entity.level().getGameTime());
+        }
+
+        ClientSnapshotClock clock = CLIENT_SNAPSHOT_CLOCKS.get(entity);
+        if (clock == null || !clock.snapshot.equals(snapshot) || entity.tickCount < clock.receivedAtTick) {
+            clock = new ClientSnapshotClock(snapshot, entity.tickCount);
+            CLIENT_SNAPSHOT_CLOCKS.put(entity, clock);
+        }
+        long initialRemaining = clock.remainingByKey.getOrDefault(key, 0L);
+        long elapsed = Math.max(0, entity.tickCount - clock.receivedAtTick);
+        return (int) Math.max(0, initialRemaining - elapsed);
+    }
+
+    private static Map<String, Long> parseV2Snapshot(String snapshot) {
+        Map<String, Long> values = new HashMap<>();
         for (String entry : snapshot.split(";")) {
             int colon = entry.indexOf(':');
-            if (colon < 0) continue;
+            if (colon < 0)
+                continue;
+            try {
+                values.put(entry.substring(0, colon), Long.parseLong(entry.substring(colon + 1)));
+            } catch (NumberFormatException ignored) {
+                // Ignore malformed entries without breaking every cooldown on the HUD.
+            }
+        }
+        return values;
+    }
+
+    private static long parseSnapshotValue(String snapshot, String key) {
+        if (snapshot == null || snapshot.isEmpty())
+            return 0;
+        for (String entry : snapshot.split(";")) {
+            int colon = entry.indexOf(':');
+            if (colon < 0)
+                continue;
             if (entry.regionMatches(0, key, 0, colon) && colon == key.length()) {
                 try {
                     return Long.parseLong(entry.substring(colon + 1));
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                    return 0;
+                }
             }
         }
         return 0;
+    }
+
+    private static final class ClientSnapshotClock {
+        private final String snapshot;
+        private final int receivedAtTick;
+        private final Map<String, Long> remainingByKey;
+
+        private ClientSnapshotClock(String snapshot, int receivedAtTick) {
+            this.snapshot = snapshot;
+            this.receivedAtTick = receivedAtTick;
+            this.remainingByKey = parseV2Snapshot(snapshot);
+        }
     }
 }

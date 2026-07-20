@@ -1,20 +1,22 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.SololevelingMod;
+import net.solocraft.util.PlayerVitalSync;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber
 public class RespawnStatResetProcedure {
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void onPlayerRespawned(PlayerEvent.PlayerRespawnEvent event) {
 		execute(event, event.getEntity());
 	}
@@ -24,23 +26,12 @@ public class RespawnStatResetProcedure {
 	}
 
 	private static void execute(@Nullable Event event, Entity entity) {
-		if (entity == null)
+		if (!(entity instanceof ServerPlayer player))
 			return;
-		if (entity instanceof LivingEntity _entity)
-			_entity.setHealth((float) ((entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1) + 999));
-		{
-			double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Mana;
-			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-				capability.MP = _setval;
-				capability.syncPlayerVariables(entity);
-			});
-		}
-		{
-			double _setval = 0;
-			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-				capability.Fatigue = _setval;
-				capability.syncPlayerVariables(entity);
-			});
-		}
+		PlayerVitalSync.restoreAfterRespawn(player);
+		SololevelingMod.queueServerWork(1, () -> {
+			if (!player.isRemoved())
+				PlayerVitalSync.refreshClientState(player);
+		});
 	}
 }

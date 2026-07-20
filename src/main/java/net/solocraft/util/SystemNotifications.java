@@ -44,7 +44,7 @@ public final class SystemNotifications {
 	}
 
 	private static void send(ServerPlayer player, ShowNotificationMessage message) {
-		if (player == null)
+		if (player == null || !SystemPlayerAccess.hasSystem(player))
 			return;
 		SololevelingMod.PACKET_HANDLER.send(PacketDistributor.PLAYER.with(() -> player), message);
 	}

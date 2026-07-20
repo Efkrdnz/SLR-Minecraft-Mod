@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "": [
+      { "model": "sololeveling:block/mana_crystal_deposit" },
+      { "model": "sololeveling:block/mana_crystal_deposit", "y": 90 },
+      { "model": "sololeveling:block/mana_crystal_deposit", "y": 180 },
+      { "model": "sololeveling:block/mana_crystal_deposit", "y": 270 }
+    ]
+  }
+}

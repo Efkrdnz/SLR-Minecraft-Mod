@@ -12,6 +12,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.network.chat.Component;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.OrbOfAvariceManager;
 
 public class LightBallThrowProcedure {
 	public static void execute(Entity entity) {
@@ -19,10 +20,11 @@ public class LightBallThrowProcedure {
 			return;
 		double rand = 0;
 		double X = 0;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 900) {
+		int manaCost = OrbOfAvariceManager.adjustManaCost(entity, 900);
+		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= manaCost) {
 			if (!CooldownManager.isOnCooldown(entity, "Lightball")) {
 				{
-					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 900;
+					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - manaCost;
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.MP = _setval;
 						capability.syncPlayerVariables(entity);

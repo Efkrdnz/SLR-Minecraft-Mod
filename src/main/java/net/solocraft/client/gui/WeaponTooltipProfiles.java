@@ -129,10 +129,10 @@ public final class WeaponTooltipProfiles {
 				l("Two as One", "Dual wielding adds the wielder's Strength.")));
 		add("kasakas_venom_fangs", p("C", C, "Dagger", VENOM, 0x57E37D, 0x1B5B3F, 8.3F, 6,
 				l("A dagger fashioned from Kasaka's venom fang.", "Residual poison still circulates through the weapon."),
-				l("Paralyze", "Venom can seize a target's movement.", "Bleed", "The serrated fang leaves persistent wounds.")));
+				l("Paralyze", "Seizes targets up to C rank.", "Bleed", "The serrated fang leaves persistent wounds.")));
 		add("kasakas_awakened_venom_fang", p("S", RELIC, "Dagger", VENOM, 0x8CFF62, 0x4E1A76, 8.6F, 6,
 				l("Kasaka's fang after its venom core awakened.", "The poison now behaves like a living predator."),
-				l("Awakened Venom", "Greatly intensifies paralysis and bleeding.")));
+				l("Awakened Venom", "Paralysis reaches one rank higher, up to B rank.")));
 		add("barukas_dagger", p("A", A, "Dagger", FROST, 0xA1EFFF, 0x3D5F9F, 8.9F, 7,
 				l("The ice-elf warlord Baruka carried this dagger.", "Weight-reducing magic makes the blade feel effortless."),
 				l("Warlord's Agility", "The enchantment favors swift movement.")));

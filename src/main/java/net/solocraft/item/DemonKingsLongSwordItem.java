@@ -3,7 +3,6 @@ package net.solocraft.item;
 
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.procedures.DemonKingsLongSwordHasItemGlowingEffectProcedure;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
@@ -133,7 +132,7 @@ public class DemonKingsLongSwordItem extends SwordItem {
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public boolean isFoil(ItemStack itemstack) {
-		Entity entity = Minecraft.getInstance().player;
-		return DemonKingsLongSwordHasItemGlowingEffectProcedure.execute(entity);
+		return Minecraft.getInstance().player != null
+				&& Minecraft.getInstance().player.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get());
 	}
 }

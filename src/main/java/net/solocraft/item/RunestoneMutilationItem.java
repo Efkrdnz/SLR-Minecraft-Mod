@@ -33,7 +33,7 @@ public class RunestoneMutilationItem extends Item {
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
 		list.add(Component.literal("Right click this rune to obtain \"Mutilation\""));
-		list.add(Component.literal("User can use \"Mutilation\" which will swiftly attack in area slashing everything!"));
+		list.add(Component.literal("Mark one enemy and build up to six cuts with dagger attacks. Recast or wait to detonate every cut."));
 	}
 
 	@Override

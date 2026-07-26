@@ -1,0 +1,13 @@
+{
+  "display": {
+    "icon": { "item": "sololeveling:hammer" },
+    "title": { "translate": "advancements.vessels.thomas_andre.title" },
+    "description": { "translate": "advancements.vessels.thomas_andre.descr" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": { "vessel": { "trigger": "minecraft:impossible" } },
+  "parent": "sololeveling:system/vessel"
+}

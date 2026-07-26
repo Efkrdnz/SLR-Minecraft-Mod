@@ -1,21 +1,16 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModItems;
+import net.solocraft.util.MagicReadingHelper;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.util.RandomSource;
-import net.minecraft.util.Mth;
 import net.minecraft.tags.TagKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
 import net.minecraft.core.registries.Registries;
 
 import java.util.List;
@@ -25,8 +20,7 @@ public class PortalSRightClickedOnEntityProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
-		double rand = 0;
-		if (!((sourceentity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MAGIC_READER.get())) {
+		if (!MagicReadingHelper.isHoldingMagicReader(sourceentity)) {
 			if (net.solocraft.guild.GuildGateHelper.prepareGateEntry(world, entity, sourceentity))
 				return;
 			{
@@ -63,20 +57,7 @@ public class PortalSRightClickedOnEntityProcedure {
 			}
 			sourceentity.setNoGravity(true);
 		} else {
-			rand = Mth.nextInt(RandomSource.create(), 1, 4);
-			if (rand == 1) {
-				if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Magic Reading: 9999"), false);
-			} else if (rand == 2) {
-				if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Magic Reading: ERROR"), false);
-			} else if (rand == 3) {
-				if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Magic Reading: N/A"), false);
-			} else if (rand == 4) {
-				if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Magic Reading: Cannot Read!"), false);
-			}
+			MagicReadingHelper.showUnreadableReading(sourceentity);
 		}
 	}
 }

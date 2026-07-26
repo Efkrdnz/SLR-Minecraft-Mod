@@ -49,6 +49,10 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.phys.Vec3;
 
 public class VulcanEntity extends Monster implements GeoEntity {
+	private static final double MELEE_DAMAGE = 48.0D;
+	private static final float HAMMER_SLAM_DAMAGE = 48.0F;
+	private static final float CHARGE_DAMAGE = 32.0F;
+	private static final float MOLTEN_BURST_DAMAGE = 36.0F;
 	public static final EntityDataAccessor<Boolean> SHOOT = SynchedEntityData.defineId(VulcanEntity.class, EntityDataSerializers.BOOLEAN);
 	public static final EntityDataAccessor<String> ANIMATION = SynchedEntityData.defineId(VulcanEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> TEXTURE = SynchedEntityData.defineId(VulcanEntity.class, EntityDataSerializers.STRING);
@@ -216,7 +220,7 @@ public class VulcanEntity extends Monster implements GeoEntity {
 		builder = builder.add(Attributes.MAX_HEALTH, 340);
 		builder = builder.add(Attributes.ARMOR, 18);
 		builder = builder.add(Attributes.ARMOR_TOUGHNESS, 8);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, 24);
+		builder = builder.add(Attributes.ATTACK_DAMAGE, MELEE_DAMAGE);
 		builder = builder.add(Attributes.FOLLOW_RANGE, 42);
 		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 1);
 		return builder;
@@ -320,7 +324,7 @@ public class VulcanEntity extends Monster implements GeoEntity {
 			serverLevel.sendParticles(ParticleTypes.CRIT, this.getX(), this.getY() + 0.1D, this.getZ(), 12, 2.5D, 0.08D, 2.5D, 0.08D);
 		if (!this.stateHit && this.stateTicks >= 14) {
 			this.stateHit = true;
-			dealSlam(7.5D, 24.0F, 1.1D, 0.55D, ParticleTypes.LAVA);
+			dealSlam(7.5D, HAMMER_SLAM_DAMAGE, 1.1D, 0.55D, ParticleTypes.LAVA);
 			this.level().playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 1.8F, 0.6F);
 		}
 		if (this.stateTicks >= 30)
@@ -335,7 +339,7 @@ public class VulcanEntity extends Monster implements GeoEntity {
 				serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE, this.getX(), this.getY() + 0.35D, this.getZ(), 6, 0.7D, 0.2D, 0.7D, 0.025D);
 				serverLevel.sendParticles(ParticleTypes.FLAME, this.getX(), this.getY() + 0.55D, this.getZ(), 3, 0.45D, 0.15D, 0.45D, 0.02D);
 			}
-			damageNearbyOnce("vulcan_charge_hit_", 2.1D, 16.0F, 1.0D, 0.25D);
+			damageNearbyOnce("vulcan_charge_hit_", 2.1D, CHARGE_DAMAGE, 1.0D, 0.25D);
 		}
 		if (this.stateTicks >= 26) {
 			clearHitFlags("vulcan_charge_hit_");
@@ -372,7 +376,7 @@ public class VulcanEntity extends Monster implements GeoEntity {
 		this.level().playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 1.4F, 0.7F);
 		for (LivingEntity nearby : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(24.0D),
 				entity -> entity != this && entity.isAlive() && entity.position().distanceTo(this.markedPosition) <= 4.0D)) {
-			nearby.hurt(this.damageSources().mobAttack(this), 18.0F);
+			nearby.hurt(this.damageSources().mobAttack(this), MOLTEN_BURST_DAMAGE);
 			nearby.setSecondsOnFire(5);
 			Vec3 direction = nearby.position().subtract(this.markedPosition).multiply(1.0D, 0.0D, 1.0D);
 			if (direction.lengthSqr() > 0.001D)

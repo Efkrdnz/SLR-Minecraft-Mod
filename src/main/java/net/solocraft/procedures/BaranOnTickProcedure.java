@@ -6,7 +6,6 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 
 /**
@@ -38,13 +37,7 @@ public class BaranOnTickProcedure {
 		if (!baran.getPersistentData().getBoolean("baran_phase2")
 				&& baran.getHealth() <= baran.getMaxHealth() * 0.5f) {
 			baran.getPersistentData().putBoolean("baran_phase2", true);
-			// Announce enrage
 			if (world instanceof ServerLevel serverLevel) {
-				for (net.minecraft.server.level.ServerPlayer sp : serverLevel.players()) {
-					if (sp.distanceTo(baran) <= 200) {
-						sp.sendSystemMessage(Component.literal("§4§l⚡ DEMON KING BARAN ENRAGES! §r§cHis power grows unbounded!"));
-					}
-				}
 				// Spawn 6 lightning bolts around Baran as a dramatic effect
 				for (int i = 0; i < 6; i++) {
 					double angle = (i / 6.0) * Math.PI * 2;

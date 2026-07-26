@@ -38,7 +38,7 @@ public class TrainingGUIScreen extends AbstractContainerScreen<TrainingGUIMenu> 
 
 	@Override
 	public boolean isPauseScreen() {
-		return true;
+		return false;
 	}
 
 	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/training_gui.png");

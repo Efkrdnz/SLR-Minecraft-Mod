@@ -1,14 +1,12 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModBlocks;
+import net.solocraft.util.InstanceDungeonKeyAccess;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
@@ -30,6 +28,10 @@ public class InstanceDungeonKeyRightclickedOnBlockProcedure {
 
         // Ensure the block is correct
         if (world.getBlockState(BlockPos.containing(x, y, z)).getBlock() != SololevelingModBlocks.INSTANCE_DUNGEON_KEY_LOGGER.get()) return;
+        if (!(player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+                .orElse(new SololevelingModVariables.PlayerVariables())).Player
+                || !InstanceDungeonKeyAccess.canEnter(player)) return;
+        InstanceDungeonKeyAccess.markClaimed(player);
 
         // Ensure quest progress is correct
         entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -39,10 +41,8 @@ public class InstanceDungeonKeyRightclickedOnBlockProcedure {
             }
         });
 
-        // Remove dungeon key item
-        if (player.getInventory().contains(new ItemStack(SololevelingModItems.INSTANCE_DUNGEON_KEY.get()))) {
-            player.getInventory().clearOrCountMatchingItems(stack -> stack.getItem() == SololevelingModItems.INSTANCE_DUNGEON_KEY.get(), 1, player.inventoryMenu.getCraftSlots());
-        }
+        // The physical key is one-use, but the durable claim keeps recovery entry available.
+        InstanceDungeonKeyAccess.consumePhysicalKey(player);
 
         // Store previous location
         entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {

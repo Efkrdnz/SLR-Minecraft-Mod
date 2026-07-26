@@ -1,0 +1,10 @@
+{
+  "display": {
+    "icon": { "item": "minecraft:glow_berries" },
+    "title": { "translate": "advancements.vessels.flame.fireflies.title" },
+    "description": { "translate": "advancements.vessels.flame.fireflies.descr" },
+    "frame": "challenge", "show_toast": true, "announce_to_chat": false, "hidden": false
+  },
+  "criteria": { "unlock": { "trigger": "minecraft:impossible" } },
+  "parent": "sololeveling:vessels/flame/meteor_rain"
+}

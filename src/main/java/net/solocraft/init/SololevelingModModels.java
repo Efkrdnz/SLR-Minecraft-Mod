@@ -10,7 +10,6 @@ import net.solocraft.client.model.Modelshadowhead;
 import net.solocraft.client.model.Modelshadowfeet;
 import net.solocraft.client.model.Modelshaces;
 import net.solocraft.client.model.Modelshabots;
-import net.solocraft.client.model.Modelmanaarrow;
 import net.solocraft.client.model.Modellight_ball;
 import net.solocraft.client.model.Modelkangtaeshikhair;
 import net.solocraft.client.model.Modelkangtaeshik;
@@ -62,7 +61,6 @@ public class SololevelingModModels {
 		event.registerLayerDefinition(Modelkangtaeshikhair.LAYER_LOCATION, Modelkangtaeshikhair::createBodyLayer);
 		event.registerLayerDefinition(Modelinv.LAYER_LOCATION, Modelinv::createBodyLayer);
 		event.registerLayerDefinition(Modelshaces.LAYER_LOCATION, Modelshaces::createBodyLayer);
-		event.registerLayerDefinition(Modelmanaarrow.LAYER_LOCATION, Modelmanaarrow::createBodyLayer);
 		event.registerLayerDefinition(Modelshabots.LAYER_LOCATION, Modelshabots::createBodyLayer);
 		event.registerLayerDefinition(Modelshadowtorso.LAYER_LOCATION, Modelshadowtorso::createBodyLayer);
 		event.registerLayerDefinition(ModelSlash3.LAYER_LOCATION, ModelSlash3::createBodyLayer);

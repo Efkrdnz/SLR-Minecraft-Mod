@@ -3,6 +3,10 @@ package net.solocraft.util;
 import net.solocraft.SololevelingMod;
 import net.solocraft.entity.DKCTowerAuraEntity;
 
+import net.minecraftforge.event.server.ServerStoppedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
@@ -24,6 +28,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Places connected, staged previews of the authored DKC rework modules. */
+@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DkcStructurePreviewBuilder {
 	private static final String FLOOR_ONE = "dkcfloor1";
 	private static final String LOWER_CITY = "dkclowercity";
@@ -32,6 +37,11 @@ public final class DkcStructurePreviewBuilder {
 	private static final Set<UUID> ACTIVE = ConcurrentHashMap.newKeySet();
 
 	private DkcStructurePreviewBuilder() {
+	}
+
+	@SubscribeEvent
+	public static void onServerStopped(ServerStoppedEvent event) {
+		ACTIVE.clear();
 	}
 
 	public static List<String> suggestions() {
@@ -74,7 +84,7 @@ public final class DkcStructurePreviewBuilder {
 		for (int index = 0; index < placements.size(); index++) {
 			Placement placement = placements.get(index);
 			boolean last = index == placements.size() - 1;
-			SololevelingMod.queueServerWork(index * TICKS_PER_PIECE, () -> {
+			SololevelingMod.queueServerWork(1 + index * TICKS_PER_PIECE, () -> {
 				try {
 					place(level, origin, placement);
 					if (last && includeFloorOne)
@@ -162,7 +172,7 @@ public final class DkcStructurePreviewBuilder {
 				anchor.getX() + 4.0D, anchor.getY() + 8.0D, anchor.getZ() + 4.0D);
 		level.getEntitiesOfClass(DKCTowerAuraEntity.class, duplicateArea).forEach(DKCTowerAuraEntity::discard);
 		DKCTowerAuraEntity aura = DKCTowerAuraEntity.spawn(level, anchor.getX(), anchor.getY(), anchor.getZ(),
-				32.0F, 320.0F, 1.0F);
+				32.0F, 320.0F, 0.86F);
 		aura.setCrownLightning(true);
 	}
 

@@ -7,7 +7,6 @@ import net.minecraftforge.event.TickEvent;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
 public class RankingStringToNumProcedure {
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {

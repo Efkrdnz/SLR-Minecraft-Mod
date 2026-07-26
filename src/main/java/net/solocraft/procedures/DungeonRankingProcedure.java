@@ -8,9 +8,11 @@ import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.TickEvent;
 
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.tags.TagKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.core.BlockPos;
 
@@ -18,6 +20,13 @@ import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber
 public class DungeonRankingProcedure {
+	private static final TagKey<Biome> DUNGEON_E = biomeTag("dune");
+	private static final TagKey<Biome> DUNGEON_D = biomeTag("dund");
+	private static final TagKey<Biome> DUNGEON_C = biomeTag("dunc");
+	private static final TagKey<Biome> DUNGEON_B = biomeTag("dunb");
+	private static final TagKey<Biome> DUNGEON_A = biomeTag("duna");
+	private static final TagKey<Biome> DUNGEON_S = biomeTag("duns");
+
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
 		if (event.phase == TickEvent.Phase.END) {
@@ -32,64 +41,33 @@ public class DungeonRankingProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		if (world.getLevelData().getGameTime() % 50 == 0) {
-			if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("dune")))) {
-				{
-					double _setval = 1;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.DunRank = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("dund")))) {
-				{
-					double _setval = 2;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.DunRank = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("dunc")))) {
-				{
-					double _setval = 3;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.DunRank = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("dunb")))) {
-				{
-					double _setval = 4;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.DunRank = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("duna")))) {
-				{
-					double _setval = 5;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.DunRank = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("duns")))) {
-				{
-					double _setval = 6;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.DunRank = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else {
-				{
-					double _setval = 0;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.DunRank = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			}
-		}
+		if (world.getLevelData().getGameTime() % 50 != 0)
+			return;
+
+		int rank = dungeonRank(world.getBiome(BlockPos.containing(x, y, z)));
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			if (capability.DunRank == rank)
+				return;
+			capability.DunRank = rank;
+			capability.syncPlayerVariables(entity);
+		});
+	}
+
+	private static int dungeonRank(Holder<Biome> biome) {
+		if (biome.is(DUNGEON_E))
+			return 1;
+		if (biome.is(DUNGEON_D))
+			return 2;
+		if (biome.is(DUNGEON_C))
+			return 3;
+		if (biome.is(DUNGEON_B))
+			return 4;
+		if (biome.is(DUNGEON_A))
+			return 5;
+		return biome.is(DUNGEON_S) ? 6 : 0;
+	}
+
+	private static TagKey<Biome> biomeTag(String path) {
+		return TagKey.create(Registries.BIOME, new ResourceLocation("minecraft", path));
 	}
 }

@@ -38,16 +38,17 @@ public class BackStepChargeProcedure {
 			return;
 		if (!entity.getPersistentData().getBoolean(INITIALIZED)) {
 			entity.getPersistentData().putBoolean(INITIALIZED, true);
-			setCharges(entity, MAX_CHARGES, 0);
+			setCharges(entity, MAX_CHARGES, 0, true);
 			return;
 		}
 		double charges = Math.max(0, Math.min(MAX_CHARGES, vars.rangerleapnum));
 		double timer = Math.max(0, vars.rangerleaptimer);
 		if (charges >= MAX_CHARGES) {
 			if (vars.rangerleapnum != MAX_CHARGES || vars.rangerleaptimer != 0)
-				setCharges(entity, MAX_CHARGES, 0);
+				setCharges(entity, MAX_CHARGES, 0, true);
 			return;
 		}
+		double previousCharges = charges;
 		if (timer <= 0) {
 			timer = RECHARGE_TICKS;
 		} else {
@@ -57,14 +58,18 @@ public class BackStepChargeProcedure {
 			charges = Math.min(MAX_CHARGES, charges + 1);
 			timer = charges >= MAX_CHARGES ? 0 : RECHARGE_TICKS;
 		}
-		setCharges(entity, charges, timer);
+		// Persist the authoritative timer every tick, but only send the large
+		// player-capability packet twice per second or when a charge changes.
+		setCharges(entity, charges, timer,
+				charges != previousCharges || entity.tickCount % 10 == 0);
 	}
 
-	private static void setCharges(Entity entity, double charges, double timer) {
+	private static void setCharges(Entity entity, double charges, double timer, boolean sync) {
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			capability.rangerleapnum = charges;
 			capability.rangerleaptimer = timer;
-			capability.syncPlayerVariables(entity);
+			if (sync)
+				capability.syncPlayerVariables(entity);
 		});
 	}
 }

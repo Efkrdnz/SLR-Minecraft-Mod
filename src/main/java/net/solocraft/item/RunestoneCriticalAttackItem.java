@@ -33,7 +33,7 @@ public class RunestoneCriticalAttackItem extends Item {
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
 		list.add(Component.literal("Right click this rune to obtain \"Critical Attack\""));
-		list.add(Component.literal("User can use \"Critical Attack\" which will swiftly attack targeted entities vital points."));
+		list.add(Component.literal("Open a brief counter window. A successful counter evades, exposes the attacker, and readies a powerful Riposte."));
 	}
 
 	@Override

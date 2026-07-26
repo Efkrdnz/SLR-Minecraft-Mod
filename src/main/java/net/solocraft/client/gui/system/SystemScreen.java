@@ -94,7 +94,8 @@ public abstract class SystemScreen extends Screen {
 
 	@Override
 	public boolean isPauseScreen() {
-		// keep the world (and thus GameTime) advancing so the background animates
+		// System state is server-authoritative and must keep receiving capability,
+		// quest, cooldown, and reward synchronization while this page is open.
 		return false;
 	}
 
@@ -485,8 +486,9 @@ public abstract class SystemScreen extends Screen {
 			if (!this.visible)
 				return;
 			boolean hovered = isHoveredOrFocused();
-			int border = hovered ? 0xFF7FE4FF : ACCENT_DIM;
-			g.fill(getX(), getY(), getX() + width, getY() + height, 0x55102338);
+			int border = !this.active ? 0x55305264 : hovered ? 0xFF7FE4FF : ACCENT_DIM;
+			g.fill(getX(), getY(), getX() + width, getY() + height,
+					this.active ? 0x55102338 : 0x33101824);
 			g.fill(getX(), getY(), getX() + width, getY() + 1, border);
 			g.fill(getX(), getY() + height - 1, getX() + width, getY() + height, border);
 			g.fill(getX(), getY(), getX() + 1, getY() + height, border);
@@ -494,9 +496,11 @@ public abstract class SystemScreen extends Screen {
 			int fillW = (int) (this.value * (width - 2));
 			g.fill(getX() + 1, getY() + 1, getX() + 1 + fillW, getY() + height - 1, ACCENT_SOFT);
 			int knobX = getX() + (int) (this.value * (width - 4));
-			g.fill(knobX, getY(), knobX + 4, getY() + height, hovered ? 0xFF7FE4FF : ACCENT);
+			g.fill(knobX, getY(), knobX + 4, getY() + height,
+					!this.active ? 0x664A6070 : hovered ? 0xFF7FE4FF : ACCENT);
 			Font font = Minecraft.getInstance().font;
-			g.drawCenteredString(font, getMessage(), getX() + width / 2, getY() + (height - 8) / 2, TEXT_MAIN);
+			g.drawCenteredString(font, getMessage(), getX() + width / 2,
+					getY() + (height - 8) / 2, this.active ? TEXT_MAIN : 0xFF60788A);
 		}
 	}
 }

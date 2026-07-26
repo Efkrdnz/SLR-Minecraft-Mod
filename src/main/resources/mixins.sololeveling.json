@@ -10,8 +10,12 @@
   ],
   "client": [
     "CreateWorldScreenMixin",
+    "DkcSkyMixin",
+    "EntityHighlightColorMixin",
+    "EntityHighlightVisibilityMixin",
     "GoliathFirstPersonHandMixin",
     "GoliathThirdPersonHandMixin",
+    "RangerNockedArrowMixin",
     "VesselCombatAttackMixin"
   ],
   "minVersion": "0.8"

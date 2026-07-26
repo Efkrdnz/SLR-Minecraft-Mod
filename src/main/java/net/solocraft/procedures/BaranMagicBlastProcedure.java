@@ -25,11 +25,11 @@ import net.minecraft.core.BlockPos;
  * Timeline (MF ticks):
  *   1   – play attack animation, begin windup
  *   15  – spawn WITCH particle burst at Baran's position (charging energy)
- *   25  – primary magic impact at target: 30 damage + DRAGON_BREATH particles
+ *   25  – primary magic impact at target: 25 damage + DRAGON_BREATH particles
  *          + explosion sound
- *   35  – secondary shockwave: 15 damage to all in radius 5 around target
+ *   35  – secondary shockwave: 12 damage to all in radius 5 around target
  *          + SMOKE particles
- *   Phase 2 extra: at MF=20 also fires a smaller pre-shot (15 damage)
+ *   Phase 2 extra: at MF=20 also fires a smaller pre-shot (12 damage)
  *   ≥55 – reset to idle
  */
 public class BaranMagicBlastProcedure {
@@ -69,7 +69,7 @@ public class BaranMagicBlastProcedure {
 		// Phase 2 pre-shot
 		if (phase2 && MF == 20) {
 			double tx = target.getX(), ty = target.getY(), tz = target.getZ();
-			target.hurt(magicDamage(world, baran), 15f);
+			target.hurt(magicDamage(world, baran), 12f);
 			if (world instanceof ServerLevel sl) {
 				sl.sendParticles(ParticleTypes.DRAGON_BREATH, tx, ty + 0.5, tz, 15, 0.3, 0.3, 0.3, 0.05);
 			}
@@ -78,7 +78,7 @@ public class BaranMagicBlastProcedure {
 		if (MF == 25) {
 			// Primary impact
 			double tx = target.getX(), ty = target.getY(), tz = target.getZ();
-			target.hurt(magicDamage(world, baran), phase2 ? 40f : 30f);
+			target.hurt(magicDamage(world, baran), phase2 ? 33f : 25f);
 			if (world instanceof ServerLevel sl) {
 				sl.sendParticles(ParticleTypes.DRAGON_BREATH, tx, ty + 1, tz, 50, 0.8, 0.8, 0.8, 0.1);
 				sl.sendParticles(ParticleTypes.FLASH, tx, ty + 1, tz, 3, 0.2, 0.2, 0.2, 0);
@@ -98,7 +98,7 @@ public class BaranMagicBlastProcedure {
 						target.getBoundingBox().inflate(5.0D),
 						e -> e != baran && !isWildKaiselin(e)
 								&& net.solocraft.util.CombatRangeHelper.withinSurfaceRange(e, target, 5.0D))) {
-					nearby.hurt(magicDamage(world, baran), 15f);
+					nearby.hurt(magicDamage(world, baran), 12f);
 				}
 				sl.playSound(null, BlockPos.containing(tx, ty, tz),
 						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.shoot")),

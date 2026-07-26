@@ -48,11 +48,9 @@ public final class MageQTEHelper {
 			ArcaneMageSpellManager.ASTRAL_ARSENAL,
 			ArcaneMageSpellManager.DIMENSIONAL_REND,
 			ArcaneMageSpellManager.CONVERGENCE,
-            "Water Slash",
-            "Curse Sphere",
-            "Curse Smoke",
-            "Curse Chains",
-            "Magic Missiles"
+			StormMageSpellManager.THUNDERHEAD,
+			StormMageSpellManager.SKYBREAKER,
+			StormMageSpellManager.TEMPEST_INCARNATE
     );
 
     // ── Pure functions ────────────────────────────────────────────────────────

@@ -217,7 +217,7 @@ public final class VesselSelectionScreen extends SystemScreen {
 			anyAvailable |= isAvailable(i);
 		graphics.fill(panelX + 5, panelY + panelH - 28, panelX + panelW - 5, panelY + panelH - 4, 0x82000105);
 		if (anyAvailable) {
-			graphics.drawCenteredString(this.font, "A claimed vessel cannot be selected.", panelX + panelW / 2, panelY + panelH - 18, subText);
+			graphics.drawCenteredString(this.font, "Locked or claimed vessels cannot be selected.", panelX + panelW / 2, panelY + panelH - 18, subText);
 		} else {
 			graphics.drawCenteredString(this.font, "All vessels are claimed.", panelX + panelW / 2, panelY + panelH - 24, 0xFFFF6868);
 			graphics.drawCenteredString(this.font, "Increase /gamerule soloLevelingMonarchLimit.", panelX + panelW / 2, panelY + panelH - 13, 0xFFFFA0A0);
@@ -232,11 +232,17 @@ public final class VesselSelectionScreen extends SystemScreen {
 			VesselDefinition definition = button.definition;
 			List<Component> tooltip = new ArrayList<>();
 			tooltip.add(Component.literal(displayName(definition)).withStyle(themeFormatting(definition), ChatFormatting.BOLD));
-			tooltip.add(Component.literal(displayPower(definition)).withStyle(ChatFormatting.WHITE));
-			tooltip.add(Component.literal(definition.description()).withStyle(ChatFormatting.GRAY));
+			if (VesselManager.isWorkInProgress(definition)) {
+				tooltip.add(Component.literal("WIP (Work in progress)")
+						.withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+			} else {
+				tooltip.add(Component.literal(displayPower(definition)).withStyle(ChatFormatting.WHITE));
+				tooltip.add(Component.literal(definition.description()).withStyle(ChatFormatting.GRAY));
+			}
 			int count = claimCount(button.index);
 			String capacity = vesselLimit <= 0 ? "Unlimited vessels" : count + "/" + vesselLimit + " claimed";
-			tooltip.add(Component.literal(capacity).withStyle(isAvailable(button.index) ? ChatFormatting.GREEN : ChatFormatting.RED));
+			if (!VesselManager.isWorkInProgress(definition))
+				tooltip.add(Component.literal(capacity).withStyle(isAvailable(button.index) ? ChatFormatting.GREEN : ChatFormatting.RED));
 			return tooltip;
 		}
 		return null;
@@ -262,6 +268,9 @@ public final class VesselSelectionScreen extends SystemScreen {
 	}
 
 	private boolean isAvailable(int index) {
+		if (index < 0 || index >= VesselManager.definitions().size()
+				|| VesselManager.isWorkInProgress(VesselManager.definitions().get(index)))
+			return false;
 		return vesselLimit <= 0 || claimCount(index) < vesselLimit;
 	}
 
@@ -442,13 +451,15 @@ public final class VesselSelectionScreen extends SystemScreen {
 				graphics.fill(getX() + 1, getY() + height - 3, getX() + width - 1, getY() + height - 1, withAlpha(activeAccent, 0x72));
 
 			Font font = Minecraft.getInstance().font;
-			String state = waiting ? "WAIT" : (available ? "OPEN" : "LOCKED");
+			boolean workInProgress = VesselManager.isWorkInProgress(definition);
+			String state = waiting ? "WAIT" : workInProgress ? "WIP" : (available ? "OPEN" : "LOCKED");
 			int stateColor = waiting ? 0xFFFFD66B : (available ? activeAccent : 0xFFFF6868);
 			int nameColor = available ? (hovered ? screen.weightedColor(THEME_TEXT) : THEME_TEXT[themeFor(definition)]) : 0xFF967F8D;
 			int subColor = available ? (hovered ? screen.weightedColor(THEME_SUBTEXT) : THEME_SUBTEXT[themeFor(definition)]) : 0xFF755E6B;
 			graphics.drawString(font, fit(font, displayName(definition), width - 10), getX() + 5, getY() + 5, nameColor, false);
 			int powerWidth = width - font.width(state) - 15;
-			graphics.drawString(font, fit(font, displayPower(definition), powerWidth), getX() + 5, getY() + 17, subColor, false);
+			String power = workInProgress ? "Work in progress" : displayPower(definition);
+			graphics.drawString(font, fit(font, power, powerWidth), getX() + 5, getY() + 17, subColor, false);
 			graphics.drawString(font, state, getX() + width - font.width(state) - 5, getY() + 17, stateColor, false);
 		}
 

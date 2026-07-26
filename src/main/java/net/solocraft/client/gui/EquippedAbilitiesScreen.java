@@ -45,6 +45,7 @@ public class EquippedAbilitiesScreen extends SystemContainerScreen<EquippedAbili
 		this.y = container.y;
 		this.z = container.z;
 		this.entity = container.entity;
+		this.abilityPage = container.initialPage;
 		this.imageWidth = 0;
 		this.imageHeight = 0;
 		this.pRelX = -118;

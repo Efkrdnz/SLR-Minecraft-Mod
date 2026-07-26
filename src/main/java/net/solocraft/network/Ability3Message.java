@@ -43,6 +43,8 @@ public class Ability3Message {
 	}
 
 	public static void pressAction(Player entity, int type, int pressedms) {
+		if (entity == null || entity.level().isClientSide())
+			return;
 		Level world = entity.level();
 		double x = entity.getX();
 		double y = entity.getY();

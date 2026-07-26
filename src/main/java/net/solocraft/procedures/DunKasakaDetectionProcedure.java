@@ -8,8 +8,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.TickEvent;
 
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,6 +23,9 @@ import java.util.Comparator;
 
 @Mod.EventBusSubscriber
 public class DunKasakaDetectionProcedure {
+	private static final ResourceKey<Level> KASAKA_DIMENSION = ResourceKey.create(Registries.DIMENSION,
+			new ResourceLocation("sololeveling", "dungeon_dimension_kasaka"));
+
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
 		if (event.phase == TickEvent.Phase.END) {
@@ -39,22 +42,19 @@ public class DunKasakaDetectionProcedure {
 			return;
 		if (world.isClientSide())
 			return;
-		if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_kasaka")))) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).tpd == false) {
-				Entity nearestPortal = world.getEntitiesOfClass(Portal12Entity.class, AABB.ofSize(new Vec3((entity.getX()), (entity.getY()), (entity.getZ())), 220, 220, 220), e -> true).stream().sorted(new Object() {
-					Comparator<Entity> compareDistOf(double _x, double _y, double _z) {
-						return Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_x, _y, _z));
-					}
-				}.compareDistOf((entity.getX()), (entity.getY()), (entity.getZ()))).findFirst().orElse(null);
+		if (entity.level().dimension().equals(KASAKA_DIMENSION)) {
+			SololevelingModVariables.PlayerVariables variables = entity.getCapability(
+					SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(null);
+			if (variables != null && !variables.tpd) {
+				Entity nearestPortal = world.getEntitiesOfClass(Portal12Entity.class,
+						AABB.ofSize(entity.position(), 6.0D, 6.0D, 6.0D),
+						portal -> portal.distanceToSqr(entity) <= 9.0D).stream()
+						.min(Comparator.comparingDouble(portal -> portal.distanceToSqr(entity)))
+						.orElse(null);
 				if (nearestPortal != null) {
 					if (entity.distanceToSqr(nearestPortal) <= 9) {
-						{
-							boolean _setval = true;
-							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-								capability.tpd = _setval;
-								capability.syncPlayerVariables(entity);
-							});
-						}
+						variables.tpd = true;
+						variables.syncPlayerVariables(entity);
 						entity.setNoGravity(false);
 						{
 							Entity _ent = entity;

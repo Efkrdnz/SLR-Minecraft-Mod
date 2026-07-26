@@ -40,7 +40,7 @@ public class RewardPanelScreen extends AbstractContainerScreen<RewardPanelMenu> 
 
 	@Override
 	public boolean isPauseScreen() {
-		return true;
+		return false;
 	}
 
 	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/reward_panel.png");

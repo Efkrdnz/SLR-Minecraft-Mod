@@ -26,9 +26,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -48,11 +46,9 @@ public class LiuSwordBeamEntity extends Entity {
 	private static final EntityDataAccessor<Float> DIRECTION_Z = SynchedEntityData.defineId(LiuSwordBeamEntity.class, EntityDataSerializers.FLOAT);
 
 	private final Set<UUID> touched = new HashSet<>();
-	private final Set<UUID> marked = new HashSet<>();
-	private final Map<UUID, UUID> markerEffects = new HashMap<>();
 	private float travelled;
 	private boolean finishing;
-	private boolean executionScheduled;
+	private boolean executionRegistered;
 
 	public LiuSwordBeamEntity(PlayMessages.SpawnEntity packet, Level level) {
 		this(SololevelingModEntities.LIU_SWORD_BEAM.get(), level);
@@ -237,12 +233,16 @@ public class LiuSwordBeamEntity extends Entity {
 				continue;
 			touched.add(targetId);
 			if (isExecutionBeam()) {
-				marked.add(targetId);
-				LiuZhigangCombatManager.restrainExecutionTarget(owner, target, 120);
 				LiuSwordVfxEntity marker = LiuSwordVfxEntity.spawnAttached(level, target, LiuSwordVfxEntity.MARK,
 						getPrimaryColor(), getSecondaryColor(), Math.max(1.2F, target.getBbWidth() * 1.45F),
 						Math.max(1.8F, target.getBbHeight() * 1.1F), 0.0F, 120, isDual());
-				markerEffects.put(targetId, marker.getUUID());
+				boolean registered = LiuZhigangCombatManager.registerExecutionTarget(owner, getUUID(),
+						target, marker.getUUID(), getDamage(), getPrimaryColor(), getSecondaryColor(),
+						isDual(), !executionRegistered);
+				if (registered)
+					executionRegistered = true;
+				else
+					marker.discard();
 			} else {
 				LiuZhigangCombatManager.hitBySwordBeam(owner, target, getDamage(), getTier());
 			}
@@ -281,20 +281,6 @@ public class LiuSwordBeamEntity extends Entity {
 		if (finishing)
 			return;
 		finishing = true;
-		if (this.level() instanceof ServerLevel level) {
-			if (!executionScheduled && owner != null && isExecutionBeam() && !marked.isEmpty()) {
-				LiuZhigangCombatManager.scheduleExecutionDetonation(owner, marked, markerEffects, getDamage(),
-						getPrimaryColor(), getSecondaryColor(), isDual());
-				executionScheduled = true;
-			}
-			if (!executionScheduled) {
-				for (UUID markerId : markerEffects.values()) {
-					Entity marker = level.getEntity(markerId);
-					if (marker != null)
-						marker.discard();
-				}
-			}
-		}
 		this.discard();
 	}
 
@@ -329,6 +315,7 @@ public class LiuSwordBeamEntity extends Entity {
 			this.entityData.set(DIRECTION_Z, tag.getFloat("DirectionZ"));
 		}
 		this.travelled = tag.getFloat("Travelled");
+		this.executionRegistered = tag.getBoolean("ExecutionRegistered");
 	}
 
 	@Override
@@ -346,6 +333,7 @@ public class LiuSwordBeamEntity extends Entity {
 		tag.putFloat("DirectionY", this.entityData.get(DIRECTION_Y));
 		tag.putFloat("DirectionZ", this.entityData.get(DIRECTION_Z));
 		tag.putFloat("Travelled", travelled);
+		tag.putBoolean("ExecutionRegistered", executionRegistered);
 	}
 
 	@Override

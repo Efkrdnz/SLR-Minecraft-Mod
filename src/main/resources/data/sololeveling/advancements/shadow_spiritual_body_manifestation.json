@@ -11,7 +11,7 @@
     },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": true,
+    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {
@@ -19,5 +19,5 @@
       "trigger": "minecraft:impossible"
     }
   },
-  "parent": "sololeveling:shadow_exchange"
+  "parent": "sololeveling:shadow_storage_level_5"
 }

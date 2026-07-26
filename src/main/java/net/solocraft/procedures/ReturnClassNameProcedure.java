@@ -14,7 +14,8 @@ public class ReturnClassNameProcedure {
 			String specialization = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 					.map(data -> data.mageSpecialization).orElse("");
 			return "barrier".equals(specialization) ? "\u00A7bBarrier Mage"
-					: "arcane".equals(specialization) ? "\u00A7dArcane Mage" : "\u00A7cFire Mage";
+					: "arcane".equals(specialization) ? "\u00A7dArcane Mage"
+					: "storm".equals(specialization) ? "\u00A7eStorm Mage" : "\u00A7cFire Mage";
 		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Classes == 3) {
 			return "\u00A7cFighter";
 		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Classes == 4) {

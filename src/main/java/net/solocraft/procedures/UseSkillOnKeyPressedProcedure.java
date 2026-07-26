@@ -7,15 +7,21 @@ import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.util.CooldownManager;
 import net.solocraft.util.ClassPassiveManager;
+import net.solocraft.util.ColdBloodSkillManager;
 import net.solocraft.util.JobSkillManager;
 import net.solocraft.util.MageQTEHelper;
 import net.solocraft.util.MageQTEState;
+import net.solocraft.util.MageSpellProgression;
 import net.solocraft.util.BarrierMageSpellManager;
 import net.solocraft.util.ArcaneMageSpellManager;
 import net.solocraft.util.FireMageSpellManager;
+import net.solocraft.util.StormMageSpellManager;
 import net.solocraft.util.QTEResult;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.UrgentQuestManager;
+import net.solocraft.util.DaggerThrowManager;
+import net.solocraft.util.RangerCombatManager;
+import net.solocraft.util.AssassinSkillManager;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -51,6 +57,17 @@ public class UseSkillOnKeyPressedProcedure {
 		// (UseSkillOnKeyReleasedProcedure) with a mana discount based on timing.
 		String _selectedPower = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 				.orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower;
+		boolean specializationSpell = FireMageSpellManager.isFireSkill(_selectedPower)
+				|| BarrierMageSpellManager.isBarrierSkill(_selectedPower)
+				|| ArcaneMageSpellManager.isArcaneSkill(_selectedPower)
+				|| StormMageSpellManager.isStormSkill(_selectedPower);
+		if (specializationSpell
+				&& !MageSpellProgression.canCastLearnedSkill(entity, _selectedPower)) {
+			if (world instanceof Level level && !level.isClientSide() && entity instanceof Player player)
+				player.displayClientMessage(Component.literal(
+						"You have not learned this spell."), true);
+			return;
+		}
 		if (MageQTEHelper.MAGE_SKILLS.contains(_selectedPower)
 				&& CooldownManager.isOnCooldown(entity, _selectedPower)) {
 			if (world instanceof Level level) {
@@ -66,12 +83,36 @@ public class UseSkillOnKeyPressedProcedure {
 			}
 			return;
 		}
+		if (RangerCombatManager.isRangerSkill(_selectedPower)) {
+			if (entity instanceof ServerPlayer ranger
+					&& RangerCombatManager.activateSkill(ranger, _selectedPower))
+				UrgentQuestManager.onSkillUsed(entity, _selectedPower);
+			return;
+		}
 		UrgentQuestManager.onSkillUsed(entity, _selectedPower);
+		if (entity instanceof ServerPlayer daggerPlayer) {
+			if (DaggerThrowManager.DAGGER_THROW.equals(_selectedPower)) {
+				DaggerThrowManager.castThrow(daggerPlayer);
+				return;
+			}
+			if (DaggerThrowManager.DAGGER_RUSH.equals(_selectedPower)) {
+				DaggerThrowManager.castRush(daggerPlayer);
+				return;
+			}
+			if (AssassinSkillManager.isReworkedSkill(_selectedPower)) {
+				AssassinSkillManager.activateSkill(daggerPlayer, _selectedPower);
+				return;
+			}
+		}
 		if (ShadowMonarchManager.isFormationSkill(_selectedPower)) {
 			ShadowFormationCastProcedure.execute(world, x, y, z, entity, _selectedPower);
 			return;
 		}
 		if (JobSkillManager.cast(world, x, y, z, entity, _selectedPower)) {
+			return;
+		}
+		if (ColdBloodSkillManager.SKILL.equals(_selectedPower)) {
+			ColdBloodSkillManager.cast(entity);
 			return;
 		}
 		if (FireMageSpellManager.FLAME_WEAVING.equals(_selectedPower)) {
@@ -87,6 +128,11 @@ public class UseSkillOnKeyPressedProcedure {
 		if (ArcaneMageSpellManager.isInstantSkill(_selectedPower)) {
 			if (world instanceof Level level && !level.isClientSide())
 				ArcaneMageSpellManager.cast(entity, _selectedPower, QTEResult.MISS);
+			return;
+		}
+		if (StormMageSpellManager.isInstantSkill(_selectedPower)) {
+			if (world instanceof Level level && !level.isClientSide())
+				StormMageSpellManager.cast(entity, _selectedPower, QTEResult.MISS);
 			return;
 		}
 		if (MageQTEHelper.MAGE_SKILLS.contains(_selectedPower)) {
@@ -167,12 +213,6 @@ public class UseSkillOnKeyPressedProcedure {
 						_player.displayClientMessage(Component.literal("\u00A71Using Quick Slashes"), true);
 				}
 			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Lightball")) {
-			LightBallThrowProcedure.execute(entity);
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Light Golem")) {
-			SummonBeastProcedure.execute(world, x, y, z, entity);
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Detection")) {
 			DetectEyeSpawnProcedure.execute(world, x, y, z, entity);
@@ -450,115 +490,6 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Taunt")) {
 			TauntCastProcedure.execute(world, x, y, z, entity);
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Sharpshooter")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!CooldownManager.isOnCooldown(entity, "Sharpshooter")) {
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					HomingArrowProcedure.execute(entity);
-					// Ranger Focus bonus: consume 100% charge for Strength II burst
-					if (world instanceof Level _lvl && !_lvl.isClientSide() && entity instanceof ServerPlayer _sp)
-						ClassPassiveManager.consumeRangerFocus(_sp);
-					CooldownManager.set(entity, "mana_refresh", 20);
-					CooldownManager.set(entity, "Sharpshooter", 120);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Proximity Trap")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-				if (!CooldownManager.isOnCooldown(entity, "Proximity Trap")) {
-					DeployTrapProcedure.execute(world, x, y, z, entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					CooldownManager.set(entity, "mana_refresh", 40);
-					CooldownManager.set(entity, "Proximity Trap", 400);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Back Step")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 200) {
-				if (BackStepProcedure.execute(entity)) {
-					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 200;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.MP = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("High Value Target")) {
-			if (!CooldownManager.isOnCooldown(entity, "High Value Target")) {
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 1000) {
-					ArrowRainSprayProcedure.execute(world, x, y, z, entity);
-					// Ranger Focus bonus: consume 100% charge for Strength II burst
-					if (world instanceof Level _lvl && !_lvl.isClientSide() && entity instanceof ServerPlayer _sp)
-						ClassPassiveManager.consumeRangerFocus(_sp);
-					CooldownManager.set(entity, "High Value Target", 120);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 1000;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-				} else {
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-				}
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Hawkeye")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 500) {
-				HawkEyeProcedure.execute(entity);
-				{
-					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 500;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.MP = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Hyper Focus")) {
-			if (!CooldownManager.isOnCooldown(entity, "Hyper Focus")) {
-				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
-					IntenseFocusProcedure.execute(world, x, y, z, entity);
-					CooldownManager.set(entity, "Hyper Focus", 200);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-				} else {
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-				}
-			}
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Critical Attack")) {
 			if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("dagger")))

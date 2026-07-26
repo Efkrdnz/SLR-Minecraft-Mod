@@ -1,6 +1,7 @@
 package net.solocraft.client.gui.system;
 
 import net.solocraft.util.SystemPlayerAccess;
+import net.solocraft.util.SystemClientConfig;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -38,7 +39,14 @@ public final class SystemNotificationManager {
 	public void push(int accentColor, int durationTicks, Component title, Component undertext, boolean negativeSound) {
 		if ((title == null && undertext == null) || !hasLocalSystem())
 			return;
-		long holdMs = Math.max(0L, durationTicks) * 50L; // 20 tps
+		long holdMs;
+		if (SystemClientConfig.isDynamicNotificationsEnabled()) {
+			int characters = (title == null ? 0 : title.getString().length())
+					+ (undertext == null ? 0 : undertext.getString().length());
+			holdMs = Math.max(1800L, Math.min(7000L, 1500L + characters * 42L));
+		} else {
+			holdMs = Math.round(SystemClientConfig.getNotificationLifetimeSeconds() * 1000.0F);
+		}
 		notifications.add(new Notification(accentColor, title, undertext, System.currentTimeMillis(), holdMs));
 		if (negativeSound)
 			SystemGuiSounds.negativeNotification();

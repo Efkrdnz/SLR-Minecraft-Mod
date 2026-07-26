@@ -33,7 +33,7 @@ public class MurderiousIntentStoneItem extends Item {
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
 		list.add(Component.literal("Right click this rune to obtain \"Murderious Intent\""));
-		list.add(Component.literal("Puts your oponent in state of \"fear\" and cutting all their ability and mobility in half!"));
+		list.add(Component.literal("Overwhelm nearby enemies with killing intent. Enemies weaker than you panic and flee."));
 	}
 
 	@Override

@@ -24,14 +24,15 @@ public class BackStepProcedure {
 				});
 			}
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 100, 1, false, false));
+				_entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 40, 0, false, false));
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 9999, 1, false, false));
-			if (entity.onGround()) {
-				entity.setDeltaMovement(new Vec3(((-1.5) * entity.getLookAngle().x), 1.5, ((-1.5) * entity.getLookAngle().z)));
-			} else {
-				entity.setDeltaMovement(new Vec3(((-1.5) * entity.getLookAngle().x), 0.1, ((-1.5) * entity.getLookAngle().z)));
-			}
+				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 80, 0, false, false));
+			Vec3 look = entity.getLookAngle();
+			Vec3 retreat = new Vec3(-look.x, 0.0D, -look.z);
+			if (retreat.lengthSqr() > 0.0001D)
+				retreat = retreat.normalize().scale(1.25D);
+			entity.setDeltaMovement(retreat.x, entity.onGround() ? 0.28D : 0.08D, retreat.z);
+			entity.hurtMarked = true;
 			return true;
 		}
 		if (entity instanceof Player _player && !_player.level().isClientSide())

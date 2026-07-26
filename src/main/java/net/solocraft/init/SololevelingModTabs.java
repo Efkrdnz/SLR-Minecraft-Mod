@@ -57,6 +57,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.MANA_GUN.get());
 				tabData.accept(SololevelingModItems.STORM_GRIAMORE.get());
 				tabData.accept(SololevelingModItems.SPIRIT_BOW.get());
+				tabData.accept(SololevelingModItems.ORB_OF_AVARICE.get());
 			})
 
 					.build());
@@ -121,7 +122,6 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.PURIFIED_BLOOD_OF_THE_DEMON_KING.get());
 				tabData.accept(SololevelingModItems.WORLD_TREES_FRAGMENT.get());
 				tabData.accept(SololevelingModItems.SPRING_WATER_OF_THE_ECHOING_FOREST.get());
-				tabData.accept(SololevelingModItems.ORB_OF_AVARICE.get());
 				tabData.accept(SololevelingModItems.GIVE_BERU.get());
 				tabData.accept(SololevelingModItems.GIVE_IGRIS.get());
 				tabData.accept(SololevelingModItems.GRAND_MAGE.get());
@@ -238,17 +238,15 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.RUNESTONE_SHADOW_SPIRITUAL_BODY_MANIFESTATION.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_MONARCHS_DOMAIN.get());
 				tabData.accept(SololevelingModItems.MURDERIOUS_INTENT_STONE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_COLD_BLOOD.get());
 				tabData.accept(SololevelingModItems.TELEKINESIS_STONE.get());
 				tabData.accept(SololevelingModItems.STEALTH_STONE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_BACKSTAB.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_DUALWIELD.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SHADOWSTEP.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_QUICKSLASHES.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_CURSE_CHAINS.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_CURSE_SPHERE.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_CURSED_SMOKE.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_WATERSLASH.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_LIGHTBALL.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_DAGGER_THROW.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_DAGGER_RUSH.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_FLAME_WEAVING.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_IGNITION_ORB.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_INFERNO_LANCE.get());
@@ -270,9 +268,15 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.RUNESTONE_ASTRAL_ARSENAL.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_DIMENSIONAL_REND.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_GRAND_FORMULA_CONVERGENCE.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_LIGHT_GOLEM.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_STATIC_NEEDLE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_SLIPSTREAM.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_THUNDERCLAP.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_LIGHTNING_ROD.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_CHAIN_LIGHTNING.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_THUNDERHEAD.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_SKYBREAKER.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_TEMPEST_INCARNATE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_DETECTION.get());
-				tabData.accept(SololevelingModItems.RUNESTONE_MAGIC_MISSILES.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SLASHDASH.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SLASH_FURY.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_CRITICALSTRIKE.get());

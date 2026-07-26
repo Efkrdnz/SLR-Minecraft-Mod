@@ -32,6 +32,9 @@ public class ARISEProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
+		String restrictedOwner = entity.getPersistentData().getString("dkc_spawned_by");
+		if (!restrictedOwner.isBlank() && !restrictedOwner.equals(sourceentity.getStringUUID()))
+			return;
 		double rand = 0;
 		if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
 			if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 500) {

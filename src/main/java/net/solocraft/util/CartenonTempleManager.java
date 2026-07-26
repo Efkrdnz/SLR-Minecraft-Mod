@@ -217,6 +217,7 @@ public final class CartenonTempleManager {
 			capability.Player = true;
 			capability.syncPlayerVariables(player);
 		});
+		VesselProgressionManager.sync(player);
 
 		ServerLevel overworld = player.server.overworld();
 		BlockPos spawn = findSafeOverworldSpawn(overworld);

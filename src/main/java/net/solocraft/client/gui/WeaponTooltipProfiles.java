@@ -35,6 +35,7 @@ public final class WeaponTooltipProfiles {
 	public static final int ROYAL = 10;
 	public static final int LUNAR = 11;
 	public static final int TITAN = 12;
+	public static final int AVARICE = 13;
 
 	private static final int E = 0;
 	private static final int D = 1;
@@ -158,6 +159,12 @@ public final class WeaponTooltipProfiles {
 		add("spirit_bow", p("A", A, "Mana Bow", NATURE, 0x8DFFD0, 0x315F79, 11.0F, 2,
 				l("An elven bow believed to originate beyond this realm.", "It shapes the wielder's mana into silent arrows."),
 				l("Spirit Arrow", "Uses mana in place of physical ammunition.")));
+		add("orb_of_avarice", p("A", A, "Magic Focus", AVARICE, 0x55D8FF, 0x8E1738, 12.8F, 7,
+				l("A petrified sphere condensed from Vulcan's blood.",
+						"It devours mana and returns it as overwhelming ruin."),
+				l("Desire for Destruction", "Doubles magic damage while held.",
+						"Insatiable Price", "Mana costs are increased by 50%.",
+						"Blue-Flame Dominion", "Fire magic burns blue under its influence.")));
 
 		// Story and legacy weapons that are not always exposed in the creative tab.
 		add("igrislongsword", p("A", A, "Longsword", BLOOD, 0xE85858, 0x541B2B, 11.3F, 0,

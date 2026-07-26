@@ -32,10 +32,14 @@ public class XpmultiplierProcedure {
 		if (world.dayTime() % 100 != 0)
 			return;
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-			capability.GuildCode = 0;
-			capability.xpmultiplier = GuildBuffManager.xpMultiplier(entity);
-			capability.manaregen = 0;
-			capability.syncPlayerVariables(entity);
+			double xpMultiplier = GuildBuffManager.xpMultiplier(entity);
+			if (capability.GuildCode != 0 || capability.xpmultiplier != xpMultiplier
+					|| capability.manaregen != 0) {
+				capability.GuildCode = 0;
+				capability.xpmultiplier = xpMultiplier;
+				capability.manaregen = 0;
+				capability.syncPlayerVariables(entity);
+			}
 		});
 	}
 }

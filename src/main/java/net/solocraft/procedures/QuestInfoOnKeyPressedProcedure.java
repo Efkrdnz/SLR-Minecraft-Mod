@@ -8,12 +8,9 @@ public class QuestInfoOnKeyPressedProcedure {
 	public static void execute(Entity entity) {
 		if (entity == null)
 			return;
-		{
-			boolean _setval = true;
-			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-				capability.questinfo = _setval;
-				capability.syncPlayerVariables(entity);
-			});
-		}
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			if (!capability.questinfo)
+				capability.questinfo = true;
+		});
 	}
 }

@@ -32,8 +32,8 @@ public class RunestoneDualwieldItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Dual wielding\""));
-		list.add(Component.literal("User can use \"Dual wielding\" which will slash rapidly towards where you looking at horizontally and teleport you to the end."));
+		list.add(Component.literal("Right click this rune to obtain \"Dualwield\""));
+		list.add(Component.literal("Enter a seven-second stance. Dagger hits gain offhand follow-ups, with a crosscut every fourth hit."));
 	}
 
 	@Override

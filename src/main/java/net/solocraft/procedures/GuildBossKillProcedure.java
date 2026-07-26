@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.guild.GuildData;
 import net.solocraft.guild.GuildSavedData;
+import net.solocraft.dkc.DkcFloorRegistry;
 
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -72,7 +73,7 @@ public class GuildBossKillProcedure {
         String dimPath = dim.location().getPath(); // e.g. "dungeon_dimension_s"
 
         // System dungeons (Igris, Kasaka, DKC, etc.) never award guild XP
-        if (EXCLUDED_DIMS.contains(dimPath)) return;
+        if (EXCLUDED_DIMS.contains(dimPath) || DkcFloorRegistry.isDkc(dim)) return;
 
         int xp = DIM_XP.getOrDefault(dimPath, DEFAULT_XP);
 

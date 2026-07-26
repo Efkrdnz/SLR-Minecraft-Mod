@@ -45,7 +45,11 @@ public class RewardGainAdvProcedure {
 	private static void execute(@Nullable Event event, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
-		if (entity.getPersistentData().getBoolean(net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG))
+		boolean runtimeSpawn = entity.getPersistentData().getBoolean(
+				net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG);
+		boolean redGateBaruka = entity instanceof BarukaEntity
+				&& net.solocraft.dungeon.runtime.SnowRedGateArenaManager.isArenaMob(entity);
+		if (runtimeSpawn && !redGateBaruka)
 			return;
 		String command = "";
 		String r1 = "";

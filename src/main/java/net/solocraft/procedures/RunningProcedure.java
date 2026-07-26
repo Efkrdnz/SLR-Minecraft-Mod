@@ -27,36 +27,23 @@ public class RunningProcedure {
 	private static void execute(@Nullable Event event, Entity entity) {
 		if (entity == null)
 			return;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).ActiveDaily) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).RUN < DailyQuestHelper.runTarget(entity)) {
-				if (Math.sqrt(Math.pow(entity.getX() - (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).RX, 2)
-						+ Math.pow(entity.getZ() - (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).RZ, 2)) >= 1) {
-					{
-						double _setval = entity.getX();
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.RX = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					{
-						double _setval = entity.getZ();
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.RZ = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					double previousValue = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).RUN;
-					double newValue = previousValue + 1;
-					{
-						double _setval = newValue;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.RUN = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					DailyQuestHelper.checkSecretTransition(entity, previousValue, newValue, DailyQuestHelper.NORMAL_RUN_TARGET);
-				}
-			}
-		}
+		SololevelingModVariables.PlayerVariables capability = entity.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(null);
+		if (capability == null || !capability.ActiveDaily
+				|| capability.RUN >= DailyQuestHelper.runTarget(entity))
+			return;
+		double dx = entity.getX() - capability.RX;
+		double dz = entity.getZ() - capability.RZ;
+		if (Math.sqrt(dx * dx + dz * dz) < 1)
+			return;
+
+		double previousValue = capability.RUN;
+		double newValue = previousValue + 1;
+		capability.RX = entity.getX();
+		capability.RZ = entity.getZ();
+		capability.RUN = newValue;
+		capability.syncPlayerVariables(entity);
+		DailyQuestHelper.checkSecretTransition(entity, previousValue, newValue,
+				DailyQuestHelper.NORMAL_RUN_TARGET);
 	}
 }

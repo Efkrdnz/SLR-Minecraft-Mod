@@ -28,10 +28,10 @@ import net.minecraft.world.phys.Vec3;
  * Timeline (MF ticks):
  *   1   – apply SPEED II, trail particles, menacing sound
  *   5   – start propelling Baran toward target every tick
- *   5-18– propulsion ticks: deal 20 damage to any entity he collides with
- *   18  – deal guaranteed 25-damage hit if target is still within 6 blocks
+ *   5-18– propulsion ticks: deal 17 damage to any entity he collides with
+ *   18  – deal guaranteed 21-damage hit if target is still within 6 blocks
  *          + knockback
- *   Phase 2: MF=1 gives SPEED III; collision damage = 28
+ *   Phase 2: MF=1 gives SPEED III; collision damage = 23
  *   ≥40 – remove speed effect, reset to idle
  */
 public class BaranChargeProcedure {
@@ -79,7 +79,7 @@ public class BaranChargeProcedure {
 
 			// Collision damage: hurt anything close to Baran during the charge
 			if (world instanceof ServerLevel sl) {
-				float collisionDmg = phase2 ? 28f : 20f;
+				float collisionDmg = phase2 ? 23f : 17f;
 				DamageSource src = new DamageSource(
 						world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
 								.getHolderOrThrow(DamageTypes.MOB_ATTACK), baran);
@@ -102,7 +102,7 @@ public class BaranChargeProcedure {
 				DamageSource src = new DamageSource(
 						world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
 								.getHolderOrThrow(DamageTypes.MOB_ATTACK), baran);
-				target.hurt(src, phase2 ? 35f : 25f);
+				target.hurt(src, phase2 ? 29f : 21f);
 				// Knockback away
 				Vec3 dir = target.position().subtract(baran.position()).normalize();
 				target.setDeltaMovement(dir.x * 1.5, 0.5, dir.z * 1.5);

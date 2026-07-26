@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.SystemNotifications;
 
 import net.minecraftforge.event.TickEvent;
@@ -51,7 +52,7 @@ public class SkillUnlockPopupProcedure {
 		}
 
 		for (String skill : currentSkills) {
-			if (!previousSkills.contains(skill))
+			if (!previousSkills.contains(skill) && !ShadowMonarchManager.isFormationSkill(skill))
 				showSkillPopup(player, skill);
 		}
 		data.putString(KEY_PLIST, normalizedCurrent);
@@ -60,11 +61,18 @@ public class SkillUnlockPopupProcedure {
 	private static Set<String> parseSkills(String plist) {
 		Set<String> skills = new LinkedHashSet<>();
 		for (String entry : plist.split(",")) {
-			String skill = entry.trim();
+			String skill = normalizeSkill(entry);
 			if (!isPlaceholderSkill(skill))
 				skills.add(skill);
 		}
 		return skills;
+	}
+
+	private static String normalizeSkill(String entry) {
+		String skill = entry == null ? "" : entry.trim();
+		if (skill.startsWith("."))
+			skill = skill.substring(1).trim();
+		return skill;
 	}
 
 	private static String normalizeSkills(Set<String> skills) {

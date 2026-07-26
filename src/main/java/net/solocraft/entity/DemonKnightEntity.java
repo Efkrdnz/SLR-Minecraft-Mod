@@ -55,7 +55,8 @@ import javax.annotation.Nullable;
 public class DemonKnightEntity extends Monster implements GeoEntity {
 	private static final int TEXTURE_VARIANT_COUNT = 3;
 	private static final float MIN_VISUAL_SCALE = 0.94F;
-	private static final float MAX_VISUAL_SCALE = 1.08F;
+	private static final float MAX_NATURAL_VISUAL_SCALE = 1.08F;
+	private static final float MAX_VISUAL_SCALE = 1.50F;
 	private static final String VISUAL_SCALE_TAG = "DemonKnightVisualScale";
 
 	// synced variant (0, 1, 2) — determines which texture is shown
@@ -75,6 +76,7 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 
 	public DemonKnightEntity(EntityType<DemonKnightEntity> type, Level world) {
 		super(type, world);
+		setMaxUpStep(1.0F);
 		xpReward = 0;
 		setNoAi(false);
 		setPersistenceRequired();
@@ -99,13 +101,14 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 		return this.entityData.get(VISUAL_SCALE);
 	}
 
-	private void setVisualScale(float scale) {
+	public void setVisualScale(float scale) {
 		this.entityData.set(VISUAL_SCALE, Math.max(MIN_VISUAL_SCALE, Math.min(MAX_VISUAL_SCALE, scale)));
 	}
 
 	public void randomizeAppearance() {
 		this.setVariant(this.random.nextInt(TEXTURE_VARIANT_COUNT));
-		this.setVisualScale(MIN_VISUAL_SCALE + this.random.nextFloat() * (MAX_VISUAL_SCALE - MIN_VISUAL_SCALE));
+		this.setVisualScale(MIN_VISUAL_SCALE
+				+ this.random.nextFloat() * (MAX_NATURAL_VISUAL_SCALE - MIN_VISUAL_SCALE));
 	}
 
 	/** Kept for existing DKC spawn code; now randomizes the complete appearance. */
@@ -121,19 +124,19 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.0, false) {
+		this.goalSelector.addGoal(0, new FloatGoal(this));
+		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.25, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
 				return 7.0; // slightly longer reach than demon (6.25)
 			}
 		});
-		this.goalSelector.addGoal(2, new RandomStrollGoal(this, 0.6));
+		this.goalSelector.addGoal(3, new RandomStrollGoal(this, 0.8));
 		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 5, true, false,
 				candidate -> !this.getPersistentData().hasUUID(WhiteFlameMonarchManager.SUMMON_OWNER)
 						&& candidate instanceof Player player && !player.isCreative() && !player.isSpectator()));
 		this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
-		this.goalSelector.addGoal(5, new FloatGoal(this));
 	}
 
 	@Override
@@ -144,6 +147,14 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
+	}
+
+	@Override
+	protected boolean shouldDespawnInPeaceful() {
+		CompoundTag data = getPersistentData();
+		if (data.getBoolean("radiru_resident") || data.getBoolean("radiru_training_dummy"))
+			return false;
+		return super.shouldDespawnInPeaceful();
 	}
 
 	@Override
@@ -214,7 +225,8 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 		if (compound.contains(VISUAL_SCALE_TAG))
 			this.setVisualScale(compound.getFloat(VISUAL_SCALE_TAG));
 		else
-			this.setVisualScale(MIN_VISUAL_SCALE + this.random.nextFloat() * (MAX_VISUAL_SCALE - MIN_VISUAL_SCALE));
+			this.setVisualScale(MIN_VISUAL_SCALE
+					+ this.random.nextFloat() * (MAX_NATURAL_VISUAL_SCALE - MIN_VISUAL_SCALE));
 		if (compound.contains("dkc_floor_number"))
 			this.getPersistentData().putDouble("dkc_floor_number", compound.getDouble("dkc_floor_number"));
 		if (compound.contains("dkc_spawned_by"))
@@ -225,11 +237,15 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 	public void baseTick() {
 		super.baseTick();
 		this.refreshDimensions();
+		net.solocraft.dkc.DkcWaveRuntime.tick(this);
 	}
 
 	@Override
 	public EntityDimensions getDimensions(Pose p) {
-		return super.getDimensions(p).scale(1.0f);
+		float eliteCollisionScale = this.getVisualScale() <= MAX_NATURAL_VISUAL_SCALE
+				? 1.0F
+				: Math.min(1.25F, this.getVisualScale() / MAX_NATURAL_VISUAL_SCALE);
+		return super.getDimensions(p).scale(eliteCollisionScale);
 	}
 
 	public static void init() {
@@ -241,8 +257,8 @@ public class DemonKnightEntity extends Monster implements GeoEntity {
 		builder = builder.add(Attributes.ARMOR, 12);               // heavy armor
 		builder = builder.add(Attributes.ARMOR_TOUGHNESS, 4);
 		builder = builder.add(Attributes.ATTACK_DAMAGE, 20);       // hits harder than demon (12)
-		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.22);    // slower than demon (0.3)
-		builder = builder.add(Attributes.FOLLOW_RANGE, 32);
+		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.3);     // elite pursuit speed; armor no longer makes them trivial to kite
+		builder = builder.add(Attributes.FOLLOW_RANGE, 48);
 		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.8); // very resistant to knockback
 		builder = builder.add(Attributes.ATTACK_KNOCKBACK, 0.5);
 		return builder;

@@ -1,0 +1,10 @@
+{
+  "display": {
+    "icon": { "item": "minecraft:nether_star" },
+    "title": { "translate": "advancements.vessels.white_flames.spiritual_body.title" },
+    "description": { "translate": "advancements.vessels.white_flames.spiritual_body.descr" },
+    "frame": "challenge", "show_toast": true, "announce_to_chat": false, "hidden": true
+  },
+  "criteria": { "unlock": { "trigger": "minecraft:impossible" } },
+  "parent": "sololeveling:vessels/white_flames/hells_army"
+}

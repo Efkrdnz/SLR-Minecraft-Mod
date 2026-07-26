@@ -257,7 +257,7 @@ public class BaranEntity extends Monster implements GeoEntity {
 				.add(Attributes.MAX_HEALTH, 300)
 				.add(Attributes.ARMOR, 32)
 				.add(Attributes.ARMOR_TOUGHNESS, 4)
-				.add(Attributes.ATTACK_DAMAGE, 25)
+				.add(Attributes.ATTACK_DAMAGE, 22)
 				.add(Attributes.FOLLOW_RANGE, 40)
 				.add(Attributes.KNOCKBACK_RESISTANCE, 0.8);
 	}

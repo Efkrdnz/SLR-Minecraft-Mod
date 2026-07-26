@@ -33,7 +33,7 @@ public class StealthStoneItem extends Item {
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
 		list.add(Component.literal("Right click this rune to obtain \"Stealth\""));
-		list.add(Component.literal("User can go into state of \"Stealth\" which conceals all the sounds, smells and visions on user"));
+		list.add(Component.literal("Vanish for four seconds and leave a decoy. Recast to swap to it; attacking from Stealth grants Ambush."));
 	}
 
 	@Override

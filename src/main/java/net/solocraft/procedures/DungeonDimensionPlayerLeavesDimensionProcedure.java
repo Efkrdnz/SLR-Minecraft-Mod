@@ -2,7 +2,9 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.JobChangeQuestManager;
+import net.solocraft.util.InstanceDungeonKeyAccess;
 import net.solocraft.SololevelingMod;
+import net.solocraft.dungeon.runtime.DungeonEncounterRuntime;
 import net.solocraft.dungeon.runtime.DungeonInstanceSavedData;
 import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
@@ -40,6 +42,8 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 				boolean isIgrisDungeon = (sourceentity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_igris")));
 				boolean canLeave = isIgrisDungeon ? JobChangeQuestManager.isFinished(sourceentity) : (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).instancecomplete == true;
 				if (canLeave) {
+					if (!isIgrisDungeon && sourceentity instanceof Player player)
+						InstanceDungeonKeyAccess.markCompleted(player);
 					if (!entity.level().isClientSide())
 						entity.discard();
 					sourceentity.getPersistentData().putString("dungeon_tag", (entity.getStringUUID()));
@@ -124,7 +128,9 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 						resetDungeonReturnState(entityiterator);
 					}
 				}
-			} else if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dungeoning) {
+			} else if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dungeoning
+					|| !sourceentity.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank()
+					|| (entity != null && !entity.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank())) {
 				boolean proceduralRedGate = sourceentity.getPersistentData().getBoolean("slr_procedural_red_gate");
 				boolean hasScopedInstance = !sourceentity.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank()
 						|| (entity != null && !entity.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank());
@@ -173,6 +179,54 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 		return true;
 	}
 
+	/**
+	 * Self-service recovery path used by the permission-free /slr escape command.
+	 * It never marks a gate complete or awards progression; it only detaches the
+	 * caller from their current runtime instance and returns them safely.
+	 */
+	public static boolean emergencyExit(ServerPlayer player) {
+		if (player == null || player.server == null)
+			return false;
+		boolean hasRuntimeBinding = !player.getPersistentData()
+				.getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank();
+		boolean dungeoning = player.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(capability -> capability.dungeoning)
+				.orElse(false);
+		if (player.level().dimension().equals(Level.OVERWORLD)
+				&& !hasRuntimeBinding && !dungeoning)
+			return false;
+
+		ServerLevel overworld = player.server.getLevel(Level.OVERWORLD);
+		if (overworld == null)
+			return false;
+		SololevelingModVariables.PlayerVariables vars = player.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables());
+		double returnX = vars.DunX + RETURN_X_OFFSET;
+		double returnY = vars.DunY;
+		double returnZ = vars.DunZ;
+		if (returnX == RETURN_X_OFFSET && returnY == 0.0D && returnZ == 0.0D) {
+			BlockPos spawn = overworld.getSharedSpawnPos();
+			returnX = spawn.getX() + 0.5D;
+			returnY = spawn.getY() + 1.0D;
+			returnZ = spawn.getZ() + 0.5D;
+		}
+
+		resetDungeonReturnState(player);
+		player.getPersistentData().remove("dungeon_tag");
+		player.getPersistentData().putBoolean("slr_procedural_dungeon", false);
+		player.getPersistentData().putBoolean("slr_procedural_red_gate", false);
+		player.setNoGravity(false);
+		player.setDeltaMovement(0.0D, 0.0D, 0.0D);
+		player.fallDistance = 0.0F;
+		BlockPos destination = BlockPos.containing(returnX, returnY, returnZ);
+		overworld.getChunk(destination);
+		player.teleportTo(overworld, returnX, returnY, returnZ,
+				player.getYRot(), player.getXRot());
+		return true;
+	}
+
 	private static String currentDungeonTag(Entity player, Entity returnPortal) {
 		String tag = player.getPersistentData().getString("dungeon_tag");
 		if (tag == null || tag.isEmpty())
@@ -196,6 +250,7 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 			try {
 				DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(player.serverLevel());
 				registry.getInstance(UUID.fromString(instanceText)).ifPresent(instance -> {
+					DungeonEncounterRuntime.clearHighlightsFor(player, instance);
 					instance.removeParticipant(player.getUUID());
 					SnowRedGateArenaManager.onParticipantExited(player.getServer(), instance);
 					registry.pruneCompletedEmptyInstances();

@@ -32,8 +32,8 @@ public class RunestoneQuickslashesItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Quickslashes\""));
-		list.add(Component.literal("User can use \"Quickslashes\" which will slash everything around user."));
+		list.add(Component.literal("Right click this rune to obtain \"Flash Cut\""));
+		list.add(Component.literal("Release two sudden crossing cuts through enemies in a narrow arc ahead."));
 	}
 
 	@Override

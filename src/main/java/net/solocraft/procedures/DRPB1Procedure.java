@@ -7,7 +7,6 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
 public class DRPB1Procedure {
 	@SubscribeEvent
 	public static void onEntityTick(LivingEvent.LivingTickEvent event) {

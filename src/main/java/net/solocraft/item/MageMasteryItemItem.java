@@ -1,6 +1,7 @@
 
 package net.solocraft.item;
 
+import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.MasterylvlupMageProcedure;
 
 import net.minecraft.world.level.Level;
@@ -28,8 +29,16 @@ public class MageMasteryItemItem extends Item {
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
-		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		MasterylvlupMageProcedure.execute(entity);
-		return ar;
+		ItemStack stack = entity.getItemInHand(hand);
+		double playerClass = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables()).Classes;
+		if (playerClass != 2.0D) {
+			if (!world.isClientSide())
+				entity.displayClientMessage(Component.literal("Only a Mage can use Mage mastery."), true);
+			return InteractionResultHolder.fail(stack);
+		}
+		if (!world.isClientSide())
+			MasterylvlupMageProcedure.execute(entity);
+		return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
 	}
 }

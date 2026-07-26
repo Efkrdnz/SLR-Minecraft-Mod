@@ -32,8 +32,8 @@ public class RunestoneSharpshooterItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Sharpshooter\""));
-		list.add(Component.literal("User can use \"Sharpshooter\" which launches a homing projectile that deals heavy damage"));
+		list.add(Component.translatable("tooltip.sololeveling.runestone_sharpshooter.unlock"));
+		list.add(Component.translatable("tooltip.sololeveling.runestone_sharpshooter.description"));
 	}
 
 	@Override

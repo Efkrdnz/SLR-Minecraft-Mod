@@ -5,6 +5,7 @@ import net.solocraft.entity.ArcaneVfxEntity;
 import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -656,6 +657,19 @@ public final class ArcaneMageSpellManager {
 		tickAnchors();
 		tickRelays();
 		tickArsenals();
+	}
+
+	@SubscribeEvent
+	public static void onServerStopped(ServerStoppedEvent event) {
+		FORMULAS.clear();
+		ANCHORS.clear();
+		RELAYS.clear();
+		ARSENALS.clear();
+		ACTIVE_BOLTS.clear();
+		ACTIVE_POLARITIES.clear();
+		ACTIVE_RENDS.clear();
+		ACTIVE_CONVERGENCES.clear();
+		DELAYED_BURSTS.clear();
 	}
 
 	private static <T extends ActiveCast> void tickList(List<T> casts) {

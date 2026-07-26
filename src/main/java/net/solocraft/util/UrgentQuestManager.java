@@ -89,10 +89,10 @@ public final class UrgentQuestManager {
 
 	private static final Map<AttackPair, Long> RECENT_CRITICALS = new HashMap<>();
 	private static final Map<AttackPair, HitWindow> WEAPON_HITS = new HashMap<>();
+	private static final Set<String> EXCLUSIVE_RUNESTONE_SKILLS = Set.of("Cold Blood");
 	private static final Map<String, String> RUNESTONE_ALIASES = Map.ofEntries(
 			Map.entry("back_step", "runestone_backstep"),
 			Map.entry("cross_strike", "runestone_criticalstrike"),
-			Map.entry("curse_smoke", "runestone_cursed_smoke"),
 			Map.entry("ground_slam", "runestone_slam"),
 			Map.entry("haste_buff", "runestone_haste"),
 			Map.entry("hyper_focus", "runestone_hyperfocus"),
@@ -102,8 +102,7 @@ public final class UrgentQuestManager {
 			Map.entry("ruler_s_hand", "telekinesis_stone"),
 			Map.entry("rulers_hand", "telekinesis_stone"),
 			Map.entry("slash_dash", "runestone_slashdash"),
-			Map.entry("sword_of_light", "runestone_swordof_light"),
-			Map.entry("water_slash", "runestone_waterslash"));
+			Map.entry("sword_of_light", "runestone_swordof_light"));
 
 	private UrgentQuestManager() {
 	}
@@ -398,7 +397,9 @@ public final class UrgentQuestManager {
 	}
 
 	private static void completePvpQuest(ServerPlayer player) {
-		List<String> candidates = splitValues(player.getPersistentData().getString(PVP_RUNESTONES));
+		List<String> candidates = splitValues(player.getPersistentData().getString(PVP_RUNESTONES)).stream()
+				.filter(UrgentQuestManager::isAvailableRunestoneReward)
+				.toList();
 		boolean firstReward = !persistentPlayerData(player).getBoolean(PVP_FIRST_REWARD_CLAIMED);
 		boolean awardRunestone = firstReward || player.getRandom().nextDouble() < REPEAT_PVP_RUNESTONE_CHANCE;
 		String reward = fallbackPvpReward(player);
@@ -462,10 +463,26 @@ public final class UrgentQuestManager {
 	private static String runestoneForSkill(String skill) {
 		if (skill == null || skill.isBlank())
 			return null;
+		if (EXCLUSIVE_RUNESTONE_SKILLS.contains(skill))
+			return null;
 		String normalized = skill.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "");
 		String registryId = RUNESTONE_ALIASES.getOrDefault(normalized, "runestone_" + normalized);
+		if (MageSpellProgression.isRetiredRunestoneId(registryId))
+			return null;
 		Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("sololeveling", registryId));
 		return item != null && item != Items.AIR ? registryId : null;
+	}
+
+	private static boolean isAvailableRunestoneReward(String registryId) {
+		if (registryId == null || registryId.isBlank()
+				|| MageSpellProgression.isRetiredRunestoneId(registryId))
+			return false;
+		ResourceLocation location = ResourceLocation.tryParse(
+				registryId.contains(":") ? registryId : "sololeveling:" + registryId);
+		if (location == null)
+			return false;
+		Item item = ForgeRegistries.ITEMS.getValue(location);
+		return item != null && item != Items.AIR;
 	}
 
 	private static boolean isPvpTarget(ServerPlayer questOwner, UUID targetId) {

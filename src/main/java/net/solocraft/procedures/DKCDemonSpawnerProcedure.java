@@ -1,251 +1,405 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModEntities;
-import net.solocraft.entity.DemonKnightEntity;
+import net.solocraft.SololevelingMod;
+import net.solocraft.dkc.DkcFloorBuilder;
+import net.solocraft.dkc.DkcFloorRegistry;
+import net.solocraft.dkc.DkcSpatialLayout;
+import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 import net.solocraft.entity.DemonEntity;
+import net.solocraft.entity.DemonKnightEntity;
+import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.phys.AABB;
 
+import java.util.UUID;
+
+/** Bounded, staged DKC waves with at most 7-12 active enemies per player. */
 public class DKCDemonSpawnerProcedure {
-	private static final ResourceKey<net.minecraft.world.level.Level> DKC_DIMENSION =
-			ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling", "dungeon_dimension_dkc"));
+	public static final String ROLE_TAG = "dkc_encounter_role";
+	public static final String FLOOR_WAVE_ROLE = "floor_wave";
+	public static final String MINIBOSS_TAG = "dkc_miniboss";
+	public static final String ATTEMPT_TAG = "dkc_wave_attempt";
+	private static final String ATTEMPT_SUFFIX = "_attempt";
+	private static final String MINIBOSS_SPAWNED_SUFFIX = "_miniboss_spawned";
+	private static final String SPAWN_RETRY_AFTER_SUFFIX = "_spawn_retry_after";
+	private static final int MAX_BATCH_SPAWNS = 6;
+	private static final long FAILED_SPAWN_RETRY_TICKS = 200L;
+	private static final UUID MINIBOSS_HEALTH_MODIFIER = UUID.fromString("57db3b42-3261-4f38-b7d3-a1e22c6b5121");
+	private static final UUID MINIBOSS_DAMAGE_MODIFIER = UUID.fromString("985172a6-dfd7-44c8-a8b0-5a9890754bb4");
+	private static final UUID MINIBOSS_ARMOR_MODIFIER = UUID.fromString("416b7192-62a7-40d6-9915-e3909c53c7d4");
+	private static final UUID MINIBOSS_TOUGHNESS_MODIFIER = UUID.fromString("70a486fd-b2a7-4991-888d-3e36ec339d5e");
+	private static final UUID MINIBOSS_KNOCKBACK_MODIFIER = UUID.fromString("8be9d98b-dd89-42ec-9a4a-fac668bc18f8");
+	private static final UUID MINIBOSS_SPEED_MODIFIER = UUID.fromString("a72b269f-3bfa-4b9f-b1b8-e68c2cab179b");
 
-	// demon count and knight count per floor
-	// floors 2-10: all demons, no knights
-	// floors 11-19: mixed — knights increase each floor, demons decrease
-	private record FloorComposition(int demons, int knights) {
-		int total() { return demons + knights; }
-	}
-
-	private static FloorComposition getFloorComposition(int floor) {
-		return switch (floor) {
-			case 2  -> new FloorComposition(10,  0);
-			case 3  -> new FloorComposition(15,  0);
-			case 4  -> new FloorComposition(20,  0);
-			case 5  -> new FloorComposition(25,  0);
-			case 6  -> new FloorComposition(28,  0);
-			case 7  -> new FloorComposition(32,  0);
-			case 8  -> new FloorComposition(36,  0);
-			case 9  -> new FloorComposition(40,  0);
-			case 10 -> new FloorComposition(50,  0); // 50 demons → Vulcan spawns
-			case 11 -> new FloorComposition(20,  5);
-			case 12 -> new FloorComposition(19,  7);
-			case 13 -> new FloorComposition(18,  9);
-			case 14 -> new FloorComposition(16, 12);
-			case 15 -> new FloorComposition(15, 14);
-			case 16 -> new FloorComposition(14, 16);
-			case 17 -> new FloorComposition(14, 18);
-			case 18 -> new FloorComposition(14, 20);
-			case 19 -> new FloorComposition(13, 25);
-			default -> new FloorComposition(10,  0);
-		};
-	}
-
-	// called when entering a new floor — sets up kill tracking data
 	public static void execute(LevelAccessor world, Entity entity) {
-		if (world == null || entity == null || !(entity instanceof Player))
+		if (!(world instanceof ServerLevel level) || !(entity instanceof ServerPlayer player))
 			return;
-		Player player = (Player) entity;
-		if (!(world instanceof Level level) || level.dimension() != DKC_DIMENSION)
+		int floor = DkcSpatialLayout.floor(player);
+		if (floor < 2 || floor > 19)
 			return;
+		GameType mode = player.gameMode.getGameModeForPlayer();
+		if (mode != GameType.SURVIVAL && mode != GameType.ADVENTURE)
+			return;
+
 		CompoundTag data = player.getPersistentData();
-		// only trigger for survival/adventure players
-		if (player instanceof ServerPlayer serverPlayer) {
-			net.minecraft.world.level.GameType gameMode = serverPlayer.gameMode.getGameModeForPlayer();
-			if (gameMode != net.minecraft.world.level.GameType.SURVIVAL && gameMode != net.minecraft.world.level.GameType.ADVENTURE)
-				return;
-		}
-		int currentFloor = DKCFloorDetectorProcedure.getCurrentFloor(player);
-		// skip boss-only floors
-		if (currentFloor == 1 || currentFloor == 20)
+		String prefix = prefix(floor);
+		if (data.getBoolean(prefix + "_spawned"))
 			return;
-		// check if floor just changed
-		if (!data.getBoolean("dkc_floor_just_changed"))
-			return;
-		// check if already spawned for this floor
-		if (data.getBoolean("dkc_floor_" + currentFloor + "_spawned"))
-			return;
-		FloorComposition comp = getFloorComposition(currentFloor);
-		data.putDouble("dkc_floor_" + currentFloor + "_required", comp.total());
-		data.putDouble("dkc_floor_" + currentFloor + "_killed", 0);
-		data.putInt("dkc_floor_" + currentFloor + "_demon_count", comp.demons());
-		data.putInt("dkc_floor_" + currentFloor + "_knight_count", comp.knights());
-		data.putBoolean("dkc_floor_" + currentFloor + "_spawned", true);
-		data.putBoolean("dkc_floor_" + currentFloor + "_spawning", true);
-		data.putLong("dkc_floor_" + currentFloor + "_enter_time",
-				world instanceof Level _level ? _level.getGameTime() : 0);
+		startNewAttempt(data, prefix);
+		data.putDouble(prefix + "_required", DkcFloorRegistry.requiredKills(floor));
+		data.putDouble(prefix + "_killed", 0.0D);
+		data.putBoolean(prefix + "_spawned", true);
+		data.putBoolean(prefix + "_spawning", true);
+		data.putBoolean(prefix + "_initial_spawned", false);
+		data.putBoolean(prefix + "_complete", false);
+		data.putBoolean(prefix + MINIBOSS_SPAWNED_SUFFIX, false);
+		data.putLong(prefix + "_enter_time", level.getGameTime());
 	}
-
-	// ── Spawn helpers ────────────────────────────────────────────────────────
-
-	private static BlockPos findSpawnPos(ServerLevel serverLevel, double spawnX, double spawnY, double spawnZ) {
-		BlockPos testPos = BlockPos.containing(spawnX, spawnY, spawnZ);
-		// search down
-		for (int i = 0; i < 20; i++) {
-			BlockPos below = testPos.below();
-			if (!serverLevel.isEmptyBlock(below) && serverLevel.isEmptyBlock(testPos) && serverLevel.isEmptyBlock(testPos.above()))
-				return testPos;
-			testPos = below;
-		}
-		// search up from original
-		testPos = BlockPos.containing(spawnX, spawnY, spawnZ);
-		for (int i = 0; i < 20; i++) {
-			BlockPos below = testPos.below();
-			if (!serverLevel.isEmptyBlock(below) && serverLevel.isEmptyBlock(testPos) && serverLevel.isEmptyBlock(testPos.above()))
-				return testPos;
-			testPos = testPos.above();
-		}
-		return null;
-	}
-
-	private static void spawnDemonWave(LevelAccessor world, Player player, int floor, int count) {
-		if (count <= 0 || !(world instanceof ServerLevel serverLevel))
-			return;
-		double originX = (player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.orElse(new SololevelingModVariables.PlayerVariables())).dkc_x;
-		double originY = (player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.orElse(new SololevelingModVariables.PlayerVariables())).dkc_y;
-		double originZ = (player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.orElse(new SololevelingModVariables.PlayerVariables())).dkc_z;
-		double floorStartZ = originZ + ((floor - 1) * 200);
-		double floorStartX = originX - 100;
-		int spawnedCount = 0;
-		int attempts = 0;
-		while (spawnedCount < count && attempts < count * 3) {
-			attempts++;
-			BlockPos pos = findSpawnPos(serverLevel,
-					floorStartX + (Math.random() * 200),
-					originY + 3,
-					floorStartZ + (Math.random() * 200));
-			if (pos == null) continue;
-			DemonEntity demon = SololevelingModEntities.DEMON.get().spawn(serverLevel, pos, MobSpawnType.SPAWNER);
-			if (demon != null) {
-				demon.getPersistentData().putDouble("dkc_floor_number", floor);
-				demon.getPersistentData().putString("dkc_spawned_by", player.getStringUUID());
-				demon.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-						net.minecraft.world.effect.MobEffects.GLOWING, 40, 0, false, false));
-				demon.setTarget(player);
-				spawnedCount++;
-			}
-		}
-		System.out.println("[DKC] Floor " + floor + " - Spawned " + spawnedCount + "/" + count + " demons");
-	}
-
-	private static void spawnKnightWave(LevelAccessor world, Player player, int floor, int count) {
-		if (count <= 0 || !(world instanceof ServerLevel serverLevel))
-			return;
-		double originX = (player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.orElse(new SololevelingModVariables.PlayerVariables())).dkc_x;
-		double originY = (player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.orElse(new SololevelingModVariables.PlayerVariables())).dkc_y;
-		double originZ = (player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.orElse(new SololevelingModVariables.PlayerVariables())).dkc_z;
-		double floorStartZ = originZ + ((floor - 1) * 200);
-		double floorStartX = originX - 100;
-		int spawnedCount = 0;
-		int attempts = 0;
-		while (spawnedCount < count && attempts < count * 3) {
-			attempts++;
-			BlockPos pos = findSpawnPos(serverLevel,
-					floorStartX + (Math.random() * 200),
-					originY + 3,
-					floorStartZ + (Math.random() * 200));
-			if (pos == null) continue;
-			DemonKnightEntity knight = SololevelingModEntities.DEMON_KNIGHT.get().spawn(serverLevel, pos, MobSpawnType.SPAWNER);
-			if (knight != null) {
-				knight.randomizeVariant();
-				knight.getPersistentData().putDouble("dkc_floor_number", floor);
-				knight.getPersistentData().putString("dkc_spawned_by", player.getStringUUID());
-				knight.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-						net.minecraft.world.effect.MobEffects.GLOWING, 40, 0, false, false));
-				knight.setTarget(player);
-				spawnedCount++;
-			}
-		}
-		System.out.println("[DKC] Floor " + floor + " - Spawned " + spawnedCount + "/" + count + " demon knights");
-	}
-
-	// ── Delayed spawn + respawn check ────────────────────────────────────────
 
 	public static void checkDelayedSpawn(LevelAccessor world, Entity entity) {
-		if (!(world instanceof Level _level) || !(entity instanceof Player player))
+		if (!(world instanceof ServerLevel level) || !(entity instanceof ServerPlayer player))
 			return;
-		if (_level.dimension() != DKC_DIMENSION)
-			return;
-		if (!(world instanceof ServerLevel serverLevel))
-			return;
-		int currentFloor = DKCFloorDetectorProcedure.getCurrentFloor(player);
-		if (currentFloor < 2 || currentFloor > 19)
+		int floor = DkcSpatialLayout.floor(player);
+		if (floor < 2 || floor > 19)
 			return;
 		CompoundTag data = player.getPersistentData();
-		if (!data.getBoolean("dkc_floor_" + currentFloor + "_spawned"))
+		String prefix = prefix(floor);
+		if (!data.getBoolean(prefix + "_spawned"))
 			return;
-		if (data.getBoolean("dkc_floor_" + currentFloor + "_complete"))
-			return;
-		long currentTime = _level.getGameTime();
-		long enterTime = data.getLong("dkc_floor_" + currentFloor + "_enter_time");
-		boolean initialSpawned = data.getBoolean("dkc_floor_" + currentFloor + "_initial_spawned");
-		// initial spawn after 15 seconds (300 ticks)
-		if (!initialSpawned && currentTime - enterTime >= 300) {
-			data.putBoolean("dkc_floor_" + currentFloor + "_initial_spawned", true);
-			data.putBoolean("dkc_floor_" + currentFloor + "_spawning", false);
-			int demonCount = data.getInt("dkc_floor_" + currentFloor + "_demon_count");
-			int knightCount = data.getInt("dkc_floor_" + currentFloor + "_knight_count");
-			spawnDemonWave(world, player, currentFloor, demonCount);
-			spawnKnightWave(world, player, currentFloor, knightCount);
-			System.out.println("[DKC] Floor " + currentFloor + " - Initial spawn: "
-					+ demonCount + " demons + " + knightCount + " knights");
+		ensureAttempt(data, prefix);
+		if (data.getBoolean(prefix + "_complete")) {
+			if (floor == 10 && level.getGameTime() % 40L == 0L)
+				DkcFloorBuilder.ensureBosses(player, floor);
 			return;
 		}
-		// check every 10 seconds if all enemies are gone
-		if (initialSpawned && currentTime % 200 == 0) {
-			double killed = data.getDouble("dkc_floor_" + currentFloor + "_killed");
-			double required = data.getDouble("dkc_floor_" + currentFloor + "_required");
-			if (killed >= required) return;
-			// count surviving demons and knights
-			int demonsAlive = 0;
-			int knightsAlive = 0;
-			for (net.minecraft.world.entity.Entity ent : serverLevel.getAllEntities()) {
-				String owner = ent.getPersistentData().getString("dkc_spawned_by");
-				int entFloor = (int) ent.getPersistentData().getDouble("dkc_floor_number");
-				if (entFloor == currentFloor && owner.equals(player.getStringUUID())) {
-					if (ent instanceof DemonEntity) demonsAlive++;
-					else if (ent instanceof DemonKnightEntity) knightsAlive++;
-				}
+
+		long elapsed = level.getGameTime() - data.getLong(prefix + "_enter_time");
+		if (!data.getBoolean(prefix + "_initial_spawned")) {
+			if (elapsed < 60L)
+				return;
+			data.putBoolean(prefix + "_initial_spawned", true);
+			data.putBoolean(prefix + "_spawning", false);
+			spawnToCap(level, player, floor);
+			return;
+		}
+		if (level.getGameTime() % 100L == Math.floorMod(player.getId(), 100))
+			spawnToCap(level, player, floor);
+	}
+
+	private static void spawnToCap(ServerLevel level, ServerPlayer player, int floor) {
+		CompoundTag data = player.getPersistentData();
+		String floorPrefix = prefix(floor);
+		if (level.getGameTime() < data.getLong(floorPrefix + SPAWN_RETRY_AFTER_SUFFIX))
+			return;
+		int killed = (int) data.getDouble(floorPrefix + "_killed");
+		int required = DkcFloorRegistry.requiredKills(floor);
+		int remaining = Math.max(0, required - killed);
+		if (remaining == 0)
+			return;
+		int alive = aliveCount(level, player, floor);
+		int desired = Math.min(DkcFloorRegistry.activeEnemyCap(floor), remaining);
+		int requested = Math.max(0, desired - alive);
+		if (requested <= 0)
+			return;
+		int spawned = spawnBatch(level, player, floor, requested);
+		if (spawned == 0)
+			data.putLong(floorPrefix + SPAWN_RETRY_AFTER_SUFFIX,
+					level.getGameTime() + FAILED_SPAWN_RETRY_TICKS);
+		else
+			data.remove(floorPrefix + SPAWN_RETRY_AFTER_SUFFIX);
+	}
+
+	private static int spawnBatch(ServerLevel level, ServerPlayer player, int floor, int requested) {
+		int count = Math.min(MAX_BATCH_SPAWNS,
+				Math.min(requested, DkcFloorRegistry.activeEnemyCap(floor)));
+		int spawned = 0;
+		CompoundTag playerData = player.getPersistentData();
+		int waveAttempt = ensureAttempt(playerData, prefix(floor));
+		String minibossKey = prefix(floor) + MINIBOSS_SPAWNED_SUFFIX;
+		boolean minibossSpawned = playerData.getBoolean(minibossKey);
+		if (!minibossSpawned && hasOwnedMiniboss(level, player, floor, waveAttempt)) {
+			minibossSpawned = true;
+			playerData.putBoolean(minibossKey, true);
+		}
+		for (int index = 0; index < count; index++) {
+			boolean knight = level.random.nextFloat() < DkcFloorRegistry.knightShare(floor);
+			Mob enemy = knight ? SololevelingModEntities.DEMON_KNIGHT.get().create(level)
+					: SololevelingModEntities.DEMON.get().create(level);
+			if (enemy == null)
+				continue;
+			enemy.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0.0F);
+			try {
+				enemy.finalizeSpawn(level, level.getCurrentDifficultyAt(player.blockPosition()),
+						MobSpawnType.SPAWNER, null, null);
+			} catch (RuntimeException exception) {
+				enemy.discard();
+				SololevelingMod.LOGGER.warn("Failed to finalize a DKC floor-wave mob", exception);
+				continue;
 			}
-			if (demonsAlive == 0 && knightsAlive == 0) {
-				// respawn proportionally to what's still needed
-				int remaining = (int) (required - killed);
-				int origDemons = data.getInt("dkc_floor_" + currentFloor + "_demon_count");
-				int origKnights = data.getInt("dkc_floor_" + currentFloor + "_knight_count");
-				int origTotal = origDemons + origKnights;
-				int respawnDemons = origTotal > 0 ? Math.round((float) origDemons / origTotal * remaining) : remaining;
-				int respawnKnights = remaining - respawnDemons;
-				System.out.println("[DKC RESPAWN] Floor " + currentFloor + " - Respawning "
-						+ respawnDemons + " demons + " + respawnKnights + " knights");
-				spawnDemonWave(world, player, currentFloor, respawnDemons);
-				spawnKnightWave(world, player, currentFloor, respawnKnights);
+			if (floor == net.solocraft.dkc.DkcRadiruManager.FLOOR) {
+				enemy.setCustomName(Component.literal(knight ? "Radiru Royal Guard" : "Radiru Defender")
+						.withStyle(ChatFormatting.DARK_PURPLE));
+				enemy.setCustomNameVisible(false);
+			}
+			boolean eliteCandidate = enemy instanceof DemonEntity
+					|| floor > net.solocraft.dkc.DkcRadiruManager.FLOOR
+					&& enemy instanceof DemonKnightEntity;
+			boolean promoted = !minibossSpawned && eliteCandidate
+					&& level.random.nextFloat() < minibossChance(floor);
+			if (promoted) {
+				if (enemy instanceof DemonKnightEntity knightEnemy)
+					promoteKnightMiniboss(knightEnemy, floor);
+				else if (enemy instanceof DemonEntity demonEnemy)
+					promoteDemonMiniboss(demonEnemy, floor);
+			}
+			BlockPos pos = DkcFloorBuilder.findCombatSpawn(level, player, floor,
+					index + spawned * 13, enemy);
+			if (pos == null) {
+				enemy.discard();
+				continue;
+			}
+			enemy.getPersistentData().putDouble("dkc_floor_number", floor);
+			enemy.getPersistentData().putString("dkc_spawned_by", player.getStringUUID());
+			enemy.getPersistentData().putString(ROLE_TAG, FLOOR_WAVE_ROLE);
+			enemy.getPersistentData().putInt(ATTEMPT_TAG, waveAttempt);
+			enemy.setTarget(player);
+			if (!level.addFreshEntity(enemy)) {
+				enemy.discard();
+				continue;
+			}
+			if (promoted) {
+				minibossSpawned = true;
+				playerData.putBoolean(minibossKey, true);
+			}
+			spawned++;
+		}
+		if (spawned > 0)
+			SololevelingMod.LOGGER.debug("Spawned {} DKC enemies for {} on floor {}", spawned,
+					player.getGameProfile().getName(), floor);
+		return spawned;
+	}
+
+	private static boolean hasOwnedMiniboss(ServerLevel level, ServerPlayer player, int floor, int attempt) {
+		String owner = player.getStringUUID();
+		AABB area = DkcFloorBuilder.combatBounds(player, floor);
+		boolean demon = !level.getEntitiesOfClass(DemonEntity.class, area,
+				entity -> entity.getPersistentData().getBoolean(MINIBOSS_TAG)
+						&& ownsWave(entity, owner, floor, attempt)).isEmpty();
+		return demon || !level.getEntitiesOfClass(DemonKnightEntity.class, area,
+				entity -> entity.getPersistentData().getBoolean(MINIBOSS_TAG)
+						&& ownsWave(entity, owner, floor, attempt)).isEmpty();
+	}
+
+	private static float minibossChance(int floor) {
+		return Math.min(0.12F, 0.08F + Math.max(0, floor - 2) * 0.002F);
+	}
+
+	private static void promoteDemonMiniboss(DemonEntity demon, int floor) {
+		CompoundTag data = demon.getPersistentData();
+		if (data.getBoolean(MINIBOSS_TAG))
+			return;
+		data.putBoolean(MINIBOSS_TAG, true);
+		data.putString(DungeonMobLevelAdapter.ROLE_TAG, DungeonMobLevelAdapter.MobRole.ELITE.id());
+		demon.setVisualScale(Math.min(1.65F, 1.48F + floor * 0.008F));
+		demon.refreshDimensions();
+		demon.setCustomName(Component.literal("Elite Demon")
+				.withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD));
+		demon.setCustomNameVisible(true);
+
+		double healthMultiplier = Math.min(3.0D, 2.35D + floor * 0.0325D);
+		double damageMultiplier = Math.min(1.70D, 1.40D + floor * 0.015D);
+		addPermanent(demon.getAttribute(Attributes.MAX_HEALTH), MINIBOSS_HEALTH_MODIFIER,
+				"DKC miniboss health", healthMultiplier - 1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL);
+		addPermanent(demon.getAttribute(Attributes.ATTACK_DAMAGE), MINIBOSS_DAMAGE_MODIFIER,
+				"DKC miniboss damage", damageMultiplier - 1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL);
+		addPermanent(demon.getAttribute(Attributes.ARMOR), MINIBOSS_ARMOR_MODIFIER,
+				"DKC miniboss armor", Math.min(14.0D, 7.0D + floor * 0.35D), AttributeModifier.Operation.ADDITION);
+		addPermanent(demon.getAttribute(Attributes.ARMOR_TOUGHNESS), MINIBOSS_TOUGHNESS_MODIFIER,
+				"DKC miniboss armor toughness", Math.min(4.0D, 2.0D + floor * 0.10D), AttributeModifier.Operation.ADDITION);
+		AttributeInstance knockback = demon.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+		if (knockback != null)
+			addPermanent(knockback, MINIBOSS_KNOCKBACK_MODIFIER, "DKC miniboss knockback resistance",
+					Math.max(0.0D, 0.85D - knockback.getValue()), AttributeModifier.Operation.ADDITION);
+		demon.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE,
+				0, false, false, true));
+		demon.setHealth(demon.getMaxHealth());
+	}
+
+	private static void promoteKnightMiniboss(DemonKnightEntity knight, int floor) {
+		CompoundTag data = knight.getPersistentData();
+		if (data.getBoolean(MINIBOSS_TAG))
+			return;
+		data.putBoolean(MINIBOSS_TAG, true);
+		data.putString(DungeonMobLevelAdapter.ROLE_TAG, DungeonMobLevelAdapter.MobRole.ELITE.id());
+
+		int variant = knight.getVariant();
+		double upperFloor = Math.max(0, floor - 16);
+		double healthMultiplier;
+		double damageMultiplier;
+		double armorBonus;
+		double toughnessBonus;
+		double targetKnockbackResistance;
+		float scale;
+		Component name;
+		switch (variant) {
+			case 1 -> {
+				healthMultiplier = 2.45D + upperFloor * 0.06D;
+				damageMultiplier = 1.20D + upperFloor * 0.02D;
+				armorBonus = 9.0D;
+				toughnessBonus = 3.5D;
+				targetKnockbackResistance = 1.0D;
+				scale = 1.38F + (float) upperFloor * 0.012F;
+				name = Component.translatable("entity.sololeveling.dkc_demon_knight_bulwark");
+			}
+			case 2 -> {
+				healthMultiplier = 2.05D + upperFloor * 0.05D;
+				damageMultiplier = 1.45D + upperFloor * 0.025D;
+				armorBonus = 4.0D;
+				toughnessBonus = 1.5D;
+				targetKnockbackResistance = 0.92D;
+				scale = 1.30F + (float) upperFloor * 0.012F;
+				name = Component.translatable("entity.sololeveling.dkc_demon_knight_executioner");
+			}
+			default -> {
+				healthMultiplier = 2.15D + upperFloor * 0.06D;
+				damageMultiplier = 1.30D + upperFloor * 0.025D;
+				armorBonus = 6.0D;
+				toughnessBonus = 2.5D;
+				targetKnockbackResistance = 0.95D;
+				scale = 1.34F + (float) upperFloor * 0.012F;
+				name = Component.translatable("entity.sololeveling.dkc_elite_demon_knight");
 			}
 		}
+
+		knight.setVisualScale(scale);
+		knight.refreshDimensions();
+		knight.setCustomName(name.copy().withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD));
+		knight.setCustomNameVisible(true);
+		addPermanent(knight.getAttribute(Attributes.MAX_HEALTH), MINIBOSS_HEALTH_MODIFIER,
+				"DKC knight miniboss health", healthMultiplier - 1.0D,
+				AttributeModifier.Operation.MULTIPLY_TOTAL);
+		addPermanent(knight.getAttribute(Attributes.ATTACK_DAMAGE), MINIBOSS_DAMAGE_MODIFIER,
+				"DKC knight miniboss damage", damageMultiplier - 1.0D,
+				AttributeModifier.Operation.MULTIPLY_TOTAL);
+		addPermanent(knight.getAttribute(Attributes.ARMOR), MINIBOSS_ARMOR_MODIFIER,
+				"DKC knight miniboss armor", armorBonus, AttributeModifier.Operation.ADDITION);
+		addPermanent(knight.getAttribute(Attributes.ARMOR_TOUGHNESS), MINIBOSS_TOUGHNESS_MODIFIER,
+				"DKC knight miniboss armor toughness", toughnessBonus,
+				AttributeModifier.Operation.ADDITION);
+		AttributeInstance knockback = knight.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
+		if (knockback != null)
+			addPermanent(knockback, MINIBOSS_KNOCKBACK_MODIFIER,
+					"DKC knight miniboss knockback resistance",
+					Math.max(0.0D, targetKnockbackResistance - knockback.getValue()),
+					AttributeModifier.Operation.ADDITION);
+		if (variant == 2)
+			addPermanent(knight.getAttribute(Attributes.MOVEMENT_SPEED), MINIBOSS_SPEED_MODIFIER,
+					"DKC knight executioner speed", 0.10D,
+					AttributeModifier.Operation.MULTIPLY_TOTAL);
+		knight.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE,
+				0, false, false, true));
+		knight.setHealth(knight.getMaxHealth());
+	}
+
+	private static void addPermanent(AttributeInstance attribute, UUID id, String name,
+			double amount, AttributeModifier.Operation operation) {
+		if (attribute == null || !Double.isFinite(amount) || amount <= 0.0D)
+			return;
+		if (attribute.getModifier(id) != null)
+			attribute.removeModifier(id);
+		attribute.addPermanentModifier(new AttributeModifier(id, name, amount, operation));
+	}
+
+	public static int aliveCount(ServerLevel level, Player player, int floor) {
+		String owner = player.getStringUUID();
+		int attempt = currentAttempt(player, floor);
+		AABB area = DkcFloorBuilder.combatBounds((ServerPlayer) player, floor);
+		int demons = level.getEntitiesOfClass(DemonEntity.class, area,
+				entity -> ownsWave(entity, owner, floor, attempt)).size();
+		int knights = level.getEntitiesOfClass(DemonKnightEntity.class, area,
+				entity -> ownsWave(entity, owner, floor, attempt)).size();
+		return demons + knights;
+	}
+
+	public static void discardOwnedWave(ServerLevel level, ServerPlayer player, int floor) {
+		String owner = player.getStringUUID();
+		AABB area = DkcFloorBuilder.combatBounds(player, floor);
+		level.getEntitiesOfClass(DemonEntity.class, area, entity -> ownsFloorWave(entity, owner, floor))
+				.forEach(Entity::discard);
+		level.getEntitiesOfClass(DemonKnightEntity.class, area, entity -> ownsFloorWave(entity, owner, floor))
+				.forEach(Entity::discard);
+	}
+
+	private static boolean ownsWave(Entity entity, String owner, int floor, int attempt) {
+		CompoundTag tag = entity.getPersistentData();
+		return ownsFloorWave(entity, owner, floor) && attempt > 0 && tag.getInt(ATTEMPT_TAG) == attempt;
+	}
+
+	private static boolean ownsFloorWave(Entity entity, String owner, int floor) {
+		CompoundTag tag = entity.getPersistentData();
+		return floor == (int) tag.getDouble("dkc_floor_number")
+				&& owner.equals(tag.getString("dkc_spawned_by"))
+				&& FLOOR_WAVE_ROLE.equals(tag.getString(ROLE_TAG));
+	}
+
+	public static boolean isCurrentWaveMob(Entity entity, Player player, int floor) {
+		return entity != null && player != null
+				&& ownsWave(entity, player.getStringUUID(), floor, currentAttempt(player, floor));
+	}
+
+	public static int currentAttempt(Player player, int floor) {
+		return player == null ? 0 : player.getPersistentData().getInt(prefix(floor) + ATTEMPT_SUFFIX);
+	}
+
+	public static void invalidateAttempt(Player player, int floor) {
+		if (player == null)
+			return;
+		startNewAttempt(player.getPersistentData(), prefix(floor));
 	}
 
 	public static void checkWaveSpawn(LevelAccessor world, Entity entity) {
-		// reserved for future wave logic
+		// Kept for generated call-site compatibility; wave replenishment is timed.
 	}
 
 	public static void respawnDemons(LevelAccessor world, Player player, int floor, int count) {
-		spawnDemonWave(world, player, floor, count);
+		if (world instanceof ServerLevel level && player instanceof ServerPlayer serverPlayer)
+			spawnBatch(level, serverPlayer, floor, count);
+	}
+
+	private static String prefix(int floor) {
+		return "dkc_floor_" + floor;
+	}
+
+	private static int ensureAttempt(CompoundTag data, String prefix) {
+		int attempt = data.getInt(prefix + ATTEMPT_SUFFIX);
+		if (attempt <= 0) {
+			attempt = 1;
+			data.putInt(prefix + ATTEMPT_SUFFIX, attempt);
+		}
+		return attempt;
+	}
+
+	private static int startNewAttempt(CompoundTag data, String prefix) {
+		int current = data.getInt(prefix + ATTEMPT_SUFFIX);
+		int next = current >= Integer.MAX_VALUE || current < 0 ? 1 : current + 1;
+		data.putInt(prefix + ATTEMPT_SUFFIX, next);
+		return next;
 	}
 }

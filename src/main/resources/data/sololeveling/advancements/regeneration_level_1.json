@@ -22,5 +22,5 @@
   "rewards": {
     "experience": 5
   },
-  "parent": "sololeveling:awakened"
+  "parent": "sololeveling:system/root"
 }

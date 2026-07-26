@@ -24,6 +24,8 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.network.AbilitiesGUIButtonMessage;
 import net.solocraft.util.SystemPlayerAccess;
 import net.solocraft.util.DungeonBuilderMode;
+import net.solocraft.client.gui.DkcQuestProgressClientState;
+import net.solocraft.client.gui.FrostArchitectureClientState;
 import net.solocraft.client.gui.dungeonbuilder.DungeonBuilderStudioClient;
 import net.solocraft.SololevelingMod;
 
@@ -311,6 +313,7 @@ public class SololevelingModKeyMappings {
 				int dt = (int) (System.currentTimeMillis() - QUEST_INFO_LASTPRESS);
 				SololevelingMod.PACKET_HANDLER.sendToServer(new QuestInfoMessage(1, dt));
 				QuestInfoMessage.pressAction(Minecraft.getInstance().player, 1, dt);
+				DkcQuestProgressClientState.clear();
 			}
 			isDownOld = isDown;
 		}
@@ -361,6 +364,7 @@ public class SololevelingModKeyMappings {
 	private static void releaseHotbarSkill(int slot) {
 		int type = 19 + slot;
 		int dt = (int) (System.currentTimeMillis() - HOTBAR_LASTPRESS[slot - 1]);
+		FrostArchitectureClientState.releaseAndSend();
 		SololevelingMod.PACKET_HANDLER.sendToServer(new UseSkillMessage(type, dt));
 		UseSkillMessage.pressAction(Minecraft.getInstance().player, type, dt);
 	}

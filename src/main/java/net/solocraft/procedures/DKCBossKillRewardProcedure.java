@@ -1,159 +1,170 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.entity.VulcanEntity;
-import net.solocraft.entity.CerberusEntity;
+import net.solocraft.dkc.DkcFloorBuilder;
+import net.solocraft.dkc.DkcFloorRegistry;
+import net.solocraft.dkc.DkcSpatialLayout;
+import net.solocraft.dkc.DkcRadiruManager;
 import net.solocraft.entity.BaranEntity;
+import net.solocraft.entity.CerberusEntity;
+import net.solocraft.entity.KaiselinEntity;
+import net.solocraft.entity.VulcanEntity;
+import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.RewardManager;
 import net.solocraft.util.SystemNotifications;
 
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.level.LevelAccessor;
 
 import java.util.UUID;
 
+/** Boss rewards, with strict dimension/owner checks and atomic floor progress. */
 public class DKCBossKillRewardProcedure {
-	// gives entry permit, increases dkc_cleared, and generates next floor when boss is killed
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceEntity) {
-		if (world == null || entity == null)
+		if (!(world instanceof ServerLevel level) || entity == null || !DkcFloorRegistry.isSharedDkc(level))
 			return;
-		boolean isBoss = entity instanceof CerberusEntity || entity instanceof VulcanEntity || entity instanceof BaranEntity;
-		if (!isBoss)
+		boolean exactKaiselin = entity instanceof KaiselinEntity
+				&& entity.getType() == SololevelingModEntities.KAISELIN.get();
+		if (!(entity instanceof CerberusEntity) && !(entity instanceof VulcanEntity)
+				&& !(entity instanceof BaranEntity) && !exactKaiselin)
 			return;
-		// Baran only counts in the DKC dimension
-		if (entity instanceof BaranEntity) {
-			net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dkc =
-				net.minecraft.resources.ResourceKey.create(
-					net.minecraft.core.registries.Registries.DIMENSION,
-					new net.minecraft.resources.ResourceLocation("sololeveling", "dungeon_dimension_dkc"));
-			if (!entity.level().dimension().equals(dkc))
-				return;
-		}
+
 		CompoundTag bossData = entity.getPersistentData();
-		int floorNumber = (int) bossData.getDouble("dkc_floor_number");
-		String spawnerUUID = bossData.getString("dkc_spawned_by");
-		// determine the actual killer (player, pet owner, or shadow owner)
-		Entity killer = ShadowKillCreditHelper.creditedSource(world, sourceEntity);
-		// if no spawner uuid, use the killer
-		if (spawnerUUID.isEmpty() && killer != null) {
-			spawnerUUID = killer.getStringUUID();
-			if (killer instanceof Player) {
-				floorNumber = DKCFloorDetectorProcedure.getCurrentFloor(killer);
-			}
-		}
-		// if still no killer, try to find nearest player (for pre-spawned bosses)
-		if (spawnerUUID.isEmpty() && world instanceof ServerLevel serverLevel) {
-			Player nearestPlayer = serverLevel.getNearestPlayer(x, y, z, 100, false);
-			if (nearestPlayer != null) {
-				spawnerUUID = nearestPlayer.getStringUUID();
-				floorNumber = DKCFloorDetectorProcedure.getCurrentFloor(nearestPlayer);
-			}
-		}
-		if (floorNumber == 0 || spawnerUUID.isEmpty())
+		int floor = (int) bossData.getDouble("dkc_floor_number");
+		if (!matchesBossFloor(entity, floor, exactKaiselin))
 			return;
-		// find the player
-		if (world instanceof ServerLevel serverLevel) {
-			try {
-				UUID playerUUID = UUID.fromString(spawnerUUID);
-				Player player = serverLevel.getPlayerByUUID(playerUUID);
-				if (player != null) {
-					CompoundTag playerData = player.getPersistentData();
-					// guard against double-firing (death event can fire more than once)
-					if (playerData.getBoolean("dkc_floor_" + floorNumber + "_boss_defeated")) {
-						return;
-					}
-					playerData.putBoolean("dkc_floor_" + floorNumber + "_boss_defeated", true);
-					// increase dkc_cleared variable
-					player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.dkc_cleared = capability.dkc_cleared + 1;
-						capability.syncPlayerVariables(player);
-					});
-					XPGainProcedure.awardBaseXp(world, player, floorNumber * 100);
-					notifyDkc(player, 0xFF4DFF88, "FLOOR COMPLETE", "Floor " + floorNumber + " has been cleared.", 100);
-					// give boss-specific rewards
-					if (floorNumber == 1) {
-						// cerberus rewards
-						try {
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
-									"slr " + player.getGameProfile().getName() + " rewards set 1 Item sololeveling:entry_permit true");
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
-									"slr " + player.getGameProfile().getName() + " rewards set 2 Item sololeveling:world_trees_fragment true");
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(), "slr " + player.getGameProfile().getName() + " rewards set 3 FullRecovery true");
-						} catch (Exception e) {
-						}
-					} else if (floorNumber == 10) {
-						// vulcan rewards
-						try {
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
-									"slr " + player.getGameProfile().getName() + " rewards set 1 Item sololeveling:entry_permit true");
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
-									"slr " + player.getGameProfile().getName() + " rewards set 2 Item sololeveling:spring_water_of_the_echoing_forest true");
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(), "slr " + player.getGameProfile().getName() + " rewards set 3 FullRecovery true");
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
-									"slr " + player.getGameProfile().getName() + " rewards set 4 Item sololeveling:orb_of_avarice true");
-						} catch (Exception e) {
-						}
-						grantAdvancement(player, "monarchs_domain");
-					} else if (floorNumber == 20) {
-						// baran rewards (final boss - no entry permit)
-						try {
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
-									"slr " + player.getGameProfile().getName() + " rewards set 1 Item sololeveling:purified_blood_of_the_demon_king true");
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
-									"slr " + player.getGameProfile().getName() + " rewards set 2 Item " + new net.minecraft.resources.ResourceLocation("sololeveling", "demon_kings_dagger").toString() + " true");
-							serverLevel.getServer().getCommands().performPrefixedCommand(serverLevel.getServer().createCommandSourceStack(),
-									"slr " + player.getGameProfile().getName() + " rewards set 3 Item " + new net.minecraft.resources.ResourceLocation("sololeveling", "demon_kings_long_sword").toString() + " true");
-						} catch (Exception e) {
-						}
-					}
-					// generate next floor based on which floor was just completed
-					if (floorNumber == 1) {
-						// floor 1 complete, generate floor 2 (regular floor)
-						FloorCreateNewProcedure.execute(world, player);
-						notifyDkc(player, 0xFFFFB83D, "FLOOR UNLOCKED", "Floor 2 has been unlocked.", 90);
-					} else if (floorNumber == 10) {
-						// floor 10 complete, generate floor 11 (regular floor)
-						FloorCreateNewProcedure.execute(world, player);
-						notifyDkc(player, 0xFFFFB83D, "FLOOR UNLOCKED", "Floor 11 has been unlocked.", 90);
-					} else if (floorNumber == 20) {
-						// final boss defeated
-						notifyDkc(player, 0xFFFFB83D, "DKC CONQUERED", "You have conquered the Demon King's Castle.", 140);
-					}
-				}
-			} catch (IllegalArgumentException e) {
-				// invalid uuid
+		String ownerText = bossData.getString("dkc_spawned_by");
+		if (ownerText.isBlank())
+			return;
+		UUID owner;
+		try {
+			owner = UUID.fromString(ownerText);
+		} catch (IllegalArgumentException ignored) {
+			return;
+		}
+		ServerPlayer player = level.getServer().getPlayerList().getPlayer(owner);
+		if (player == null || !DkcSpatialLayout.isPlayerInFloor(player, floor)
+				|| !DkcSpatialLayout.isEntityInOwnedFloor(entity, owner, floor))
+			return;
+		ServerPlayer creditedPlayer = ShadowKillCreditHelper.creditedServerPlayer(world, sourceEntity);
+		if (creditedPlayer == null || !creditedPlayer.getUUID().equals(player.getUUID()))
+			return;
+		double alreadyCleared = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables()).dkc_cleared;
+		if (alreadyCleared >= floor)
+			return;
+
+		CompoundTag data = player.getPersistentData();
+		if (floor == 20) {
+			if (entity instanceof BaranEntity) {
+				data.putBoolean("dkc_floor_20_baran_defeated", true);
+				BaranSummonProcedure.discardBossAdds(level, player, floor);
 			}
+			if (exactKaiselin)
+				data.putBoolean("dkc_floor_20_kaiselin_defeated", true);
+			boolean baranDown = data.getBoolean("dkc_floor_20_baran_defeated");
+			boolean kaiselinDown = data.getBoolean("dkc_floor_20_kaiselin_defeated");
+			if (!baranDown || !kaiselinDown)
+				return;
+			ensureKaiselSoul(level, player);
+		}
+
+		String defeatedKey = "dkc_floor_" + floor + "_boss_defeated";
+		if (data.getBoolean(defeatedKey))
+			return;
+		data.putBoolean(defeatedKey, true);
+		ServerPlayer rewardPlayer = player;
+		rewardPlayer.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			capability.dkc_cleared = Math.max(capability.dkc_cleared, floor);
+			capability.syncPlayerVariables(rewardPlayer);
+		});
+		XPGainProcedure.awardBaseXp(world, player, floor * 100);
+		notify(player, 0xFF4DFF88, "BOSS SLAIN",
+				floor == DkcFloorRegistry.LAST_FLOOR
+						? "Demon King's Castle conquered."
+						: "Floor " + floor + " cleared.",
+				100);
+		grantBossRewards(level, player, floor);
+
+		if (floor == DkcFloorRegistry.LAST_FLOOR)
+			DkcRadiruManager.onCastleConquered(player);
+	}
+
+	private static boolean matchesBossFloor(Entity entity, int floor, boolean exactKaiselin) {
+		return floor == 1 && entity instanceof CerberusEntity
+				|| floor == 10 && entity instanceof VulcanEntity
+				|| floor == 20 && (entity instanceof BaranEntity || exactKaiselin);
+	}
+
+	private static void ensureKaiselSoul(ServerLevel level, ServerPlayer player) {
+		CompoundTag data = player.getPersistentData();
+		if (data.getBoolean(KaiselinEntity.DKC_SOUL_SPAWNED))
+			return;
+		BlockPos ground = DkcFloorBuilder.bossPosition(player, 20);
+		while (ground.getY() > level.getMinBuildHeight() + 1 && level.isEmptyBlock(ground.below()))
+			ground = ground.below();
+		while (ground.getY() < level.getMaxBuildHeight() - 2 && !level.isEmptyBlock(ground))
+			ground = ground.above();
+		Entity soul = SololevelingModEntities.SHADOW_SOUL.get().spawn(level, ground, MobSpawnType.MOB_SUMMONED);
+		if (soul == null)
+			return;
+		soul.getPersistentData().putString("soultype", "kaisel");
+		soul.getPersistentData().putDouble("dkc_floor_number", 20);
+		soul.getPersistentData().putString("dkc_spawned_by", player.getStringUUID());
+		data.putBoolean(KaiselinEntity.DKC_SOUL_SPAWNED, true);
+	}
+
+	private static void grantBossRewards(ServerLevel level, ServerPlayer player, int floor) {
+		String name = player.getGameProfile().getName();
+		try {
+			if (floor == 1) {
+				reward(level, name, "rewards set 1 Item sololeveling:entry_permit true");
+				reward(level, name, "rewards set 2 Item sololeveling:world_trees_fragment true");
+				reward(level, name, "rewards set 3 FullRecovery true");
+			} else if (floor == 10) {
+				reward(level, name, "rewards set 1 Item sololeveling:entry_permit true");
+				reward(level, name, "rewards set 2 Item sololeveling:spring_water_of_the_echoing_forest true");
+				reward(level, name, "rewards set 3 FullRecovery true");
+				RewardManager.appendReward(player, "ITEM:sololeveling:orb_of_avarice");
+				grantAdvancement(player, "monarchs_domain");
+			} else if (floor == 20) {
+				reward(level, name, "rewards set 1 Item sololeveling:purified_blood_of_the_demon_king true");
+				reward(level, name, "rewards set 2 Item sololeveling:demon_kings_dagger true");
+				reward(level, name, "rewards set 3 Item sololeveling:demon_kings_long_sword true");
+			}
+		} catch (RuntimeException ignored) {
 		}
 	}
 
-	private static void grantAdvancement(Player player, String advancementId) {
-		if (!(player instanceof ServerPlayer serverPlayer))
-			return;
-		Advancement advancement = serverPlayer.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling", advancementId));
+	private static void reward(ServerLevel level, String playerName, String arguments) {
+		level.getServer().getCommands().performPrefixedCommand(level.getServer().createCommandSourceStack(),
+				"slr " + playerName + " " + arguments);
+	}
+
+	private static void grantAdvancement(ServerPlayer player, String advancementId) {
+		Advancement advancement = player.server.getAdvancements()
+				.getAdvancement(new ResourceLocation("sololeveling", advancementId));
 		if (advancement == null)
 			return;
-		AdvancementProgress progress = serverPlayer.getAdvancements().getOrStartProgress(advancement);
-		if (!progress.isDone()) {
-			for (String criteria : progress.getRemainingCriteria()) {
-				serverPlayer.getAdvancements().award(advancement, criteria);
-			}
-		}
+		AdvancementProgress progress = player.getAdvancements().getOrStartProgress(advancement);
+		if (!progress.isDone())
+			for (String criterion : progress.getRemainingCriteria())
+				player.getAdvancements().award(advancement, criterion);
 	}
 
-	private static void notifyDkc(Player player, int accent, String title, String under, int durationTicks) {
-		if (player instanceof ServerPlayer serverPlayer) {
-			SystemNotifications.showTitleUnder(serverPlayer, accent, durationTicks,
-					Component.literal(title).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-					Component.literal(under).withStyle(ChatFormatting.GRAY));
-		}
+	private static void notify(ServerPlayer player, int accent, String title, String under, int duration) {
+		SystemNotifications.showTitleUnder(player, accent, duration,
+				Component.literal(title).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+				Component.literal(under).withStyle(ChatFormatting.GRAY));
 	}
-
 }

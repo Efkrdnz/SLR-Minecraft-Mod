@@ -1,16 +1,16 @@
 package net.solocraft.procedures;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.dungeon.ProceduralDungeonRank;
 import net.solocraft.entity.Portal12Entity;
 import net.solocraft.entity.PortalSewersEntity;
-import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.MagicReadingHelper;
 
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
@@ -21,13 +21,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.AABB;
@@ -45,10 +41,8 @@ public class PortalSewersRightClickedOnEntityProcedure {
 		if (entity == null || sourceentity == null || world.isClientSide())
 			return;
 
-		if ((sourceentity instanceof LivingEntity living ? living.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MAGIC_READER.get()) {
-			double reading = Mth.nextInt(RandomSource.create(), 201, 399);
-			if (sourceentity instanceof ServerPlayer player)
-				player.displayClientMessage(Component.literal("Magic Reading: " + Math.round(reading)), false);
+		if (MagicReadingHelper.isHoldingMagicReader(sourceentity)) {
+			MagicReadingHelper.showRankReading(sourceentity, ProceduralDungeonRank.D);
 			return;
 		}
 

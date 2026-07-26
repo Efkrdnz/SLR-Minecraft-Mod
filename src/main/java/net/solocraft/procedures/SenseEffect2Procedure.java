@@ -1,94 +1,86 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.EntityHighlightSystem;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.tags.TagKey;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.level.LevelAccessor;
 
-import javax.annotation.Nullable;
-
-import java.util.List;
 import java.util.Comparator;
+import java.util.List;
 
+/** Periodically turns Perception into a private, short-lived entity sense. */
 @Mod.EventBusSubscriber
-public class SenseEffect2Procedure {
+public final class SenseEffect2Procedure {
+	private static final String HIGHLIGHT_SOURCE = "perception:sense";
+	private static final String NEXT_SENSE_TICK = "slr_next_perception_sense";
+	private static final int HIGHLIGHT_DURATION_TICKS = 80;
+	private static final int SENSE_COOLDOWN_TICKS = 240;
+	private static final int MAX_SENSE_TARGETS = 24;
+	private static final double MAX_PERCEPTION = 100.0D;
+
+	private SenseEffect2Procedure() {
+	}
+
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player.level(), event.player.getX(), event.player.getY(), event.player.getZ(), event.player);
-		}
+		if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player)
+			trySense(player);
 	}
 
+	/** Retained for generated callers; perception sensing is authoritative on the server. */
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
-		execute(null, world, x, y, z, entity);
+		if (!world.isClientSide() && entity instanceof ServerPlayer player)
+			trySense(player);
 	}
 
-	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity) {
-		if (entity == null)
+	private static void trySense(ServerPlayer player) {
+		SololevelingModVariables.PlayerVariables variables = player
+				.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(null);
+		if (variables == null)
 			return;
-		double rand = 0;
-		double num = 0;
-		rand = Math.random();
-		if (entity instanceof Player) {
-			if (rand <= (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).perception / 20000) {
-				{
-					final Vec3 _center = new Vec3(x, y, z);
-					List<Entity> _entfound = world
-							.getEntitiesOfClass(Entity.class,
-									new AABB(_center, _center).inflate(((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).perception) / 2d), e -> true)
-							.stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
-					for (Entity entityiterator : _entfound) {
-						if (!(entity == entityiterator) && !(entityiterator instanceof TamableAnimal _tamIsTamedBy && entity instanceof LivingEntity _livEnt ? _tamIsTamedBy.isOwnedBy(_livEnt) : false) && entityiterator instanceof LivingEntity
-								&& !entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals"))) && !entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("side")))) {
-							num = num + 1;
-							if (world.isClientSide()) {
-								if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(MobEffects.GLOWING, 200, 1, false, false));
-							}
-						}
-					}
-				}
-				if (num > 0) {
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal(("\u00A7fYou felt " + Math.round(num) + " Entities presence")), true);
-					if (world instanceof Level _level) {
-						if (!_level.isClientSide()) {
-							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.fungus.step")), SoundSource.NEUTRAL, 1, 2);
-						} else {
-							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.fungus.step")), SoundSource.NEUTRAL, 1, 2, false);
-						}
-					}
-				}
-			}
+		double perception = Math.max(0.0D, Math.min(MAX_PERCEPTION, variables.perception));
+		long gameTime = player.serverLevel().getGameTime();
+		if (gameTime < player.getPersistentData().getLong(NEXT_SENSE_TICK))
+			return;
+		if (perception <= 0.0D || player.getRandom().nextDouble() > perception / 20_000.0D)
+			return;
+		player.getPersistentData().putLong(NEXT_SENSE_TICK, gameTime + SENSE_COOLDOWN_TICKS);
+
+		double radius = perception / 2.0D;
+		List<LivingEntity> targets = player.serverLevel()
+				.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(radius),
+						target -> eligible(player, target))
+				.stream()
+				.sorted(Comparator.comparingDouble(player::distanceToSqr))
+				.limit(MAX_SENSE_TARGETS)
+				.toList();
+		for (LivingEntity target : targets) {
+			EntityHighlightSystem.show(player, target, HIGHLIGHT_SOURCE,
+					EntityHighlightSystem.perceptionColor(target), HIGHLIGHT_DURATION_TICKS,
+					EntityHighlightSystem.perceptionPriority(target));
 		}
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).perception >= 100) {
-			{
-				double _setval = 100;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.perception = _setval;
-					capability.syncPlayerVariables(entity);
-				});
-			}
-		}
+		if (targets.isEmpty())
+			return;
+
+		player.playNotifySound(SoundEvents.SCULK_CLICKING, SoundSource.PLAYERS, 0.45F, 1.6F);
+	}
+
+	private static boolean eligible(ServerPlayer viewer, LivingEntity target) {
+		if (target == viewer || !EntityHighlightSystem.isPerceptionCandidate(target))
+			return false;
+		if (target instanceof TamableAnimal tamable && tamable.isOwnedBy(viewer))
+			return false;
+		return !viewer.isAlliedTo(target) && !target.isAlliedTo(viewer);
 	}
 }

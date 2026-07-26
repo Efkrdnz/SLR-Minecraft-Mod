@@ -1,7 +1,5 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
-
 import net.minecraftforge.registries.ForgeRegistries;
 
 import net.minecraft.advancements.Advancement;
@@ -21,27 +19,19 @@ public class RunestoneMonarchsDomainRightclickedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, ItemStack itemstack) {
 		if (entity == null)
 			return;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
-			if (!hasMonarchsDomain(entity)) {
-				grantMonarchsDomain(entity);
-				if (entity instanceof Player _player) {
-					ItemStack _stktoremove = itemstack;
-					_player.getInventory().clearOrCountMatchingItems(p -> _stktoremove.getItem() == p.getItem(), 1, _player.inventoryMenu.getCraftSlots());
-				}
-				if (world instanceof Level _level) {
-					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.enchantment_table.use")), SoundSource.NEUTRAL, 1, 1);
-					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.enchantment_table.use")), SoundSource.NEUTRAL, 1, 1, false);
-					}
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You already have \"Monarch's Domain\""), true);
+		if (world instanceof Level level && level.isClientSide())
+			return;
+		if (!hasMonarchsDomain(entity)) {
+			grantMonarchsDomain(entity);
+			if (entity instanceof Player _player) {
+				ItemStack _stktoremove = itemstack;
+				_player.getInventory().clearOrCountMatchingItems(p -> _stktoremove.getItem() == p.getItem(), 1, _player.inventoryMenu.getCraftSlots());
 			}
+			if (world instanceof Level _level)
+				_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.enchantment_table.use")), SoundSource.NEUTRAL, 1, 1);
 		} else {
 			if (entity instanceof Player _player && !_player.level().isClientSide())
-				_player.displayClientMessage(Component.literal("You cannot learn this skill with current class"), true);
+				_player.displayClientMessage(Component.literal("You already have \"Monarch's Domain\""), true);
 		}
 	}
 

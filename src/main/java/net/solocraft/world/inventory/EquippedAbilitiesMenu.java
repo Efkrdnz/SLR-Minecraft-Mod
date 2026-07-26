@@ -27,6 +27,7 @@ public class EquippedAbilitiesMenu extends AbstractContainerMenu implements Supp
 	public final static HashMap<String, Object> guistate = new HashMap<>();
 	public final Level world;
 	public final Player entity;
+	public final int initialPage;
 	public int x, y, z;
 	private ContainerLevelAccess access = ContainerLevelAccess.NULL;
 	private IItemHandler internal;
@@ -41,6 +42,7 @@ public class EquippedAbilitiesMenu extends AbstractContainerMenu implements Supp
 		this.entity = inv.player;
 		this.world = inv.player.level();
 		this.internal = new ItemStackHandler(0);
+		int openingPage = 1;
 		BlockPos pos = null;
 		if (extraData != null) {
 			pos = extraData.readBlockPos();
@@ -48,7 +50,10 @@ public class EquippedAbilitiesMenu extends AbstractContainerMenu implements Supp
 			this.y = pos.getY();
 			this.z = pos.getZ();
 			access = ContainerLevelAccess.create(world, pos);
+			if (extraData.readableBytes() > 0)
+				openingPage = extraData.readVarInt() == 2 ? 2 : 1;
 		}
+		this.initialPage = openingPage;
 		EquippedAbilitiesThisGUIIsOpenedProcedure.execute(entity);
 	}
 

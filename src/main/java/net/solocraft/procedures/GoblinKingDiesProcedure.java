@@ -79,7 +79,7 @@ public class GoblinKingDiesProcedure {
 								_ent.getServer().getCommands().performPrefixedCommand(
 										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p title {\"text\":\"Goblin King Defeated\",\"color\":\"#DF9607\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+										"/slnotify both &6&lBoss Slain | &eBoss Defeated!");
 							}
 						}
 						{
@@ -88,7 +88,7 @@ public class GoblinKingDiesProcedure {
 								_ent.getServer().getCommands().performPrefixedCommand(
 										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p subtitle {\"text\":\"Leveled Up!\",\"color\":\"gold\",\"bold\":false,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+										"/title @p clear");
 							}
 						}
 					}
@@ -128,7 +128,7 @@ public class GoblinKingDiesProcedure {
 								_ent.getServer().getCommands().performPrefixedCommand(
 										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p title {\"text\":\"Goblin King Defeated\",\"color\":\"#DF9607\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+										"/slnotify both &6&lBoss Slain | &eBoss Defeated!");
 							}
 						}
 						{
@@ -137,7 +137,7 @@ public class GoblinKingDiesProcedure {
 								_ent.getServer().getCommands().performPrefixedCommand(
 										new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 												_ent.getDisplayName(), _ent.level().getServer(), _ent),
-										"/title @p subtitle {\"text\":\"Leveled Up!\",\"color\":\"gold\",\"bold\":false,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+										"/title @p clear");
 							}
 						}
 					}
@@ -179,7 +179,7 @@ public class GoblinKingDiesProcedure {
 											_ent.getServer().getCommands().performPrefixedCommand(
 													new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 															_ent.getDisplayName(), _ent.level().getServer(), _ent),
-													"/title @p title {\"text\":\"Goblin King Defeated\",\"color\":\"#DF9607\",\"bold\":true,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+													"/slnotify both &6&lBoss Slain | &eBoss Defeated!");
 										}
 									}
 									{
@@ -188,7 +188,7 @@ public class GoblinKingDiesProcedure {
 											_ent.getServer().getCommands().performPrefixedCommand(
 													new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
 															_ent.getDisplayName(), _ent.level().getServer(), _ent),
-													"/title @p subtitle {\"text\":\"Leveled Up!\",\"color\":\"gold\",\"bold\":false,\"italic\":false,\"underlined\":false,\"strikethrough\":false,\"obfuscated\":false}");
+													"/title @p clear");
 										}
 									}
 								}

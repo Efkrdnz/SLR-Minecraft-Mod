@@ -33,7 +33,7 @@ public class PocketDimensionGUIScreen extends AbstractContainerScreen<PocketDime
 
 	@Override
 	public boolean isPauseScreen() {
-		return true;
+		return false;
 	}
 
 	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/pocket_dimension_gui.png");

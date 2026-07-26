@@ -32,8 +32,8 @@ public class RunestoneShadowstepItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Shadowstep\""));
-		list.add(Component.literal("User can use \"Shadowstep\" which will let user move forward in instant dealing damage if dashed towards an entity."));
+		list.add(Component.literal("Right click this rune to obtain \"Ghost Step\""));
+		list.add(Component.literal("Dash safely through danger. Crossing an enemy exposes them; a precisely timed dash evades one attack."));
 	}
 
 	@Override

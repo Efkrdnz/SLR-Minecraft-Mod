@@ -151,6 +151,7 @@ public class SololevelingModVariables {
 			clone.LastKilled = original.LastKilled;
 			clone.Level = original.Level;
 			clone.MainQuest = original.MainQuest;
+			clone.QuestProgression = original.QuestProgression;
 			clone.manaregen = original.manaregen;
 			clone.MaxXP = original.MaxXP;
 			clone.orcmax = original.orcmax;
@@ -269,6 +270,17 @@ public class SololevelingModVariables {
 			clone.dkc_y = original.dkc_y;
 			clone.dkc_z = original.dkc_z;
 			clone.dkc_started = original.dkc_started;
+			clone.radiru_pact = original.radiru_pact;
+			clone.radiru_slaughtered = original.radiru_slaughtered;
+			clone.radiru_side_quest_unlocked = original.radiru_side_quest_unlocked;
+			// Job Change is a persistent quest run. Losing these fields on a death
+			// clone turns the same Igris encounter into a fresh, farmable run.
+			clone.jobadvpoint = original.jobadvpoint;
+			clone.JobChange_timer = original.JobChange_timer;
+			clone.jobtimer = original.jobtimer;
+			clone.randplayerx = original.randplayerx;
+			clone.randplayery = original.randplayery;
+			clone.randplayerz = original.randplayerz;
 			if (!event.isWasDeath()) {
 				clone.LoreAccurateRankStart = original.LoreAccurateRankStart;
 				clone.ariset = original.ariset;
@@ -295,9 +307,6 @@ public class SololevelingModVariables {
 				clone.instancecomplete = original.instancecomplete;
 				clone.inv = original.inv;
 				clone.istraining = original.istraining;
-				clone.jobadvpoint = original.jobadvpoint;
-				clone.JobChange_timer = original.JobChange_timer;
-				clone.jobtimer = original.jobtimer;
 				clone.JP = original.JP;
 				clone.kamishcharge = original.kamishcharge;
 				clone.leapjump = original.leapjump;
@@ -307,7 +316,6 @@ public class SololevelingModVariables {
 				clone.PhantomName = original.PhantomName;
 				clone.punishment = original.punishment;
 				clone.questinfo = original.questinfo;
-				clone.QuestProgression = original.QuestProgression;
 				clone.radius1 = original.radius1;
 				clone.rushattack = original.rushattack;
 				clone.shieldbash = original.shieldbash;
@@ -325,9 +333,6 @@ public class SololevelingModVariables {
 				clone.rangerleapnum = original.rangerleapnum;
 				clone.rangerleaptimer = original.rangerleaptimer;
 				clone.sl_EVA = original.sl_EVA;
-				clone.randplayerx = original.randplayerx;
-				clone.randplayery = original.randplayery;
-				clone.randplayerz = original.randplayerz;
 				clone.traintype = original.traintype;
 				clone.isdailytraining = original.isdailytraining;
 				clone.instance_query_timer = original.instance_query_timer;
@@ -774,6 +779,12 @@ public class SololevelingModVariables {
 		public double dkc_y = 0;
 		public double dkc_z = 0;
 		public boolean dkc_started = false;
+		/** Floor 15 mercy route: Esil granted the owner an Entry Permit. */
+		public boolean radiru_pact = false;
+		/** Mutually exclusive Floor 15 execution route. */
+		public boolean radiru_slaughtered = false;
+		/** Unlocked after a Radiru ally completes the remaining DKC floors. */
+		public boolean radiru_side_quest_unlocked = false;
 		/** Compact cooldown snapshot synced to client: "key1:expiry1;key2:expiry2" */
 		public String cooldownData = "";
 
@@ -1044,6 +1055,9 @@ public class SololevelingModVariables {
 			nbt.putDouble("dkc_y", dkc_y);
 			nbt.putDouble("dkc_z", dkc_z);
 			nbt.putBoolean("dkc_started", dkc_started);
+			nbt.putBoolean("radiru_pact", radiru_pact);
+			nbt.putBoolean("radiru_slaughtered", radiru_slaughtered);
+			nbt.putBoolean("radiru_side_quest_unlocked", radiru_side_quest_unlocked);
 			nbt.putString("cooldownData", cooldownData);
 			return nbt;
 		}
@@ -1301,6 +1315,9 @@ public class SololevelingModVariables {
 			dkc_y = nbt.getDouble("dkc_y");
 			dkc_z = nbt.getDouble("dkc_z");
 			dkc_started = nbt.getBoolean("dkc_started");
+			radiru_pact = nbt.getBoolean("radiru_pact");
+			radiru_slaughtered = nbt.getBoolean("radiru_slaughtered");
+			radiru_side_quest_unlocked = nbt.getBoolean("radiru_side_quest_unlocked");
 			cooldownData = nbt.getString("cooldownData");
 		}
 	}
@@ -1577,6 +1594,9 @@ public class SololevelingModVariables {
 					variables.dkc_y = message.data.dkc_y;
 					variables.dkc_z = message.data.dkc_z;
 					variables.dkc_started = message.data.dkc_started;
+					variables.radiru_pact = message.data.radiru_pact;
+					variables.radiru_slaughtered = message.data.radiru_slaughtered;
+					variables.radiru_side_quest_unlocked = message.data.radiru_side_quest_unlocked;
 					variables.cooldownData = message.data.cooldownData;
 				}
 			});

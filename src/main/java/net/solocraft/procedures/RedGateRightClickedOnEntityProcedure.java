@@ -1,23 +1,20 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModItems;
 import net.solocraft.entity.RedGateEntity;
 import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
+import net.solocraft.util.MagicReadingHelper;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.util.RandomSource;
-import net.minecraft.util.Mth;
 import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
@@ -27,11 +24,8 @@ import net.minecraft.network.protocol.game.ClientboundUpdateMobEffectPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerAbilitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
-import net.minecraft.network.chat.Component;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.core.BlockPos;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.CommandSource;
 
 import java.util.List;
 import java.util.Comparator;
@@ -41,8 +35,7 @@ public class RedGateRightClickedOnEntityProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
-		double rand = 0;
-		if (!((sourceentity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MAGIC_READER.get())) {
+		if (!MagicReadingHelper.isHoldingMagicReader(sourceentity)) {
 			if (net.solocraft.guild.GuildGateHelper.prepareGateEntry(world, entity, sourceentity))
 				return;
 			// The dedicated legacy red gate now shares the finite, instance-scoped wave
@@ -92,13 +85,6 @@ public class RedGateRightClickedOnEntityProcedure {
 						});
 					}
 					SololevelingMod.queueServerWork(10, () -> {
-						{
-							Entity _ent = entity;
-							if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-								_ent.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4,
-										_ent.getName().getString(), _ent.getDisplayName(), _ent.level().getServer(), _ent), "/title @p title [\"\",{\"text\":\"Red Gate?\",\"color\":\"red\"}]");
-							}
-						}
 						if (sourceentity instanceof ServerPlayer _player && !_player.level().isClientSide()) {
 							ResourceKey<Level> destinationType = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_snow"));
 							if (_player.level().dimension() == destinationType)
@@ -142,14 +128,6 @@ public class RedGateRightClickedOnEntityProcedure {
 									});
 								}
 								SololevelingMod.queueServerWork(10, () -> {
-									{
-										Entity _ent = entityiterator;
-										if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-											_ent.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(),
-													_ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(), _ent.getDisplayName(), _ent.level().getServer(), _ent),
-													"/title @p title [\"\",{\"text\":\"Red Gate?\",\"color\":\"red\"}]");
-										}
-									}
 									if (entityiterator instanceof ServerPlayer _player && !_player.level().isClientSide()) {
 										ResourceKey<Level> destinationType = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_snow"));
 										if (_player.level().dimension() == destinationType)
@@ -172,20 +150,7 @@ public class RedGateRightClickedOnEntityProcedure {
 				}
 			}
 		} else {
-			rand = Mth.nextInt(RandomSource.create(), 1, 4);
-			if (rand == 1) {
-				if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Magic Reading: 9999"), false);
-			} else if (rand == 2) {
-				if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Magic Reading: ERROR"), false);
-			} else if (rand == 3) {
-				if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Magic Reading: N/A"), false);
-			} else if (rand == 4) {
-				if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("Magic Reading: Cannot Read!"), false);
-			}
+			MagicReadingHelper.showUnreadableReading(sourceentity);
 		}
 	}
 }

@@ -1,11 +1,13 @@
 
 package net.solocraft.network;
 
+import net.solocraft.dkc.DkcQuestProgressTracker;
 import net.solocraft.procedures.QuestInfoOnKeyReleasedProcedure;
 import net.solocraft.procedures.QuestInfoOnKeyPressedProcedure;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -13,6 +15,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.function.Supplier;
 
@@ -44,6 +47,11 @@ public class QuestInfoMessage {
 	}
 
 	public static void pressAction(Player entity, int type, int pressedms) {
+		if (entity == null || type != 0 && type != 1)
+			return;
+		if (type == 0 && entity instanceof ServerPlayer player
+				&& !DkcQuestProgressTracker.acceptPress(player))
+			return;
 		Level world = entity.level();
 		double x = entity.getX();
 		double y = entity.getY();
@@ -54,15 +62,20 @@ public class QuestInfoMessage {
 		if (type == 0) {
 
 			QuestInfoOnKeyPressedProcedure.execute(entity);
+			if (entity instanceof ServerPlayer player)
+				DkcQuestProgressTracker.beginTracking(player);
 		}
 		if (type == 1) {
 
 			QuestInfoOnKeyReleasedProcedure.execute(entity);
+			if (entity instanceof ServerPlayer player)
+				DkcQuestProgressTracker.stopTracking(player);
 		}
 	}
 
 	@SubscribeEvent
 	public static void registerMessage(FMLCommonSetupEvent event) {
-		SololevelingMod.addNetworkMessage(QuestInfoMessage.class, QuestInfoMessage::buffer, QuestInfoMessage::new, QuestInfoMessage::handler);
+		SololevelingMod.addNetworkMessage(QuestInfoMessage.class, QuestInfoMessage::buffer,
+				QuestInfoMessage::new, QuestInfoMessage::handler, NetworkDirection.PLAY_TO_SERVER);
 	}
 }

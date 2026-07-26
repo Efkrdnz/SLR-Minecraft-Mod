@@ -33,8 +33,10 @@ public class SummonLimitProcedure {
 				{
 					double _setval = Math.round(((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level / 15) * 5);
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.summonlimit = _setval;
-						capability.syncPlayerVariables(entity);
+						if (capability.summonlimit != _setval) {
+							capability.summonlimit = _setval;
+							capability.syncPlayerVariables(entity);
+						}
 					});
 				}
 			}

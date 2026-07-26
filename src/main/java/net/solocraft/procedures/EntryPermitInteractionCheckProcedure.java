@@ -1,20 +1,22 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.dkc.DkcFloorBuilder;
+import net.solocraft.dkc.DkcFloorRegistry;
+import net.solocraft.dkc.DkcRunSavedData;
+import net.solocraft.dkc.DkcSpatialLayout;
 
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.LevelAccessor;
 
+/** Compatibility entry point retained for older generated call sites. */
 public class EntryPermitInteractionCheckProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
-		if (entity == null)
+		if (!(entity instanceof ServerPlayer player) || player.server == null)
 			return;
-		if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_dkc")))
-				&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dkc_cleared < 20) {
-			FloorCreateNewProcedure.execute(world, entity);
-		}
+		int floor = DkcSpatialLayout.floor(player);
+		if (floor > 0 && floor < DkcFloorRegistry.LAST_FLOOR
+				&& DkcRunSavedData.get(player.server).isTransitionArmed(player, floor))
+			DkcFloorBuilder.prepareFloor(player, floor + 1);
 	}
 }

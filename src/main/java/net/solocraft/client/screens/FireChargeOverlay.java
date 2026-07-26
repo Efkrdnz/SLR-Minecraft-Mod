@@ -39,6 +39,11 @@ public class FireChargeOverlay {
 			y = entity.getY();
 			z = entity.getZ();
 		}
+		boolean firstCharge = FireCharge1Procedure.execute(entity);
+		boolean secondCharge = FireCharg2Procedure.execute(entity);
+		boolean thirdCharge = FireCharge3Procedure.execute(entity);
+		if (!firstCharge && !secondCharge && !thirdCharge)
+			return;
 		RenderSystem.disableDepthTest();
 		RenderSystem.depthMask(false);
 		RenderSystem.enableBlend();
@@ -46,22 +51,22 @@ public class FireChargeOverlay {
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		if (true) {
-			if (FireCharge1Procedure.execute(entity)) {
+			if (firstCharge) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge1.png"), w / 2 + -16, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
-			if (FireCharge1Procedure.execute(entity)) {
+			if (firstCharge) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge1.png"), w / 2 + -15, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
-			if (FireCharg2Procedure.execute(entity)) {
+			if (secondCharge) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge2.png"), w / 2 + -16, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
-			if (FireCharg2Procedure.execute(entity)) {
+			if (secondCharge) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge2.png"), w / 2 + -15, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
-			if (FireCharge3Procedure.execute(entity)) {
+			if (thirdCharge) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge3.png"), w / 2 + -16, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
-			if (FireCharge3Procedure.execute(entity)) {
+			if (thirdCharge) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge3.png"), w / 2 + -15, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
 		}

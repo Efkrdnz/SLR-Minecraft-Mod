@@ -141,7 +141,6 @@ public class HighOrcEntity extends Monster implements GeoEntity {
 	@Override
 	public void baseTick() {
 		super.baseTick();
-		this.refreshDimensions();
 	}
 
 	@Override

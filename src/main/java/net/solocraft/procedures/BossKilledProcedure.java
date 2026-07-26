@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.FangedKasakaEntity;
 import net.solocraft.util.CartenonTempleManager;
+import net.solocraft.util.InstanceDungeonKeyAccess;
 import net.solocraft.util.KangTaeshikAmbushManager;
 
 import net.minecraftforge.fml.common.Mod;
@@ -113,6 +114,8 @@ public class BossKilledProcedure {
 					markGateCleared(world, resolveDungeonTag(world, entity, sourceentity));
 				}
 			} else if (entity instanceof FangedKasakaEntity) {
+				boolean kasakaInstance = entity.level().dimension().location().equals(
+						new ResourceLocation("sololeveling", "dungeon_dimension_kasaka"));
 				if (((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party).equals("")) {
 					{
 						boolean _setval = true;
@@ -121,6 +124,8 @@ public class BossKilledProcedure {
 							capability.syncPlayerVariables(creditedSourceentity);
 						});
 					}
+					if (kasakaInstance && sourceentity instanceof Player player)
+						InstanceDungeonKeyAccess.markCompleted(player);
 				} else {
 					for (Entity entityiterator : new ArrayList<>(world.players())) {
 						if (((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party)
@@ -133,6 +138,8 @@ public class BossKilledProcedure {
 										capability.syncPlayerVariables(entityiterator);
 									});
 								}
+								if (kasakaInstance && entityiterator instanceof Player player)
+									InstanceDungeonKeyAccess.markCompleted(player);
 							}
 						}
 					}

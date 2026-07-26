@@ -1,35 +1,30 @@
-
 package net.solocraft.world.dimension;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.solocraft.SololevelingMod;
+import net.solocraft.client.dimension.DkcDimensionSpecialEffects;
+import net.solocraft.dkc.DkcFloorRegistry;
+
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.client.renderer.DimensionSpecialEffects;
-
-@Mod.EventBusSubscriber
+/** Registration bridge for the shared Demon King's Castle dimension. */
+@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
 public class DungeonDimensionDKCDimension {
-	@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+	private DungeonDimensionDKCDimension() {
+	}
+
+	@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 	public static class DimensionSpecialEffectsHandler {
+		private DimensionSpecialEffectsHandler() {
+		}
+
 		@SubscribeEvent
 		@OnlyIn(Dist.CLIENT)
 		public static void registerDimensionSpecialEffects(RegisterDimensionSpecialEffectsEvent event) {
-			DimensionSpecialEffects customEffect = new DimensionSpecialEffects(DimensionSpecialEffects.OverworldEffects.CLOUD_LEVEL, true, DimensionSpecialEffects.SkyType.NORMAL, false, false) {
-				@Override
-				public Vec3 getBrightnessDependentFogColor(Vec3 color, float sunHeight) {
-					return new Vec3(0.4156862745, 0.1019607843, 0.1019607843);
-				}
-
-				@Override
-				public boolean isFoggyAt(int x, int y) {
-					return true;
-				}
-			};
-			event.register(new ResourceLocation("sololeveling:dungeon_dimension_dkc"), customEffect);
+			event.register(DkcFloorRegistry.SHARED_DIMENSION.location(), new DkcDimensionSpecialEffects());
 		}
 	}
 }

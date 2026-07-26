@@ -29,6 +29,8 @@ import net.solocraft.util.JobSkillManager;
 import net.solocraft.util.BarrierMageSpellManager;
 import net.solocraft.util.ArcaneMageSpellManager;
 import net.solocraft.util.FireMageSpellManager;
+import net.solocraft.util.OrbOfAvariceManager;
+import net.solocraft.util.StormMageSpellManager;
 import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraftforge.fml.common.Mod;
@@ -50,25 +52,24 @@ import com.mojang.blaze3d.platform.GlStateManager;
 public class DisplayOverlay {
 	private static final ResourceLocation SKILL_COOLDOWN_COVER = new ResourceLocation("sololeveling:textures/screens/newbasiccdcover.png");
 
-	private static ResourceLocation getSkillTexture(String skillName) {
+	private static ResourceLocation getSkillTexture(String skillName, boolean avariceHeld) {
 		if (ShadowMonarchManager.isFormationSkill(skillName))
 			return new ResourceLocation("sololeveling:textures/screens/newshadowformation.png");
 		return switch (skillName) {
-			// goofy ahh mapping
-			case FireMageSpellManager.FLAME_WEAVING -> new ResourceLocation("sololeveling:textures/screens/icon_firehurricane.png");
-			case FireMageSpellManager.IGNITION_ORB -> new ResourceLocation("sololeveling:textures/screens/icon_new_fireball.png");
-			case FireMageSpellManager.INFERNO_LANCE -> new ResourceLocation("sololeveling:textures/screens/icon_firebeam.png");
-			case FireMageSpellManager.FLASHFIRE -> new ResourceLocation("sololeveling:textures/screens/icon_slashdash.png");
-			case FireMageSpellManager.CREMATION -> new ResourceLocation("sololeveling:textures/screens/icon_firevacuum.png");
-			case FireMageSpellManager.FURNACE_DOMINION -> new ResourceLocation("sololeveling:textures/screens/icon_firehurricane.png");
-			case FireMageSpellManager.HEAVENFALL -> new ResourceLocation("sololeveling:textures/screens/icon_firearrows.png");
-			case BarrierMageSpellManager.FRACTURE_BOLT -> new ResourceLocation("sololeveling:textures/screens/icon_magicmissiles.png");
-			case BarrierMageSpellManager.PRISM_RAMPART -> new ResourceLocation("sololeveling:textures/screens/icon_protectionmark.png");
-			case BarrierMageSpellManager.REPULSION_FRAME -> new ResourceLocation("sololeveling:textures/screens/icon_shieldbash.png");
-			case BarrierMageSpellManager.SEALING_PRISM -> new ResourceLocation("sololeveling:textures/screens/icon_cursechains.png");
-			case BarrierMageSpellManager.MIRROR_WARD -> new ResourceLocation("sololeveling:textures/screens/icon_reinforcement.png");
-			case BarrierMageSpellManager.RESONANT_COLLAPSE -> new ResourceLocation("sololeveling:textures/screens/icon_groundslam.png");
-			case BarrierMageSpellManager.ABSOLUTE_BASTION -> new ResourceLocation("sololeveling:textures/screens/icon_willpower.png");
+			case FireMageSpellManager.FLAME_WEAVING -> fireMageTexture("firebullet", avariceHeld);
+			case FireMageSpellManager.IGNITION_ORB -> fireMageTexture("fireball", avariceHeld);
+			case FireMageSpellManager.INFERNO_LANCE -> fireMageTexture("firelance", avariceHeld);
+			case FireMageSpellManager.FLASHFIRE -> fireMageTexture("firedash", avariceHeld);
+			case FireMageSpellManager.CREMATION -> fireMageTexture("cremation", avariceHeld);
+			case FireMageSpellManager.FURNACE_DOMINION -> fireMageTexture("furnace", avariceHeld);
+			case FireMageSpellManager.HEAVENFALL -> fireMageTexture("meteor", avariceHeld);
+			case BarrierMageSpellManager.FRACTURE_BOLT -> new ResourceLocation("sololeveling:textures/screens/icon_mage_barrier_fracturebolt.png");
+			case BarrierMageSpellManager.PRISM_RAMPART -> new ResourceLocation("sololeveling:textures/screens/icon_mage_barrier_prismrampart.png");
+			case BarrierMageSpellManager.REPULSION_FRAME -> new ResourceLocation("sololeveling:textures/screens/icon_mage_barrier_repulsionframe.png");
+			case BarrierMageSpellManager.SEALING_PRISM -> new ResourceLocation("sololeveling:textures/screens/icon_mage_barrier_sealingprism.png");
+			case BarrierMageSpellManager.MIRROR_WARD -> new ResourceLocation("sololeveling:textures/screens/icon_mage_barrier_mirrorward.png");
+			case BarrierMageSpellManager.RESONANT_COLLAPSE -> new ResourceLocation("sololeveling:textures/screens/icon_mage_barrier_resonantcollapse.png");
+			case BarrierMageSpellManager.ABSOLUTE_BASTION -> new ResourceLocation("sololeveling:textures/screens/icon_mage_barrier_absolutebastion.png");
 			case ArcaneMageSpellManager.AETHER_BOLT -> new ResourceLocation("sololeveling:textures/screens/icon_magicmissiles.png");
 			case ArcaneMageSpellManager.VECTOR_STEP -> new ResourceLocation("sololeveling:textures/screens/icon_shadowstep.png");
 			case ArcaneMageSpellManager.POLARITY_SPHERE -> new ResourceLocation("sololeveling:textures/screens/icon_cursesphere.png");
@@ -76,17 +77,23 @@ public class DisplayOverlay {
 			case ArcaneMageSpellManager.ASTRAL_ARSENAL -> new ResourceLocation("sololeveling:textures/screens/icon_swordbeam.png");
 			case ArcaneMageSpellManager.DIMENSIONAL_REND -> new ResourceLocation("sololeveling:textures/screens/icon_slashfury.png");
 			case ArcaneMageSpellManager.CONVERGENCE -> new ResourceLocation("sololeveling:textures/screens/icon_groundslam.png");
-			case "Water Slash" -> new ResourceLocation("sololeveling:textures/screens/icon_new_waterslash.png");
-			case "Lightball" -> new ResourceLocation("sololeveling:textures/screens/icon_new_light_ball.png");
-			case "Light Golem" -> new ResourceLocation("sololeveling:textures/screens/icon_lightgolem.png");
-			case "Backstab" -> new ResourceLocation("sololeveling:textures/screens/icon_backstab.png");
+			case StormMageSpellManager.STATIC_NEEDLE -> new ResourceLocation("sololeveling:textures/screens/icon_magicmissiles.png");
+			case StormMageSpellManager.SLIPSTREAM -> new ResourceLocation("sololeveling:textures/screens/icon_shadowstep.png");
+			case StormMageSpellManager.THUNDERCLAP -> new ResourceLocation("sololeveling:textures/screens/newbaranstormburst.png");
+			case StormMageSpellManager.LIGHTNING_ROD -> new ResourceLocation("sololeveling:textures/screens/icon_telekinesis.png");
+			case StormMageSpellManager.CHAIN_LIGHTNING -> new ResourceLocation("sololeveling:textures/screens/icon_mowf_lightningbreath.png");
+			case StormMageSpellManager.THUNDERHEAD -> new ResourceLocation("sololeveling:textures/screens/newbaranlightningstrike.png");
+			case StormMageSpellManager.SKYBREAKER -> new ResourceLocation("sololeveling:textures/screens/newbaranlaser.png");
+			case StormMageSpellManager.TEMPEST_INCARNATE -> new ResourceLocation("sololeveling:textures/screens/icon_mowf_hellstormdominion.png");
+			case "Backstab", "Night Rend" -> new ResourceLocation("sololeveling:textures/screens/icon_backstab.png");
 			case "Dualwield" -> new ResourceLocation("sololeveling:textures/screens/icon_dualwielding.png");
-			case "Quickslashes" -> new ResourceLocation("sololeveling:textures/screens/icon_quickslashes.png");
-			case "Shadowstep" -> new ResourceLocation("sololeveling:textures/screens/icon_shadowstep.png");
+			case "Quickslashes", "Flash Cut" -> new ResourceLocation("sololeveling:textures/screens/icon_quickslashes.png");
+			case "Dagger Throw" -> new ResourceLocation("sololeveling:textures/screens/icon_dualwielding.png");
+			case "Dagger Rush" -> new ResourceLocation("sololeveling:textures/screens/icon_quickslashes.png");
+			case "Shadowstep", "Ghost Step" -> new ResourceLocation("sololeveling:textures/screens/icon_shadowstep.png");
 			case "Stealth" -> new ResourceLocation("sololeveling:textures/screens/icon_stealth.png");
 			case "Murderious Intent" -> new ResourceLocation("sololeveling:textures/screens/icon_murderiousintend.png");
 			case "Detection" -> new ResourceLocation("sololeveling:textures/screens/icon_detection.png");
-			case "Curse Sphere" -> new ResourceLocation("sololeveling:textures/screens/icon_cursesphere.png");
 			case "Slash Dash" -> new ResourceLocation("sololeveling:textures/screens/icon_slashdash.png");
 			case "Cross Strike", "Critical Strike" -> new ResourceLocation("sololeveling:textures/screens/icon_criticalstrike.png");
 			case "Sword of Light" -> new ResourceLocation("sololeveling:textures/screens/icon_swordoflight.png");
@@ -106,17 +113,18 @@ public class DisplayOverlay {
 			case "Willpower" -> new ResourceLocation("sololeveling:textures/screens/icon_willpower.png");
 			case "Taunt" -> new ResourceLocation("sololeveling:textures/screens/icon_taunt.png");
 			case "Sharpshooter" -> new ResourceLocation("sololeveling:textures/screens/icon_sharpshooter.png");
+			case "Mana Quiver" -> new ResourceLocation("sololeveling:textures/screens/icon_sharpshooter.png");
+			case "Rapid Fire" -> new ResourceLocation("sololeveling:textures/screens/icon_firearrows.png");
+			case "Arrow Shower" -> new ResourceLocation("sololeveling:textures/screens/icon_proximitytrap.png");
 			case "Proximity Trap" -> new ResourceLocation("sololeveling:textures/screens/icon_proximitytrap.png");
 			case "Back Step" -> new ResourceLocation("sololeveling:textures/screens/icon_backstep.png");
 			case "High Value Target" -> new ResourceLocation("sololeveling:textures/screens/icon_highvaluetarget.png");
 			case "Hawkeye" -> new ResourceLocation("sololeveling:textures/screens/icon_hawkeye.png");
 			case "Hyper Focus" -> new ResourceLocation("sololeveling:textures/screens/icon_hyperfocus.png");
-			case "Curse Smoke" -> new ResourceLocation("sololeveling:textures/screens/icon_cursesmoke.png");
-			case "Curse Chains" -> new ResourceLocation("sololeveling:textures/screens/icon_cursechains.png");
+			case "Cold Blood" -> new ResourceLocation("sololeveling:textures/screens/icon_murderiousintend.png");
 			case "Critical Attack" -> new ResourceLocation("sololeveling:textures/screens/icon_critical_strike.png");
 			case "Mutilation" -> new ResourceLocation("sololeveling:textures/screens/icon_mutilation.png");
 			case "Sword Beam" -> new ResourceLocation("sololeveling:textures/screens/icon_swordbeam.png");
-			case "Magic Missiles" -> new ResourceLocation("sololeveling:textures/screens/icon_magicmissiles.png");
 			case JobSkillManager.ARISE -> new ResourceLocation("sololeveling:textures/screens/newshadowarise.png");
 			case JobSkillManager.SHADOW_SUMMON -> new ResourceLocation("sololeveling:textures/screens/newshadowsummon.png");
 			case JobSkillManager.DISMISS_SHADOWS -> new ResourceLocation("sololeveling:textures/screens/newshadowdismiss.png");
@@ -129,6 +137,7 @@ public class DisplayOverlay {
 			case JobSkillManager.ICE_SPEAR -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchspear.png");
 			case JobSkillManager.FLASH_FREEZE -> new ResourceLocation("sololeveling:textures/screens/icon_frost_stillness.png");
 			case JobSkillManager.FROZEN_PATH -> new ResourceLocation("sololeveling:textures/screens/icon_frost_causeway.png");
+			case JobSkillManager.FROZEN_ARCHITECTURE -> new ResourceLocation("sololeveling:textures/screens/newfrostmonarchchunk.png");
 			case JobSkillManager.FROST_COUNTER -> new ResourceLocation("sololeveling:textures/screens/icon_frost_winter_remembers.png");
 			case JobSkillManager.ABSOLUTE_ZERO -> new ResourceLocation("sololeveling:textures/screens/icon_frost_whiteout.png");
 			case JobSkillManager.FROST_SPIRITUALIZATION -> new ResourceLocation("sololeveling:textures/screens/icon_frost_spiritualization.png");
@@ -153,6 +162,11 @@ public class DisplayOverlay {
 		};
 	}
 
+	private static ResourceLocation fireMageTexture(String name, boolean avariceHeld) {
+		return new ResourceLocation("sololeveling:textures/screens/icon_mage_fire_" + name
+				+ (avariceHeld ? "_orb" : "") + ".png");
+	}
+
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public static void eventHandler(RenderGuiEvent.Pre event) {
 		int w = event.getWindow().getGuiScaledWidth();
@@ -168,13 +182,16 @@ public class DisplayOverlay {
 			y = entity.getY();
 			z = entity.getZ();
 		}
+		boolean visible = IsInCombatModeProcedure.execute(entity);
+		if (!visible)
+			return;
 		RenderSystem.disableDepthTest();
 		RenderSystem.depthMask(false);
 		RenderSystem.enableBlend();
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		if (IsInCombatModeProcedure.execute(entity)) {
+		if (visible) {
 			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_melee.png"), w - 24, h - 24, 0, 0, 20, 20, 20, 20);
 			if (WeaponAbCooldownSymbolProcedure.execute(entity)) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbasiccdcover.png"), w - 24, h - 24, 0, 0, 20, 20, 20, 20);
@@ -201,6 +218,7 @@ public class DisplayOverlay {
 			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/icon_background.png"), w / 2 + -90, h - 22, 0, 0, 162, 22, 162, 22);
 			int[] slotXOffsets = {-89, -69, -49, -29, -9, 11, 31, 51};
 			SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
+			boolean avariceHeld = OrbOfAvariceManager.isHeldBy(entity);
 			for (int i = 0; i < 8; i++) {
 				String skillName = SkillSlotHelper.getSlot(vars, vars.PskillPage >= 2 ? i + 9 : i + 1);
 				/*
@@ -208,7 +226,7 @@ public class DisplayOverlay {
 					Minecraft.getInstance().gui.getChat().addMessage(Component.literal("Slot " + (i + 1) + " is empty!"));
 				}
 				*/
-				ResourceLocation icon = getSkillTexture(skillName);
+				ResourceLocation icon = getSkillTexture(skillName, avariceHeld);
 				int slotX = w / 2 + slotXOffsets[i];
 				int slotY = h - 21;
 				event.getGuiGraphics().blit(icon, slotX, slotY, 0, 0, 20, 20, 20, 20);

@@ -1,6 +1,7 @@
 package net.solocraft.util;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
 
@@ -62,6 +63,11 @@ public final class GoliathCombatManager {
 	private static final String FALL_SAFE_UNTIL = "goliath_fall_safe_until";
 	private static final DustParticleOptions GOLD = new DustParticleOptions(new Vector3f(1.0F, 0.66F, 0.08F), 1.35F);
 	private static final DustParticleOptions PALE_GOLD = new DustParticleOptions(new Vector3f(1.0F, 0.9F, 0.48F), 0.9F);
+	private static final float ENHANCED_STRIKE_DAMAGE_MULTIPLIER = 0.72F;
+	private static final float POWER_SMASH_DAMAGE_MULTIPLIER = 0.78F;
+	private static final float CAPTURE_DAMAGE_MULTIPLIER = 0.82F;
+	private static final float PURSUIT_DAMAGE_MULTIPLIER = 0.82F;
+	private static final float COLLAPSE_DAMAGE_MULTIPLIER = 0.82F;
 	private static final Map<UUID, ChargeState> CHARGES = new HashMap<>();
 	private static final Map<UUID, PursuitState> PURSUITS = new HashMap<>();
 	private static final Map<UUID, CaptureState> CAPTURES = new HashMap<>();
@@ -112,7 +118,8 @@ public final class GoliathCombatManager {
 		player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
 
 		double strength = variables(player).Strength;
-		float damage = (float) ((12.0D + strength / 8.0D) * (combo == 1 ? 1.0D : combo == 2 ? 1.22D : 1.68D) * (manifested ? 1.55D : 1.0D));
+		float damage = (float) ((12.0D + strength / 8.0D) * (combo == 1 ? 1.0D : combo == 2 ? 1.22D : 1.68D) * (manifested ? 1.55D : 1.0D))
+				* ENHANCED_STRIKE_DAMAGE_MULTIPLIER;
 		double radius = combo == 1 ? 3.3D : combo == 2 ? 4.2D : 5.6D;
 		Vec3 forward = horizontalLook(player);
 		Vec3 center = combo == 3 ? player.position() : player.position().add(forward.scale(combo == 1 ? 2.3D : 1.8D));
@@ -174,7 +181,8 @@ public final class GoliathCombatManager {
 		found.removeIf(target -> horizontal(target.position().subtract(player.position())).normalize().dot(forward) < 0.42D);
 		found.sort(Comparator.comparingDouble(player::distanceToSqr));
 		double strength = variables(player).Strength;
-		float primary = (float) ((31.0D + strength / 3.8D) * (manifested ? 1.55D : 1.0D));
+		float primary = (float) ((31.0D + strength / 3.8D) * (manifested ? 1.55D : 1.0D))
+				* POWER_SMASH_DAMAGE_MULTIPLIER;
 		for (int i = 0; i < found.size(); i++) {
 			LivingEntity target = found.get(i);
 			float damage = i == 0 ? primary : primary * (manifested ? 0.68F : 0.42F);
@@ -340,7 +348,7 @@ public final class GoliathCombatManager {
 		CAPTURES.remove(player.getUUID());
 		Vec3 look = player.getLookAngle().normalize();
 		float damage = physicalDamage(player, state.manifested ? (thrown ? 28.0D : 22.0D) : 12.0D,
-				state.manifested ? 5.5D : 10.0D);
+				state.manifested ? 5.5D : 10.0D) * CAPTURE_DAMAGE_MULTIPLIER;
 		for (UUID id : state.targetIds) {
 			LivingEntity target = livingEntity(player.serverLevel(), id);
 			if (target == null || !validTarget(player, target))
@@ -411,7 +419,8 @@ public final class GoliathCombatManager {
 			return;
 		Vec3 center = target == null ? player.position() : target.position();
 		double radius = state.manifested ? 8.5D : 6.0D;
-		float damage = physicalDamage(player, state.manifested ? 34.0D : 21.0D, state.manifested ? 3.7D : 5.5D);
+		float damage = physicalDamage(player, state.manifested ? 34.0D : 21.0D, state.manifested ? 3.7D : 5.5D)
+				* PURSUIT_DAMAGE_MULTIPLIER;
 		for (LivingEntity nearby : targets(player, new AABB(center, center).inflate(radius, 4.0D, radius))) {
 			float dealt = nearby == target ? damage * 1.45F : damage;
 			if (dealPhysical(player, nearby, dealt))
@@ -422,7 +431,8 @@ public final class GoliathCombatManager {
 
 	private static void damageDashPath(ServerPlayer player, PursuitState state) {
 		AABB area = player.getBoundingBox().inflate(state.manifested ? 1.45D : 0.9D);
-		float damage = physicalDamage(player, state.manifested ? 12.0D : 7.0D, 12.0D);
+		float damage = physicalDamage(player, state.manifested ? 12.0D : 7.0D, 12.0D)
+				* PURSUIT_DAMAGE_MULTIPLIER;
 		for (LivingEntity target : targets(player, area)) {
 			if (!state.hitIds.add(target.getUUID()))
 				continue;
@@ -443,7 +453,7 @@ public final class GoliathCombatManager {
 	private static void collapseImpact(ServerPlayer player, boolean manifested, boolean secondWave) {
 		double radius = manifested ? (secondWave ? 12.0D : 10.0D) : 7.0D;
 		float damage = physicalDamage(player, manifested ? (secondWave ? 30.0D : 24.0D) : 18.0D,
-				manifested ? (secondWave ? 4.6D : 5.2D) : 7.0D);
+				manifested ? (secondWave ? 4.6D : 5.2D) : 7.0D) * COLLAPSE_DAMAGE_MULTIPLIER;
 		Vec3 center = player.position();
 		for (LivingEntity target : targets(player, player.getBoundingBox().inflate(radius, 4.5D, radius))) {
 			if (dealPhysical(player, target, damage)) {
@@ -460,6 +470,8 @@ public final class GoliathCombatManager {
 
 	private static void breakDashBlocks(ServerPlayer player, Vec3 motion, boolean manifested) {
 		ServerLevel level = player.serverLevel();
+		if (DkcFloorRegistry.isDkc(level))
+			return;
 		double radius = manifested ? 1.05D : 0.65D;
 		AABB swept = player.getBoundingBox().expandTowards(motion).inflate(radius, 0.05D, radius);
 		swept = new AABB(swept.minX, swept.minY + 0.16D, swept.minZ, swept.maxX, swept.maxY - 0.08D, swept.maxZ);

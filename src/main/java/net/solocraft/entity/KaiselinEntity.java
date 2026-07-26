@@ -53,9 +53,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.entity.PartEntity;
 
-import java.util.UUID;
-
 public class KaiselinEntity extends Monster implements GeoEntity {
+	public static final String DKC_SOUL_SPAWNED = "dkc_floor_20_kaisel_soul_spawned";
 	public static final EntityDataAccessor<String> ANIMATION = SynchedEntityData.defineId(KaiselinEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> TEXTURE = SynchedEntityData.defineId(KaiselinEntity.class, EntityDataSerializers.STRING);
 
@@ -449,25 +448,16 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 		if (!this.level().isClientSide() && this.getType() == SololevelingModEntities.KAISELIN.get()
 				&& !this.getPersistentData().getBoolean("kaiselin_soul_spawned")) {
 			this.getPersistentData().putBoolean("kaiselin_soul_spawned", true);
-			markDkcKaiselinDefeated();
-			spawnKaiselSoulOnGround();
+			boolean dkcObjective = (int) this.getPersistentData().getDouble("dkc_floor_number") == 20
+					&& !this.getPersistentData().getString("dkc_spawned_by").isBlank();
+			// DKC completion and its owner-bound Kaisel soul are committed only by
+			// the death-event reward path after killer/owner validation. Other
+			// Kaiselins retain the normal immediate soul drop.
+			if (!dkcObjective)
+				spawnKaiselSoulOnGround();
 		}
 		super.die(source);
 		this.bossInfo.removeAllPlayers();
-	}
-
-	private void markDkcKaiselinDefeated() {
-		if (!(this.level() instanceof ServerLevel serverLevel) || (int) this.getPersistentData().getDouble("dkc_floor_number") != 20)
-			return;
-		String owner = this.getPersistentData().getString("dkc_spawned_by");
-		if (owner == null || owner.isEmpty())
-			return;
-		try {
-			ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(UUID.fromString(owner));
-			if (player != null)
-				player.getPersistentData().putBoolean("dkc_floor_20_kaiselin_defeated", true);
-		} catch (IllegalArgumentException ignored) {
-		}
 	}
 
 	private void spawnKaiselSoulOnGround() {

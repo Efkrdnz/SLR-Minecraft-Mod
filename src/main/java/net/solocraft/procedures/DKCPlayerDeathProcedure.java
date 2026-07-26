@@ -1,21 +1,24 @@
 package net.solocraft.procedures;
 
+import net.solocraft.dkc.DkcFloorBuilder;
+import net.solocraft.dkc.DkcFloorRegistry;
+import net.solocraft.dkc.DkcRadiruManager;
+import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.BaranEntity;
 import net.solocraft.entity.CerberusEntity;
 import net.solocraft.entity.DemonEntity;
 import net.solocraft.entity.DemonKnightEntity;
 import net.solocraft.entity.KaiselinEntity;
+import net.solocraft.entity.ShadowSoulEntity;
 import net.solocraft.entity.VulcanEntity;
 
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -39,19 +42,20 @@ import net.minecraft.world.phys.AABB;
 @Mod.EventBusSubscriber
 public class DKCPlayerDeathProcedure {
 
-    private static final ResourceKey<net.minecraft.world.level.Level> DKC =
-            ResourceKey.create(Registries.DIMENSION,
-                    new ResourceLocation("sololeveling", "dungeon_dimension_dkc"));
-
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        if (!player.level().dimension().equals(DKC)) return;
+        if (!DkcFloorRegistry.isDkc(player.level())) return;
 
         int floor = DKCFloorDetectorProcedure.getCurrentFloor(player);
         if (floor <= 0) return;
+		double cleared = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables()).dkc_cleared;
+		if (cleared >= floor) return; // A cleared floor must never respawn or pay twice.
 
         resetFloor((ServerLevel) player.level(), player, floor);
+		if (floor == DkcRadiruManager.FLOOR)
+			DkcRadiruManager.resetFailedEncounter((ServerLevel) player.level(), player);
 
         player.sendSystemMessage(Component.literal(
                 "§c§lFloor " + floor + " Failed! §7Your progress on this floor has been reset."));
@@ -65,9 +69,7 @@ public class DKCPlayerDeathProcedure {
 
         // Search area — large enough to cover a full 200-block floor around the
         // player's death position.
-        AABB area = new AABB(
-                player.getX() - 400, player.getY() - 80, player.getZ() - 400,
-                player.getX() + 400, player.getY() + 80, player.getZ() + 400);
+        AABB area = DkcFloorBuilder.combatBounds((ServerPlayer) player, floor);
 
         // ── Remove demons belonging to this player on this floor ──────────────
         for (DemonEntity d : level.getEntitiesOfClass(DemonEntity.class, area)) {
@@ -80,13 +82,19 @@ public class DKCPlayerDeathProcedure {
                     && uuid.equals(k.getPersistentData().getString("dkc_spawned_by")))
                 k.discard();
         }
+		for (ShadowSoulEntity soul : level.getEntitiesOfClass(ShadowSoulEntity.class, area)) {
+			if (floor == (int) soul.getPersistentData().getDouble("dkc_floor_number")
+					&& uuid.equals(soul.getPersistentData().getString("dkc_spawned_by")))
+				soul.discard();
+		}
 
         // ── Boss-specific handling ────────────────────────────────────────────
         switch (floor) {
             case 1 -> {
                 // Cerberus is pre-placed — just heal it back to full
                 for (CerberusEntity boss : level.getEntitiesOfClass(CerberusEntity.class, area)) {
-                    boss.setHealth(boss.getMaxHealth());
+					if (uuid.equals(boss.getPersistentData().getString("dkc_spawned_by")))
+						boss.discard();
                 }
             }
             case 10 -> {
@@ -100,14 +108,16 @@ public class DKCPlayerDeathProcedure {
             case 20 -> {
                 // Baran is pre-placed — heal it back to full
                 for (BaranEntity boss : level.getEntitiesOfClass(BaranEntity.class, area)) {
-                    boss.setHealth(boss.getMaxHealth());
+					if (uuid.equals(boss.getPersistentData().getString("dkc_spawned_by")))
+						boss.discard();
                 }
                 for (KaiselinEntity boss : level.getEntitiesOfClass(KaiselinEntity.class, area)) {
                     if (uuid.equals(boss.getPersistentData().getString("dkc_spawned_by")))
-                        boss.setHealth(boss.getMaxHealth());
+						boss.discard();
                 }
             }
         }
+		DKCDemonSpawnerProcedure.invalidateAttempt(player, floor);
 
         // ── Clear all floor state so it restarts cleanly on re-entry ─────────
         String prefix = "dkc_floor_" + floor;
@@ -119,8 +129,12 @@ public class DKCPlayerDeathProcedure {
         data.remove(prefix + "_required");
         data.remove(prefix + "_demon_count");
         data.remove(prefix + "_knight_count");
+		data.remove(prefix + "_miniboss_spawned");
+		data.remove(prefix + "_spawn_retry_after");
         data.remove(prefix + "_kaiselin_defeated");
         data.remove(prefix + "_kaiselin_spawned");
+		data.remove(prefix + "_baran_defeated");
+		data.remove(KaiselinEntity.DKC_SOUL_SPAWNED);
         data.remove(prefix + "_enter_time");
         data.remove(prefix + "_boss_defeated");
     }

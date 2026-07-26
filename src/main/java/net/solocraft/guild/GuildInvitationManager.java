@@ -11,6 +11,7 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -45,6 +46,11 @@ public final class GuildInvitationManager {
                                 .executes(context -> respond(
                                         context.getSource().getPlayerOrException(),
                                         StringArgumentType.getString(context, "token"), false)))));
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        PENDING.clear();
     }
 
     public static int sendInvitation(ServerPlayer inviter, ServerPlayer target) {

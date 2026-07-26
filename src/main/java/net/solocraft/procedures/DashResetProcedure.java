@@ -29,34 +29,21 @@ public class DashResetProcedure {
 	private static void execute(@Nullable Event event, Entity entity) {
 		if (entity == null)
 			return;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP < 100) {
-			{
-				double _setval = 1;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.dash = _setval;
-					capability.syncPlayerVariables(entity);
-				});
-			}
+		SololevelingModVariables.PlayerVariables capability = entity.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(null);
+		if (capability == null)
+			return;
+		if (capability.MP < 100 && capability.dash != 1) {
+			capability.dash = 1;
+			capability.syncPlayerVariables(entity);
 		}
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dash == 1.3) {
-			{
-				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP
-						- Math.round(2 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 30);
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.MP = _setval;
-					capability.syncPlayerVariables(entity);
-				});
-			}
+		if (capability.dash == 1.3) {
+			capability.MP -= Math.round(2 + capability.Intelligence / 30);
+			capability.syncPlayerVariables(entity);
 			CooldownManager.set(entity, "mana_refresh", 20);
-		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dash == 1.5) {
-			{
-				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP
-						- Math.round(4 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 30);
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.MP = _setval;
-					capability.syncPlayerVariables(entity);
-				});
-			}
+		} else if (capability.dash == 1.5) {
+			capability.MP -= Math.round(4 + capability.Intelligence / 30);
+			capability.syncPlayerVariables(entity);
 			CooldownManager.set(entity, "mana_refresh", 20);
 		}
 	}

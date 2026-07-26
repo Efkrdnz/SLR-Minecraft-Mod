@@ -254,3 +254,29 @@ tasks.register('auditJarClassCompleteness') {
 tasks.named('build') {
     dependsOn 'auditJarClassCompleteness'
 }
+
+tasks.register('migrateLegacyLevelStems', JavaExec) {
+    group = 'maintenance'
+    description = 'Dry-runs or applies the offline removal of retired DKC/Monarch LevelStems from one level.dat.'
+    dependsOn 'classes'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass.set('net.solocraft.tools.LegacyLevelStemMigrator')
+
+    doFirst {
+        def worldPath = providers.gradleProperty('legacyWorld').orNull
+        if (worldPath == null || worldPath.trim().isEmpty()) {
+            throw new GradleException(
+                    'An explicit world path is required. Use "-PlegacyWorld=C:\\path\\to\\world".'
+            )
+        }
+        def applyText = providers.gradleProperty('applyLegacyStemMigration').orNull
+        if (applyText != null && !applyText.equalsIgnoreCase('true') && !applyText.equalsIgnoreCase('false')) {
+            throw new GradleException('-PapplyLegacyStemMigration must be exactly true or false.')
+        }
+        def apply = applyText != null && applyText.equalsIgnoreCase('true')
+        setArgs([worldPath, apply ? '--apply' : '--dry-run'])
+        logger.lifecycle(apply
+                ? 'Legacy LevelStem migration APPLY mode requested.'
+                : 'Legacy LevelStem migration dry-run mode; no world files will be changed.')
+    }
+}

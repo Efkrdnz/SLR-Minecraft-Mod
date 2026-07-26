@@ -1,6 +1,9 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.dkc.DkcFloorBuilder;
+import net.solocraft.dkc.DkcFloorRegistry;
+import net.solocraft.dkc.DkcSpatialLayout;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -59,8 +62,13 @@ public class DungeonVoidSafetyProcedure {
 	private static BlockPos fallbackAnchor(ServerPlayer player) {
 		SololevelingModVariables.PlayerVariables vars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		ResourceLocation id = player.level().dimension().location();
-		if ("dungeon_dimension_dkc".equals(id.getPath()) && hasStoredPosition(vars.dkc_x, vars.dkc_y, vars.dkc_z))
-			return BlockPos.containing(vars.dkc_x + 100, vars.dkc_y + 4, vars.dkc_z + 4);
+		if (DkcFloorRegistry.isSharedDkc(player.level())) {
+			int floor = DkcSpatialLayout.floor(player);
+			if (floor == 0)
+				floor = Math.max(1, Math.min(DkcFloorRegistry.LAST_FLOOR,
+						(int) player.getPersistentData().getDouble("dkc_current_floor")));
+			return DkcFloorBuilder.spawnPosition(player, floor);
+		}
 		if (hasStoredPosition(vars.DunX, vars.DunY, vars.DunZ))
 			return BlockPos.containing(player.getX(), vars.DunY, player.getZ());
 		return BlockPos.containing(player.getX(), 64, player.getZ());

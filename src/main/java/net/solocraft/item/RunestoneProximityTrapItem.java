@@ -32,8 +32,8 @@ public class RunestoneProximityTrapItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Proximity Trap\""));
-		list.add(Component.literal("User can deploy \"Proximity Trap\" which explodes on impact of non ally entity contact or manually by shooting it."));
+		list.add(Component.translatable("tooltip.sololeveling.runestone_arrow_shower.unlock"));
+		list.add(Component.translatable("tooltip.sololeveling.runestone_arrow_shower.description"));
 	}
 
 	@Override

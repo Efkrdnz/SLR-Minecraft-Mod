@@ -602,7 +602,6 @@ public class GoblinClubShadowEntity extends TamableAnimal implements GeoEntity {
 	public void baseTick() {
 		super.baseTick();
 		GoblinClubShadowOnEntityTickUpdateProcedure.execute(this.level(), this);
-		this.refreshDimensions();
 	}
 
 	@Override

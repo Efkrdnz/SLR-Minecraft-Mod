@@ -11,7 +11,7 @@
     },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": true,
+    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {
@@ -22,5 +22,5 @@
   "rewards": {
     "experience": 2
   },
-  "parent": "sololeveling:shadow_extraction"
+  "parent": "sololeveling:system/dkc_midpoint"
 }

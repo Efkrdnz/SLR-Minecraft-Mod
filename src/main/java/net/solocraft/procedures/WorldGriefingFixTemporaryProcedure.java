@@ -4,27 +4,19 @@ import net.solocraft.init.SololevelingModGameRules;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
 
 import net.minecraft.world.level.LevelAccessor;
-
-import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber
 public class WorldGriefingFixTemporaryProcedure {
 	@SubscribeEvent
-	public static void onWorldTick(TickEvent.LevelTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.level);
-		}
+	public static void onServerStarted(ServerStartedEvent event) {
+		execute(event.getServer().overworld());
 	}
 
 	public static void execute(LevelAccessor world) {
-		execute(null, world);
-	}
-
-	private static void execute(@Nullable Event event, LevelAccessor world) {
-		world.getLevelData().getGameRules().getRule(SololevelingModGameRules.SOLO_WORLD_GRIEFING).set(true, world.getServer());
+		if (world != null && world.getServer() != null)
+			world.getLevelData().getGameRules().getRule(SololevelingModGameRules.SOLO_WORLD_GRIEFING).set(true, world.getServer());
 	}
 }

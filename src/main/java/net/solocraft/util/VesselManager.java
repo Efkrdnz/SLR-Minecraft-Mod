@@ -20,11 +20,14 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Mod.EventBusSubscriber
 public final class VesselManager {
 	public static final String RULER = "ruler";
 	public static final String MONARCH = "monarch";
+	private static final Set<String> WORK_IN_PROGRESS = Set.of(
+			"christopher_reed", "sung_il_hwan", "go_gunhee");
 
 	private static final List<VesselDefinition> DEFINITIONS = List.of(
 			new VesselDefinition(RULER, "ashborn", 1, "Ashborn", "Shadow Monarch", "Command the dead and an endless shadow army."),
@@ -144,6 +147,7 @@ public final class VesselManager {
 			capability.syncPlayerVariables(player);
 		});
 		JobSkillManager.syncJobSkills(player);
+		VesselProgressionManager.sync(player);
 	}
 
 	public static void releaseClaim(ServerPlayer player) {
@@ -163,6 +167,10 @@ public final class VesselManager {
 
 	public static List<VesselDefinition> definitions() {
 		return DEFINITIONS;
+	}
+
+	public static boolean isWorkInProgress(VesselDefinition definition) {
+		return definition != null && WORK_IN_PROGRESS.contains(definition.identity());
 	}
 
 	public static VesselDefinition definition(String type, String identity) {
@@ -242,6 +250,7 @@ public final class VesselManager {
 			capability.syncPlayerVariables(player);
 		});
 		JobSkillManager.syncJobSkills(player);
+		MageSpellProgression.reconcileVesselInheritance(player);
 	}
 
 	private static String normalizeIdentity(String identity) {

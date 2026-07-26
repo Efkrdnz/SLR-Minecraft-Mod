@@ -44,7 +44,7 @@ public class FireMageRunestoneItem extends Item {
 	public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
 		ItemStack stack = player.getItemInHand(hand);
 		if (!level.isClientSide()) {
-			if (MageSpellProgression.unlockSkill(player, skill, false)) {
+			if (MageSpellProgression.unlockFromRunestone(player, skill)) {
 				if (!player.isCreative())
 					stack.shrink(1);
 				player.displayClientMessage(Component.literal("Skill acquired: " + skill)

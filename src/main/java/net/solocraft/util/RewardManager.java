@@ -77,7 +77,13 @@ public final class RewardManager {
 		String reward = rewardAt(entity, slot);
 		if (isEmptyReward(reward))
 			return false;
-		RewardCollectProcedure.execute(entity, reward);
+		if (reward.startsWith(DaggerThrowManager.RECOVERY_PREFIX)) {
+			if (!(entity instanceof net.minecraft.server.level.ServerPlayer player)
+					|| !DaggerThrowManager.claimRecovery(player, reward))
+				return false;
+		} else {
+			RewardCollectProcedure.execute(entity, reward);
+		}
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(vars -> {
 			if (slot == 1) {
 				vars.reward_1 = "";
@@ -104,6 +110,8 @@ public final class RewardManager {
 
 	public static String displayName(String reward) {
 		String cleanReward = clean(reward);
+		if (cleanReward.startsWith(DaggerThrowManager.RECOVERY_PREFIX))
+			return "\u00A7l" + DaggerThrowManager.displayRecoveryName(cleanReward);
 		if (cleanReward.startsWith("SP")) {
 			try {
 				int amount = Integer.parseInt(cleanReward.substring(2));
@@ -181,10 +189,36 @@ public final class RewardManager {
 		vars.reward_extra = rewards.size() > 3 ? String.join(JOIN_DELIMITER, rewards.subList(3, rewards.size())) : "";
 	}
 
+	/** Removes one exact pending reward, used when an escrowed dagger returns normally. */
+	public static void removeReward(Entity entity, String reward) {
+		String target = clean(reward);
+		if (entity == null || target.isEmpty())
+			return;
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(vars -> {
+			List<String> rewards = new ArrayList<>();
+			addIfPresent(rewards, vars.reward_1);
+			addIfPresent(rewards, vars.reward_2);
+			addIfPresent(rewards, vars.reward_3);
+			rewards.addAll(parseExtra(vars.reward_extra));
+			if (!rewards.remove(target))
+				return;
+			vars.reward_1 = rewards.size() > 0 ? rewards.get(0) : "";
+			vars.reward_2 = rewards.size() > 1 ? rewards.get(1) : "";
+			vars.reward_3 = rewards.size() > 2 ? rewards.get(2) : "";
+			vars.reward_extra = rewards.size() > 3 ? String.join(JOIN_DELIMITER, rewards.subList(3, rewards.size())) : "";
+			vars.syncPlayerVariables(entity);
+		});
+	}
+
 	private static String clean(String reward) {
 		if (reward == null)
 			return "";
 		String trimmed = reward.trim();
-		return "\"\"".equals(trimmed) ? "" : trimmed;
+		if ("\"\"".equals(trimmed))
+			return "";
+		if (trimmed.startsWith("ITEM:")
+				&& MageSpellProgression.isRetiredRunestoneId(trimmed.substring(5)))
+			return "SP5";
+		return trimmed;
 	}
 }

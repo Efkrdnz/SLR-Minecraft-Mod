@@ -1,5 +1,6 @@
 package net.solocraft.procedures;
 
+import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.init.SololevelingModEntities;
@@ -25,11 +26,15 @@ public class PortalPerTickProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		entity.getPersistentData().putDouble("PortalLife", (entity.getPersistentData().getDouble("PortalLife") + 1));
-		if (entity.getPersistentData().getDouble("PortalLife") >= 24000) {
-			if (entity.getPersistentData().getBoolean("slr_is_red_gate")) {
-				SololevelingModVariables.MapVariables.get(world).RedGate = false;
-				SololevelingModVariables.MapVariables.get(world).syncData(world);
+		boolean activeDungeon = hasStartedDungeon(entity);
+		if (!activeDungeon)
+			entity.getPersistentData().putDouble("PortalLife", (entity.getPersistentData().getDouble("PortalLife") + 1));
+		if (!activeDungeon && entity.getPersistentData().getDouble("PortalLife") >= 24000) {
+			if (entity.getPersistentData().getBoolean("slr_is_red_gate")
+					&& !entity.level().isClientSide() && world.getServer() != null) {
+				SololevelingModVariables.MapVariables variables = SololevelingModVariables.MapVariables.get(world);
+				variables.RedGate = SnowRedGateArenaManager.hasActiveArena(world.getServer());
+				variables.syncData(world);
 			}
 			if (!entity.level().isClientSide())
 				entity.discard();
@@ -470,5 +475,32 @@ public class PortalPerTickProcedure {
 			if (!entity.level().isClientSide())
 				entity.discard();
 		}
+	}
+
+	private static boolean hasStartedDungeon(Entity entity) {
+		// Red Gates are one-way once entered: their sealed entrance must keep its
+		// normal lifetime countdown so it eventually breaks instead of persisting
+		// forever. Other entered gates remain available for their normal retry flow.
+		if (entity.getPersistentData().getBoolean("slr_is_red_gate"))
+			return false;
+		if (entity instanceof Portal1Entity portal)
+			return portal.getEntityData().get(Portal1Entity.DATA_usedbefore);
+		if (entity instanceof PortalSewersEntity portal)
+			return portal.getEntityData().get(PortalSewersEntity.DATA_usedbefore);
+		if (entity instanceof PortalCemeteryEntity portal)
+			return portal.getEntityData().get(PortalCemeteryEntity.DATA_usedbefore);
+		if (entity instanceof PortalAncientGolemEntity portal)
+			return portal.getEntityData().get(PortalAncientGolemEntity.DATA_usedbefore);
+		if (entity instanceof PortalLabEntity portal)
+			return portal.getEntityData().get(PortalLabEntity.DATA_usedbefore);
+		if (entity instanceof PortalLushEntity portal)
+			return portal.getEntityData().get(PortalLushEntity.DATA_usedbefore);
+		if (entity instanceof PortalKargalgansThroneRoomEntity portal)
+			return portal.getEntityData().get(PortalKargalgansThroneRoomEntity.DATA_usedbefore);
+		if (entity instanceof PortalBeruEntity portal)
+			return portal.getEntityData().get(PortalBeruEntity.DATA_usedbefore);
+		if (entity instanceof RandomCaveLargeEntity portal)
+			return portal.getEntityData().get(RandomCaveLargeEntity.DATA_usedbefore);
+		return false;
 	}
 }

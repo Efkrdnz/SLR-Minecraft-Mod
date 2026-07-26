@@ -1,5 +1,6 @@
 package net.solocraft.guild;
 
+import net.solocraft.entity.ManaArrowEntity;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.ShadowMonarchManager;
 
@@ -114,6 +115,7 @@ public final class GuildBuffManager {
 
     private static void tickManaBuffs(ServerPlayer player) {
         player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(vars -> {
+            double beforeMp = vars.MP;
             double lastMp = player.getPersistentData().contains(LAST_MP) ? player.getPersistentData().getDouble(LAST_MP) : vars.MP;
             if (hasActive(player, GuildBuffRegistry.MANA_EFFICIENCY) && vars.MP < lastMp) {
                 double spent = lastMp - vars.MP;
@@ -123,7 +125,8 @@ public final class GuildBuffManager {
                 double base = Math.max(1.0D, ((vars.Intelligence / 20.0D) * 2.0D) + vars.manaregen);
                 vars.MP = Math.min(vars.Mana, vars.MP + base * 0.10D);
             }
-            vars.syncPlayerVariables(player);
+            if (Double.compare(vars.MP, beforeMp) != 0)
+                vars.syncPlayerVariables(player);
             player.getPersistentData().putDouble(LAST_MP, vars.MP);
         });
     }
@@ -132,11 +135,22 @@ public final class GuildBuffManager {
         AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed == null) return;
         AttributeModifier old = speed.getModifier(FOOTWORK_SPEED_ID);
-        if (old != null) speed.removeModifier(FOOTWORK_SPEED_ID);
-        if (hasActive(player, GuildBuffRegistry.ASSASSIN_FOOTWORK)
-                && player.getPersistentData().getLong(COMBAT_UNTIL) > player.level().getGameTime()) {
-            speed.addTransientModifier(new AttributeModifier(FOOTWORK_SPEED_ID, FOOTWORK_SPEED_NAME, 0.12D, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        boolean desired = hasActive(player, GuildBuffRegistry.ASSASSIN_FOOTWORK)
+                && player.getPersistentData().getLong(COMBAT_UNTIL) > player.level().getGameTime();
+        boolean matches = old != null
+                && Double.compare(old.getAmount(), 0.12D) == 0
+                && old.getOperation() == AttributeModifier.Operation.MULTIPLY_TOTAL;
+        if (!desired) {
+            if (old != null)
+                speed.removeModifier(FOOTWORK_SPEED_ID);
+            return;
         }
+        if (matches)
+            return;
+        if (old != null)
+            speed.removeModifier(FOOTWORK_SPEED_ID);
+        speed.addTransientModifier(new AttributeModifier(FOOTWORK_SPEED_ID, FOOTWORK_SPEED_NAME,
+                0.12D, AttributeModifier.Operation.MULTIPLY_TOTAL));
     }
 
     private static void markCombat(ServerPlayer player, int ticks) {
@@ -159,7 +173,8 @@ public final class GuildBuffManager {
         if (isMagicDamage(source)) return true;
         return source.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin")))
                 || source.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:fighter")))
-                || source.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:ranger")));
+                || source.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:ranger")))
+                || source.getDirectEntity() instanceof ManaArrowEntity;
     }
 
     private static GuildData guildFor(Entity entity) {

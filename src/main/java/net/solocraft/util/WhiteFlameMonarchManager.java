@@ -59,6 +59,8 @@ public final class WhiteFlameMonarchManager {
 	private static final String BREATH_UNTIL = "mowf_breath_until";
 	private static final String DOMAIN_UNTIL = "mowf_domain_until";
 	private static final String DOMAIN_NEXT = "mowf_domain_next";
+	private static final String DOMAIN_LAST_TARGET = "mowf_domain_last_target";
+	private static final String DOMAIN_REPEAT_HITS = "mowf_domain_repeat_hits";
 	private static final String DOPPEL_CHARGES = "mowf_doppel_charges";
 	private static final String DOPPEL_UNTIL = "mowf_doppel_until";
 	private static final String BRAND_UNTIL = "mowf_brand_until";
@@ -103,8 +105,10 @@ public final class WhiteFlameMonarchManager {
 			return;
 		long now = player.level().getGameTime();
 		CooldownManager.set(player, HELLSTORM_DOMINION, spiritualized ? 330 : 390);
-		player.getPersistentData().putLong(DOMAIN_UNTIL, now + (spiritualized ? 280 : 220));
+		player.getPersistentData().putLong(DOMAIN_UNTIL, now + (spiritualized ? 220 : 160));
 		player.getPersistentData().putLong(DOMAIN_NEXT, now + 4);
+		player.getPersistentData().remove(DOMAIN_LAST_TARGET);
+		player.getPersistentData().remove(DOMAIN_REPEAT_HITS);
 		for (int wave = 0; wave < 3; wave++) {
 			int delay = wave * 3;
 			SololevelingMod.queueServerWork(delay, () -> {
@@ -222,7 +226,7 @@ public final class WhiteFlameMonarchManager {
 			breathPulse(player);
 		if (player.getPersistentData().getLong(DOMAIN_UNTIL) >= now
 				&& player.getPersistentData().getLong(DOMAIN_NEXT) <= now) {
-			player.getPersistentData().putLong(DOMAIN_NEXT, now + (isSpiritualized(player) ? 7 : 10));
+			player.getPersistentData().putLong(DOMAIN_NEXT, now + (isSpiritualized(player) ? 11 : 14));
 			domainStrike(player);
 		}
 	}
@@ -321,10 +325,15 @@ public final class WhiteFlameMonarchManager {
 		Vec3 point;
 		if (target != null) {
 			point = findDomainStrikePoint(level, target.getX(), target.getY(), target.getZ());
-			float damage = magicDamage(player, spiritualized ? 18.0D : 13.0D, spiritualized ? 13.0D : 17.0D);
-			dealMagic(player, target, damage * (brandStacks(target, player) > 0 ? 1.22F : 1.0F));
+			float damage = magicDamage(player, spiritualized ? 13.0D : 10.0D,
+					spiritualized ? 26.0D : 32.0D);
+			float repeatMultiplier = domainRepeatMultiplier(player, target);
+			dealMagic(player, target, damage * repeatMultiplier
+					* (brandStacks(target, player) > 0 ? 1.12F : 1.0F));
 			brand(target, player, spiritualized ? 150 : 110, 1);
 		} else {
+			player.getPersistentData().remove(DOMAIN_LAST_TARGET);
+			player.getPersistentData().remove(DOMAIN_REPEAT_HITS);
 			double angle = player.getRandom().nextDouble() * Math.PI * 2.0D;
 			double radius = 4.0D + player.getRandom().nextDouble() * 10.0D;
 			point = findDomainStrikePoint(level, player.getX() + Math.cos(angle) * radius,
@@ -334,6 +343,20 @@ public final class WhiteFlameMonarchManager {
 		spawnDomainVolley(level, player.position(), spiritualized ? 2 : 1, spiritualized ? 15.0D : 11.0D);
 		level.playSound(null, BlockPos.containing(point), SoundEvents.LIGHTNING_BOLT_IMPACT,
 				SoundSource.PLAYERS, 0.65F, 1.05F + player.getRandom().nextFloat() * 0.18F);
+	}
+
+	private static float domainRepeatMultiplier(ServerPlayer player, LivingEntity target) {
+		boolean sameTarget = player.getPersistentData().hasUUID(DOMAIN_LAST_TARGET)
+				&& target.getUUID().equals(player.getPersistentData().getUUID(DOMAIN_LAST_TARGET));
+		int repeatHits = sameTarget ? player.getPersistentData().getInt(DOMAIN_REPEAT_HITS) : 0;
+		player.getPersistentData().putUUID(DOMAIN_LAST_TARGET, target.getUUID());
+		player.getPersistentData().putInt(DOMAIN_REPEAT_HITS, repeatHits + 1);
+		return switch (repeatHits) {
+			case 0 -> 1.0F;
+			case 1 -> 0.78F;
+			case 2 -> 0.62F;
+			default -> 0.50F;
+		};
 	}
 
 	private static void spawnDomainVolley(ServerLevel level, Vec3 center, int count, double radius) {
@@ -414,7 +437,8 @@ public final class WhiteFlameMonarchManager {
 	private static LivingEntity nearestTarget(ServerLevel level, ServerPlayer owner, Vec3 center,
 			double radius, boolean preferBranded) {
 		List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class,
-				new AABB(center, center).inflate(radius), candidate -> validTarget(owner, candidate));
+				new AABB(center, center).inflate(radius),
+				candidate -> validTarget(owner, candidate) && owner.hasLineOfSight(candidate));
 		return targets.stream().min(Comparator
 				.<LivingEntity>comparingInt(target -> preferBranded && brandStacks(target, owner) > 0 ? 0 : 1)
 				.thenComparingDouble(target -> target.distanceToSqr(center))).orElse(null);

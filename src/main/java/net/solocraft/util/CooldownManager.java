@@ -21,6 +21,7 @@ import java.util.WeakHashMap;
 @Mod.EventBusSubscriber
 public final class CooldownManager {
     private static final String PREFIX = "cd_";
+    private static final String FULL_DURATION_PREFIX = "slr_cd_full_";
     private static final String SNAPSHOT_V2 = "v2@";
     private static final Map<Entity, ClientSnapshotClock> CLIENT_SNAPSHOT_CLOCKS =
             Collections.synchronizedMap(new WeakHashMap<>());
@@ -30,12 +31,29 @@ public final class CooldownManager {
 
     /** Starts or replaces a cooldown. Duration is measured in ticks. */
     public static void set(Entity entity, String key, int durationTicks) {
+        setInternal(entity, key, durationTicks, false);
+    }
+
+    /**
+     * Starts a real-duration cooldown even in Creative mode. Use this for
+     * stateful abilities whose recharge timing must remain authoritative and visible.
+     */
+    public static void setFullDuration(Entity entity, String key, int durationTicks) {
+        setInternal(entity, key, durationTicks, true);
+    }
+
+    private static void setInternal(Entity entity, String key, int durationTicks,
+            boolean fullDuration) {
         if (entity == null || entity.level().isClientSide())
             return;
-        if (isCreativePlayer(entity))
+        if (isCreativePlayer(entity) && !fullDuration)
             durationTicks = Math.min(durationTicks, 10);
         long expiry = entity.level().getGameTime() + Math.max(0, durationTicks);
         entity.getPersistentData().putLong(PREFIX + key, expiry);
+        if (fullDuration)
+            entity.getPersistentData().putBoolean(FULL_DURATION_PREFIX + key, true);
+        else
+            entity.getPersistentData().remove(FULL_DURATION_PREFIX + key);
         pushSnapshot(entity);
     }
 
@@ -43,6 +61,7 @@ public final class CooldownManager {
         if (entity == null || entity.level().isClientSide())
             return;
         entity.getPersistentData().remove(PREFIX + key);
+        entity.getPersistentData().remove(FULL_DURATION_PREFIX + key);
         pushSnapshot(entity);
     }
 
@@ -60,7 +79,7 @@ public final class CooldownManager {
         if (entity == null || entity.level().isClientSide())
             return;
         entity.getPersistentData().getAllKeys().stream()
-                .filter(key -> key.startsWith(PREFIX))
+                .filter(key -> key.startsWith(PREFIX) || key.startsWith(FULL_DURATION_PREFIX))
                 .toList()
                 .forEach(entity.getPersistentData()::remove);
         pushSnapshot(entity);
@@ -79,7 +98,10 @@ public final class CooldownManager {
         if (entity.level().isClientSide())
             return getClientRemainingTicks(entity, key);
         long expiry = entity.getPersistentData().getLong(PREFIX + key);
-        return (int) Math.max(0, expiry - entity.level().getGameTime());
+        int remaining = (int) Math.max(0, expiry - entity.level().getGameTime());
+        if (remaining == 0)
+            entity.getPersistentData().remove(FULL_DURATION_PREFIX + key);
+        return remaining;
     }
 
     public static int getRemainingSeconds(Entity entity, String key) {
@@ -88,7 +110,8 @@ public final class CooldownManager {
     }
 
     private static void trimCreativeCooldown(Entity entity, String key) {
-        if (entity == null || entity.level().isClientSide() || !isCreativePlayer(entity))
+        if (entity == null || entity.level().isClientSide() || !isCreativePlayer(entity)
+                || entity.getPersistentData().getBoolean(FULL_DURATION_PREFIX + key))
             return;
         long now = entity.level().getGameTime();
         long expiry = entity.getPersistentData().getLong(PREFIX + key);

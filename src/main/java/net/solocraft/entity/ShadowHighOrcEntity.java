@@ -486,7 +486,6 @@ public class ShadowHighOrcEntity extends TamableAnimal implements GeoEntity {
 	public void baseTick() {
 		super.baseTick();
 		CommandCallProcedureProcedure.execute(this.level(), this);
-		this.refreshDimensions();
 	}
 
 	@Override

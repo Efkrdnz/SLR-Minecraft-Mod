@@ -44,7 +44,7 @@ public class DailyQuestsScreen extends AbstractContainerScreen<DailyQuestsMenu> 
 
 	@Override
 	public boolean isPauseScreen() {
-		return true;
+		return false;
 	}
 
 	@Override

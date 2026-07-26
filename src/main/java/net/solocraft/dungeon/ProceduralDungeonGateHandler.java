@@ -104,6 +104,10 @@ public class ProceduralDungeonGateHandler {
 		}
 		if (!(sourceentity instanceof ServerPlayer player))
 			return;
+		// Transformed Red Gates are one-way. Their used flag remains the silent
+		// entry lock even after the active arena is torn down.
+		if (isProceduralRedGate(gate) && isLocked(gate))
+			return;
 		if (isDungeonBound(player)) {
 			player.displayClientMessage(Component.literal("You are already bound to a dungeon."), true);
 			return;

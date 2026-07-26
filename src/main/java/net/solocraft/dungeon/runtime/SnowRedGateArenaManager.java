@@ -213,11 +213,8 @@ public final class SnowRedGateArenaManager {
 	public static boolean enterLegacy(LevelAccessor world, RedGateEntity gate, ServerPlayer initiator) {
 		if (world == null || gate == null || initiator == null)
 			return false;
-		if (gate.getEntityData().get(RedGateEntity.DATA_usedbefore)) {
-			initiator.displayClientMessage(Component.literal("The red gate has already sealed.")
-					.withStyle(ChatFormatting.DARK_RED), true);
+		if (gate.getEntityData().get(RedGateEntity.DATA_usedbefore))
 			return true;
-		}
 		RiftTerritory territory = territoryFor(gate);
 		gate.getPersistentData().putString(TERRITORY_TAG, territory.id());
 		return open(world, gate, initiator, nearbyPartyMembers(world, gate, initiator), true,

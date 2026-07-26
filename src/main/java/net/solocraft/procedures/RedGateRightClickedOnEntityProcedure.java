@@ -36,6 +36,9 @@ public class RedGateRightClickedOnEntityProcedure {
 		if (entity == null || sourceentity == null)
 			return;
 		if (!MagicReadingHelper.isHoldingMagicReader(sourceentity)) {
+			if (entity instanceof RedGateEntity usedRedGate
+					&& usedRedGate.getEntityData().get(RedGateEntity.DATA_usedbefore))
+				return;
 			if (net.solocraft.guild.GuildGateHelper.prepareGateEntry(world, entity, sourceentity))
 				return;
 			// The dedicated legacy red gate now shares the finite, instance-scoped wave

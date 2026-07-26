@@ -23,7 +23,7 @@ public class RedGateRenderer extends GeoEntityRenderer<RedGateEntity> {
 
 	@Override
 	public RenderType getRenderType(RedGateEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
+		return net.solocraft.client.renderer.shader.GateRenderTypes.emissive(getTextureLocation(animatable));
 	}
 
 	@Override

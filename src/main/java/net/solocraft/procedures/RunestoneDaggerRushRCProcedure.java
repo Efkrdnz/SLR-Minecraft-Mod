@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.RulersAuthorityManager;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
@@ -10,6 +11,8 @@ import net.minecraft.network.chat.Component;
 public class RunestoneDaggerRushRCProcedure {
 	public static void execute(Entity entity, ItemStack itemstack) {
 		if (entity == null)
+			return;
+		if (!RulersAuthorityManager.hasAuthority(entity))
 			return;
 		if (!((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Dagger Rush")) {
 			{

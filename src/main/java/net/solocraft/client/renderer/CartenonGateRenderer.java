@@ -23,7 +23,7 @@ public class CartenonGateRenderer extends GeoEntityRenderer<CartenonGateEntity> 
 	@Override
 	public RenderType getRenderType(CartenonGateEntity entity, ResourceLocation texture,
 			MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucentEmissive(texture);
+		return net.solocraft.client.renderer.shader.GateRenderTypes.emissive(texture);
 	}
 
 	@Override

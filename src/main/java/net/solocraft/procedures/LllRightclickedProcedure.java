@@ -37,13 +37,6 @@ public class LllRightclickedProcedure {
 						capability.syncPlayerVariables(entity);
 					});
 				}
-				{
-					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_assassin + 1;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.progression_assassin = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
 				if (world instanceof ServerLevel _level) {
 					Entity entityToSpawn = SololevelingModEntities.AFTER_IMAGE.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 					if (entityToSpawn != null) {

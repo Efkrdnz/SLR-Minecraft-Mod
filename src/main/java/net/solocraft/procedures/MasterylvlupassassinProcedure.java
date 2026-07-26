@@ -2,6 +2,8 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.AssassinSkillManager;
+import net.solocraft.util.DaggerThrowManager;
+import net.solocraft.util.RulersAuthorityManager;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -13,7 +15,8 @@ import java.util.List;
 public class MasterylvlupassassinProcedure {
 	private static final List<String> MASTERY_SKILLS = List.of(
 			AssassinSkillManager.FLASH_CUT, AssassinSkillManager.GHOST_STEP,
-			AssassinSkillManager.NIGHT_REND, AssassinSkillManager.DUALWIELD, "Dagger Throw");
+			AssassinSkillManager.NIGHT_REND, AssassinSkillManager.DUALWIELD,
+			DaggerThrowManager.DAGGER_THROW);
 
 	public static void execute(Entity entity) {
 		if (entity == null)
@@ -27,9 +30,11 @@ public class MasterylvlupassassinProcedure {
 			if (!containsSkill(current, skill))
 				missing.add(skill);
 		}
-		// Dagger Rush is the evolved form and never enters the mastery pool before Dagger Throw.
-		if (containsSkill(current, "Dagger Throw") && !containsSkill(current, "Dagger Rush"))
-			missing.add("Dagger Rush");
+		// Dagger Rush is the Authority-driven evolution of Dagger Throw.
+		if (RulersAuthorityManager.hasAuthority(entity)
+				&& containsSkill(current, DaggerThrowManager.DAGGER_THROW)
+				&& !containsSkill(current, DaggerThrowManager.DAGGER_RUSH))
+			missing.add(DaggerThrowManager.DAGGER_RUSH);
 		if (missing.isEmpty())
 			return;
 

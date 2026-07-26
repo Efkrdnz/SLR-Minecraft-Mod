@@ -13,6 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.server.level.ServerLevel;
@@ -31,14 +32,10 @@ public class BloodLustProcedure {
 			return;
 		if (world instanceof ServerLevel _level)
 			_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.MANA_BLUE.get()), x, y, z, 20, 2, 2, 2, 1);
-		{
-			double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_assassin + 1;
-			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-				capability.progression_assassin = _setval;
-				capability.syncPlayerVariables(entity);
-			});
-		}
-		CooldownManager.setFullDuration(entity, "Murderious Intent", 220);
+		if (entity instanceof Player player && player.isCreative())
+			CooldownManager.clear(entity, "Murderious Intent");
+		else
+			CooldownManager.setFullDuration(entity, "Murderious Intent", 220);
 		{
 			final Vec3 _center = new Vec3(x, y, z);
 			SololevelingModVariables.PlayerVariables casterVars = entity

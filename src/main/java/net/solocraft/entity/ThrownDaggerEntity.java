@@ -3,6 +3,7 @@ package net.solocraft.entity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.DaggerThrowManager;
 import net.solocraft.util.EntityHighlightSystem;
+import net.solocraft.util.RulersAuthorityManager;
 
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PlayMessages;
@@ -133,9 +134,13 @@ public class ThrownDaggerEntity extends Projectile {
 		return player != null && player.getUUID().equals(getOwnerId());
 	}
 
-	public void beginReturn() {
+	public boolean beginReturn() {
+		if (isPhysical() && this.level() instanceof ServerLevel level
+				&& !RulersAuthorityManager.hasAuthority(owner(level)))
+			return false;
 		this.entityData.set(RETURNING, true);
 		this.setNoGravity(true);
+		return true;
 	}
 
 	public void markRulersControlled(long gameTime) {
@@ -183,6 +188,10 @@ public class ThrownDaggerEntity extends Projectile {
 			if (this.tickCount <= this.entityData.get(DELAY))
 				return;
 			boolean controlled = rulerControlTick >= level.getGameTime();
+			if (isPhysical() && isReturning() && !RulersAuthorityManager.hasAuthority(owner)) {
+				this.entityData.set(RETURNING, false);
+				this.setNoGravity(false);
+			}
 			if (isReturning() && !controlled) {
 				Vec3 destination = owner.getEyePosition().add(0.0D, -0.25D, 0.0D);
 				Vec3 toOwner = destination.subtract(this.position());
@@ -221,8 +230,8 @@ public class ThrownDaggerEntity extends Projectile {
 			if (this.tickCount > (isSpectral() ? 90 : 600)) {
 				if (isSpectral())
 					this.discard();
-				else
-					beginReturn();
+				else if (!beginReturn())
+					this.discard();
 			}
 		} else if (this.tickCount > this.entityData.get(DELAY)) {
 			this.setPos(this.getX() + this.getDeltaMovement().x, this.getY() + this.getDeltaMovement().y,

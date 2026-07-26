@@ -23,7 +23,7 @@ public class Portal1Renderer extends GeoEntityRenderer<Portal1Entity> {
 
 	@Override
 	public RenderType getRenderType(Portal1Entity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
+		return net.solocraft.client.renderer.shader.GateRenderTypes.emissive(getTextureLocation(animatable));
 	}
 
 	@Override

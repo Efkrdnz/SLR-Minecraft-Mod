@@ -23,7 +23,7 @@ public class PortalKargalgansThroneRoomRenderer extends GeoEntityRenderer<Portal
 
 	@Override
 	public RenderType getRenderType(PortalKargalgansThroneRoomEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
+		return net.solocraft.client.renderer.shader.GateRenderTypes.emissive(getTextureLocation(animatable));
 	}
 
 	@Override

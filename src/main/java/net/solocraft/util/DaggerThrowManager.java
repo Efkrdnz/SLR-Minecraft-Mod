@@ -61,6 +61,8 @@ public final class DaggerThrowManager {
 			UUID token = escrow.getUUID("Token");
 			ThrownDaggerEntity active = ACTIVE.get(token);
 			if (active != null && active.isAlive()) {
+				if (!RulersAuthorityManager.hasAuthority(player))
+					return;
 				active.beginReturn();
 				player.displayClientMessage(Component.translatable("message.sololeveling.dagger_throw.recalling")
 						.withStyle(ChatFormatting.AQUA), true);
@@ -78,7 +80,7 @@ public final class DaggerThrowManager {
 					.withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		if (CooldownManager.isOnCooldown(player, DAGGER_THROW_COOLDOWN))
+		if (!player.isCreative() && CooldownManager.isOnCooldown(player, DAGGER_THROW_COOLDOWN))
 			return;
 		double manaCost = daggerThrowManaCost(held.stack);
 		if (!consumeMana(player, manaCost)) {
@@ -107,12 +109,12 @@ public final class DaggerThrowManager {
 		}
 		register(dagger);
 		RewardManager.appendReward(player, recoveryReward(token, exact));
-		CooldownManager.setFullDuration(player, DAGGER_THROW_COOLDOWN, daggerThrowCooldownTicks(exact));
+		setAssassinCooldown(player, DAGGER_THROW_COOLDOWN, daggerThrowCooldownTicks(exact));
 		CooldownManager.set(player, "mana_refresh", 30);
 	}
 
 	public static void castRush(ServerPlayer player) {
-		if (player == null || !player.isAlive())
+		if (player == null || !player.isAlive() || !RulersAuthorityManager.hasAuthority(player))
 			return;
 		List<ItemStack> daggers = inventoryDaggers(player);
 		if (daggers.isEmpty()) {
@@ -120,7 +122,7 @@ public final class DaggerThrowManager {
 					.withStyle(ChatFormatting.RED), true);
 			return;
 		}
-		if (CooldownManager.isOnCooldown(player, DAGGER_RUSH_COOLDOWN))
+		if (!player.isCreative() && CooldownManager.isOnCooldown(player, DAGGER_RUSH_COOLDOWN))
 			return;
 		double manaCost = daggerRushManaCost(daggers);
 		if (!consumeMana(player, manaCost)) {
@@ -142,7 +144,7 @@ public final class DaggerThrowManager {
 					direction.scale(2.75D + (i % 2) * 0.12D), i * 2);
 			player.serverLevel().addFreshEntity(spectral);
 		}
-		CooldownManager.setFullDuration(player, DAGGER_RUSH_COOLDOWN, daggerRushCooldownTicks(daggers.size()));
+		setAssassinCooldown(player, DAGGER_RUSH_COOLDOWN, daggerRushCooldownTicks(daggers.size()));
 		CooldownManager.set(player, "mana_refresh", 40);
 	}
 
@@ -327,6 +329,13 @@ public final class DaggerThrowManager {
 		}
 		double enchantment = EnchantmentHelper.getDamageBonus(stack, MobType.UNDEFINED);
 		return Mth.clamp(addition * multiplier + enchantment, 4.0D, 40.0D);
+	}
+
+	private static void setAssassinCooldown(ServerPlayer player, String key, int durationTicks) {
+		if (player.isCreative())
+			CooldownManager.clear(player, key);
+		else
+			CooldownManager.setFullDuration(player, key, durationTicks);
 	}
 
 	private static boolean consumeMana(ServerPlayer player, double cost) {

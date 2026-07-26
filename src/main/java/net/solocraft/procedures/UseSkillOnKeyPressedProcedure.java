@@ -535,7 +535,6 @@ public class UseSkillOnKeyPressedProcedure {
 			return;
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			capability.MP -= 100;
-			capability.progression_assassin += 1;
 			capability.syncPlayerVariables(entity);
 		});
 		if (world instanceof ServerLevel level) {

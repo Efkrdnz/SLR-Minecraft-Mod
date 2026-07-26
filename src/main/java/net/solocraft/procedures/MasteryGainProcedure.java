@@ -45,7 +45,7 @@ public class MasteryGainProcedure {
 		double multiplier = 0;
 		if (!(entity == sourceentity)) {
 			if (amount >= 1) {
-				if (isAssassinDamage(damagesource, sourceentity)) {
+				if (playerClass(sourceentity) == 1.0D && isAssassinDamage(damagesource, sourceentity)) {
 					if (!CooldownManager.isOnCooldown(sourceentity, "mastery")) {
 						{
 							double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_assassin + 1;
@@ -103,7 +103,8 @@ public class MasteryGainProcedure {
 					}
 				}
 			}
-			if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_assassin > (sourceentity
+			if (playerClass(sourceentity) == 1.0D
+					&& (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_assassin > (sourceentity
 					.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_multiplier_assassin * 7) {
 				{
 					double _setval = 0;
@@ -113,7 +114,7 @@ public class MasteryGainProcedure {
 					});
 				}
 				{
-					double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_multiplier_assassin + 1;
+					double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_multiplier_assassin + 3;
 					sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.progression_multiplier_assassin = _setval;
 						capability.syncPlayerVariables(sourceentity);

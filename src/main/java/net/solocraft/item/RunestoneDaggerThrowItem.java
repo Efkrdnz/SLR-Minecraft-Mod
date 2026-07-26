@@ -32,7 +32,7 @@ public class RunestoneDaggerThrowItem extends Item {
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
 		list.add(Component.literal("Right click this rune to obtain \"Dagger Throw\""));
-		list.add(Component.literal("User can use \"Dagger Throw\" which will throw the held dagger and let it be recalled."));
+		list.add(Component.literal("Throws the held dagger. Recall requires Ruler's Authority."));
 	}
 
 	@Override

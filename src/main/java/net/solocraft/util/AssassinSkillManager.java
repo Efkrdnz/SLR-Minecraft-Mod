@@ -133,19 +133,20 @@ public final class AssassinSkillManager {
 			case MURDERIOUS_INTENT -> castMurderiousIntent(player);
 			default -> false;
 		};
-		// BloodLustProcedure already advances Assassin progression for
-		// Murderious Intent, so do not count that cast twice.
-		if (cast && !MURDERIOUS_INTENT.equals(skill))
-			incrementProgression(player);
 		return cast;
 	}
 
 	private static boolean castGhostStep(ServerPlayer player, CombatState state) {
 		long now = player.level().getGameTime();
-		rechargeGhostStep(player, state, now);
-		if (state.ghostCharges <= 0) {
-			showCooldown(player, GHOST_STEP, Math.max(1L, state.nextGhostRecharge - now));
-			return false;
+		if (player.isCreative()) {
+			state.ghostCharges = GHOST_MAX_CHARGES;
+			state.nextGhostRecharge = 0L;
+		} else {
+			rechargeGhostStep(player, state, now);
+			if (state.ghostCharges <= 0) {
+				showCooldown(player, GHOST_STEP, Math.max(1L, state.nextGhostRecharge - now));
+				return false;
+			}
 		}
 		if (!consumeMana(player, 80.0D))
 			return false;
@@ -163,9 +164,11 @@ public final class AssassinSkillManager {
 		player.setDeltaMovement(Vec3.ZERO);
 		player.hurtMarked = true;
 
-		state.ghostCharges--;
-		if (state.nextGhostRecharge <= now)
-			state.nextGhostRecharge = now + GHOST_RECHARGE_TICKS;
+		if (!player.isCreative()) {
+			state.ghostCharges--;
+			if (state.nextGhostRecharge <= now)
+				state.nextGhostRecharge = now + GHOST_RECHARGE_TICKS;
+		}
 		state.ghostEvadeUntil = now + 4L;
 		updateGhostStepCooldown(player, state, now);
 		CooldownManager.set(player, "mana_refresh", 20);
@@ -235,7 +238,7 @@ public final class AssassinSkillManager {
 			}
 		}
 
-		CooldownManager.setFullDuration(player, NIGHT_REND, 160);
+		setAssassinCooldown(player, NIGHT_REND, 160);
 		CooldownManager.set(player, "mana_refresh", 40);
 		play(player, struck ? SoundEvents.PLAYER_ATTACK_CRIT : SoundEvents.PLAYER_ATTACK_SWEEP,
 				0.85F, struck ? 1.55F : 1.25F);
@@ -278,7 +281,7 @@ public final class AssassinSkillManager {
 				player.getBoundingBox().inflate(12.0D), candidate -> candidate.getTarget() == player))
 			mob.setTarget(decoy);
 
-		CooldownManager.setFullDuration(player, STEALTH, 300);
+		setAssassinCooldown(player, STEALTH, 300);
 		CooldownManager.set(player, "mana_refresh", 40);
 		spawnCross(player, player.getBoundingBox().getCenter(), 0.7F, 101);
 		play(player, SoundEvents.ILLUSIONER_MIRROR_MOVE, 0.65F, 1.15F);
@@ -315,7 +318,7 @@ public final class AssassinSkillManager {
 			addTempo(player, state, "flash-cut");
 		Vec3 visual = origin.add(forward.scale(2.4D));
 		spawnCross(player, visual, 1.05F, 101);
-		CooldownManager.setFullDuration(player, FLASH_CUT, 80);
+		setAssassinCooldown(player, FLASH_CUT, 80);
 		CooldownManager.set(player, "mana_refresh", 30);
 		play(player, SoundEvents.PLAYER_ATTACK_SWEEP, 0.9F, 1.6F);
 		message(player, FLASH_CUT);
@@ -331,7 +334,7 @@ public final class AssassinSkillManager {
 
 		state.dualwieldUntil = player.level().getGameTime() + 140L;
 		state.dualwieldHits = 0;
-		CooldownManager.setFullDuration(player, DUALWIELD, 360);
+		setAssassinCooldown(player, DUALWIELD, 360);
 		CooldownManager.set(player, "mana_refresh", 50);
 		play(player, SoundEvents.ARMOR_EQUIP_CHAIN, 0.7F, 1.65F);
 		message(player, "Dualwield  7s");
@@ -345,7 +348,7 @@ public final class AssassinSkillManager {
 			return false;
 
 		state.counterUntil = player.level().getGameTime() + 7L;
-		CooldownManager.setFullDuration(player, CRITICAL_ATTACK, 180);
+		setAssassinCooldown(player, CRITICAL_ATTACK, 180);
 		CooldownManager.set(player, "mana_refresh", 30);
 		play(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.7F, 1.8F);
 		message(player, "Critical Attack  counter");
@@ -377,7 +380,7 @@ public final class AssassinSkillManager {
 		state.lastMutilationAction = "";
 		// Publish the complete time-to-ready immediately. Detonation replaces this
 		// with the normal post-detonation cooldown while remaining recastable here.
-		CooldownManager.setFullDuration(player, MUTILATION, 540);
+		setAssassinCooldown(player, MUTILATION, 540);
 		CooldownManager.set(player, "mana_refresh", 50);
 		spawnSlash(player, target.getBoundingBox().getCenter(), -35.0F, 0.65F, 100);
 		play(player, SoundEvents.AMETHYST_BLOCK_CHIME, 0.7F, 1.25F);
@@ -575,7 +578,7 @@ public final class AssassinSkillManager {
 		for (Map.Entry<String, String> entry : LEGACY_NAMES.entrySet()) {
 			int remaining = CooldownManager.getRemainingTicks(player, entry.getKey());
 			if (remaining > 0) {
-				CooldownManager.setFullDuration(player, entry.getValue(), remaining);
+				setAssassinCooldown(player, entry.getValue(), remaining);
 				CooldownManager.clear(player, entry.getKey());
 			}
 		}
@@ -639,7 +642,7 @@ public final class AssassinSkillManager {
 		clearMutilation(state);
 		Entity entity = targetId == null ? null : player.serverLevel().getEntity(targetId);
 		if (invalid || !(entity instanceof LivingEntity target) || !validTarget(player, target)) {
-			CooldownManager.setFullDuration(player, MUTILATION, 200);
+			setAssassinCooldown(player, MUTILATION, 200);
 			message(player, "Mutilation target lost");
 			return;
 		}
@@ -653,7 +656,7 @@ public final class AssassinSkillManager {
 					spawnSlash(player, center, -55.0F + index * 29.0F,
 							0.7F + Math.min(0.35F, index * 0.04F), 103));
 		}
-		CooldownManager.setFullDuration(player, MUTILATION, 400);
+		setAssassinCooldown(player, MUTILATION, 400);
 		play(player, SoundEvents.PLAYER_ATTACK_CRIT, 1.0F, 1.35F);
 		message(player, "Mutilation  " + cuts + " cuts");
 	}
@@ -741,12 +744,16 @@ public final class AssassinSkillManager {
 	}
 
 	private static void updateGhostStepCooldown(ServerPlayer player, CombatState state, long now) {
+		if (player.isCreative()) {
+			state.ghostCharges = GHOST_MAX_CHARGES;
+			state.nextGhostRecharge = 0L;
+		}
 		persistGhostStepState(player, state);
 		if (state.ghostCharges >= GHOST_MAX_CHARGES || state.nextGhostRecharge <= 0L) {
 			CooldownManager.clear(player, GHOST_STEP);
 			return;
 		}
-		CooldownManager.setFullDuration(player, GHOST_STEP,
+		setAssassinCooldown(player, GHOST_STEP,
 				(int) Math.max(1L, state.nextGhostRecharge - now));
 	}
 
@@ -840,10 +847,21 @@ public final class AssassinSkillManager {
 	}
 
 	private static boolean ready(ServerPlayer player, String key) {
+		if (player.isCreative()) {
+			CooldownManager.clear(player, key);
+			return true;
+		}
 		if (!CooldownManager.isOnCooldown(player, key))
 			return true;
 		showCooldown(player, key, CooldownManager.getRemainingTicks(player, key));
 		return false;
+	}
+
+	private static void setAssassinCooldown(ServerPlayer player, String key, int durationTicks) {
+		if (player.isCreative())
+			CooldownManager.clear(player, key);
+		else
+			CooldownManager.setFullDuration(player, key, durationTicks);
 	}
 
 	private static void showCooldown(ServerPlayer player, String skill, long ticks) {
@@ -873,13 +891,6 @@ public final class AssassinSkillManager {
 	private static boolean requiresDagger(ServerPlayer player, boolean bothHands) {
 		message(player, bothHands ? "Equip a dagger in both hands" : "Equip a dagger");
 		return false;
-	}
-
-	private static void incrementProgression(ServerPlayer player) {
-		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(vars -> {
-			vars.progression_assassin += 1.0D;
-			vars.syncPlayerVariables(player);
-		});
 	}
 
 	private static int playerClass(ServerPlayer player) {

@@ -1,6 +1,8 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.DaggerThrowManager;
+import net.solocraft.util.RulersAuthorityManager;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
@@ -12,8 +14,9 @@ public class MasterylvlupDaggerProcedure {
 			return;
 		String list = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 				.orElse(new SololevelingModVariables.PlayerVariables()).Plist;
-		String unlocked = !list.contains("Dagger Throw") ? "Dagger Throw"
-				: !list.contains("Dagger Rush") ? "Dagger Rush"
+		String unlocked = !list.contains(DaggerThrowManager.DAGGER_THROW) ? DaggerThrowManager.DAGGER_THROW
+				: RulersAuthorityManager.hasAuthority(entity)
+						&& !list.contains(DaggerThrowManager.DAGGER_RUSH) ? DaggerThrowManager.DAGGER_RUSH
 				: !list.contains("Critical Attack") ? "Critical Attack" : "";
 		if (unlocked.isEmpty())
 			return;

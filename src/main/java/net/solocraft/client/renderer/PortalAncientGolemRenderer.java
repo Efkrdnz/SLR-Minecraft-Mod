@@ -23,7 +23,7 @@ public class PortalAncientGolemRenderer extends GeoEntityRenderer<PortalAncientG
 
 	@Override
 	public RenderType getRenderType(PortalAncientGolemEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucentEmissive(getTextureLocation(animatable));
+		return net.solocraft.client.renderer.shader.GateRenderTypes.emissive(getTextureLocation(animatable));
 	}
 
 	@Override

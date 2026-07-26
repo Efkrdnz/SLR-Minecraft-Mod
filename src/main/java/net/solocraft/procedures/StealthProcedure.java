@@ -1,6 +1,5 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraft.world.phys.Vec3;
@@ -27,13 +26,6 @@ public class StealthProcedure {
 		if (entity == null)
 			return;
 		if (!CooldownManager.isOnCooldown(entity, "Stealth")) {
-			{
-				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_assassin + 1;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.progression_assassin = _setval;
-					capability.syncPlayerVariables(entity);
-				});
-			}
 			CooldownManager.set(entity, "Stealth", 400);
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 160, 1, false, false));

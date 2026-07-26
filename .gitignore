@@ -28,3 +28,7 @@ __pycache__/
 # Other Files (In Eclipse)
 .classpath
 .project
+
+# Local root-level guides, plans, and design notes
+/*.md
+!/[Rr][Ee][Aa][Dd][Mm][Ee].[Mm][Dd]

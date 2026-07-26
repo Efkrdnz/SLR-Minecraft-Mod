@@ -27,59 +27,34 @@ public class AttributeBugFixBelow0Procedure {
 	private static void execute(@Nullable Event event, Entity entity) {
 		if (entity == null)
 			return;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Vitality < 0) {
-			{
-				double _setval = 0;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Vitality = _setval;
-					capability.syncPlayerVariables(entity);
-				});
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			boolean changed = false;
+			if (capability.Vitality < 0) {
+				capability.Vitality = 0;
+				changed = true;
 			}
-		}
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength < 0) {
-			{
-				double _setval = 0;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Strength = _setval;
-					capability.syncPlayerVariables(entity);
-				});
+			if (capability.Strength < 0) {
+				capability.Strength = 0;
+				changed = true;
 			}
-		}
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence < 0) {
-			{
-				double _setval = 0;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Intelligence = _setval;
-					capability.syncPlayerVariables(entity);
-				});
+			if (capability.Intelligence < 0) {
+				capability.Intelligence = 0;
+				changed = true;
 			}
-		}
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Speed < 0) {
-			{
-				double _setval = 0;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Speed = _setval;
-					capability.syncPlayerVariables(entity);
-				});
+			if (capability.Speed < 0) {
+				capability.Speed = 0;
+				changed = true;
 			}
-		}
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Durability < 0) {
-			{
-				double _setval = 0;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Durability = _setval;
-					capability.syncPlayerVariables(entity);
-				});
+			if (capability.Durability < 0) {
+				capability.Durability = 0;
+				changed = true;
 			}
-		}
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).perception < 0) {
-			{
-				double _setval = 0;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.perception = _setval;
-					capability.syncPlayerVariables(entity);
-				});
+			if (capability.perception < 0) {
+				capability.perception = 0;
+				changed = true;
 			}
-		}
+			if (changed)
+				capability.syncPlayerVariables(entity);
+		});
 	}
 }

@@ -33,6 +33,9 @@ public class AbilityAppendButtonProcedure {
 			});
 			if (entity instanceof ServerPlayer _ent) {
 				BlockPos _bpos = BlockPos.containing(x, y, z);
+				int initialPage = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+						.map(capability -> capability.PslotSelecting >= 9 && capability.PslotSelecting <= 16 ? 2 : 1)
+						.orElse(1);
 				NetworkHooks.openScreen((ServerPlayer) _ent, new MenuProvider() {
 					@Override
 					public Component getDisplayName() {
@@ -41,9 +44,10 @@ public class AbilityAppendButtonProcedure {
 
 					@Override
 					public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
-						return new EquippedAbilitiesMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(_bpos));
+						return new EquippedAbilitiesMenu(id, inventory,
+								new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(_bpos).writeVarInt(initialPage));
 					}
-				}, _bpos);
+				}, data -> data.writeBlockPos(_bpos).writeVarInt(initialPage));
 			}
 		}
 	}

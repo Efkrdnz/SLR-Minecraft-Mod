@@ -12,12 +12,13 @@
     },
     "frame": "challenge",
     "show_toast": true,
-    "announce_to_chat": true,
+    "announce_to_chat": false,
     "hidden": false
   },
   "criteria": {
     "rulers_will": {
       "trigger": "minecraft:impossible"
     }
-  }
+  },
+  "parent": "sololeveling:system/vessel"
 }

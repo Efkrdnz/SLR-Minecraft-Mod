@@ -300,6 +300,7 @@ public final class SlrDungeonCommand {
 			return 0;
 		}
 		DungeonInstanceSavedData.Instance instance = found.get();
+		DungeonEncounterRuntime.clearInstanceHighlights(player.getServer(), instance);
 		ServerLevel level = player.getServer().getLevel(instance.dimension());
 		int discarded = 0;
 		if (level != null) {
@@ -340,6 +341,7 @@ public final class SlrDungeonCommand {
 			return 0;
 		}
 		ServerLevel level = player.getServer().getLevel(instance.dimension());
+		DungeonEncounterRuntime.clearEncounterHighlights(player.getServer(), instance, state.get());
 		int discarded = 0;
 		if (level != null) {
 			for (UUID mobId : state.get().trackedMobs()) {

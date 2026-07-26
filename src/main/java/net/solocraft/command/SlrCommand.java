@@ -47,12 +47,19 @@ import net.solocraft.procedures.SLRCRankProcedure;
 import net.solocraft.procedures.SLRCLassRandomProcedure;
 import net.solocraft.procedures.SLRBRankProcedure;
 import net.solocraft.procedures.SLRARankProcedure;
+import net.solocraft.procedures.DKCLevelItemRightclickedProcedure;
+import net.solocraft.procedures.DKCPathTeleportProcedure;
+import net.solocraft.procedures.DungeonDimensionPlayerLeavesDimensionProcedure;
+import net.solocraft.dkc.DkcFloorBuilder;
+import net.solocraft.dkc.DkcFloorRegistry;
+import net.solocraft.dkc.DkcSpatialLayout;
 import net.solocraft.guild.GuildSavedData;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.VesselManager;
 import net.solocraft.util.CartenonTempleGenerator;
 import net.solocraft.util.DkcStructurePreviewBuilder;
+import net.solocraft.util.FrostMonarchCastleGenerator;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -70,6 +77,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -95,10 +103,24 @@ import java.util.function.Consumer;
 
 @Mod.EventBusSubscriber
 public class SlrCommand {
+	private static final String RECOVERY_COOLDOWN_TAG = "slr_recovery_command_cooldown";
+	private static final long RECOVERY_COOLDOWN_TICKS = 200L;
+
 	@SubscribeEvent
 	public static void registerCommand(RegisterCommandsEvent event) {
 		event.getDispatcher().register(
-				Commands.literal("slr").requires(s -> s.hasPermission(3)).then(Commands.argument("name", EntityArgument.players()).then(Commands.literal("player").then(Commands.argument("player", BoolArgumentType.bool()).executes(arguments -> {
+				Commands.literal("slr")
+					.then(Commands.literal("help").executes(SlrCommand::showRecoveryHelp))
+					.then(Commands.literal("recovery").executes(SlrCommand::showRecoveryHelp))
+					.then(Commands.literal("escape").executes(SlrCommand::escapeDungeon))
+					.then(Commands.literal("stuck").executes(SlrCommand::recoverFromStuck))
+					.then(Commands.literal("dkc")
+							.then(Commands.literal("status").executes(SlrCommand::showDkcStatus))
+							.then(Commands.literal("unstuck").executes(SlrCommand::unstuckDkc))
+							.then(Commands.literal("leave").executes(SlrCommand::escapeDungeon)))
+					.then(Commands.argument("name", EntityArgument.players())
+							.requires(s -> s.hasPermission(3))
+							.then(Commands.literal("player").then(Commands.argument("player", BoolArgumentType.bool()).executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
 					double x = arguments.getSource().getPosition().x();
 					double y = arguments.getSource().getPosition().y();
@@ -252,6 +274,15 @@ public class SlrCommand {
 								.then(Commands.literal("sillad").executes(arguments -> VesselManager.assign(arguments, "monarch", "sillad")))
 								.then(Commands.literal("baran").executes(arguments -> VesselManager.assign(arguments, "monarch", "baran")))
 								.then(Commands.literal("rakan").executes(arguments -> VesselManager.assign(arguments, "monarch", "rakan")))))
+					.then(Commands.literal("dkc")
+							.then(Commands.argument("floor", IntegerArgumentType.integer(1, 20))
+									.executes(SlrCommand::setDkcFloor))
+							.then(Commands.literal("floor")
+									.then(Commands.argument("floor", IntegerArgumentType.integer(1, 20))
+											.executes(SlrCommand::setDkcFloor)))
+							.then(Commands.literal("level")
+									.then(Commands.argument("floor", IntegerArgumentType.integer(1, 20))
+											.executes(SlrCommand::setDkcFloor))))
 					.then(Commands.literal("rank")
 							.then(Commands.literal("E").executes(arguments -> forEachTarget(arguments, SLRERankProcedure::execute)))
 							.then(Commands.literal("D").executes(arguments -> forEachTarget(arguments, SLRDRankProcedure::execute)))
@@ -740,6 +771,17 @@ public class SlrCommand {
 						.executes(arguments -> {
 							String dungeonName = StringArgumentType.getString(arguments, "dungeon");
 							String normalizedDungeon = normalizeDungeonName(dungeonName);
+							if (FrostMonarchCastleGenerator.handles(normalizedDungeon)) {
+								int started = 0;
+								for (var target : EntityArgument.getPlayers(arguments, "name")) {
+									if (FrostMonarchCastleGenerator.start(target))
+										started++;
+								}
+								final int startedBuilds = started;
+								arguments.getSource().sendSuccess(() -> Component.literal("Queued " + startedBuilds
+										+ " Boreal Crown site survey(s)."), false);
+								return started > 0 ? 1 : 0;
+							}
 							if (DkcStructurePreviewBuilder.handles(normalizedDungeon)) {
 								int started = 0;
 								for (var target : EntityArgument.getPlayers(arguments, "name")) {
@@ -765,7 +807,7 @@ public class SlrCommand {
 							List<String> structures = structuresForDungeon(dungeonName);
 							if (structures == null || structures.isEmpty()) {
 								arguments.getSource().sendFailure(Component.literal("§cUnknown dungeon structure set: §e" + dungeonName
-										+ "§c. Try: §7" + String.join(", ", STRUCTURE_SETS.keySet())));
+										+ "§c. Try: §7" + String.join(", ", structureSuggestions())));
 								return 0;
 							}
 							int totalPlaced = 0;
@@ -806,6 +848,105 @@ public class SlrCommand {
 			));
 	}
 
+	private static int showRecoveryHelp(CommandContext<CommandSourceStack> arguments) {
+		arguments.getSource().sendSuccess(() -> Component.translatable("commands.slr.recovery.help")
+				.withStyle(ChatFormatting.AQUA), false);
+		return 1;
+	}
+
+	private static int escapeDungeon(CommandContext<CommandSourceStack> arguments)
+			throws CommandSyntaxException {
+		net.minecraft.server.level.ServerPlayer player = arguments.getSource().getPlayerOrException();
+		if (recoveryOnCooldown(player, arguments.getSource()))
+			return 0;
+		if (DkcFloorRegistry.isDkc(player.level())) {
+			markRecoveryUsed(player);
+			DKCPathTeleportProcedure.returnToSavedOverworld(player);
+			arguments.getSource().sendSuccess(
+					() -> Component.translatable("commands.slr.recovery.dkc_left")
+							.withStyle(ChatFormatting.LIGHT_PURPLE), false);
+			return 1;
+		}
+		if (!DungeonDimensionPlayerLeavesDimensionProcedure.emergencyExit(player)) {
+			arguments.getSource().sendFailure(
+					Component.translatable("commands.slr.recovery.not_in_dungeon"));
+			return 0;
+		}
+		markRecoveryUsed(player);
+		arguments.getSource().sendSuccess(
+				() -> Component.translatable("commands.slr.recovery.escaped")
+						.withStyle(ChatFormatting.YELLOW), false);
+		return 1;
+	}
+
+	private static int recoverFromStuck(CommandContext<CommandSourceStack> arguments)
+			throws CommandSyntaxException {
+		net.minecraft.server.level.ServerPlayer player = arguments.getSource().getPlayerOrException();
+		return DkcFloorRegistry.isDkc(player.level())
+				? unstuckDkc(arguments) : escapeDungeon(arguments);
+	}
+
+	private static int unstuckDkc(CommandContext<CommandSourceStack> arguments)
+			throws CommandSyntaxException {
+		net.minecraft.server.level.ServerPlayer player = arguments.getSource().getPlayerOrException();
+		if (!DkcFloorRegistry.isDkc(player.level())) {
+			arguments.getSource().sendFailure(
+					Component.translatable("commands.slr.recovery.not_in_dkc"));
+			return 0;
+		}
+		if (recoveryOnCooldown(player, arguments.getSource()))
+			return 0;
+		int floor = DkcSpatialLayout.floor(player);
+		if (floor <= 0)
+			floor = (int) player.getPersistentData().getDouble("dkc_current_floor");
+		if (floor < DkcFloorRegistry.FIRST_FLOOR || floor > DkcFloorRegistry.LAST_FLOOR) {
+			arguments.getSource().sendFailure(
+					Component.translatable("commands.slr.recovery.dkc_floor_unknown"));
+			return 0;
+		}
+		markRecoveryUsed(player);
+		DkcFloorBuilder.teleportToFloor(player, floor);
+		final int recoveredFloor = floor;
+		arguments.getSource().sendSuccess(
+				() -> Component.translatable("commands.slr.recovery.dkc_unstuck", recoveredFloor)
+						.withStyle(ChatFormatting.LIGHT_PURPLE), false);
+		return 1;
+	}
+
+	private static int showDkcStatus(CommandContext<CommandSourceStack> arguments)
+			throws CommandSyntaxException {
+		net.minecraft.server.level.ServerPlayer player = arguments.getSource().getPlayerOrException();
+		if (!DkcFloorRegistry.isDkc(player.level())) {
+			arguments.getSource().sendFailure(
+					Component.translatable("commands.slr.recovery.not_in_dkc"));
+			return 0;
+		}
+		int spatialFloor = DkcSpatialLayout.floor(player);
+		int storedFloor = (int) player.getPersistentData().getDouble("dkc_current_floor");
+		arguments.getSource().sendSuccess(
+				() -> Component.translatable("commands.slr.recovery.dkc_status",
+						spatialFloor > 0 ? spatialFloor : storedFloor,
+						spatialFloor > 0 ? "inside" : "outside")
+						.withStyle(ChatFormatting.AQUA), false);
+		return 1;
+	}
+
+	private static boolean recoveryOnCooldown(net.minecraft.server.level.ServerPlayer player,
+			CommandSourceStack source) {
+		long remaining = player.getPersistentData().getLong(RECOVERY_COOLDOWN_TAG)
+				- player.serverLevel().getGameTime();
+		if (remaining <= 0L)
+			return false;
+		long seconds = Math.max(1L, (remaining + 19L) / 20L);
+		source.sendFailure(Component.translatable("commands.slr.recovery.cooldown", seconds));
+		return true;
+	}
+
+	private static void markRecoveryUsed(net.minecraft.server.level.ServerPlayer player) {
+		player.getPersistentData().putLong(RECOVERY_COOLDOWN_TAG,
+				player.serverLevel().getGameTime() + RECOVERY_COOLDOWN_TICKS);
+	}
+
 	private static int forEachTarget(CommandContext<CommandSourceStack> arguments, Consumer<net.minecraft.server.level.ServerPlayer> action) {
 		try {
 			var targets = EntityArgument.getPlayers(arguments, "name");
@@ -816,6 +957,19 @@ public class SlrCommand {
 			arguments.getSource().sendFailure(Component.literal("Unable to resolve target players"));
 			return 0;
 		}
+	}
+
+	private static int setDkcFloor(CommandContext<CommandSourceStack> arguments) throws CommandSyntaxException {
+		int floor = IntegerArgumentType.getInteger(arguments, "floor");
+		int changed = 0;
+		for (var target : EntityArgument.getPlayers(arguments, "name")) {
+			if (DKCLevelItemRightclickedProcedure.setCurrentFloor(target, floor))
+				changed++;
+		}
+		final int changedPlayers = changed;
+		arguments.getSource().sendSuccess(() -> Component.literal("Queued fresh DKC Floor " + floor
+				+ " state for " + changedPlayers + " player(s)."), true);
+		return changed;
 	}
 
 	private static int modifyShadowSoldiers(com.mojang.brigadier.context.CommandContext<net.minecraft.commands.CommandSourceStack> arguments, int amount) throws com.mojang.brigadier.exceptions.CommandSyntaxException {
@@ -866,6 +1020,7 @@ public class SlrCommand {
 		List<String> suggestions = new ArrayList<>(STRUCTURE_SETS.keySet());
 		suggestions.add("cartenon");
 		suggestions.addAll(DkcStructurePreviewBuilder.suggestions());
+		suggestions.addAll(FrostMonarchCastleGenerator.suggestions());
 		suggestions.sort(String::compareTo);
 		return suggestions;
 	}

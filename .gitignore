@@ -1,16 +1,28 @@
 # Gradle build system ignores
 .gradle/
+.gradle-codex/
 build/
 
 # Other IDE related folders
 .idea/
+.impeccable/
 .settings/
+*.iml
 
 # MCreator workspace
 .mcreator/
 
 # Minecraft client/server files
 run/
+temp/
+
+# Generated tool output
+__pycache__/
+*.py[cod]
+
+# Empty local scratch files
+/8)
+/shadowDistortionShader
 
 # MacOS system files
 .DS_STORE

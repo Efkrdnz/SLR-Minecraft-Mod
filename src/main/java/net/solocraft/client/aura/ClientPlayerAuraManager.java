@@ -3,6 +3,11 @@ package net.solocraft.client.aura;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 /** Client runtime state for packet-driven continuous auras and short bursts. */
+@Mod.EventBusSubscriber(value = Dist.CLIENT)
 public final class ClientPlayerAuraManager {
 	private static final Map<Integer, AuraInstance> CONTINUOUS = new HashMap<>();
 	private static final Map<Integer, List<AuraInstance>> BURSTS = new HashMap<>();
@@ -91,6 +97,17 @@ public final class ClientPlayerAuraManager {
 
 	public static void clearTrail(int entityId) {
 		TRAILS.remove(entityId);
+	}
+
+	public static void clear() {
+		CONTINUOUS.clear();
+		BURSTS.clear();
+		TRAILS.clear();
+	}
+
+	@SubscribeEvent
+	public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+		clear();
 	}
 
 	private static long gameTime() {

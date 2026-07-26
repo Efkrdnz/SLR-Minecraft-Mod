@@ -16,7 +16,7 @@ import java.util.function.Supplier;
  * Server → Client packet that updates one passive-display slot.
  *
  * passiveType values:
- *   0 = Assassin shadow-combo tier  (int 0-10)
+ *   0 = Assassin Predator's Tempo   (int 0-5)
  *   1 = Fighter  battle-power       (double 0-100)
  *   2 = Tanker   iron-wall stacks   (int 0-10)
  *   3 = Healer   resonance stacks   (int 0-5)

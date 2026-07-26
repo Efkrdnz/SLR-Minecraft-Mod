@@ -18,6 +18,8 @@ public class DKCCombatTrackerProcedure {
 	public static void onEntityHurt(LivingHurtEvent event) {
 		if (event == null || event.getEntity() == null)
 			return;
+		if (event.getEntity().getPersistentData().getBoolean("radiru_training_dummy"))
+			return;
 		if (event.getEntity() instanceof ServerPlayer player) {
 			markInCombat(player);
 		}

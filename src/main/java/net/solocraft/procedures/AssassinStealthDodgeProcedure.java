@@ -18,12 +18,11 @@ import net.minecraft.core.registries.Registries;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
 public class AssassinStealthDodgeProcedure {
 	@SubscribeEvent
 	public static void onEntityAttacked(LivingAttackEvent event) {
 		Entity entity = event.getEntity();
-		if (event != null && entity != null) {
+		if (entity != null) {
 			execute(event, entity, event.getSource().getEntity());
 		}
 	}

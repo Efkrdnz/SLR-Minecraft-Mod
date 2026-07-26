@@ -92,6 +92,8 @@ public final class CombatRankHelper {
 	private static int dimensionRank(String path) {
 		if (path != null && path.startsWith("monarch_territory_"))
 			return 4;
+		if (path != null && path.startsWith("dungeon_dimension_dkc"))
+			return 6;
 		return switch (path) {
 			case "dungeon_dimension_d" -> 2;
 			case "dungeon_dimension_c", "dungeon_dimension_kasaka" -> 3;

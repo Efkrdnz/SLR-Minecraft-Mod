@@ -37,13 +37,16 @@ public class FrozenOverlayOverlay {
 			y = entity.getY();
 			z = entity.getZ();
 		}
+		boolean visible = FrozenOverlayDisplayOverlayIngameProcedure.execute(entity);
+		if (!visible)
+			return;
 		RenderSystem.disableDepthTest();
 		RenderSystem.depthMask(false);
 		RenderSystem.enableBlend();
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		if (FrozenOverlayDisplayOverlayIngameProcedure.execute(entity)) {
+		if (visible) {
 			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/freezescreen.png"), 0, 0, 0, 0, w, h, w, h);
 		}
 		RenderSystem.depthMask(true);

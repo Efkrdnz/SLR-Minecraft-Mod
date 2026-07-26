@@ -1,6 +1,7 @@
 package net.solocraft.util;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.dkc.DkcRadiruManager;
 import net.solocraft.network.ShowDamageNumberMessage;
 
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
@@ -30,6 +31,10 @@ public final class DamageNumberManager {
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void onLivingHurt(LivingHurtEvent event) {
 		if (event.getAmount() <= 0 || event.getEntity().level().isClientSide())
+			return;
+		// Radiru targets report the final post-armor value and rolling DPS from
+		// LivingDamageEvent; the normal pre-armor number would be misleading.
+		if (event.getEntity().getPersistentData().getBoolean(DkcRadiruManager.TRAINING_DUMMY_TAG))
 			return;
 		Set<ServerPlayer> recipients = new HashSet<>();
 		ServerPlayer owner = owningPlayer(event.getSource().getEntity());

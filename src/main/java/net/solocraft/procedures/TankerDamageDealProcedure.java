@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.init.SololevelingModSounds;
 import net.solocraft.entity.HunterEntity;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -25,22 +26,27 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
 import net.minecraft.tags.TagKey;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.CommandSource;
 import net.minecraft.client.Minecraft;
+
+import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber
 public class TankerDamageDealProcedure {
+	private static final DustParticleOptions BLUE_SLASH_PARTICLE = new DustParticleOptions(new Vector3f(0.04F, 0.35F, 0.68F), 1.0F);
+	private static final DustParticleOptions WHITE_SLASH_PARTICLE = new DustParticleOptions(new Vector3f(0.94F, 0.94F, 0.94F), 1.0F);
+
 	@SubscribeEvent
 	public static void onEntityAttacked(LivingAttackEvent event) {
 		Entity entity = event.getEntity();
@@ -76,7 +82,8 @@ public class TankerDamageDealProcedure {
 		double rnk = 0;
 		if (sourceentity instanceof HunterEntity) {
 			if ((sourceentity instanceof HunterEntity _datEntS ? _datEntS.getEntityData().get(HunterEntity.DATA_HunterClass) : "").equals("Tanker")) {
-				rand = Mth.nextInt(RandomSource.create(), 1, 6);
+				RandomSource random = RandomSource.create();
+				rand = Mth.nextInt(random, 1, 6);
 				if (((entity instanceof LivingEntity _entity) ? _entity.getMainHandItem() : ItemStack.EMPTY).getItem() instanceof AxeItem
 						|| (entity instanceof LivingEntity _entity ? _entity.getOffhandItem() : ItemStack.EMPTY).getItem() instanceof AxeItem
 						|| ((entity instanceof LivingEntity _entity) ? _entity.getMainHandItem() : ItemStack.EMPTY).getItem() instanceof SwordItem
@@ -84,7 +91,7 @@ public class TankerDamageDealProcedure {
 					if (rand == 1) {
 						if (sourceentity instanceof LivingEntity _entity)
 							_entity.swing(InteractionHand.MAIN_HAND, true);
-						radius = Mth.nextDouble(RandomSource.create(), 1.4, 2);
+						radius = Mth.nextDouble(random, 1.4, 2);
 						hei = -2;
 						speed = 5;
 						particleNum = 30;
@@ -102,36 +109,13 @@ public class TankerDamageDealProcedure {
 							z_pos = sourceentity.getZ() + radius * vZ;
 							i = i + 1;
 							hei = hei + 0.133;
-							{
-								Entity _ent = entity;
-								if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-									_ent.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null,
-											4, _ent.getName().getString(), _ent.getDisplayName(), _ent.level().getServer(), _ent), ("/particle dust 0.04 0.35 0.68 1 " + x_pos + " " + (y_pos + 1.8) + " " + z_pos + " 0 0 0 0.1 1 force"));
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL,
-											(float) 0.3, (float) Mth.nextDouble(RandomSource.create(), 0.7, 2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3,
-											(float) Mth.nextDouble(RandomSource.create(), 0.7, 2), false);
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")),
-											SoundSource.NEUTRAL, (float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL,
-											(float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2), false);
-								}
-							}
+							if (entity.level() instanceof ServerLevel level)
+								sendForcedDust(level, BLUE_SLASH_PARTICLE, x_pos, y_pos + 1.8, z_pos);
 						}
 					} else if (rand == 2) {
 						if (sourceentity instanceof LivingEntity _entity)
 							_entity.swing(InteractionHand.MAIN_HAND, true);
-						radius = Mth.nextDouble(RandomSource.create(), 1.4, 2);
+						radius = Mth.nextDouble(random, 1.4, 2);
 						hei = 2;
 						speed = 5;
 						particleNum = 30;
@@ -149,36 +133,13 @@ public class TankerDamageDealProcedure {
 							z_pos = sourceentity.getZ() + radius * vZ;
 							i = i + 1;
 							hei = hei - 0.133;
-							{
-								Entity _ent = entity;
-								if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-									_ent.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null,
-											4, _ent.getName().getString(), _ent.getDisplayName(), _ent.level().getServer(), _ent), ("/particle dust 0.04 0.35 0.68 1 " + x_pos + " " + (y_pos + 1.8) + " " + z_pos + " 0 0 0 0.1 1 force"));
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL,
-											(float) 0.3, (float) Mth.nextDouble(RandomSource.create(), 0.7, 2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3,
-											(float) Mth.nextDouble(RandomSource.create(), 0.7, 2), false);
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")),
-											SoundSource.NEUTRAL, (float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL,
-											(float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2), false);
-								}
-							}
+							if (entity.level() instanceof ServerLevel level)
+								sendForcedDust(level, BLUE_SLASH_PARTICLE, x_pos, y_pos + 1.8, z_pos);
 						}
 					} else if (rand == 3) {
 						if (sourceentity instanceof LivingEntity _entity)
 							_entity.swing(InteractionHand.MAIN_HAND, true);
-						radius = Mth.nextDouble(RandomSource.create(), 1.4, 2);
+						radius = Mth.nextDouble(random, 1.4, 2);
 						hei = 0;
 						speed = 5;
 						particleNum = 30;
@@ -195,36 +156,13 @@ public class TankerDamageDealProcedure {
 							y_pos = sourceentity.getY() + hei + radius * vY;
 							z_pos = sourceentity.getZ() + radius * vZ;
 							i = i + 1;
-							{
-								Entity _ent = entity;
-								if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-									_ent.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null,
-											4, _ent.getName().getString(), _ent.getDisplayName(), _ent.level().getServer(), _ent), ("/particle dust 0.04 0.35 0.68 1 " + x_pos + " " + (y_pos + 1.8) + " " + z_pos + " 0 0 0 0.1 1 force"));
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL,
-											(float) 0.3, (float) Mth.nextDouble(RandomSource.create(), 0.7, 2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3,
-											(float) Mth.nextDouble(RandomSource.create(), 0.7, 2), false);
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")),
-											SoundSource.NEUTRAL, (float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL,
-											(float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2), false);
-								}
-							}
+							if (entity.level() instanceof ServerLevel level)
+								sendForcedDust(level, BLUE_SLASH_PARTICLE, x_pos, y_pos + 1.8, z_pos);
 						}
 					} else if (rand == 4) {
 						if (sourceentity instanceof LivingEntity _entity)
 							_entity.swing(InteractionHand.MAIN_HAND, true);
-						radius = Mth.nextDouble(RandomSource.create(), 1.4, 2);
+						radius = Mth.nextDouble(random, 1.4, 2);
 						hei = -2;
 						speed = 5;
 						particleNum = 30;
@@ -242,36 +180,13 @@ public class TankerDamageDealProcedure {
 							z_pos = sourceentity.getZ() + radius * vZ;
 							i = i + 1;
 							hei = hei + 0.133;
-							{
-								Entity _ent = entity;
-								if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-									_ent.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null,
-											4, _ent.getName().getString(), _ent.getDisplayName(), _ent.level().getServer(), _ent), ("/particle dust 0.94 0.94 0.94 1 " + x_pos + " " + (y_pos + 1.8) + " " + z_pos + " 0 0 0 0.1 1 force"));
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL,
-											(float) 0.3, (float) Mth.nextDouble(RandomSource.create(), 0.7, 2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3,
-											(float) Mth.nextDouble(RandomSource.create(), 0.7, 2), false);
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")),
-											SoundSource.NEUTRAL, (float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL,
-											(float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2), false);
-								}
-							}
+							if (entity.level() instanceof ServerLevel level)
+								sendForcedDust(level, WHITE_SLASH_PARTICLE, x_pos, y_pos + 1.8, z_pos);
 						}
 					} else if (rand == 5) {
 						if (sourceentity instanceof LivingEntity _entity)
 							_entity.swing(InteractionHand.MAIN_HAND, true);
-						radius = Mth.nextDouble(RandomSource.create(), 1.4, 2);
+						radius = Mth.nextDouble(random, 1.4, 2);
 						hei = 2;
 						speed = 5;
 						particleNum = 30;
@@ -289,36 +204,13 @@ public class TankerDamageDealProcedure {
 							z_pos = sourceentity.getZ() + radius * vZ;
 							i = i + 1;
 							hei = hei - 0.133;
-							{
-								Entity _ent = entity;
-								if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-									_ent.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null,
-											4, _ent.getName().getString(), _ent.getDisplayName(), _ent.level().getServer(), _ent), ("/particle dust 0.94 0.94 0.94 1 " + x_pos + " " + (y_pos + 1.8) + " " + z_pos + " 0 0 0 0.1 1 force"));
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL,
-											(float) 0.3, (float) Mth.nextDouble(RandomSource.create(), 0.7, 2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3,
-											(float) Mth.nextDouble(RandomSource.create(), 0.7, 2), false);
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")),
-											SoundSource.NEUTRAL, (float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL,
-											(float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2), false);
-								}
-							}
+							if (entity.level() instanceof ServerLevel level)
+								sendForcedDust(level, WHITE_SLASH_PARTICLE, x_pos, y_pos + 1.8, z_pos);
 						}
 					} else {
 						if (sourceentity instanceof LivingEntity _entity)
 							_entity.swing(InteractionHand.MAIN_HAND, true);
-						radius = Mth.nextDouble(RandomSource.create(), 1.4, 2);
+						radius = Mth.nextDouble(random, 1.4, 2);
 						hei = 0;
 						speed = 5;
 						particleNum = 30;
@@ -335,33 +227,11 @@ public class TankerDamageDealProcedure {
 							y_pos = sourceentity.getY() + hei + radius * vY;
 							z_pos = sourceentity.getZ() + radius * vZ;
 							i = i + 1;
-							{
-								Entity _ent = entity;
-								if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-									_ent.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null,
-											4, _ent.getName().getString(), _ent.getDisplayName(), _ent.level().getServer(), _ent), ("/particle dust 0.94 0.94 0.94 1 " + x_pos + " " + (y_pos + 1.8) + " " + z_pos + " 0 0 0 0.1 1 force"));
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL,
-											(float) 0.3, (float) Mth.nextDouble(RandomSource.create(), 0.7, 2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3,
-											(float) Mth.nextDouble(RandomSource.create(), 0.7, 2), false);
-								}
-							}
-							if (world instanceof Level _level) {
-								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")),
-											SoundSource.NEUTRAL, (float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2));
-								} else {
-									_level.playLocalSound((sourceentity.getX()), (sourceentity.getY()), (sourceentity.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL,
-											(float) 0.5, (float) Mth.nextDouble(RandomSource.create(), 0.7, 1.2), false);
-								}
-							}
+							if (entity.level() instanceof ServerLevel level)
+								sendForcedDust(level, WHITE_SLASH_PARTICLE, x_pos, y_pos + 1.8, z_pos);
 						}
 					}
+					playSwingSounds(world, sourceentity, random);
 				} else {
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, x, (y + 1.4), z, 2, 0.05, 0.05, 0.05, 1);
@@ -440,6 +310,26 @@ public class TankerDamageDealProcedure {
 					}
 				}
 			}
+		}
+	}
+
+	private static void sendForcedDust(ServerLevel level, DustParticleOptions particle, double x, double y, double z) {
+		for (ServerPlayer viewer : level.players())
+			level.sendParticles(viewer, particle, true, x, y, z, 1, 0.0, 0.0, 0.0, 0.1);
+	}
+
+	private static void playSwingSounds(LevelAccessor world, Entity sourceentity, RandomSource random) {
+		if (!(world instanceof Level level))
+			return;
+		float slashPitch = (float) Mth.nextDouble(random, 0.7, 2.0);
+		float sweepPitch = (float) Mth.nextDouble(random, 0.7, 1.2);
+		if (!level.isClientSide()) {
+			BlockPos sourcePos = BlockPos.containing(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ());
+			level.playSound(null, sourcePos, SololevelingModSounds.SLASH.get(), SoundSource.NEUTRAL, 0.3F, slashPitch);
+			level.playSound(null, sourcePos, SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.NEUTRAL, 0.5F, sweepPitch);
+		} else {
+			level.playLocalSound(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ(), SololevelingModSounds.SLASH.get(), SoundSource.NEUTRAL, 0.3F, slashPitch, false);
+			level.playLocalSound(sourceentity.getX(), sourceentity.getY(), sourceentity.getZ(), SoundEvents.PLAYER_ATTACK_SWEEP, SoundSource.NEUTRAL, 0.5F, sweepPitch, false);
 		}
 	}
 }

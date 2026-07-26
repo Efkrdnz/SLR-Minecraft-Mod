@@ -1,0 +1,10 @@
+{
+  "display": {
+    "icon": { "item": "minecraft:glowstone_dust" },
+    "title": { "translate": "advancements.vessels.rulers.brilliant_manifestation.title" },
+    "description": { "translate": "advancements.vessels.rulers.brilliant_manifestation.descr" },
+    "frame": "challenge", "show_toast": true, "announce_to_chat": false, "hidden": false
+  },
+  "criteria": { "unlock": { "trigger": "minecraft:impossible" } },
+  "parent": "sololeveling:vessels/go_gunhee"
+}

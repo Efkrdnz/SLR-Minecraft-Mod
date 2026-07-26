@@ -1,12 +1,11 @@
 
 package net.solocraft.client.screens;
 
-import org.checkerframework.checker.units.qual.h;
-
 import net.solocraft.procedures.ReturnQuestNameProcedure;
 import net.solocraft.procedures.QuestLinesProcedure;
 import net.solocraft.procedures.QuestInfoGetProcedure;
 import net.solocraft.procedures.DungeoningProcedure;
+import net.solocraft.client.gui.DkcQuestProgressClientState;
 import net.solocraft.client.gui.UrgentQuestClientState;
 
 import net.minecraftforge.fml.common.Mod;
@@ -15,9 +14,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.api.distmarker.Dist;
 
-import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.Minecraft;
@@ -36,25 +33,20 @@ public class QuestsOverlayOverlay {
 	public static void eventHandler(RenderGuiEvent.Pre event) {
 		int w = event.getWindow().getGuiScaledWidth();
 		int h = event.getWindow().getGuiScaledHeight();
-		Level world = null;
-		double x = 0;
-		double y = 0;
-		double z = 0;
 		Player entity = Minecraft.getInstance().player;
-		if (entity != null) {
-			world = entity.level();
-			x = entity.getX();
-			y = entity.getY();
-			z = entity.getZ();
-		}
+		boolean visible = QuestInfoGetProcedure.execute(entity);
+		if (!visible)
+			return;
 		RenderSystem.disableDepthTest();
 		RenderSystem.depthMask(false);
 		RenderSystem.enableBlend();
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		if (QuestInfoGetProcedure.execute(entity)) {
-			if (UrgentQuestClientState.isActive()) {
+		if (visible) {
+			if (DkcQuestProgressClientState.isActive(entity)) {
+				renderDkcQuest(event.getGuiGraphics(), w, h);
+			} else if (UrgentQuestClientState.isActive()) {
 				renderUrgentQuest(event.getGuiGraphics(), w);
 			} else {
 				renderStoryQuest(event.getGuiGraphics(), entity, w);
@@ -65,6 +57,101 @@ public class QuestsOverlayOverlay {
 		RenderSystem.enableDepthTest();
 		RenderSystem.disableBlend();
 		RenderSystem.setShaderColor(1, 1, 1, 1);
+	}
+
+	private static void renderDkcQuest(GuiGraphics graphics, int screenWidth, int screenHeight) {
+		Font font = Minecraft.getInstance().font;
+		int x = 8;
+		int width = Math.max(120, Math.min(230, screenWidth - 16));
+		int accent = dkcAccent(DkcQuestProgressClientState.phase());
+		List<net.minecraft.util.FormattedCharSequence> objectiveLines = font.split(
+				Component.literal(DkcQuestProgressClientState.objective()), width - 12);
+		List<net.minecraft.util.FormattedCharSequence> detailLines = DkcQuestProgressClientState.detail().isBlank()
+				? List.of() : font.split(Component.literal(DkcQuestProgressClientState.detail()), width - 12);
+		boolean objectiveProgress = DkcQuestProgressClientState.target() > 0;
+		boolean urgent = UrgentQuestClientState.isActive();
+		List<net.minecraft.util.FormattedCharSequence> urgentLines = urgent
+				? font.split(Component.literal(UrgentQuestClientState.objective()), width - 12) : List.of();
+		int urgentLineCount = Math.min(2, urgentLines.size());
+
+		int height = 34 + objectiveLines.size() * 10 + detailLines.size() * 10
+				+ (objectiveProgress ? 17 : 0);
+		if (urgent)
+			height += 25 + urgentLineCount * 10;
+		int y = Math.min(134, Math.max(8, screenHeight - height - 8));
+
+		drawSystemPanel(graphics, x, y, width, height, 0xD2080A13, accent);
+		Component heading = Component.literal("DEMON KING'S CASTLE")
+				.withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD);
+		graphics.drawString(font, heading, x + 6, y + 5, 0xFFFFFFFF, false);
+		String overall = DkcQuestProgressClientState.cleared() + "/" + 20;
+		graphics.drawString(font, overall, x + width - 6 - font.width(overall), y + 5, 0xFFFFC766, false);
+
+		String floorLine = "FLOOR " + DkcQuestProgressClientState.floor() + " - "
+				+ DkcQuestProgressClientState.floorName().toUpperCase(java.util.Locale.ROOT);
+		if (font.width(floorLine) > width - 12)
+			floorLine = font.plainSubstrByWidth(floorLine, width - 24) + "...";
+		graphics.drawString(font, floorLine, x + 6, y + 17, accent, false);
+		int cursor = y + 29;
+		for (net.minecraft.util.FormattedCharSequence line : objectiveLines) {
+			graphics.drawString(font, line, x + 6, cursor, 0xFFF4F7FF, false);
+			cursor += 10;
+		}
+		for (net.minecraft.util.FormattedCharSequence line : detailLines) {
+			graphics.drawString(font, line, x + 6, cursor, 0xFFADB8C7, false);
+			cursor += 10;
+		}
+
+		if (objectiveProgress) {
+			int progress = Math.min(DkcQuestProgressClientState.progress(), DkcQuestProgressClientState.target());
+			String progressText = "Objective: " + progress + "/" + DkcQuestProgressClientState.target();
+			graphics.drawString(font, progressText, x + 6, cursor, 0xFFEAF8FF, false);
+			cursor += 10;
+			int barWidth = width - 12;
+			int filled = (int) Math.round(barWidth * (progress / (double) DkcQuestProgressClientState.target()));
+			graphics.fill(x + 6, cursor + 1, x + 6 + barWidth, cursor + 5, 0xAA1A2230);
+			if (filled > 0)
+				graphics.fill(x + 6, cursor + 1, x + 6 + filled, cursor + 5, accent);
+			cursor += 7;
+		}
+
+		if (urgent) {
+			graphics.fill(x + 6, cursor + 1, x + width - 6, cursor + 2, 0xAA7A1F2A);
+			cursor += 6;
+			Component urgentHeading = Component.literal("URGENT: ").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD)
+					.append(Component.literal(UrgentQuestClientState.title()).withStyle(ChatFormatting.RED, ChatFormatting.BOLD));
+			List<net.minecraft.util.FormattedCharSequence> headingLines = font.split(urgentHeading, width - 12);
+			if (!headingLines.isEmpty())
+				graphics.drawString(font, headingLines.get(0), x + 6, cursor, 0xFFFF6A6A, false);
+			cursor += 10;
+			for (int index = 0; index < urgentLineCount; index++) {
+				graphics.drawString(font, urgentLines.get(index), x + 6, cursor, 0xFFD8C8D0, false);
+				cursor += 10;
+			}
+			String urgentStatus = urgentStatus();
+			graphics.drawString(font, urgentStatus, x + 6, cursor, 0xFFFFC766, false);
+		}
+	}
+
+	private static String urgentStatus() {
+		String status = switch (UrgentQuestClientState.kind()) {
+			case "kill", "pvp", "kang" -> "Progress " + UrgentQuestClientState.progress() + "/" + UrgentQuestClientState.target();
+			case "no_skills" -> "No skills used";
+			default -> "Active";
+		};
+		int remaining = UrgentQuestClientState.remainingSeconds();
+		return remaining < 0 ? status : status + String.format("  %02d:%02d", remaining / 60, remaining % 60);
+	}
+
+	private static int dkcAccent(String phase) {
+		return switch (phase) {
+			case "boss" -> 0xFFFF4D4D;
+			case "radiru", "sanctuary" -> 0xFFD96CFF;
+			case "ascent" -> 0xFF4FD7FF;
+			case "permit" -> 0xFFFFC766;
+			case "conquered" -> 0xFFFFB83D;
+			default -> 0xFFFF7A45;
+		};
 	}
 
 	private static void renderUrgentQuest(GuiGraphics graphics, int screenWidth) {

@@ -4,22 +4,25 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.dungeon.data.DungeonDataTypes.IntRange;
 import net.solocraft.dungeon.data.MobPoolResolver;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.EntityHighlightSystem;
+import net.solocraft.util.SystemNotifications;
 
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 
@@ -193,12 +196,7 @@ public final class DungeonEncounterRuntime {
 			}
 			mob.getPersistentData().remove(DungeonMobLevelAdapter.PENDING_TRACK_TAG);
 		}
-		for (ServerPlayer player : level.players()) {
-			if (instance.participants().isEmpty() || instance.participants().contains(player.getUUID()))
-				player.displayClientMessage(Component.literal(encounter.boss()
-						? "Boss encounter started." : "Dungeon encounter started.")
-						.withStyle(encounter.boss() ? ChatFormatting.DARK_RED : ChatFormatting.RED), true);
-		}
+		syncEncounterHighlights(level, instance, encounter);
 		return true;
 	}
 
@@ -224,6 +222,7 @@ public final class DungeonEncounterRuntime {
 			return;
 		SololevelingMod.LOGGER.warn("Resetting dungeon encounter {} in instance {} after tracked mobs were missing for {} ticks",
 				encounter.key(), instance.id(), MISSING_MOB_RECOVERY_TICKS);
+		clearEncounterHighlights(level.getServer(), instance, encounter);
 		encounter.resetProgress();
 		MISSING_SINCE.remove(key);
 		RETRY_AFTER.put(key, level.getGameTime() + FAILED_ACTIVATION_RETRY_TICKS);
@@ -254,6 +253,7 @@ public final class DungeonEncounterRuntime {
 		if (state.isEmpty() || !state.get().untrackMob(entity.getUUID()))
 			return;
 		DungeonInstanceSavedData.EncounterState encounter = state.get();
+		clearEncounterHighlight(level.getServer(), instance, entity.getUUID());
 		RETRY_AFTER.remove(retryKey(instance, encounter));
 		MISSING_SINCE.remove(retryKey(instance, encounter));
 		if (!encounter.trackedMobs().isEmpty())
@@ -310,13 +310,18 @@ public final class DungeonEncounterRuntime {
 			Optional<DungeonInstanceSavedData.Instance> found = DungeonInstanceSavedData.get(level)
 					.getInstance(UUID.fromString(instanceText));
 			boolean pendingTrack = entity.getPersistentData().getBoolean(DungeonMobLevelAdapter.PENDING_TRACK_TAG);
+			Optional<DungeonInstanceSavedData.EncounterState> state = found
+					.flatMap(instance -> instance.encounter(encounterKey));
+			boolean tracked = state.map(value -> value.trackedMobs().contains(entity.getUUID())).orElse(false);
 			boolean valid = found.isPresent() && !found.get().completed()
-					&& found.get().encounter(encounterKey)
-							.map(state -> !state.completed() && (pendingTrack || state.trackedMobs().contains(entity.getUUID())))
-							.orElse(false);
+					&& state.map(value -> !value.completed() && (pendingTrack || tracked)).orElse(false);
 			if (!valid) {
 				event.setCanceled(true);
 				entity.discard();
+			} else if (tracked) {
+				DungeonMobLevelAdapter.MobRole role = DungeonMobLevelAdapter.MobRole.fromString(
+						entity.getPersistentData().getString(DungeonMobLevelAdapter.ROLE_TAG));
+				syncTargetHighlights(level.getServer(), found.get(), entity.getUUID(), role);
 			}
 		} catch (IllegalArgumentException ignored) {
 			event.setCanceled(true);
@@ -328,6 +333,7 @@ public final class DungeonEncounterRuntime {
 	public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
 		if (!(event.getEntity() instanceof ServerPlayer player))
 			return;
+		syncActiveHighlights(player);
 		String currentInstance = player.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG);
 		boolean completedParticipant = !currentInstance.isBlank()
 				&& DungeonInstanceSavedData.get(player.serverLevel()).listInstances().stream()
@@ -335,6 +341,19 @@ public final class DungeonEncounterRuntime {
 						&& instance.participants().contains(player.getUUID()));
 		if (completedParticipant)
 			setBossKilledCompatibility(player);
+	}
+
+	@SubscribeEvent
+	public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+		if (event.getEntity() instanceof ServerPlayer player)
+			syncActiveHighlights(player);
+	}
+
+	@SubscribeEvent
+	public static void onServerStopped(ServerStoppedEvent event) {
+		RETRY_AFTER.clear();
+		MISSING_SINCE.clear();
+		tickCounter = 0;
 	}
 
 	/** Applies a completion receipt only for a participant bound to this exact instance. */
@@ -350,6 +369,7 @@ public final class DungeonEncounterRuntime {
 	private static void completeInstance(MinecraftServer server, DungeonInstanceSavedData.Instance instance) {
 		if (!instance.setCompleted(true))
 			return;
+		clearInstanceHighlights(server, instance);
 		ServerLevel level = server.getLevel(instance.dimension());
 		for (DungeonInstanceSavedData.EncounterState encounter : instance.encounters()) {
 			RETRY_AFTER.remove(retryKey(instance, encounter));
@@ -368,8 +388,9 @@ public final class DungeonEncounterRuntime {
 					player.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG)))
 				continue;
 			setBossKilledCompatibility(player);
-			player.sendSystemMessage(Component.literal("Dungeon complete: " + instance.dungeonId())
-					.withStyle(ChatFormatting.GOLD));
+			SystemNotifications.showTitleUnder(player, 0xFF4DFF88, 90,
+					Component.literal("DUNGEON CLEARED"),
+					Component.literal("Boss defeated."));
 		}
 		SololevelingMod.LOGGER.info("Completed dungeon instance {} ({})", instance.id(), instance.dungeonId());
 	}
@@ -379,6 +400,115 @@ public final class DungeonEncounterRuntime {
 			variables.BossKilled = true;
 			variables.syncPlayerVariables(player);
 		});
+	}
+
+	private static void syncEncounterHighlights(ServerLevel level,
+			DungeonInstanceSavedData.Instance instance,
+			DungeonInstanceSavedData.EncounterState encounter) {
+		for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
+			if (!canReceiveInstanceHighlights(player, instance))
+				continue;
+			for (UUID targetId : encounter.trackedMobs()) {
+				Entity target = level.getEntity(targetId);
+				DungeonMobLevelAdapter.MobRole role = roleFor(target, encounter);
+				EntityHighlightSystem.show(player, targetId, instance.dimension(),
+						EntityHighlightSystem.dungeonSource(instance.id()),
+						EntityHighlightSystem.dungeonColor(role), 0,
+						EntityHighlightSystem.dungeonPriority(role));
+			}
+		}
+	}
+
+	private static void syncActiveHighlights(ServerPlayer player) {
+		DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(player.server);
+		for (DungeonInstanceSavedData.Instance instance : registry.listInstances()) {
+			if (instance.completed() || !canReceiveInstanceHighlights(player, instance))
+				continue;
+			ServerLevel level = player.server.getLevel(instance.dimension());
+			if (level == null)
+				continue;
+			for (DungeonInstanceSavedData.EncounterState encounter : instance.encounters()) {
+				if (!encounter.activated() || encounter.completed())
+					continue;
+				for (UUID targetId : encounter.trackedMobs()) {
+					Entity target = level.getEntity(targetId);
+					DungeonMobLevelAdapter.MobRole role = roleFor(target, encounter);
+					EntityHighlightSystem.show(player, targetId, instance.dimension(),
+							EntityHighlightSystem.dungeonSource(instance.id()),
+							EntityHighlightSystem.dungeonColor(role), 0,
+							EntityHighlightSystem.dungeonPriority(role));
+				}
+			}
+		}
+	}
+
+	private static void clearEncounterHighlight(MinecraftServer server,
+			DungeonInstanceSavedData.Instance instance, UUID targetId) {
+		String source = EntityHighlightSystem.dungeonSource(instance.id());
+		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+			if (canReceiveInstanceHighlights(player, instance))
+				EntityHighlightSystem.hide(player, targetId, instance.dimension(), source);
+		}
+	}
+
+	/** Removes every target lease for one encounter before it is reset or discarded. */
+	public static void clearEncounterHighlights(MinecraftServer server,
+			DungeonInstanceSavedData.Instance instance,
+			DungeonInstanceSavedData.EncounterState encounter) {
+		if (server == null || instance == null || encounter == null)
+			return;
+		String source = EntityHighlightSystem.dungeonSource(instance.id());
+		List<UUID> targetIds = List.copyOf(encounter.trackedMobs());
+		for (ServerPlayer player : server.getPlayerList().getPlayers())
+			for (UUID targetId : targetIds)
+				EntityHighlightSystem.hide(player, targetId, instance.dimension(), source);
+	}
+
+	/** Clears one instance's private outline source even after participant membership changes. */
+	public static void clearHighlightsFor(ServerPlayer player,
+			DungeonInstanceSavedData.Instance instance) {
+		if (player != null && instance != null)
+			EntityHighlightSystem.clearSource(player, EntityHighlightSystem.dungeonSource(instance.id()));
+	}
+
+	private static void syncTargetHighlights(MinecraftServer server,
+			DungeonInstanceSavedData.Instance instance, UUID targetId,
+			DungeonMobLevelAdapter.MobRole role) {
+		for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+			if (!canReceiveInstanceHighlights(player, instance))
+				continue;
+			EntityHighlightSystem.show(player, targetId, instance.dimension(),
+					EntityHighlightSystem.dungeonSource(instance.id()),
+					EntityHighlightSystem.dungeonColor(role), 0,
+					EntityHighlightSystem.dungeonPriority(role));
+		}
+	}
+
+	public static void clearInstanceHighlights(MinecraftServer server,
+			DungeonInstanceSavedData.Instance instance) {
+		if (server == null || instance == null)
+			return;
+		String source = EntityHighlightSystem.dungeonSource(instance.id());
+		for (ServerPlayer player : server.getPlayerList().getPlayers())
+			EntityHighlightSystem.clearSource(player, source);
+	}
+
+	private static boolean canReceiveInstanceHighlights(ServerPlayer player,
+			DungeonInstanceSavedData.Instance instance) {
+		if (instance.participants().contains(player.getUUID()))
+			return true;
+		return instance.participants().isEmpty() && instance.id().toString().equals(
+				player.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG));
+	}
+
+	private static DungeonMobLevelAdapter.MobRole roleFor(Entity target,
+			DungeonInstanceSavedData.EncounterState encounter) {
+		if (target != null) {
+			return DungeonMobLevelAdapter.MobRole.fromString(target.getPersistentData()
+					.getString(DungeonMobLevelAdapter.ROLE_TAG));
+		}
+		return encounter.boss() ? DungeonMobLevelAdapter.MobRole.BOSS
+				: DungeonMobLevelAdapter.MobRole.NORMAL;
 	}
 
 	private static String retryKey(DungeonInstanceSavedData.Instance instance,

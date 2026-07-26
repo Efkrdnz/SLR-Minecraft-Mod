@@ -11,6 +11,7 @@ import net.solocraft.world.dimension.rift.RiftTerritory;
 
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -19,7 +20,6 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -35,17 +35,20 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -57,11 +60,13 @@ import java.util.UUID;
 public final class SnowRedGateArenaManager {
 	public static final ResourceLocation ARENA_ID = new ResourceLocation("sololeveling", "red_gate_monarch_arena");
 	private static final ResourceLocation LEGACY_ARENA_ID = new ResourceLocation("sololeveling", "red_gate_snow_arena");
-	/** Retained only so runs created by the first Frost implementation can finish. */
+	/** Shared realm used by every Monarch Red Gate territory. */
 	public static final ResourceKey<Level> SNOW_DIMENSION = ResourceKey.create(Registries.DIMENSION,
 			new ResourceLocation("sololeveling", "dungeon_dimension_snow"));
 	public static final String TERRITORY_TAG = "slr_red_gate_territory";
-	private static final Map<RiftTerritory, ResourceKey<Level>> TERRITORY_DIMENSIONS = createTerritoryDimensions();
+	/** Removed dimension keys are retained only for active-save recovery. */
+	private static final Map<RiftTerritory, ResourceKey<Level>> LEGACY_TERRITORY_DIMENSIONS =
+			createLegacyTerritoryDimensions();
 
 	private static final ResourceLocation BEAR_POOL = new ResourceLocation("sololeveling", "red_gate_ice_bears");
 	private static final ResourceLocation ELF_POOL = new ResourceLocation("sololeveling", "red_gate_ice_elves");
@@ -73,20 +78,29 @@ public final class SnowRedGateArenaManager {
 	private static final String PROCEDURAL_DUNGEON_TAG = "slr_procedural_dungeon";
 	private static final String PROCEDURAL_RED_TAG = "slr_procedural_red_gate";
 	private static final String BOUNDARY_NOTICE_TAG = "slr_red_gate_boundary_notice";
-	private static final String WAVE_NOTICE_TAG = "slr_red_gate_wave_notice";
 	private static final int FIRST_WAVE_DELAY = 100;
 	private static final int INTERMISSION_TICKS = 160;
 	private static final int BOSS_INTRO_TICKS = 200;
-	private static final int ARENA_RADIUS = 112;
-	private static final int MOB_LEASH_RADIUS = 104;
+	private static final int ARENA_RADIUS = 80;
+	private static final int MOB_LEASH_RADIUS = 76;
 	private static final int MAX_ACTIVE_WAVE_MOBS = 18;
-	private static final int SAFE_ARENA_SEARCH_RADIUS = 96;
+	private static final int LANDSCAPE_RADIUS = 112;
+	private static final int LANDSCAPE_MIN_OFFSET = -4;
+	private static final int LANDSCAPE_MAX_OFFSET = 16;
+	private static final int LANDSCAPE_CLEAR_HEIGHT = 26;
+	private static final int SAFE_CLEARING_RADIUS = 11;
+	private static final int SCENERY_COUNT = 42;
+	private static final int SHARD_COUNT = 18;
+	/** Global horizontal-column budget shared by every arena being prepared. */
+	private static final int PREPARATION_WORK_BUDGET = 256;
+	private static final int MINIMUM_CELL_SEPARATION = ARENA_RADIUS * 2 + 64;
+	private static final Map<UUID, ArenaPreparationJob> PREPARATIONS = new LinkedHashMap<>();
 	private static int tickCounter;
 
 	private SnowRedGateArenaManager() {
 	}
 
-	private static Map<RiftTerritory, ResourceKey<Level>> createTerritoryDimensions() {
+	private static Map<RiftTerritory, ResourceKey<Level>> createLegacyTerritoryDimensions() {
 		Map<RiftTerritory, ResourceKey<Level>> dimensions = new EnumMap<>(RiftTerritory.class);
 		for (RiftTerritory territory : RiftTerritory.values())
 			dimensions.put(territory, ResourceKey.create(Registries.DIMENSION,
@@ -104,19 +118,72 @@ public final class SnowRedGateArenaManager {
 		return storedTerritory(gate).orElse(RiftTerritory.FROST);
 	}
 
-	private static Optional<RiftTerritory> territoryForDimension(ResourceKey<Level> dimension) {
-		if (SNOW_DIMENSION.equals(dimension))
-			return Optional.of(RiftTerritory.FROST);
-		return TERRITORY_DIMENSIONS.entrySet().stream()
+	private static Optional<RiftTerritory> legacyTerritoryForDimension(ResourceKey<Level> dimension) {
+		return LEGACY_TERRITORY_DIMENSIONS.entrySet().stream()
 				.filter(entry -> entry.getValue().equals(dimension))
 				.map(Map.Entry::getKey)
 				.findFirst();
 	}
 
+	private static Optional<RiftTerritory> territoryForInstance(DungeonInstanceSavedData.Instance instance) {
+		if (instance == null)
+			return Optional.empty();
+		Optional<RiftTerritory> legacy = legacyTerritoryForDimension(instance.dimension());
+		if (legacy.isPresent())
+			return legacy;
+		if (!SNOW_DIMENSION.equals(instance.dimension()))
+			return Optional.empty();
+		Optional<RiftTerritory> encoded = instance.playerStart()
+				.flatMap(RedGateRealmLayout::cellAt)
+				.map(RedGateRealmLayout.Cell::territory);
+		// The original snow arena predates encoded cells and was always Frost.
+		return encoded.isPresent() ? encoded : Optional.of(RiftTerritory.FROST);
+	}
+
+	private static boolean isArenaDimension(ResourceKey<Level> dimension) {
+		return SNOW_DIMENSION.equals(dimension) || legacyTerritoryForDimension(dimension).isPresent();
+	}
+
 	private static boolean isArenaInstance(DungeonInstanceSavedData.Instance instance) {
 		return instance != null && (ARENA_ID.equals(instance.dungeonId())
 				|| LEGACY_ARENA_ID.equals(instance.dungeonId()))
-				&& territoryForDimension(instance.dimension()).isPresent();
+				&& isArenaDimension(instance.dimension());
+	}
+
+	/** True when an entity belongs to a live Monarch Red Gate arena instance. */
+	public static boolean isArenaMob(Entity entity) {
+		if (entity == null || entity.level().isClientSide()
+				|| !(entity.level() instanceof ServerLevel level))
+			return false;
+		String instanceText = entity.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG);
+		try {
+			return !instanceText.isBlank() && DungeonInstanceSavedData.get(level)
+					.getInstance(UUID.fromString(instanceText))
+					.filter(SnowRedGateArenaManager::isArenaInstance)
+					.isPresent();
+		} catch (IllegalArgumentException ignored) {
+			return false;
+		}
+	}
+
+	/**
+	 * Resolves the exact territory of a live arena entity from its persisted
+	 * instance binding. Dimension identity alone is intentionally insufficient
+	 * now that every territory shares the snow realm.
+	 */
+	public static Optional<RiftTerritory> arenaTerritory(Entity entity) {
+		if (entity == null || entity.level().isClientSide()
+				|| !(entity.level() instanceof ServerLevel level))
+			return Optional.empty();
+		String instanceText = entity.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG);
+		try {
+			return instanceText.isBlank() ? Optional.empty() : DungeonInstanceSavedData.get(level)
+					.getInstance(UUID.fromString(instanceText))
+					.filter(SnowRedGateArenaManager::isArenaInstance)
+					.flatMap(SnowRedGateArenaManager::territoryForInstance);
+		} catch (IllegalArgumentException ignored) {
+			return Optional.empty();
+		}
 	}
 
 	/** True while at least one scoped Monarch red-gate run still exists. */
@@ -128,11 +195,18 @@ public final class SnowRedGateArenaManager {
 	/** Reconciles persistent gate state after a player leaves through the clear portal. */
 	public static void onParticipantExited(MinecraftServer server,
 			DungeonInstanceSavedData.Instance instance) {
-		if (server == null || !isArenaInstance(instance) || !instance.completed()
-				|| !instance.participants().isEmpty())
+		if (server == null || !isArenaInstance(instance) || !instance.participants().isEmpty())
 			return;
-		DungeonInstanceSavedData.get(server).pruneCompletedEmptyInstances();
-		recordArenaClosure(server, instance);
+		DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(server);
+		if (instance.completed()) {
+			registry.pruneCompletedEmptyInstances();
+			recordArenaClosure(server, instance);
+		} else {
+			// A self-service emergency exit is an abandonment, never a clear.
+			// Tear down the now-empty encounter so it cannot leave an orphaned
+			// instance, tracked mobs, or a permanently active Red Gate flag.
+			failAbandonedInstance(server, registry, instance);
+		}
 	}
 
 	/** Handles the original dedicated red-gate entity. */
@@ -168,7 +242,7 @@ public final class SnowRedGateArenaManager {
 	}
 
 	public static ResourceKey<Level> dimensionFor(RiftTerritory territory) {
-		return TERRITORY_DIMENSIONS.getOrDefault(territory, TERRITORY_DIMENSIONS.get(RiftTerritory.FROST));
+		return SNOW_DIMENSION;
 	}
 
 	private static boolean open(LevelAccessor world, Entity gate, ServerPlayer initiator,
@@ -180,6 +254,8 @@ public final class SnowRedGateArenaManager {
 					.withStyle(ChatFormatting.RED), true);
 			return true;
 		}
+		MinecraftServer server = sourceLevel.getServer();
+		DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(server);
 		List<ServerPlayer> entrants = sanitizeEntrants(sourceLevel, gate, initiator, requestedEntrants);
 		if (entrants.isEmpty())
 			return true;
@@ -192,7 +268,6 @@ public final class SnowRedGateArenaManager {
 			}
 		}
 
-		MinecraftServer server = sourceLevel.getServer();
 		ResourceKey<Level> destination = dimensionFor(territory);
 		ServerLevel arenaLevel = server.getLevel(destination);
 		if (arenaLevel == null) {
@@ -202,7 +277,7 @@ public final class SnowRedGateArenaManager {
 		}
 
 		UUID instanceId = gate.getUUID();
-		DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(server);
+		registry.pruneCompletedEmptyInstances();
 		if (registry.getInstance(instanceId).isPresent()) {
 			initiator.sendSystemMessage(Component.literal("This red gate already has an active encounter.")
 					.withStyle(ChatFormatting.RED));
@@ -212,8 +287,12 @@ public final class SnowRedGateArenaManager {
 		long seed = gate.getUUID().getMostSignificantBits() ^ gate.getUUID().getLeastSignificantBits()
 				^ arenaLevel.getSeed();
 		int effectiveLevel = effectiveLevelFor(territory, initiator, entrants);
-		BlockPos center = findArenaCenter(arenaLevel, targetCoordinate(gate, "tpx", gate.getX()),
-				targetCoordinate(gate, "tpz", gate.getZ()));
+		BlockPos center = allocateArenaCenter(arenaLevel, registry, territory).orElse(null);
+		if (center == null) {
+			openingFailure(world, gate, initiator,
+					"No isolated Red Gate arena cell is currently available.");
+			return true;
+		}
 
 		DungeonInstanceSavedData.MutationResult<DungeonInstanceSavedData.Instance> created = registry.create(
 				instanceId, ARENA_ID, destination, seed, effectiveLevel, arenaLevel.getGameTime());
@@ -231,12 +310,13 @@ public final class SnowRedGateArenaManager {
 				return true;
 			}
 		}
-		decorateArena(arenaLevel, center, seed, territory);
-		String setupProblem = configureInstance(arenaLevel, instance, center, entrants.size(), seed, territory);
-		if (setupProblem != null) {
+		// Persist the allocated cell before any world work begins. This reserves the
+		// collision-safe slot across restarts; an instance with a center and no
+		// encounters is the durable "preparing" state.
+		if (!instance.setPlayerStart(center)) {
 			registry.remove(instanceId);
 			openingFailure(world, gate, initiator,
-					"Could not prepare the red gate encounter: " + setupProblem);
+					"Could not reserve the red gate arena cell.");
 			return true;
 		}
 
@@ -252,14 +332,8 @@ public final class SnowRedGateArenaManager {
 		SololevelingModVariables.MapVariables.get(world).RedGate = true;
 		SololevelingModVariables.MapVariables.get(world).syncData(world);
 
-		for (ServerPlayer entrant : entrants) {
-			entrant.sendSystemMessage(Component.literal("RED GATE — " + territory.displayName().toUpperCase())
-					.withStyle(ChatFormatting.BOLD, ChatFormatting.DARK_RED));
-			entrant.displayClientMessage(Component.literal("Survive the Monarch's assault. The exit will remain sealed.")
-					.withStyle(ChatFormatting.AQUA), true);
-		}
-		SololevelingMod.queueServerWork(10, () -> teleportEntrants(arenaLevel, center, entrants, instance));
-		SololevelingMod.LOGGER.info("Created {} Monarch red-gate arena {} at {} for {} participant(s), effective level {}",
+		enqueuePreparation(instance, center, territory);
+		SololevelingMod.LOGGER.info("Queued {} Monarch red-gate arena {} at {} for {} participant(s), effective level {}",
 				territory.id(), instanceId, center, entrants.size(), effectiveLevel);
 		return true;
 	}
@@ -393,6 +467,12 @@ public final class SnowRedGateArenaManager {
 			BlockPos position = new BlockPos(x, y, z);
 			if (safeStandingPosition(level, position))
 				return position;
+			for (int scanY = level.getMaxBuildHeight() - 3;
+					scanY > level.getMinBuildHeight() + 1; scanY--) {
+				BlockPos scanned = new BlockPos(x, scanY, z);
+				if (safeStandingPosition(level, scanned))
+					return scanned;
+			}
 		}
 		return fallbackCenter != null && safeStandingPosition(level, fallbackCenter) ? fallbackCenter : null;
 	}
@@ -402,6 +482,7 @@ public final class SnowRedGateArenaManager {
 			return false;
 		BlockState floor = level.getBlockState(position.below());
 		return floor.isFaceSturdy(level, position.below(), Direction.UP)
+				&& !floor.is(Blocks.BEDROCK)
 				&& !isUnsafeLandingBlock(floor)
 				&& level.getFluidState(position).isEmpty()
 				&& level.getFluidState(position.above()).isEmpty()
@@ -412,49 +493,50 @@ public final class SnowRedGateArenaManager {
 				&& !isUnsafeLandingBlock(level.getBlockState(position.above()));
 	}
 
-	private static BlockPos findArenaCenter(ServerLevel level, int targetX, int targetZ) {
-		BlockPos best = null;
-		int bestScore = Integer.MAX_VALUE;
-		for (int offsetX = -SAFE_ARENA_SEARCH_RADIUS; offsetX <= SAFE_ARENA_SEARCH_RADIUS; offsetX += 16) {
-			for (int offsetZ = -SAFE_ARENA_SEARCH_RADIUS; offsetZ <= SAFE_ARENA_SEARCH_RADIUS; offsetZ += 16) {
-				BlockPos candidate = findSafeSurface(level, targetX + offsetX, targetZ + offsetZ, null);
-				if (candidate == null)
-					continue;
-				int distancePenalty = (Math.abs(offsetX) + Math.abs(offsetZ)) / 16;
-				int score = terrainScore(level, candidate) * 4 + distancePenalty;
-				if (score < bestScore) {
-					best = candidate;
-					bestScore = score;
-				}
-			}
+	private static Optional<BlockPos> allocateArenaCenter(ServerLevel level,
+			DungeonInstanceSavedData registry, RiftTerritory territory) {
+		Set<Integer> occupiedSlots = new HashSet<>();
+		List<BlockPos> occupiedCenters = new ArrayList<>();
+		for (DungeonInstanceSavedData.Instance existing : registry.listInstances()) {
+			if (!SNOW_DIMENSION.equals(existing.dimension()))
+				continue;
+			BlockPos existingCenter = existing.playerStart().orElse(null);
+			if (existingCenter == null)
+				continue;
+			occupiedCenters.add(existingCenter);
+			RedGateRealmLayout.cellAt(existingCenter)
+					.filter(cell -> cell.territory() == territory)
+					.ifPresent(cell -> occupiedSlots.add(cell.slot()));
 		}
-		if (best == null)
-			best = surface(level, targetX, targetZ);
-		prepareLanding(level, best);
-		return best;
-	}
 
-	private static int terrainScore(ServerLevel level, BlockPos center) {
-		int minimum = Integer.MAX_VALUE;
-		int maximum = Integer.MIN_VALUE;
-		for (int[] sample : new int[][]{{0, 0}, {8, 0}, {-8, 0}, {0, 8}, {0, -8}}) {
-			int height = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-					center.getX() + sample[0], center.getZ() + sample[1]);
-			minimum = Math.min(minimum, height);
-			maximum = Math.max(maximum, height);
+		long minimumDistanceSquared = (long) MINIMUM_CELL_SEPARATION * MINIMUM_CELL_SEPARATION;
+		for (int slot = 0; slot < RedGateRealmLayout.MAX_SLOTS_PER_TERRITORY; slot++) {
+			if (occupiedSlots.contains(slot))
+				continue;
+			BlockPos horizontal = RedGateRealmLayout.center(territory, slot, 0);
+			boolean overlaps = occupiedCenters.stream().anyMatch(existing -> {
+				long dx = (long) existing.getX() - horizontal.getX();
+				long dz = (long) existing.getZ() - horizontal.getZ();
+				return dx * dx + dz * dz < minimumDistanceSquared;
+			});
+			if (overlaps)
+				continue;
+
+			int standingY = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+					horizontal.getX(), horizontal.getZ());
+			if (standingY <= level.getMinBuildHeight() + 1)
+				standingY = Mth.clamp(64, level.getMinBuildHeight() + 8, level.getMaxBuildHeight() - 16);
+			return Optional.of(new BlockPos(horizontal.getX(), standingY, horizontal.getZ()));
 		}
-		return maximum - minimum;
+		return Optional.empty();
 	}
 
 	private static BlockPos surface(ServerLevel level, int x, int z) {
 		return new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
 	}
 
-	private static void prepareLanding(ServerLevel level, BlockPos center) {
-		Block support = territoryForDimension(level.dimension())
-				.map(SnowRedGateArenaManager::paletteFor)
-				.map(ArenaPalette::groundPrimary)
-				.orElse(Blocks.STONE);
+	private static void prepareLanding(ServerLevel level, BlockPos center, RiftTerritory territory) {
+		Block support = paletteFor(territory).groundPrimary();
 		for (int dx = -2; dx <= 2; dx++) {
 			for (int dz = -2; dz <= 2; dz++) {
 				BlockPos standing = center.offset(dx, 0, dz);
@@ -463,18 +545,23 @@ public final class SnowRedGateArenaManager {
 				if (!floorState.isFaceSturdy(level, floor, Direction.UP)
 						|| isUnsafeLandingBlock(floorState)
 						|| !level.getFluidState(floor).isEmpty()) {
-					level.setBlockAndUpdate(floor, support.defaultBlockState());
+					setBlockIfChanged(level, floor, support.defaultBlockState());
 				}
 				for (int y = 0; y <= 3; y++) {
 					BlockPos clear = standing.above(y);
-					if (!level.getBlockState(clear).getCollisionShape(level, clear).isEmpty()
+					BlockState clearState = level.getBlockState(clear);
+					if (!clearState.getCollisionShape(level, clear).isEmpty()
 							|| !level.getFluidState(clear).isEmpty()
-							|| isUnsafeLandingBlock(level.getBlockState(clear))) {
-						level.setBlockAndUpdate(clear, Blocks.AIR.defaultBlockState());
+							|| isUnsafeLandingBlock(clearState)) {
+						setBlockIfChanged(level, clear, Blocks.AIR.defaultBlockState());
 					}
 				}
 			}
 		}
+	}
+
+	private static boolean setBlockIfChanged(ServerLevel level, BlockPos position, BlockState state) {
+		return !state.equals(level.getBlockState(position)) && level.setBlock(position, state, 2);
 	}
 
 	private static boolean isUnsafeLandingBlock(BlockState state) {
@@ -489,79 +576,202 @@ public final class SnowRedGateArenaManager {
 				|| state.is(Blocks.SOUL_CAMPFIRE);
 	}
 
-	/**
-	 * Gives each run a recognizable territory-themed clearing without relying on
-	 * reusable structure files. Deterministic palette seams and perimeter shards
-	 * make the combat space readable from the spawn point.
-	 */
-	private static void decorateArena(ServerLevel level, BlockPos center, long seed, RiftTerritory territory) {
-		ArenaPalette palette = paletteFor(territory);
-		RandomSource random = RandomSource.create(seed ^ 0x51A7E0F12D34B678L);
-		int clearingRadius = 27;
-		for (int dx = -clearingRadius; dx <= clearingRadius; dx++) {
-			for (int dz = -clearingRadius; dz <= clearingRadius; dz++) {
-				int distanceSquared = dx * dx + dz * dz;
-				if (distanceSquared > clearingRadius * clearingRadius)
-					continue;
-				BlockPos top = surface(level, center.getX() + dx, center.getZ() + dz);
-				BlockPos ground = top.below();
-				if (level.getBlockState(ground).is(Blocks.SNOW))
-					ground = ground.below();
-				if (!level.getBlockState(ground).isFaceSturdy(level, ground, Direction.UP)
-						|| level.getBlockState(ground).is(Blocks.BEDROCK))
-					continue;
-				double radial = Math.sqrt(distanceSquared) / clearingRadius;
-				double iceChance = 0.12D + radial * 0.24D;
-				double roll = random.nextDouble();
-				if (roll < iceChance * 0.16D)
-					level.setBlockAndUpdate(ground, palette.groundAccent().defaultBlockState());
-				else if (roll < iceChance)
-					level.setBlockAndUpdate(ground, palette.groundSecondary().defaultBlockState());
-				else if (roll < 0.58D)
-					level.setBlockAndUpdate(ground, palette.groundPrimary().defaultBlockState());
-			}
-		}
+	private static boolean isPreparingInstance(DungeonInstanceSavedData.Instance instance) {
+		return isArenaInstance(instance) && !instance.completed()
+				&& instance.playerStart().isPresent() && instance.encounters().isEmpty();
+	}
 
-		for (int shard = 0; shard < 12; shard++) {
-			double angle = Math.PI * 2.0D * shard / 12.0D + random.nextDouble() * 0.18D;
-			int radius = 29 + random.nextInt(6);
-			BlockPos base = surface(level,
-					center.getX() + Mth.floor(Math.cos(angle) * radius),
-					center.getZ() + Mth.floor(Math.sin(angle) * radius));
-			int height = 3 + random.nextInt(5);
-			for (int y = 0; y < height; y++) {
-				BlockPos shardPos = base.above(y);
-				if (!level.getBlockState(shardPos).isAir() && !level.getBlockState(shardPos).is(Blocks.SNOW))
-					break;
-				level.setBlockAndUpdate(shardPos,
-						y == height - 1 || random.nextInt(5) == 0
-								? palette.shardAccent().defaultBlockState() : palette.shardPrimary().defaultBlockState());
+	private static void enqueuePreparation(DungeonInstanceSavedData.Instance instance,
+			BlockPos center, RiftTerritory territory) {
+		PREPARATIONS.compute(instance.id(), (ignored, existing) ->
+				existing != null && existing.matches(center, territory, instance.seed())
+						? existing : new ArenaPreparationJob(instance.id(), center, territory, instance.seed()));
+	}
+
+	/** Reconstructs a lost in-memory job from the durable preparing state. */
+	private static void ensurePreparationQueued(DungeonInstanceSavedData.Instance instance) {
+		if (!isPreparingInstance(instance))
+			return;
+		BlockPos center = instance.playerStart().orElse(null);
+		RiftTerritory territory = territoryForInstance(instance).orElse(null);
+		if (center != null && territory != null)
+			enqueuePreparation(instance, center, territory);
+	}
+
+	private static List<ServerPlayer> onlineBoundParticipants(MinecraftServer server,
+			DungeonInstanceSavedData.Instance instance) {
+		String instanceId = instance.id().toString();
+		Set<UUID> participants = instance.participants();
+		return server.getPlayerList().getPlayers().stream()
+				.filter(player -> participants.contains(player.getUUID()))
+				.filter(player -> instanceId.equals(player.getPersistentData()
+						.getString(DungeonMobLevelAdapter.INSTANCE_TAG)))
+				.toList();
+	}
+
+	private static void processPreparationJobs(MinecraftServer server) {
+		if (PREPARATIONS.isEmpty())
+			return;
+		DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(server);
+		List<ArenaPreparationJob> runnable = new ArrayList<>();
+		for (ArenaPreparationJob job : new ArrayList<>(PREPARATIONS.values())) {
+			DungeonInstanceSavedData.Instance instance = registry.getInstance(job.instanceId()).orElse(null);
+			if (instance == null || !isPreparingInstance(instance)) {
+				PREPARATIONS.remove(job.instanceId());
+				continue;
+			}
+			if (!job.matches(instance.playerStart().orElse(null),
+					territoryForInstance(instance).orElse(null), instance.seed())) {
+				failPreparation(server, registry, instance,
+						"the persisted arena allocation changed while it was preparing", null);
+				continue;
+			}
+			if (instance.participants().isEmpty()) {
+				failAbandonedInstance(server, registry, instance);
+				continue;
+			}
+			if (server.getLevel(instance.dimension()) == null) {
+				failPreparation(server, registry, instance,
+						"the shared Red Gate realm is unavailable", null);
+				continue;
+			}
+			// No bound player means no reason to touch or retain the arena chunks.
+			if (!onlineBoundParticipants(server, instance).isEmpty())
+				runnable.add(job);
+		}
+		if (runnable.isEmpty())
+			return;
+
+		int remaining = PREPARATION_WORK_BUDGET;
+		for (int index = 0; index < runnable.size() && remaining > 0; index++) {
+			ArenaPreparationJob job = runnable.get(index);
+			int jobsLeft = runnable.size() - index;
+			int allowance = Math.max(1, remaining / jobsLeft);
+			int used = advancePreparation(server, registry, job, allowance);
+			remaining -= Math.min(remaining, used);
+		}
+	}
+
+	private static int advancePreparation(MinecraftServer server, DungeonInstanceSavedData registry,
+			ArenaPreparationJob job, int allowance) {
+		DungeonInstanceSavedData.Instance instance = registry.getInstance(job.instanceId())
+				.filter(SnowRedGateArenaManager::isPreparingInstance)
+				.orElse(null);
+		if (instance == null) {
+			PREPARATIONS.remove(job.instanceId());
+			return 0;
+		}
+		ServerLevel level = server.getLevel(instance.dimension());
+		if (level == null) {
+			failPreparation(server, registry, instance,
+					"the shared Red Gate realm became unavailable", null);
+			return 0;
+		}
+		try {
+			int used = job.advance(level, allowance);
+			if (job.finished())
+				finishPreparation(server, registry, level, instance, job);
+			return used;
+		} catch (RuntimeException exception) {
+			failPreparation(server, registry, instance,
+					"an unexpected world-generation error occurred", exception);
+			return 0;
+		}
+	}
+
+	private static void finishPreparation(MinecraftServer server, DungeonInstanceSavedData registry,
+			ServerLevel level, DungeonInstanceSavedData.Instance instance, ArenaPreparationJob job) {
+		if (!isPreparingInstance(instance)) {
+			PREPARATIONS.remove(job.instanceId());
+			return;
+		}
+		prepareLanding(level, job.center(), job.territory());
+		String setupProblem = configureInstance(level, instance, job.center(),
+				Math.max(1, instance.participants().size()), instance.seed(), job.territory());
+		if (setupProblem != null) {
+			failPreparation(server, registry, instance,
+					"encounter setup failed: " + setupProblem, null);
+			return;
+		}
+		PREPARATIONS.remove(job.instanceId());
+		List<ServerPlayer> entrants = onlineBoundParticipants(server, instance);
+		for (ServerPlayer entrant : entrants)
+			entrant.setNoGravity(true);
+		if (!entrants.isEmpty())
+			SololevelingMod.queueServerWork(server, 1,
+					() -> teleportEntrants(level, job.center(), entrants, instance));
+		SololevelingMod.LOGGER.info("Prepared {} Monarch red-gate arena {} at {} in staged server ticks",
+				job.territory().id(), instance.id(), job.center());
+	}
+
+	private static void failPreparation(MinecraftServer server, DungeonInstanceSavedData registry,
+			DungeonInstanceSavedData.Instance instance, String reason, RuntimeException exception) {
+		PREPARATIONS.remove(instance.id());
+		DungeonEncounterRuntime.clearInstanceHighlights(server, instance);
+		discardTrackedMobs(server, instance);
+		registry.remove(instance.id());
+		rollbackPreparingGate(server, instance.id());
+		for (ServerPlayer participant : server.getPlayerList().getPlayers()) {
+			if (!instance.participants().contains(participant.getUUID())
+					|| !instance.id().toString().equals(participant.getPersistentData()
+							.getString(DungeonMobLevelAdapter.INSTANCE_TAG)))
+				continue;
+			if (isArenaDimension(participant.level().dimension()))
+				recoverEntrant(participant,
+						"The Red Gate could not finish stabilizing, so you were returned safely.");
+			else {
+				clearEntrantState(participant);
+				participant.sendSystemMessage(Component.literal(
+						"The Red Gate could not finish stabilizing. You may try it again.")
+						.withStyle(ChatFormatting.YELLOW));
 			}
 		}
-		if (palette.precipitation())
-			level.setWeatherParameters(0, 12_000, true, false);
+		refreshArenaFlag(server);
+		if (exception == null)
+			SololevelingMod.LOGGER.warn("Cancelled preparing Monarch red-gate arena {}: {}",
+					instance.id(), reason);
 		else
-			level.setWeatherParameters(12_000, 0, false, false);
+			SololevelingMod.LOGGER.error("Cancelled preparing Monarch red-gate arena {}: {}",
+					instance.id(), reason, exception);
+	}
+
+	private static void rollbackPreparingGate(MinecraftServer server, UUID gateId) {
+		for (ServerLevel level : server.getAllLevels()) {
+			Entity gate = level.getEntity(gateId);
+			if (gate == null)
+				continue;
+			gate.getPersistentData().remove(GATE_INSTANCE_TAG);
+			gate.getPersistentData().putBoolean(PROCEDURAL_RED_TAG, false);
+			gate.getPersistentData().putBoolean("slr_is_red_gate", false);
+			if (gate instanceof Portal1Entity portal) {
+				portal.getEntityData().set(Portal1Entity.DATA_usedbefore, false);
+				portal.setTexture("portalgate2");
+			} else if (gate instanceof RedGateEntity redGate) {
+				redGate.getEntityData().set(RedGateEntity.DATA_usedbefore, false);
+				redGate.setTexture("portalgate2");
+			}
+			return;
+		}
 	}
 
 	private static ArenaPalette paletteFor(RiftTerritory territory) {
 		return switch (territory) {
 			case DESTRUCTION -> new ArenaPalette(Blocks.RED_TERRACOTTA, Blocks.NETHERRACK,
-					Blocks.MAGMA_BLOCK, Blocks.BLACKSTONE, Blocks.POLISHED_BLACKSTONE, false);
+					Blocks.MAGMA_BLOCK, Blocks.BLACKSTONE, Blocks.POLISHED_BLACKSTONE);
 			case FROST -> new ArenaPalette(Blocks.SNOW_BLOCK, Blocks.PACKED_ICE,
-					Blocks.BLUE_ICE, Blocks.PACKED_ICE, Blocks.BLUE_ICE, true);
+					Blocks.BLUE_ICE, Blocks.PACKED_ICE, Blocks.BLUE_ICE);
 			case FANGS -> new ArenaPalette(Blocks.MOSS_BLOCK, Blocks.PODZOL,
-					Blocks.COARSE_DIRT, Blocks.MOSSY_COBBLESTONE, Blocks.MOSS_BLOCK, true);
+					Blocks.COARSE_DIRT, Blocks.MOSSY_COBBLESTONE, Blocks.MOSS_BLOCK);
 			case PLAGUES -> new ArenaPalette(Blocks.MUD, Blocks.GREEN_TERRACOTTA,
-					Blocks.CLAY, Blocks.BROWN_TERRACOTTA, Blocks.GREEN_TERRACOTTA, true);
+					Blocks.CLAY, Blocks.BROWN_TERRACOTTA, Blocks.GREEN_TERRACOTTA);
 			case IRON_BODY -> new ArenaPalette(Blocks.TUFF, Blocks.ANDESITE,
-					Blocks.GRAY_TERRACOTTA, Blocks.SMOOTH_BASALT, Blocks.POLISHED_ANDESITE, false);
+					Blocks.GRAY_TERRACOTTA, Blocks.SMOOTH_BASALT, Blocks.POLISHED_ANDESITE);
 			case WHITE_FLAMES -> new ArenaPalette(Blocks.SOUL_SOIL, Blocks.WHITE_TERRACOTTA,
-					Blocks.SOUL_SAND, Blocks.CALCITE, Blocks.SMOOTH_QUARTZ, false);
+					Blocks.SOUL_SAND, Blocks.CALCITE, Blocks.SMOOTH_QUARTZ);
 			case TRANSFIGURATION -> new ArenaPalette(Blocks.WARPED_NYLIUM, Blocks.PURPLE_TERRACOTTA,
-					Blocks.CYAN_TERRACOTTA, Blocks.WARPED_WART_BLOCK, Blocks.CRYING_OBSIDIAN, false);
+					Blocks.CYAN_TERRACOTTA, Blocks.WARPED_WART_BLOCK, Blocks.CRYING_OBSIDIAN);
 			case BEGINNING -> new ArenaPalette(Blocks.SCULK, Blocks.DEEPSLATE,
-					Blocks.BLACKSTONE, Blocks.POLISHED_BLACKSTONE, Blocks.CHISELED_POLISHED_BLACKSTONE, true);
+					Blocks.BLACKSTONE, Blocks.POLISHED_BLACKSTONE, Blocks.CHISELED_POLISHED_BLACKSTONE);
 		};
 	}
 
@@ -573,6 +783,7 @@ public final class SnowRedGateArenaManager {
 		if (current.isEmpty())
 			return;
 		DungeonInstanceSavedData.Instance activeInstance = current.get();
+		RiftTerritory territory = territoryForInstance(activeInstance).orElse(RiftTerritory.FROST);
 		boolean removedStaleBinding = false;
 		for (int index = 0; index < entrants.size(); index++) {
 			ServerPlayer entrant = entrants.get(index);
@@ -581,13 +792,16 @@ public final class SnowRedGateArenaManager {
 			if (!activeInstance.participants().contains(entrant.getUUID())
 					|| !activeInstance.id().toString().equals(entrant.getPersistentData()
 							.getString(DungeonMobLevelAdapter.INSTANCE_TAG))) {
+				DungeonEncounterRuntime.clearHighlightsFor(entrant, activeInstance);
 				removedStaleBinding |= activeInstance.removeParticipant(entrant.getUUID());
 				continue;
 			}
 			double angle = Math.PI * 2.0D * index / Math.max(1, entrants.size());
-			BlockPos arrival = surface(level, center.getX() + Mth.floor(Math.cos(angle) * 3.0D),
-					center.getZ() + Mth.floor(Math.sin(angle) * 3.0D));
-			prepareLanding(level, arrival);
+			// Keep the validated arena Y. Re-querying the heightmap here could return
+			// the dimension's void-floor Y even though the center was already safe.
+			BlockPos arrival = center.offset(Mth.floor(Math.cos(angle) * 3.0D), 0,
+					Mth.floor(Math.sin(angle) * 3.0D));
+			prepareLanding(level, arrival, territory);
 			entrant.teleportTo(level, arrival.getX() + 0.5D, arrival.getY(), arrival.getZ() + 0.5D,
 					entrant.getYRot(), entrant.getXRot());
 			entrant.setNoGravity(false);
@@ -621,9 +835,10 @@ public final class SnowRedGateArenaManager {
 		entrant.getPersistentData().putBoolean(PROCEDURAL_RED_TAG, true);
 		entrant.getPersistentData().putString(TERRITORY_TAG, territory.id());
 		entrant.getPersistentData().putString(DungeonMobLevelAdapter.INSTANCE_TAG, instance.id().toString());
-		entrant.getPersistentData().remove(WAVE_NOTICE_TAG);
 		UrgentQuestManager.markDungeonId(entrant, "red_gate");
-		entrant.setNoGravity(true);
+		// The player remains in the source world while the cell is prepared. Freeze
+		// gravity only for the final one-tick teleport handoff.
+		entrant.setNoGravity(false);
 	}
 
 	private static void discardOwnedShadows(ServerLevel level, Entity gate, ServerPlayer owner) {
@@ -680,40 +895,45 @@ public final class SnowRedGateArenaManager {
 				.orElse(false);
 	}
 
-	private static int targetCoordinate(Entity gate, String key, double fallback) {
-		double value = gate.getPersistentData().contains(key, Tag.TAG_ANY_NUMERIC)
-				? gate.getPersistentData().getDouble(key) : fallback;
-		return Mth.clamp(Mth.floor(value), -29_999_000, 29_999_000);
-	}
-
 	@SubscribeEvent
 	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || ++tickCounter % 20 != 0)
+		if (event.phase != TickEvent.Phase.END)
 			return;
 		MinecraftServer server = event.getServer();
-		for (DungeonInstanceSavedData.Instance instance : DungeonInstanceSavedData.get(server).listInstances()) {
+		processPreparationJobs(server);
+		if (++tickCounter % 20 != 0)
+			return;
+		DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(server);
+		for (DungeonInstanceSavedData.Instance instance : registry.listInstances()) {
 			if (!isArenaInstance(instance))
 				continue;
 			ServerLevel level = server.getLevel(instance.dimension());
-			if (level == null)
+			if (level == null) {
+				failUnavailableInstance(server, registry, instance,
+						"A legacy Red Gate realm was retired, so you were returned safely.");
 				continue;
+			}
 			Optional<BlockPos> center = instance.playerStart();
-			if (center.isEmpty())
+			if (center.isEmpty()) {
+				failUnavailableInstance(server, registry, instance,
+						"Your Red Gate arena had no valid center, so you were returned safely.");
 				continue;
+			}
+			if (isPreparingInstance(instance)) {
+				ensurePreparationQueued(instance);
+				continue;
+			}
 			enforceBoundary(level, instance, center.get());
 			leashEncounterMobs(level, instance, center.get());
-			if (instance.completed()) {
+			if (instance.completed())
 				ensureReturnPortal(level, instance);
-				updatePlayerFeedback(level, instance, null);
-			} else {
-				DungeonInstanceSavedData.EncounterState activeWave = instance.encounters().stream()
-						.filter(encounter -> encounter.activated() && !encounter.completed())
-						.min(Comparator.comparingInt(DungeonInstanceSavedData.EncounterState::sequenceOrder))
-						.orElse(null);
-				if (activeWave != null)
-					updatePlayerFeedback(level, instance, activeWave);
-			}
 		}
+	}
+
+	@SubscribeEvent
+	public static void onServerStopped(ServerStoppedEvent event) {
+		PREPARATIONS.clear();
+		tickCounter = 0;
 	}
 
 	/** Restores a participant if the server stopped or they disconnected during entry. */
@@ -805,7 +1025,7 @@ public final class SnowRedGateArenaManager {
 		player.getPersistentData().putString("dungeon_tag", instance.id().toString());
 		player.getPersistentData().putBoolean(PROCEDURAL_DUNGEON_TAG, true);
 		player.getPersistentData().putBoolean(PROCEDURAL_RED_TAG, true);
-		territoryForDimension(instance.dimension()).ifPresent(territory ->
+		territoryForInstance(instance).ifPresent(territory ->
 				player.getPersistentData().putString(TERRITORY_TAG, territory.id()));
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			capability.dungeoning = true;
@@ -823,6 +1043,12 @@ public final class SnowRedGateArenaManager {
 					"That Monarch territory is unavailable, so you were returned safely.");
 			return;
 		}
+		if (isPreparingInstance(instance)) {
+			ensurePreparationQueued(instance);
+			player.setNoGravity(false);
+			player.fallDistance = 0.0F;
+			return;
+		}
 		if (player.level() == level) {
 			player.setNoGravity(false);
 			player.fallDistance = 0.0F;
@@ -830,14 +1056,14 @@ public final class SnowRedGateArenaManager {
 			return;
 		}
 		player.setNoGravity(true);
-		SololevelingMod.queueServerWork(1, () -> {
+		SololevelingMod.queueServerWork(player.server, 1, () -> {
 			if (!player.hasDisconnected() && instance.id().toString().equals(
 					player.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG)))
 				teleportEntrants(level, center, List.of(player), instance);
 		});
 	}
 
-	/** A red gate is a no-respawn encounter: death ejects that participant. */
+	/** Death ejects the player while the sealed entrance remains until it breaks. */
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void onPlayerClone(PlayerEvent.Clone event) {
 		if (!event.isWasDeath() || !(event.getOriginal() instanceof ServerPlayer original)
@@ -851,14 +1077,16 @@ public final class SnowRedGateArenaManager {
 		if (memberships.isEmpty())
 			return;
 		for (DungeonInstanceSavedData.Instance instance : memberships)
-			detachArenaParticipant(original.getServer(), registry, instance, original.getUUID());
+			detachArenaParticipant(original.server, registry, instance, original.getUUID());
 		clearEntrantState(clone);
-		clone.sendSystemMessage(Component.literal("You were expelled from the red gate.")
-				.withStyle(ChatFormatting.DARK_RED));
+		clone.sendSystemMessage(Component.literal(
+				"You died inside the red gate. Its entrance remains sealed until the gate breaks.")
+				.withStyle(ChatFormatting.YELLOW));
 	}
 
 	private static void detachArenaParticipant(MinecraftServer server, DungeonInstanceSavedData registry,
 			DungeonInstanceSavedData.Instance instance, UUID playerId) {
+		DungeonEncounterRuntime.clearHighlightsFor(server.getPlayerList().getPlayer(playerId), instance);
 		instance.removeParticipant(playerId);
 		if (!instance.participants().isEmpty())
 			return;
@@ -874,7 +1102,7 @@ public final class SnowRedGateArenaManager {
 	}
 
 	private static boolean needsArenaRecovery(ServerPlayer player) {
-		boolean inTerritory = territoryForDimension(player.level().dimension()).isPresent();
+		boolean inTerritory = isArenaDimension(player.level().dimension());
 		boolean dungeonCapability = player
 				.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 				.map(capability -> capability.dungeoning)
@@ -886,7 +1114,7 @@ public final class SnowRedGateArenaManager {
 	}
 
 	private static void recoverEntrant(ServerPlayer player, String message) {
-		boolean stranded = territoryForDimension(player.level().dimension()).isPresent();
+		boolean stranded = isArenaDimension(player.level().dimension());
 		ServerLevel overworld = player.server.getLevel(Level.OVERWORLD);
 		SololevelingModVariables.PlayerVariables variables = player
 				.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -913,10 +1141,16 @@ public final class SnowRedGateArenaManager {
 		}
 		clearEntrantState(player);
 		player.sendSystemMessage(Component.literal(message).withStyle(ChatFormatting.YELLOW));
-		if (!stranded || overworld == null)
+		// A removed custom dimension can make Minecraft place the player in the
+		// Overworld before this login event runs. The persisted dungeon return is
+		// still authoritative in that case, so do not require the current level to
+		// be one of the (now unavailable) arena dimensions.
+		boolean shouldReturn = stranded || hasSavedReturn;
+		if (!shouldReturn || overworld == null)
 			return;
-		SololevelingMod.queueServerWork(1, () -> {
-			if (player.hasDisconnected() || territoryForDimension(player.level().dimension()).isEmpty())
+		SololevelingMod.queueServerWork(player.server, 1, () -> {
+			if (player.hasDisconnected()
+					|| (stranded && !isArenaDimension(player.level().dimension())))
 				return;
 			player.teleportTo(overworld, returnX, returnY, returnZ, player.getYRot(), player.getXRot());
 			player.setNoGravity(false);
@@ -927,7 +1161,6 @@ public final class SnowRedGateArenaManager {
 	private static void clearEntrantState(ServerPlayer player) {
 		player.getPersistentData().remove(DungeonMobLevelAdapter.INSTANCE_TAG);
 		player.getPersistentData().remove("dungeon_tag");
-		player.getPersistentData().remove(WAVE_NOTICE_TAG);
 		player.getPersistentData().remove(BOUNDARY_NOTICE_TAG);
 		player.getPersistentData().putBoolean(PROCEDURAL_DUNGEON_TAG, false);
 		player.getPersistentData().putBoolean(PROCEDURAL_RED_TAG, false);
@@ -942,15 +1175,26 @@ public final class SnowRedGateArenaManager {
 
 	private static void failAbandonedInstance(MinecraftServer server, DungeonInstanceSavedData registry,
 			DungeonInstanceSavedData.Instance instance) {
+		PREPARATIONS.remove(instance.id());
+		DungeonEncounterRuntime.clearInstanceHighlights(server, instance);
 		discardTrackedMobs(server, instance);
 		registry.remove(instance.id());
-		recordArenaClosure(server, instance);
-		SololevelingMod.LOGGER.info("Failed empty Monarch red-gate arena {} after its last participant died",
+		// Abandonment is not a clear. Keep the already-used Overworld gate locked
+		// and leave the Red Gate flag set until PortalPerTick performs its normal
+		// lifetime break. Recording a closure here would discard the gate at once.
+		SololevelingModVariables.MapVariables variables =
+				SololevelingModVariables.MapVariables.get(server.overworld());
+		variables.RedGate = true;
+		variables.syncData(server.overworld());
+		SololevelingMod.LOGGER.info(
+				"Closed empty Monarch red-gate arena {}; its entrance remains sealed until it breaks",
 				instance.id());
 	}
 
 	private static void failUnavailableInstance(MinecraftServer server, DungeonInstanceSavedData registry,
 			DungeonInstanceSavedData.Instance instance, String message) {
+		PREPARATIONS.remove(instance.id());
+		DungeonEncounterRuntime.clearInstanceHighlights(server, instance);
 		discardTrackedMobs(server, instance);
 		registry.remove(instance.id());
 		recordArenaClosure(server, instance);
@@ -1047,6 +1291,14 @@ public final class SnowRedGateArenaManager {
 
 	private static void ensureReturnPortal(ServerLevel level, DungeonInstanceSavedData.Instance instance) {
 		BlockPos exit = instance.exit().orElseGet(() -> instance.playerStart().orElse(BlockPos.ZERO));
+		// Never wake an offline completed arena just to recreate a portal. The
+		// portal is restored after a bound participant has loaded the exit chunk.
+		boolean participantPresent = level.players().stream().anyMatch(player ->
+				instance.participants().contains(player.getUUID())
+						&& instance.id().toString().equals(player.getPersistentData()
+								.getString(DungeonMobLevelAdapter.INSTANCE_TAG)));
+		if (!participantPresent || !level.hasChunkAt(exit))
+			return;
 		AABB search = AABB.ofSize(Vec3.atCenterOf(exit), 16.0D, 10.0D, 16.0D);
 		boolean exists = !level.getEntitiesOfClass(Entity.class, search, entity ->
 				entity.getType() == SololevelingModEntities.PORTAL_12.get()
@@ -1054,68 +1306,377 @@ public final class SnowRedGateArenaManager {
 								.getString(DungeonMobLevelAdapter.INSTANCE_TAG))).isEmpty();
 		if (exists)
 			return;
-		prepareLanding(level, exit);
+		prepareLanding(level, exit, territoryForInstance(instance).orElse(RiftTerritory.FROST));
 		Entity portal = DungeonReturnPortalSpawner.spawn(level, exit, instance.exitFacing().orElse(Direction.SOUTH),
 				instance.id(), instance.id().toString());
 		if (portal != null)
 			SololevelingMod.LOGGER.info("Opened return portal for completed Monarch red-gate arena {}", instance.id());
 	}
 
-	private static void updatePlayerFeedback(ServerLevel level, DungeonInstanceSavedData.Instance instance,
-			DungeonInstanceSavedData.EncounterState wave) {
-		String state = wave == null ? "complete" : wave.key();
-		String receipt = instance.id() + ":" + state;
-		for (ServerPlayer player : level.players()) {
-			if (!instance.participants().contains(player.getUUID())
-					|| !instance.id().toString().equals(player.getPersistentData()
-							.getString(DungeonMobLevelAdapter.INSTANCE_TAG))
-					|| receipt.equals(player.getPersistentData().getString(WAVE_NOTICE_TAG)))
-				continue;
-			player.getPersistentData().putString(WAVE_NOTICE_TAG, receipt);
-			if (wave == null) {
-				player.sendSystemMessage(Component.literal("Baruka has fallen. The red gate's exit is open.")
-						.withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
-				player.displayClientMessage(Component.literal("DUNGEON CLEARED — EXIT UNSEALED")
-						.withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD), true);
-			} else {
-				Component announcement = Component.literal(waveTitle(wave))
-						.withStyle(wave.boss() ? ChatFormatting.DARK_RED : ChatFormatting.AQUA,
-								ChatFormatting.BOLD);
-				player.sendSystemMessage(announcement);
-				player.displayClientMessage(announcement, true);
+	private enum PreparationPhase {
+		LANDSCAPE,
+		SCENERY,
+		SHARDS,
+		COMPLETE
+	}
+
+	/**
+	 * Mutable, server-thread-only cursor for one deterministic arena build. Each
+	 * consumed unit represents one horizontal landscape column or one bounded
+	 * scenery feature. The generated hills feather back into the cheap flat realm
+	 * outside the playable cell, so the player sees terrain rather than a platform
+	 * edge without paying for infinite terrain generation.
+	 */
+	private static final class ArenaPreparationJob {
+		private static final long DECORATION_SALT = 0x51A7E0F12D34B678L;
+		private static final long SURFACE_SALT = 0x6A09E667F3BCC909L;
+		private final UUID instanceId;
+		private final BlockPos center;
+		private final RiftTerritory territory;
+		private final long seed;
+		private final ArenaPalette palette;
+		private final RandomSource random;
+		private PreparationPhase phase = PreparationPhase.LANDSCAPE;
+		private int landscapeIndex;
+		private int sceneryIndex;
+		private int shardIndex;
+		private boolean staleEntitiesDiscarded;
+
+		private ArenaPreparationJob(UUID instanceId, BlockPos center,
+				RiftTerritory territory, long seed) {
+			this.instanceId = instanceId;
+			this.center = center.immutable();
+			this.territory = territory;
+			this.seed = seed;
+			this.palette = paletteFor(territory);
+			this.random = RandomSource.create(seed ^ DECORATION_SALT);
+		}
+
+		private UUID instanceId() {
+			return instanceId;
+		}
+
+		private BlockPos center() {
+			return center;
+		}
+
+		private RiftTerritory territory() {
+			return territory;
+		}
+
+		private boolean matches(BlockPos expectedCenter, RiftTerritory expectedTerritory,
+				long expectedSeed) {
+			return center.equals(expectedCenter) && territory == expectedTerritory && seed == expectedSeed;
+		}
+
+		private boolean finished() {
+			return phase == PreparationPhase.COMPLETE;
+		}
+
+		private int advance(ServerLevel level, int budget) {
+			if (budget <= 0 || finished())
+				return 0;
+			if (!staleEntitiesDiscarded) {
+				AABB cleanupBounds = new AABB(center).inflate(ARENA_RADIUS, 64.0D, ARENA_RADIUS);
+				for (Entity stale : level.getEntitiesOfClass(Entity.class, cleanupBounds,
+						entity -> !(entity instanceof ServerPlayer)))
+					stale.discard();
+				staleEntitiesDiscarded = true;
 			}
+
+			int used = 0;
+			int sceneryThisPass = 0;
+			int shardsThisPass = 0;
+			while (used < budget && !finished()) {
+				if (phase == PreparationPhase.SCENERY && sceneryThisPass >= 4)
+					break;
+				if (phase == PreparationPhase.SHARDS && shardsThisPass >= 6)
+					break;
+				PreparationPhase consumedPhase = phase;
+				boolean consumed = switch (phase) {
+					case LANDSCAPE -> advanceLandscapeColumn(level);
+					case SCENERY -> advanceScenery(level);
+					case SHARDS -> advanceShard(level);
+					case COMPLETE -> false;
+				};
+				if (consumed) {
+					used++;
+					if (consumedPhase == PreparationPhase.SCENERY)
+						sceneryThisPass++;
+					else if (consumedPhase == PreparationPhase.SHARDS)
+						shardsThisPass++;
+				}
+			}
+			return used;
+		}
+
+		private boolean advanceLandscapeColumn(ServerLevel level) {
+			int diameter = LANDSCAPE_RADIUS * 2 + 1;
+			int total = diameter * diameter;
+			while (landscapeIndex < total) {
+				int index = landscapeIndex++;
+				int dx = index / diameter - LANDSCAPE_RADIUS;
+				int dz = index % diameter - LANDSCAPE_RADIUS;
+				if (dx * dx + dz * dz > LANDSCAPE_RADIUS * LANDSCAPE_RADIUS)
+					continue;
+
+				int baseSurfaceY = center.getY() - 1;
+				int targetSurfaceY = Mth.clamp(baseSurfaceY + terrainOffset(dx, dz),
+						level.getMinBuildHeight() + 2, level.getMaxBuildHeight() - 3);
+				int minimumY = Math.max(level.getMinBuildHeight() + 1,
+						baseSurfaceY + LANDSCAPE_MIN_OFFSET);
+				int maximumY = Math.min(level.getMaxBuildHeight() - 2,
+						baseSurfaceY + LANDSCAPE_CLEAR_HEIGHT);
+				BlockState surface = surfaceState(dx, dz);
+				BlockState fill = palette.groundPrimary().defaultBlockState();
+				for (int y = minimumY; y <= maximumY; y++) {
+					BlockPos position = new BlockPos(center.getX() + dx, y, center.getZ() + dz);
+					BlockState desired = y > targetSurfaceY
+							? Blocks.AIR.defaultBlockState()
+							: y == targetSurfaceY ? surface : fill;
+					setBlockIfChanged(level, position, desired);
+				}
+				return true;
+			}
+			phase = PreparationPhase.SCENERY;
+			return false;
+		}
+
+		private boolean advanceScenery(ServerLevel level) {
+			if (sceneryIndex >= SCENERY_COUNT) {
+				phase = PreparationPhase.SHARDS;
+				return false;
+			}
+			int feature = sceneryIndex++;
+			double angle = random.nextDouble() * Math.PI * 2.0D;
+			int radius = 22 + random.nextInt(61);
+			int dx = Mth.floor(Math.cos(angle) * radius);
+			int dz = Mth.floor(Math.sin(angle) * radius);
+			BlockPos base = standingPosition(dx, dz);
+			placeSceneryFeature(level, base, feature);
+			return true;
+		}
+
+		private boolean advanceShard(ServerLevel level) {
+			if (shardIndex >= SHARD_COUNT) {
+				phase = PreparationPhase.COMPLETE;
+				return false;
+			}
+			int shard = shardIndex++;
+			double angle = Math.PI * 2.0D * shard / SHARD_COUNT + random.nextDouble() * 0.18D;
+			int radius = 67 + random.nextInt(18);
+			int dx = Mth.floor(Math.cos(angle) * radius);
+			int dz = Mth.floor(Math.sin(angle) * radius);
+			BlockPos base = standingPosition(dx, dz);
+			int height = 3 + random.nextInt(5);
+			for (int y = 0; y < height; y++) {
+				BlockPos shardPos = base.above(y);
+				BlockState current = level.getBlockState(shardPos);
+				if (!current.isAir() && !current.is(Blocks.SNOW))
+					break;
+				boolean accent = y == height - 1 || random.nextInt(5) == 0;
+				setBlockIfChanged(level, shardPos, (accent
+						? palette.shardAccent() : palette.shardPrimary()).defaultBlockState());
+			}
+			if (shardIndex >= SHARD_COUNT)
+				phase = PreparationPhase.COMPLETE;
+			return true;
+		}
+
+		private BlockPos standingPosition(int dx, int dz) {
+			return center.offset(dx, terrainOffset(dx, dz), dz);
+		}
+
+		private int terrainOffset(int dx, int dz) {
+			double radius = Math.sqrt((double) dx * dx + (double) dz * dz);
+			if (radius <= SAFE_CLEARING_RADIUS || radius >= LANDSCAPE_RADIUS)
+				return 0;
+
+			double phaseA = unit(seed ^ 0x243F6A8885A308D3L) * Math.PI * 2.0D;
+			double phaseB = unit(seed ^ 0x13198A2E03707344L) * Math.PI * 2.0D;
+			double phaseC = unit(seed ^ 0xA4093822299F31D0L) * Math.PI * 2.0D;
+			double broad = Math.sin(dx * 0.052D + phaseA)
+					+ Math.cos(dz * 0.047D + phaseB)
+					+ Math.sin((dx + dz) * 0.031D + phaseC) * 0.72D;
+			double detail = Math.sin(dx * 0.137D - dz * 0.109D + phaseB) * 0.8D
+					+ Math.cos((dx - dz) * 0.091D + phaseA) * 0.45D;
+			double shape = switch (territory) {
+				case DESTRUCTION -> 4.0D + broad * 3.6D + Math.abs(detail) * 2.8D;
+				case FROST -> 5.0D + broad * 4.8D + Math.abs(detail) * 3.7D;
+				case FANGS -> 3.0D + broad * 3.5D + detail * 1.8D;
+				case PLAGUES -> broad * 1.8D - Math.abs(detail) * 1.2D;
+				case IRON_BODY -> 5.0D + broad * 5.4D + Math.abs(detail) * 3.8D;
+				case WHITE_FLAMES -> 3.0D + broad * 3.7D + Math.abs(detail) * 2.0D;
+				case TRANSFIGURATION -> 4.0D + broad * 5.0D + detail * 3.2D;
+				case BEGINNING -> 4.0D + broad * 4.4D + detail * 2.1D;
+			};
+
+			double clearingBlend = smoothStep((radius - SAFE_CLEARING_RADIUS) / 18.0D);
+			/*
+			 * The playable barrier ends at radius 80. Raise the last 24 blocks of
+			 * generated terrain into a natural horizon ridge instead of feathering
+			 * back down to the shared realm's cheap flat substrate. From anywhere
+			 * the player can legally stand, the ridge and client fog conceal the
+			 * finite terrain seam without generating an infinite world.
+			 */
+			double ridgeStart = ARENA_RADIUS + 6.0D;
+			double ridge = smoothStep((radius - ridgeStart)
+					/ Math.max(1.0D, LANDSCAPE_RADIUS - ridgeStart)) * 11.0D;
+			return Mth.clamp((int) Math.round(shape * clearingBlend + ridge),
+					LANDSCAPE_MIN_OFFSET, LANDSCAPE_MAX_OFFSET);
+		}
+
+		private BlockState surfaceState(int dx, int dz) {
+			double radius = Math.sqrt((double) dx * dx + (double) dz * dz);
+			if (radius <= SAFE_CLEARING_RADIUS + 4.0D)
+				return palette.groundPrimary().defaultBlockState();
+			double roll = unit(seed ^ SURFACE_SALT
+					^ (long) dx * 0x9E3779B97F4A7C15L
+					^ (long) dz * 0xC2B2AE3D27D4EB4FL);
+			if (roll < 0.10D && !(radius < 24.0D
+					&& isUnsafeLandingBlock(palette.groundAccent().defaultBlockState())))
+				return palette.groundAccent().defaultBlockState();
+			if (roll < 0.38D)
+				return palette.groundSecondary().defaultBlockState();
+			return palette.groundPrimary().defaultBlockState();
+		}
+
+		private void placeSceneryFeature(ServerLevel level, BlockPos base, int feature) {
+			switch (territory) {
+				case FROST -> {
+					if (feature % 3 == 0)
+						placeCanopyTree(level, base, Blocks.SPRUCE_LOG, Blocks.SPRUCE_LEAVES,
+								5 + random.nextInt(3), true);
+					else
+						placeSpire(level, base, Blocks.PACKED_ICE, Blocks.BLUE_ICE,
+								3 + random.nextInt(5));
+				}
+				case FANGS -> {
+					if (feature % 3 == 0)
+						placeCanopyTree(level, base, Blocks.DARK_OAK_LOG, Blocks.DARK_OAK_LEAVES,
+								4 + random.nextInt(3), true);
+					else
+						placeBoulder(level, base, Blocks.MOSSY_COBBLESTONE, Blocks.MOSS_BLOCK);
+				}
+				case PLAGUES -> {
+					if (feature % 4 == 0)
+						placeDeadTree(level, base, Blocks.MANGROVE_LOG, 4 + random.nextInt(4));
+					else
+						placeBoulder(level, base, Blocks.MANGROVE_ROOTS, Blocks.MUD);
+				}
+				case DESTRUCTION -> {
+					if (feature % 4 == 0)
+						placeDeadTree(level, base, Blocks.STRIPPED_DARK_OAK_LOG, 4 + random.nextInt(4));
+					else
+						placeSpire(level, base, Blocks.BLACKSTONE, Blocks.MAGMA_BLOCK,
+								3 + random.nextInt(5));
+				}
+				case IRON_BODY -> placeBoulder(level, base, Blocks.TUFF, Blocks.SMOOTH_BASALT);
+				case WHITE_FLAMES -> placeSpire(level, base, Blocks.CALCITE, Blocks.SMOOTH_QUARTZ,
+						4 + random.nextInt(5));
+				case TRANSFIGURATION -> {
+					if (feature % 3 == 0)
+						placeCanopyTree(level, base, Blocks.WARPED_STEM, Blocks.WARPED_WART_BLOCK,
+								4 + random.nextInt(4), false);
+					else
+						placeSpire(level, base, Blocks.CRYING_OBSIDIAN, Blocks.WARPED_WART_BLOCK,
+								3 + random.nextInt(6));
+				}
+				case BEGINNING -> {
+					if (feature % 3 == 0)
+						placeMonolith(level, base, 5 + random.nextInt(5));
+					else
+						placeBoulder(level, base, Blocks.DEEPSLATE, Blocks.SCULK);
+				}
+			}
+		}
+
+		private void placeCanopyTree(ServerLevel level, BlockPos base, Block trunk, Block canopy,
+				int height, boolean persistentLeaves) {
+			for (int y = 0; y < height; y++)
+				setSceneryBlock(level, base.above(y), trunk.defaultBlockState());
+			BlockState canopyState = canopy.defaultBlockState();
+			if (persistentLeaves && canopyState.hasProperty(LeavesBlock.PERSISTENT))
+				canopyState = canopyState.setValue(LeavesBlock.PERSISTENT, true);
+			for (int layer = -2; layer <= 1; layer++) {
+				int radius = layer >= 1 ? 1 : layer == 0 ? 2 : 1;
+				int y = height + layer;
+				for (int dx = -radius; dx <= radius; dx++) {
+					for (int dz = -radius; dz <= radius; dz++) {
+						if (Math.abs(dx) + Math.abs(dz) > radius + 1)
+							continue;
+						setSceneryBlock(level, base.offset(dx, y, dz), canopyState);
+					}
+				}
+			}
+		}
+
+		private void placeDeadTree(ServerLevel level, BlockPos base, Block trunk, int height) {
+			for (int y = 0; y < height; y++)
+				setSceneryBlock(level, base.above(y), trunk.defaultBlockState());
+			Direction first = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+			Direction second = first.getClockWise();
+			setSceneryBlock(level, base.above(height - 2).relative(first), trunk.defaultBlockState());
+			setSceneryBlock(level, base.above(height - 1).relative(second), trunk.defaultBlockState());
+		}
+
+		private void placeSpire(ServerLevel level, BlockPos base, Block primary, Block accent, int height) {
+			for (int y = 0; y < height; y++) {
+				Block block = y == height - 1 || (y > 1 && random.nextInt(5) == 0) ? accent : primary;
+				setSceneryBlock(level, base.above(y), block.defaultBlockState());
+				if (y < 2) {
+					setSceneryBlock(level, base.offset(1, y, 0), primary.defaultBlockState());
+					setSceneryBlock(level, base.offset(0, y, 1), primary.defaultBlockState());
+				}
+			}
+		}
+
+		private void placeBoulder(ServerLevel level, BlockPos base, Block primary, Block accent) {
+			for (int dx = -1; dx <= 1; dx++) {
+				for (int dz = -1; dz <= 1; dz++) {
+					for (int y = 0; y <= 1; y++) {
+						if (Math.abs(dx) + Math.abs(dz) + y > 3)
+							continue;
+						Block block = random.nextInt(5) == 0 ? accent : primary;
+						setSceneryBlock(level, base.offset(dx, y, dz), block.defaultBlockState());
+					}
+				}
+			}
+		}
+
+		private void placeMonolith(ServerLevel level, BlockPos base, int height) {
+			for (int y = 0; y < height; y++) {
+				Block block = y == height - 1 ? Blocks.CHISELED_DEEPSLATE
+						: y % 3 == 0 ? Blocks.POLISHED_DEEPSLATE : Blocks.DEEPSLATE_BRICKS;
+				setSceneryBlock(level, base.above(y), block.defaultBlockState());
+			}
+			setSceneryBlock(level, base.relative(Direction.EAST), Blocks.SCULK.defaultBlockState());
+			setSceneryBlock(level, base.relative(Direction.WEST), Blocks.SCULK.defaultBlockState());
+		}
+
+		private void setSceneryBlock(ServerLevel level, BlockPos position, BlockState state) {
+			BlockState current = level.getBlockState(position);
+			if (current.isAir() || current.is(Blocks.SNOW))
+				setBlockIfChanged(level, position, state);
+		}
+
+		private static double smoothStep(double value) {
+			double clamped = Mth.clamp(value, 0.0D, 1.0D);
+			return clamped * clamped * (3.0D - 2.0D * clamped);
+		}
+
+		private static double unit(long value) {
+			value ^= value >>> 33;
+			value *= 0xFF51AFD7ED558CCDL;
+			value ^= value >>> 33;
+			value *= 0xC4CEB9FE1A85EC53L;
+			value ^= value >>> 33;
+			return (value >>> 11) * 0x1.0p-53;
 		}
 	}
 
-	private static String waveTitle(DungeonInstanceSavedData.EncounterState wave) {
-		String label = switch (wave.key()) {
-			case "ice_bear_rush" -> "ICE BEAR RUSH";
-			case "ice_elf_vanguard" -> "ICE ELF VANGUARD";
-			case "ice_elf_ambush" -> "ICE ELF AMBUSH";
-			case "ice_elf_encirclement" -> "ICE ELF ENCIRCLEMENT";
-			case "ice_elf_guard" -> "WARLORD'S GUARD";
-			case "baruka" -> "BARUKA";
-			default -> wave.key().toUpperCase();
-		};
-		if (wave.boss())
-			return "FINAL WAVE - " + label;
-		return "WAVE " + romanNumeral(wave.sequenceOrder() + 1) + " - " + label;
-	}
-
-	private static String romanNumeral(int number) {
-		return switch (number) {
-			case 1 -> "I";
-			case 2 -> "II";
-			case 3 -> "III";
-			case 4 -> "IV";
-			case 5 -> "V";
-			case 6 -> "VI";
-			default -> Integer.toString(number);
-		};
-	}
-
 	private record ArenaPalette(Block groundPrimary, Block groundSecondary, Block groundAccent,
-			Block shardPrimary, Block shardAccent, boolean precipitation) {
+			Block shardPrimary, Block shardAccent) {
 	}
 
 	private record WaveSpec(String id, ResourceLocation pool, int count, boolean boss, boolean elite,

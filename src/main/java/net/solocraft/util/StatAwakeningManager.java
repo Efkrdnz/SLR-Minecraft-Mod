@@ -146,6 +146,7 @@ public final class StatAwakeningManager {
     private static void triggerAwakening(ServerPlayer sp, int classNum) {
         String name  = CLASS_NAMES[classNum - 1];
         String color = CLASS_COLORS[classNum - 1];
+        int accent = CLASS_ACCENTS[classNum - 1];
 
         // 1. Assign class
         sp.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -158,10 +159,15 @@ public final class StatAwakeningManager {
         grantStarterSkills(sp, classNum);
 		if (classNum == 2) {
 			name = MageSpellProgression.displayName(sp);
-			color = MageSpellProgression.isBarrierMage(sp) ? "aqua" : "red";
+			boolean barrier = MageSpellProgression.isBarrierMage(sp);
+			boolean arcane = MageSpellProgression.isArcaneMage(sp);
+			boolean storm = MageSpellProgression.isStormMage(sp);
+			color = barrier ? "aqua" : arcane ? "light_purple" : storm ? "yellow" : "red";
+			accent = barrier ? 0xFF5CE8FF : arcane ? 0xFF8A5CFF
+					: storm ? 0xFFFFD45A : 0xFFFF5A2A;
 		}
 
-        SystemNotifications.showTitleUnder(sp, CLASS_ACCENTS[classNum - 1], 140,
+        SystemNotifications.showTitleUnder(sp, accent, 140,
             Component.literal("STAT AWAKENING").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
             Component.literal("Your dominant stats awakened " + name + ".\nStarter skills have been unlocked.").withStyle(ChatFormatting.GRAY));
 
@@ -264,9 +270,9 @@ public final class StatAwakeningManager {
 
     private static final String[][] STARTER_SKILLS = {
         // 1 Assassin
-        { "Shadowstep", "Backstab" },
+        { AssassinSkillManager.GHOST_STEP, AssassinSkillManager.NIGHT_REND },
         // 2 Mage
-        { FireMageSpellManager.IGNITION_ORB, "Water Slash" },
+        { FireMageSpellManager.FLAME_WEAVING, FireMageSpellManager.IGNITION_ORB },
         // 3 Fighter
         { "Slash Dash", "Ground Slam" },
         // 4 Tanker
@@ -274,6 +280,6 @@ public final class StatAwakeningManager {
         // 5 Healer
         { "Heal Beam", "Purification" },
         // 6 Ranger
-        { "Back Step", "Sharpshooter" },
+        { RangerCombatManager.MANA_QUIVER, RangerCombatManager.BACK_STEP },
     };
 }

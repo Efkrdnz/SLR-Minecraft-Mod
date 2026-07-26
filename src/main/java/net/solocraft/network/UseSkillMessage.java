@@ -5,6 +5,8 @@ import net.solocraft.procedures.SkillSlotHelper;
 import net.solocraft.procedures.UseSkillOnKeyReleasedProcedure;
 import net.solocraft.procedures.UseSkillOnKeyPressedProcedure;
 import net.solocraft.util.MageQTEHelper;
+import net.solocraft.util.FrostArchitectureManager;
+import net.solocraft.client.gui.FrostArchitectureClientState;
 import net.solocraft.SololevelingMod;
 
 import net.minecraftforge.network.NetworkEvent;
@@ -89,6 +91,10 @@ public class UseSkillMessage {
 		SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		if (!vars.combatmode || vars.PselectedPower.isEmpty())
 			return;
+		if (world.isClientSide() && FrostArchitectureManager.SKILL.equals(vars.PselectedPower)) {
+			FrostArchitectureClientState.begin(hotbarSlot);
+			return;
+		}
 		if (world.isClientSide() && !MageQTEHelper.MAGE_SKILLS.contains(vars.PselectedPower))
 			return;
 		UseSkillOnKeyPressedProcedure.execute(world, x, y, z, entity);
@@ -97,6 +103,8 @@ public class UseSkillMessage {
 	private static void releaseHotbarSlot(Player entity, int pressedms) {
 		SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		if (!vars.combatmode || vars.PselectedPower.isEmpty())
+			return;
+		if (entity.level().isClientSide() && FrostArchitectureManager.SKILL.equals(vars.PselectedPower))
 			return;
 		if (entity.level().isClientSide() && !MageQTEHelper.MAGE_SKILLS.contains(vars.PselectedPower))
 			return;

@@ -12,27 +12,23 @@ public class IfInSurvivalProcedure {
 	public static boolean execute(Entity entity) {
 		if (entity == null)
 			return false;
-		if ((new Object() {
-			public boolean checkGamemode(Entity _ent) {
-				if (_ent instanceof ServerPlayer _serverPlayer) {
-					return _serverPlayer.gameMode.getGameModeForPlayer() == GameType.SURVIVAL;
-				} else if (_ent.level().isClientSide() && _ent instanceof Player _player) {
-					return Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()) != null && Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()).getGameMode() == GameType.SURVIVAL;
-				}
+		GameType gameType;
+		if (entity instanceof ServerPlayer serverPlayer) {
+			gameType = serverPlayer.gameMode.getGameModeForPlayer();
+		} else if (entity.level().isClientSide() && entity instanceof Player player) {
+			var connection = Minecraft.getInstance().getConnection();
+			if (connection == null)
 				return false;
-			}
-		}.checkGamemode(entity) || new Object() {
-			public boolean checkGamemode(Entity _ent) {
-				if (_ent instanceof ServerPlayer _serverPlayer) {
-					return _serverPlayer.gameMode.getGameModeForPlayer() == GameType.ADVENTURE;
-				} else if (_ent.level().isClientSide() && _ent instanceof Player _player) {
-					return Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()) != null && Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()).getGameMode() == GameType.ADVENTURE;
-				}
+			var playerInfo = connection.getPlayerInfo(player.getGameProfile().getId());
+			if (playerInfo == null)
 				return false;
-			}
-		}.checkGamemode(entity)) && (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).CustomHUD) {
-			return true;
+			gameType = playerInfo.getGameMode();
+		} else {
+			return false;
 		}
-		return false;
+		if (gameType != GameType.SURVIVAL && gameType != GameType.ADVENTURE)
+			return false;
+		return entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElseGet(SololevelingModVariables.PlayerVariables::new).CustomHUD;
 	}
 }

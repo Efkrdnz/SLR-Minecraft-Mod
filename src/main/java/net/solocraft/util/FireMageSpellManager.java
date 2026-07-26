@@ -6,6 +6,7 @@ import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -349,6 +350,17 @@ public final class FireMageSpellManager {
 		tick(ACTIVE_HEAVENFALL);
 		tick(ACTIVE_COLLAPSES);
 		tick(DELAYED_BURSTS);
+	}
+
+	@SubscribeEvent
+	public static void onServerStopped(ServerStoppedEvent event) {
+		ACTIVE_PROJECTILES.clear();
+		ACTIVE_DASHES.clear();
+		ACTIVE_CREMATIONS.clear();
+		ACTIVE_FURNACES.clear();
+		ACTIVE_HEAVENFALL.clear();
+		ACTIVE_COLLAPSES.clear();
+		DELAYED_BURSTS.clear();
 	}
 
 	private static <T extends ActiveCast> void tick(List<T> casts) {

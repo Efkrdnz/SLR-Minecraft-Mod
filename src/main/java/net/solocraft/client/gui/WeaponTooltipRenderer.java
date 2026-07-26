@@ -1,5 +1,6 @@
 package net.solocraft.client.gui;
 
+import net.solocraft.client.renderer.shader.OrbOfAvariceTooltipRenderTypes;
 import net.solocraft.client.renderer.shader.WeaponTooltipRenderTypes;
 
 import net.minecraftforge.client.event.RenderTooltipEvent;
@@ -63,12 +64,17 @@ public final class WeaponTooltipRenderer {
 
 	private static boolean drawShader(GuiGraphics graphics, int x, int y, int width,
 			int height, WeaponTooltipProfiles.Profile profile) {
-		ShaderInstance shader = WeaponTooltipRenderTypes.get();
+		boolean avarice = profile.theme() == WeaponTooltipProfiles.AVARICE;
+		ShaderInstance shader = avarice
+				? OrbOfAvariceTooltipRenderTypes.get()
+				: WeaponTooltipRenderTypes.get();
 		if (shader == null)
 			return false;
 
-		set(shader, "RankLevel", profile.tier());
-		set(shader, "Theme", profile.theme());
+		if (!avarice) {
+			set(shader, "RankLevel", profile.tier());
+			set(shader, "Theme", profile.theme());
+		}
 		set(shader, "Seed", profile.seed());
 		setColor(shader, "PrimaryColor", profile.primaryColor());
 		setColor(shader, "SecondaryColor", profile.secondaryColor());
@@ -77,7 +83,7 @@ public final class WeaponTooltipRenderer {
 		RenderSystem.defaultBlendFunc();
 		RenderSystem.disableCull();
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-		RenderSystem.setShader(WeaponTooltipRenderTypes::get);
+		RenderSystem.setShader(() -> shader);
 
 		Matrix4f matrix = graphics.pose().last().pose();
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();

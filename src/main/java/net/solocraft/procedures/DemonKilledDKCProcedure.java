@@ -5,6 +5,8 @@ import net.solocraft.entity.DemonEntity;
 import net.solocraft.entity.DemonKnightEntity;
 import net.solocraft.entity.CerberusEntity;
 import net.solocraft.entity.BaranEntity;
+import net.solocraft.entity.KaiselinEntity;
+import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -43,6 +45,9 @@ public class DemonKilledDKCProcedure {
 				DKCBossKillRewardProcedure.execute(world, x, y, z, entity, sourceEntity);
 			}
 			if (entity instanceof BaranEntity) {
+				DKCBossKillRewardProcedure.execute(world, x, y, z, entity, sourceEntity);
+			}
+			if (entity instanceof KaiselinEntity && entity.getType() == SololevelingModEntities.KAISELIN.get()) {
 				DKCBossKillRewardProcedure.execute(world, x, y, z, entity, sourceEntity);
 			}
 		}

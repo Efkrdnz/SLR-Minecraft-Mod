@@ -81,6 +81,8 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 
 	@Override
 	public boolean isPauseScreen() {
+		// Container menus exchange live slot and capability state with the
+		// integrated server, so pausing here can leave their client view stale.
 		return false;
 	}
 

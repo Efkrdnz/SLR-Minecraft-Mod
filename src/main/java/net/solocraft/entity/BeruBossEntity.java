@@ -245,7 +245,7 @@ public class BeruBossEntity extends Monster implements GeoEntity {
 		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.4);
 		builder = builder.add(Attributes.MAX_HEALTH, 200);
 		builder = builder.add(Attributes.ARMOR, 90);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, 20);
+		builder = builder.add(Attributes.ATTACK_DAMAGE, 18);
 		builder = builder.add(Attributes.FOLLOW_RANGE, 128);
 		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.1);
 		builder = builder.add(Attributes.ATTACK_KNOCKBACK, 1);

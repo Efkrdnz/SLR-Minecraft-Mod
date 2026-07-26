@@ -1,7 +1,9 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.AssassinSkillManager;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.DaggerThrowManager;
 import net.solocraft.util.JobSkillManager;
 
 import net.minecraft.world.entity.Entity;
@@ -55,8 +57,13 @@ public class CooldownRemainingOnTickProcedure {
 	}
 
 	private static String normalizeCooldownKey(String power) {
-		if (JobSkillManager.isJobSkill(power))
-			return JobSkillManager.cooldownKey(power);
-		return power.equals("Critical Strike") ? "Cross Strike" : power;
+		String canonical = AssassinSkillManager.canonicalName(power);
+		if (DaggerThrowManager.DAGGER_THROW.equalsIgnoreCase(canonical))
+			return DaggerThrowManager.DAGGER_THROW_COOLDOWN;
+		if (DaggerThrowManager.DAGGER_RUSH.equalsIgnoreCase(canonical))
+			return DaggerThrowManager.DAGGER_RUSH_COOLDOWN;
+		if (JobSkillManager.isJobSkill(canonical))
+			return JobSkillManager.cooldownKey(canonical);
+		return canonical.equalsIgnoreCase("Critical Strike") ? "Cross Strike" : canonical;
 	}
 }

@@ -46,8 +46,12 @@ public class DunPlaceLushProcedure {
 				if (template != null) {
 					PLACING_LUSH_DUNGEON.set(true);
 					try {
+						// The dense template authors every block state and has only air/bedrock at
+						// its boundary, so the multi-million-block neighbor-shape pass is redundant.
 						template.placeInWorld(_serverworld, BlockPos.containing(x - 15, y, z - 150), BlockPos.containing(x - 15, y, z - 150),
-								new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
+								new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE)
+										.setIgnoreEntities(false).setKnownShape(true),
+								_serverworld.random, 2);
 					} finally {
 						PLACING_LUSH_DUNGEON.remove();
 					}

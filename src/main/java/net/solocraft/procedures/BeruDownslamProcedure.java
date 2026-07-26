@@ -43,7 +43,7 @@ public class BeruDownslamProcedure {
 			for (Entity entityiterator : _entfound) {
 				if (!(entityiterator == entity) && !(entityiterator instanceof TamableAnimal _tamIsTamedBy && entity instanceof LivingEntity _livEnt ? _tamIsTamedBy.isOwnedBy(_livEnt) : false)
 						&& (entityiterator instanceof LivingEntity || entityiterator instanceof Player)) {
-					entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 14);
+					entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 12);
 					entityiterator.setDeltaMovement(new Vec3(0, 0.5, 0));
 				}
 			}

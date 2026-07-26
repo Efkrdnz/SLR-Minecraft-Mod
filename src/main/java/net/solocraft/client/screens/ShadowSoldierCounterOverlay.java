@@ -30,6 +30,8 @@ import com.mojang.blaze3d.platform.GlStateManager;
 public class ShadowSoldierCounterOverlay {
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public static void eventHandler(RenderGuiEvent.Pre event) {
+		if (legacyOverlayDisabled())
+			return;
 		int w = event.getWindow().getGuiScaledWidth();
 		int h = event.getWindow().getGuiScaledHeight();
 		Level world = null;
@@ -90,5 +92,9 @@ public class ShadowSoldierCounterOverlay {
 		RenderSystem.enableDepthTest();
 		RenderSystem.disableBlend();
 		RenderSystem.setShaderColor(1, 1, 1, 1);
+	}
+
+	private static boolean legacyOverlayDisabled() {
+		return true;
 	}
 }

@@ -4,8 +4,11 @@ import net.solocraft.item.YellowkeyItem;
 import net.solocraft.item.ArcaneMageRunestoneItem;
 import net.solocraft.item.BarrierMageRunestoneItem;
 import net.solocraft.item.FireMageRunestoneItem;
+import net.solocraft.item.RetiredMageRunestoneItem;
+import net.solocraft.item.StormMageRunestoneItem;
 import net.solocraft.util.BarrierMageSpellManager;
 import net.solocraft.util.ArcaneMageSpellManager;
+import net.solocraft.util.StormMageSpellManager;
 import net.solocraft.item.WorldTreesFragmentItem;
 import net.solocraft.item.WarAxeItem;
 import net.solocraft.item.TestParticlesItem;
@@ -33,7 +36,6 @@ import net.solocraft.item.ShadowARMORItem;
 import net.solocraft.item.SelectionSpecialBoxItem;
 import net.solocraft.item.STierSwordItem;
 import net.solocraft.item.RunestoneWillpowerItem;
-import net.solocraft.item.RunestoneWaterslashItem;
 import net.solocraft.item.RunestoneTauntItem;
 import net.solocraft.item.RunestoneTankLeapItem;
 import net.solocraft.item.RunestoneSwordofLightItem;
@@ -56,19 +58,16 @@ import net.solocraft.item.RunestonePhysicalItem;
 import net.solocraft.item.RunestoneOverhealItem;
 import net.solocraft.item.RunestoneMonarchsDomainItem;
 import net.solocraft.item.RunestoneMutilationItem;
-import net.solocraft.item.RunestoneMagicMissilesItem;
-import net.solocraft.item.RunestoneLightballItem;
-import net.solocraft.item.RunestoneLightGolemItem;
 import net.solocraft.item.RunestoneHyperfocusItem;
 import net.solocraft.item.RunestoneHighValueTargetItem;
 import net.solocraft.item.RunestoneHealBeamItem;
 import net.solocraft.item.RunestoneHawkeyeItem;
 import net.solocraft.item.RunestoneHasteItem;
 import net.solocraft.item.RunestoneDualwieldItem;
+import net.solocraft.item.RunestoneDaggerThrowItem;
+import net.solocraft.item.RunestoneDaggerRushItem;
 import net.solocraft.item.RunestoneDetectionItem;
-import net.solocraft.item.RunestoneCursedSmokeItem;
-import net.solocraft.item.RunestoneCurseSphereItem;
-import net.solocraft.item.RunestoneCurseChainsItem;
+import net.solocraft.item.RunestoneColdBloodItem;
 import net.solocraft.item.RunestoneCriticalstrikeItem;
 import net.solocraft.item.RunestoneCriticalAttackItem;
 import net.solocraft.item.RunestoneBlessingMarkItem;
@@ -360,17 +359,25 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> RUNESTONE_SHADOW_SPIRITUAL_BODY_MANIFESTATION = REGISTRY.register("runestone_shadow_spiritual_body_manifestation", () -> new RunestoneShadowSpiritualBodyManifestationItem());
 	public static final RegistryObject<Item> RUNESTONE_MONARCHS_DOMAIN = REGISTRY.register("runestone_monarchs_domain", () -> new RunestoneMonarchsDomainItem());
 	public static final RegistryObject<Item> MURDERIOUS_INTENT_STONE = REGISTRY.register("murderious_intent_stone", () -> new MurderiousIntentStoneItem());
+	public static final RegistryObject<Item> RUNESTONE_COLD_BLOOD = REGISTRY.register("runestone_cold_blood", () -> new RunestoneColdBloodItem());
 	public static final RegistryObject<Item> TELEKINESIS_STONE = REGISTRY.register("telekinesis_stone", () -> new TelekinesisStoneItem());
 	public static final RegistryObject<Item> STEALTH_STONE = REGISTRY.register("stealth_stone", () -> new StealthStoneItem());
 	public static final RegistryObject<Item> RUNESTONE_BACKSTAB = REGISTRY.register("runestone_backstab", () -> new RunestoneBackstabItem());
 	public static final RegistryObject<Item> RUNESTONE_DUALWIELD = REGISTRY.register("runestone_dualwield", () -> new RunestoneDualwieldItem());
+	public static final RegistryObject<Item> RUNESTONE_DAGGER_THROW = REGISTRY.register("runestone_dagger_throw", () -> new RunestoneDaggerThrowItem());
+	public static final RegistryObject<Item> RUNESTONE_DAGGER_RUSH = REGISTRY.register("runestone_dagger_rush", () -> new RunestoneDaggerRushItem());
 	public static final RegistryObject<Item> RUNESTONE_SHADOWSTEP = REGISTRY.register("runestone_shadowstep", () -> new RunestoneShadowstepItem());
 	public static final RegistryObject<Item> RUNESTONE_QUICKSLASHES = REGISTRY.register("runestone_quickslashes", () -> new RunestoneQuickslashesItem());
-	public static final RegistryObject<Item> RUNESTONE_CURSE_CHAINS = REGISTRY.register("runestone_curse_chains", () -> new RunestoneCurseChainsItem());
-	public static final RegistryObject<Item> RUNESTONE_CURSE_SPHERE = REGISTRY.register("runestone_curse_sphere", () -> new RunestoneCurseSphereItem());
-	public static final RegistryObject<Item> RUNESTONE_CURSED_SMOKE = REGISTRY.register("runestone_cursed_smoke", () -> new RunestoneCursedSmokeItem());
-	public static final RegistryObject<Item> RUNESTONE_WATERSLASH = REGISTRY.register("runestone_waterslash", () -> new RunestoneWaterslashItem());
-	public static final RegistryObject<Item> RUNESTONE_LIGHTBALL = REGISTRY.register("runestone_lightball", () -> new RunestoneLightballItem());
+	public static final RegistryObject<Item> RUNESTONE_CURSE_CHAINS = REGISTRY.register("runestone_curse_chains",
+			() -> new RetiredMageRunestoneItem("Curse Chains"));
+	public static final RegistryObject<Item> RUNESTONE_CURSE_SPHERE = REGISTRY.register("runestone_curse_sphere",
+			() -> new RetiredMageRunestoneItem("Curse Sphere"));
+	public static final RegistryObject<Item> RUNESTONE_CURSED_SMOKE = REGISTRY.register("runestone_cursed_smoke",
+			() -> new RetiredMageRunestoneItem("Curse Smoke"));
+	public static final RegistryObject<Item> RUNESTONE_WATERSLASH = REGISTRY.register("runestone_waterslash",
+			() -> new RetiredMageRunestoneItem("Water Slash"));
+	public static final RegistryObject<Item> RUNESTONE_LIGHTBALL = REGISTRY.register("runestone_lightball",
+			() -> new RetiredMageRunestoneItem("Lightball"));
 	public static final RegistryObject<Item> RUNESTONE_FLAME_WEAVING = REGISTRY.register("runestone_flame_weaving",
 			() -> new FireMageRunestoneItem("Flame Weaving", "Weave fast, mana-free fire bolts from raw magical output."));
 	public static final RegistryObject<Item> RUNESTONE_IGNITION_ORB = REGISTRY.register("runestone_ignition_orb",
@@ -413,9 +420,27 @@ public class SololevelingModItems {
 			() -> new ArcaneMageRunestoneItem(ArcaneMageSpellManager.DIMENSIONAL_REND, "Cut space itself with a persistent piercing plane."));
 	public static final RegistryObject<Item> RUNESTONE_GRAND_FORMULA_CONVERGENCE = REGISTRY.register("runestone_grand_formula_convergence",
 			() -> new ArcaneMageRunestoneItem(ArcaneMageSpellManager.CONVERGENCE, "Assemble a battlefield-scale formula and collapse its center."));
-	public static final RegistryObject<Item> RUNESTONE_LIGHT_GOLEM = REGISTRY.register("runestone_light_golem", () -> new RunestoneLightGolemItem());
+	public static final RegistryObject<Item> RUNESTONE_STATIC_NEEDLE = REGISTRY.register("runestone_static_needle",
+			() -> new StormMageRunestoneItem(StormMageSpellManager.STATIC_NEEDLE, "Fire a precise bolt that marks enemies Conductive."));
+	public static final RegistryObject<Item> RUNESTONE_SLIPSTREAM = REGISTRY.register("runestone_slipstream",
+			() -> new StormMageRunestoneItem(StormMageSpellManager.SLIPSTREAM, "Ride a safe four-tick current in your movement direction."));
+	public static final RegistryObject<Item> RUNESTONE_THUNDERCLAP = REGISTRY.register("runestone_thunderclap",
+			() -> new StormMageRunestoneItem(StormMageSpellManager.THUNDERCLAP, "Peel nearby enemies away with a controlled thunder cone."));
+	public static final RegistryObject<Item> RUNESTONE_LIGHTNING_ROD = REGISTRY.register("runestone_lightning_rod",
+			() -> new StormMageRunestoneItem(StormMageSpellManager.LIGHTNING_ROD, "Privately designate an aimed enemy as your routing root."));
+	public static final RegistryObject<Item> RUNESTONE_CHAIN_LIGHTNING = REGISTRY.register("runestone_chain_lightning",
+			() -> new StormMageRunestoneItem(StormMageSpellManager.CHAIN_LIGHTNING, "Route a bounded lightning chain through visible enemies."));
+	public static final RegistryObject<Item> RUNESTONE_THUNDERHEAD = REGISTRY.register("runestone_thunderhead",
+			() -> new StormMageRunestoneItem(StormMageSpellManager.THUNDERHEAD, "Place a short-lived storm that delivers scheduled strikes."));
+	public static final RegistryObject<Item> RUNESTONE_SKYBREAKER = REGISTRY.register("runestone_skybreaker",
+			() -> new StormMageRunestoneItem(StormMageSpellManager.SKYBREAKER, "Call a telegraphed vertical finisher onto a marked target or point."));
+	public static final RegistryObject<Item> RUNESTONE_TEMPEST_INCARNATE = REGISTRY.register("runestone_tempest_incarnate",
+			() -> new StormMageRunestoneItem(StormMageSpellManager.TEMPEST_INCARNATE, "Wear the storm, accelerating Voltage and creating bounded echoes."));
+	public static final RegistryObject<Item> RUNESTONE_LIGHT_GOLEM = REGISTRY.register("runestone_light_golem",
+			() -> new RetiredMageRunestoneItem("Light Golem"));
 	public static final RegistryObject<Item> RUNESTONE_DETECTION = REGISTRY.register("runestone_detection", () -> new RunestoneDetectionItem());
-	public static final RegistryObject<Item> RUNESTONE_MAGIC_MISSILES = REGISTRY.register("runestone_magic_missiles", () -> new RunestoneMagicMissilesItem());
+	public static final RegistryObject<Item> RUNESTONE_MAGIC_MISSILES = REGISTRY.register("runestone_magic_missiles",
+			() -> new RetiredMageRunestoneItem("Magic Missiles"));
 	public static final RegistryObject<Item> RUNESTONE_SLASHDASH = REGISTRY.register("runestone_slashdash", () -> new RunestoneSlashdashItem());
 	public static final RegistryObject<Item> RUNESTONE_SLASH_FURY = REGISTRY.register("runestone_slash_fury", () -> new RunestoneSlashFuryItem());
 	public static final RegistryObject<Item> RUNESTONE_CRITICALSTRIKE = REGISTRY.register("runestone_criticalstrike", () -> new RunestoneCriticalstrikeItem());

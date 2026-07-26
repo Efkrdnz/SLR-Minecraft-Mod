@@ -1,0 +1,13 @@
+{
+  "display": {
+    "icon": { "item": "minecraft:bone" },
+    "title": { "translate": "advancements.vessels.monarch_of_fangs.title" },
+    "description": { "translate": "advancements.vessels.monarch_of_fangs.descr" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": { "vessel": { "trigger": "minecraft:impossible" } },
+  "parent": "sololeveling:system/vessel"
+}

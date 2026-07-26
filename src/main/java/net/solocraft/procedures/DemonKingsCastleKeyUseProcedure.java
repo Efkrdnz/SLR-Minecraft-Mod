@@ -1,14 +1,13 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.dkc.DkcFloorRegistry;
+import net.solocraft.dkc.DkcRunSavedData;
+import net.solocraft.item.RedkeyItem;
 import net.solocraft.util.DkcQuestManager;
 
-import net.minecraft.core.registries.Registries;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -18,13 +17,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 
 public class DemonKingsCastleKeyUseProcedure {
-	private static final ResourceKey<Level> DKC_DIMENSION = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling", "dungeon_dimension_dkc"));
-
 	public static void execute(LevelAccessor world, Entity entity, ItemStack stack) {
 		if (!(entity instanceof ServerPlayer player) || player.server == null)
 			return;
-		DkcQuestManager.unlock(player);
-		if (player.level().dimension().equals(DKC_DIMENSION)) {
+		if (DkcFloorRegistry.isDkc(player.level())) {
 			DKCPathTeleportProcedure.returnToSavedOverworld(player);
 			return;
 		}
@@ -37,11 +33,21 @@ public class DemonKingsCastleKeyUseProcedure {
 			return;
 		}
 		PointSetProcedure.execute(player);
+		DkcRunSavedData runs = DkcRunSavedData.get(player.server);
+		runs.getOrCreate(player);
 		SololevelingModVariables.PlayerVariables vars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		if (vars.dkc_cleared >= 20) {
 			player.displayClientMessage(Component.literal("\u00A75The Demon King's Castle is already conquered. Its gates stay silent."), true);
 			return;
 		}
+		if (!vars.dkc_started && vars.dkc_cleared <= 0
+				&& (stack == null || stack.isEmpty()
+						|| !(stack.getItem() instanceof RedkeyItem))) {
+			player.displayClientMessage(Component.literal(
+					"\u00A75The first seal requires the Demon King's Castle Key."), true);
+			return;
+		}
+		DkcQuestManager.unlock(player);
 		if (vars.dkc_started || vars.dkc_cleared > 0) {
 			if (!vars.dkc_started) {
 				player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -50,15 +56,10 @@ public class DemonKingsCastleKeyUseProcedure {
 				});
 			}
 			player.displayClientMessage(Component.literal("\u00A75The castle has already accepted your blood."), true);
+			consumeKey(player, stack);
 			DKCPathTeleportProcedure.execute(player, 1);
 			return;
 		}
-		ServerLevel dkcLevel = player.server.getLevel(DKC_DIMENSION);
-		if (dkcLevel == null) {
-			player.displayClientMessage(Component.literal("\u00A74The Demon King's Castle refuses to manifest."), true);
-			return;
-		}
-		FloorCreateNewProcedure.execute(dkcLevel, player, "cerberus");
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			capability.dkc_started = true;
 			capability.dkc_cleared = Math.max(0, capability.dkc_cleared);
@@ -74,6 +75,14 @@ public class DemonKingsCastleKeyUseProcedure {
 		player.displayClientMessage(Component.literal("\u00A78The Demon King's Castle has marked a path for you."), true);
 		player.serverLevel().sendParticles(ParticleTypes.SOUL_FIRE_FLAME, player.getX(), player.getY() + 1.0D, player.getZ(), 42, 0.75D, 0.75D, 0.75D, 0.035D);
 		player.serverLevel().sendParticles(ParticleTypes.LARGE_SMOKE, player.getX(), player.getY() + 0.8D, player.getZ(), 24, 0.55D, 0.45D, 0.55D, 0.02D);
+		consumeKey(player, stack);
 		DKCPathTeleportProcedure.execute(player, 1);
+	}
+
+	private static void consumeKey(ServerPlayer player, ItemStack stack) {
+		if (player != null && stack != null && !stack.isEmpty()
+				&& stack.getItem() instanceof RedkeyItem
+				&& !player.getAbilities().instabuild)
+			stack.shrink(1);
 	}
 }

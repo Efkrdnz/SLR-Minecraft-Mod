@@ -32,8 +32,8 @@ public class RunestoneBackstepItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Back step\""));
-		list.add(Component.literal("User can use \"Back step\" which launches user towards air backwards and horizontal if casted in air."));
+		list.add(Component.translatable("tooltip.sololeveling.runestone_back_step.unlock"));
+		list.add(Component.translatable("tooltip.sololeveling.runestone_back_step.description"));
 	}
 
 	@Override

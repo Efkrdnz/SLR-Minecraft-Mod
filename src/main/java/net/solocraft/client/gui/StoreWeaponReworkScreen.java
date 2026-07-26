@@ -33,7 +33,7 @@ public class StoreWeaponReworkScreen extends AbstractContainerScreen<StoreWeapon
 
 	@Override
 	public boolean isPauseScreen() {
-		return true;
+		return false;
 	}
 
 	@Override

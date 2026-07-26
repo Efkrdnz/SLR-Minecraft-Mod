@@ -1,31 +1,32 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.RangerCombatManager;
 
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 
-public class RunestoneProximityTrapRCProcedure {
-	public static void execute(Entity entity, ItemStack itemstack) {
-		if (entity == null)
+/**
+ * Legacy registry hook: the old Proximity Trap stone now unlocks Arrow Shower
+ * so existing worlds and item IDs remain valid.
+ */
+public final class RunestoneProximityTrapRCProcedure {
+	private RunestoneProximityTrapRCProcedure() {
+	}
+
+	public static void execute(Entity entity, ItemStack itemStack) {
+		if (!(entity instanceof ServerPlayer player))
 			return;
-		if (!((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist).contains("Proximity Trap")) {
-			{
-				String _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Plist + "Proximity Trap" + ",";
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Plist = _setval;
-					capability.syncPlayerVariables(entity);
-				});
-			}
-			if (entity instanceof Player _player) {
-				ItemStack _stktoremove = itemstack;
-				_player.getInventory().clearOrCountMatchingItems(p -> _stktoremove.getItem() == p.getItem(), 1, _player.inventoryMenu.getCraftSlots());
-			}
-		} else {
-			if (entity instanceof Player _player && !_player.level().isClientSide())
-				_player.displayClientMessage(Component.literal("You already have this skill!"), false);
+		if (!RangerCombatManager.grantSkill(player, RangerCombatManager.ARROW_SHOWER)) {
+			player.displayClientMessage(Component.translatable(
+					"message.sololeveling.ranger.skill_known"), false);
+			return;
 		}
+		if (!player.isCreative())
+			itemStack.shrink(1);
+		player.displayClientMessage(Component.translatable(
+				"message.sololeveling.ranger.skill_gained",
+				RangerCombatManager.ARROW_SHOWER), false);
 	}
 }

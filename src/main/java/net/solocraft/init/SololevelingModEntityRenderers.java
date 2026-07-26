@@ -1,6 +1,7 @@
 package net.solocraft.init;
 
 import net.solocraft.client.renderer.RadiruBloodSpearRenderer;
+import net.solocraft.client.renderer.EsilRadiruRenderer;
 import net.solocraft.client.renderer.ArcaneVfxRenderer;
 import net.solocraft.client.renderer.BarrierVfxRenderer;
 import net.solocraft.client.renderer.FireMageVfxRenderer;
@@ -116,6 +117,7 @@ import net.solocraft.client.renderer.DetectEyeInvRenderer;
 import net.solocraft.client.renderer.DemonKnightRenderer;
 import net.solocraft.client.renderer.DemonRenderer;
 import net.solocraft.client.renderer.DaggerSlashRenderer;
+import net.solocraft.client.renderer.ThrownDaggerRenderer;
 import net.solocraft.client.renderer.DualWieldFlurryRenderer;
 import net.solocraft.client.renderer.DKnight3Renderer;
 import net.solocraft.client.renderer.DKnight2Renderer;
@@ -238,11 +240,13 @@ public class SololevelingModEntityRenderers {
 		event.registerEntityRenderer(SololevelingModEntities.AFTER_IMAGE_1.get(), AfterImage1Renderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.AFTER_IMAGE_2.get(), AfterImage2Renderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SECRETARY.get(), SecretaryRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.ESIL_RADIRU.get(), EsilRadiruRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.ELDER_BEAST.get(), ElderBeastRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.DETECT_EYE_INV.get(), DetectEyeInvRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.ICE_BALL.get(), IceBallRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.ICE_CHUNK.get(), IceChunkRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.DAGGER_SLASH.get(), DaggerSlashRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.THROWN_DAGGER.get(), ThrownDaggerRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.ARROW_SPLASH.get(), ArrowSplashRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.GOBLIN_CLUB.get(), GoblinClubRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.GOBLIN_ARCHER.get(), GoblinArcherRenderer::new);

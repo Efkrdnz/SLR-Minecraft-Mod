@@ -2,15 +2,17 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
-import net.solocraft.util.CooldownManager;
 import net.solocraft.util.MageQTEHelper;
 import net.solocraft.util.MageQTEState;
+import net.solocraft.util.MageSpellProgression;
 import net.solocraft.util.QTEResult;
 import net.solocraft.util.JobSkillManager;
 import net.solocraft.util.FireMageSpellManager;
 import net.solocraft.util.BarrierMageSpellManager;
 import net.solocraft.util.ArcaneMageSpellManager;
+import net.solocraft.util.StormMageSpellManager;
 import net.solocraft.util.OrbOfAvariceManager;
+import net.solocraft.util.AssassinSkillManager;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -44,9 +46,12 @@ public class UseSkillOnKeyReleasedProcedure {
 
         if (JobSkillManager.release(entity, power, pressedMs))
             return;
+        if (AssassinSkillManager.isReworkedSkill(power))
+            return;
 
         // ── Mage QTE key release ──────────────────────────────────────────────
         if (MageQTEHelper.MAGE_SKILLS.contains(power)) {
+			boolean authorized = MageSpellProgression.canCastLearnedSkill(entity, power);
 
             // Client: end the ring animation and show the result flash immediately
             if (world instanceof Level clientLevel && clientLevel.isClientSide()) {
@@ -65,7 +70,7 @@ public class UseSkillOnKeyReleasedProcedure {
             if (world instanceof Level _lvl && !_lvl.isClientSide()) {
 				boolean qteStarted = entity.getPersistentData().getBoolean("mage_casting");
                 entity.getPersistentData().putBoolean("mage_casting", false);
-				if (qteStarted) {
+				if (authorized && qteStarted) {
 					float zoneStart = entity.getPersistentData().contains("mage_qte_zone_start")
 							? entity.getPersistentData().getFloat("mage_qte_zone_start")
 							: MageQTEHelper.computeZoneStart(entity);
@@ -111,7 +116,6 @@ public class UseSkillOnKeyReleasedProcedure {
         double   mult      = MageQTEHelper.getManaCostMultiplier(result, cap.Intelligence);
         double   effectiveMult = mult * OrbOfAvariceManager.manaCostMultiplier(entity);
 
-        double ex = entity.getX(), ey = entity.getY(), ez = entity.getZ();
         boolean cast = false;
 
         if (FireMageSpellManager.isQteSkill(power)) {
@@ -120,53 +124,8 @@ public class UseSkillOnKeyReleasedProcedure {
             cast = BarrierMageSpellManager.cast(entity, power, result);
 		} else if (ArcaneMageSpellManager.isQteSkill(power)) {
 			cast = ArcaneMageSpellManager.cast(entity, power, result);
-        } else switch (power) {
-            case "Water Slash" -> {
-                int cost = (int) Math.ceil(600 * effectiveMult);
-                if (cap.MP < cost)               { mpMsg(entity); return; }
-                if (isCd(entity, "Water Slash"))  { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                CooldownManager.set(entity, "mana_refresh", 60);
-                WaterBulletProcedure.execute(world, entity);
-                cast = true;
-            }
-            case "Curse Sphere" -> {
-                // Dynamic mana cost scales with Intelligence
-                int cost = (int) Math.ceil((600 + cap.Intelligence * 4) * effectiveMult);
-                if (cap.MP < cost) { mpMsg(entity); return; }
-                if (isCd(entity, "Curse Sphere")) { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                CooldownManager.set(entity, "mana_refresh", 60);
-                AirVacuumsProcedure.execute(world, entity);
-                cast = true;
-            }
-            case "Curse Smoke" -> {
-                int cost = (int) Math.ceil(600 * effectiveMult);
-                if (cap.MP < cost)               { mpMsg(entity); return; }
-                if (isCd(entity, "Curse Smoke"))  { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                CooldownManager.set(entity, "Curse Smoke", 150);
-                CurseSmokeCastProcedure.execute(world, ex, ey, ez, entity);
-                cast = true;
-            }
-            case "Curse Chains" -> {
-                int cost = (int) Math.ceil(300 * effectiveMult);
-                if (cap.MP < cost)                { mpMsg(entity); return; }
-                if (isCd(entity, "Curse Chains"))  { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                CooldownManager.set(entity, "Curse Chains", 150);
-                CursedChainsCastProcedure.execute(world, entity);
-                cast = true;
-            }
-            case "Magic Missiles" -> {
-                int cost = (int) Math.ceil(500 * effectiveMult);
-                if (cap.MP < cost)                  { mpMsg(entity); return; }
-                if (isCd(entity, "Magic Missiles"))  { cdMsg(entity); return; }
-                deductMP(entity, cost);
-                CooldownManager.set(entity, "Magic Missiles", 150);
-                MagicMissilesShootProcedure.execute(world, entity);
-                cast = true;
-            }
+		} else if (StormMageSpellManager.isQteSkill(power)) {
+			cast = StormMageSpellManager.cast(entity, power, result);
         }
 
         // QTE result feedback — only shown when the spell actually cast
@@ -183,24 +142,4 @@ public class UseSkillOnKeyReleasedProcedure {
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
-    private static void deductMP(Entity entity, double amount) {
-        entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(cap -> {
-            cap.MP -= amount;
-            cap.syncPlayerVariables(entity);
-        });
-    }
-
-    private static boolean isCd(Entity entity, String key) {
-        return CooldownManager.isOnCooldown(entity, key);
-    }
-
-    private static void mpMsg(Entity entity) {
-        if (entity instanceof Player p && !p.level().isClientSide())
-            p.displayClientMessage(Component.literal("Not enough MP!"), true);
-    }
-
-    private static void cdMsg(Entity entity) {
-        if (entity instanceof Player p && !p.level().isClientSide())
-            p.displayClientMessage(Component.literal("Ability on cooldown!"), true);
-    }
 }

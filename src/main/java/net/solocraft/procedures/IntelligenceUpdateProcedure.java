@@ -32,21 +32,23 @@ public class IntelligenceUpdateProcedure {
 		if (entity instanceof Player player && player.isCreative()) {
 			if (world.getLevelData().getGameTime() % 20 == 0) {
 				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Mana = 1000000.0D;
-					capability.MP = 1000000.0D;
-					capability.syncPlayerVariables(entity);
+					if (capability.Mana != 1000000.0D || capability.MP != 1000000.0D) {
+						capability.Mana = 1000000.0D;
+						capability.MP = 1000000.0D;
+						capability.syncPlayerVariables(entity);
+					}
 				});
 			}
 			return;
 		}
 		if (world.getLevelData().getGameTime() % 20 == 0) {
-			{
-				double _setval = 1000 + 100 * (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Mana = _setval;
+			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+				double mana = 1000 + 100 * capability.Intelligence;
+				if (capability.Mana != mana) {
+					capability.Mana = mana;
 					capability.syncPlayerVariables(entity);
-				});
-			}
+				}
+			});
 		}
 	}
 }

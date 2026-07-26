@@ -1,34 +1,38 @@
-// Tag-Based Boss Advancement System - Uses entity tags for automatic detection
 package net.solocraft.procedures;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
+
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.tags.TagKey;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.advancements.Advancement;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.Level;
 
-import java.util.Set;
-import java.util.Map;
-import java.util.List;
 import java.util.HashMap;
-import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * Awards public boss-history advancements without adding duplicate chat or
+ * action-bar narration. Boss completion feedback is owned by the relevant
+ * dungeon flow and is delivered through the System popup when available.
+ */
 @Mod.EventBusSubscriber
-public class GiveKillAdvancementsProcedure {
-	// Your boss tag
-	private static final TagKey<net.minecraft.world.entity.EntityType<?>> SOLO_BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("sololeveling", "soloboss"));
-	// Simple mapping: entity registry name -> advancement ID
+public final class GiveKillAdvancementsProcedure {
+	private static final TagKey<EntityType<?>> SOLO_BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE,
+			new ResourceLocation("sololeveling", "soloboss"));
 	private static final Map<String, String> BOSS_TO_ADVANCEMENT = new HashMap<>();
+	private static final double PROXIMITY_RANGE = 50.0D;
+
 	static {
-		// Just add the mappings here - when you add a new boss to the tag, add the advancement here
 		BOSS_TO_ADVANCEMENT.put("sololeveling:fanged_kasaka", "sololeveling:kasakas_domain");
 		BOSS_TO_ADVANCEMENT.put("sololeveling:igris", "sololeveling:blood_red_commander_igris");
 		BOSS_TO_ADVANCEMENT.put("sololeveling:beru_boss", "sololeveling:ant_king");
@@ -41,112 +45,67 @@ public class GiveKillAdvancementsProcedure {
 		BOSS_TO_ADVANCEMENT.put("sololeveling:kargalgan", "sololeveling:kargalgan_adv");
 		BOSS_TO_ADVANCEMENT.put("sololeveling:baruka", "sololeveling:baruka_adv");
 		BOSS_TO_ADVANCEMENT.put("sololeveling:futuristic_golem", "sololeveling:futuristic_golem_adv");
-		// Add more as needed - this is the ONLY place you need to add new bosses
 	}
-	// Configuration
-	private static final double PROXIMITY_RANGE = 50.0; // blocks
+
+	private GiveKillAdvancementsProcedure() {
+	}
 
 	@SubscribeEvent
 	public static void onBossDeath(LivingDeathEvent event) {
-		if (event.getEntity() == null)
+		Entity boss = event.getEntity();
+		if (boss.getPersistentData().getBoolean(DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG)
+				|| !boss.getType().is(SOLO_BOSS_TAG))
 			return;
-		Entity deadEntity = event.getEntity();
-		if (deadEntity.getPersistentData().getBoolean(net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG))
+		ResourceLocation entityId = ForgeRegistries.ENTITY_TYPES.getKey(boss.getType());
+		String advancementId = entityId == null ? null : BOSS_TO_ADVANCEMENT.get(entityId.toString());
+		if (advancementId == null)
 			return;
-		// Check if the dead entity is in the soloboss tag
-		if (!isSoloBoss(deadEntity))
-			return;
-		// Get the entity's registry name
-		ResourceLocation entityLocation = ForgeRegistries.ENTITY_TYPES.getKey(deadEntity.getType());
-		if (entityLocation == null)
-			return;
-		String entityName = entityLocation.toString();
-		// Get the corresponding advancement
-		String advancementId = BOSS_TO_ADVANCEMENT.get(entityName);
-		if (advancementId == null) {
-			System.out.println("[SoloLeveling] No advancement configured for boss: " + entityName);
-			return;
-		}
-		// Give advancement to all nearby players
-		giveAdvancementToNearbyPlayers(deadEntity, advancementId);
-	}
-
-	private static boolean isSoloBoss(Entity entity) {
-		// Check if entity type is in the soloboss tag
-		return entity.getType().is(SOLO_BOSS_TAG);
+		giveAdvancementToNearbyPlayers(boss, advancementId);
 	}
 
 	private static void giveAdvancementToNearbyPlayers(Entity boss, String advancementId) {
-		if (!(boss.level() instanceof Level))
-			return;
-		Level level = (Level) boss.level();
+		Level level = boss.level();
 		if (level.getServer() == null)
 			return;
-		// Get the advancement
-		Advancement advancement = level.getServer().getAdvancements().getAdvancement(new ResourceLocation(advancementId));
-		if (advancement == null) {
-			System.err.println("[SoloLeveling] Advancement not found: " + advancementId);
+		Advancement advancement = level.getServer().getAdvancements()
+				.getAdvancement(new ResourceLocation(advancementId));
+		if (advancement == null)
 			return;
-		}
-		// Find all players within range
-		List<ServerPlayer> nearbyPlayers = new ArrayList<>();
 		for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
-			if (player.level() == level && player.distanceTo(boss) <= PROXIMITY_RANGE) {
-				nearbyPlayers.add(player);
-			}
-		}
-		if (nearbyPlayers.isEmpty())
-			return;
-		// Give advancement to all nearby players
-		for (ServerPlayer player : nearbyPlayers) {
-			giveAdvancementToPlayer(player, advancement, boss);
-		}
-		// Send group message
-		String bossName = boss.getDisplayName().getString();
-		Component message = Component.literal("§6" + bossName + " defeated! " + nearbyPlayers.size() + " player(s) earned the achievement!");
-		for (ServerPlayer player : nearbyPlayers) {
-			player.displayClientMessage(message, false);
+			if (player.level() != level || player.distanceTo(boss) > PROXIMITY_RANGE)
+				continue;
+			giveAdvancementToPlayer(player, advancement);
 		}
 	}
 
-	private static void giveAdvancementToPlayer(ServerPlayer player, Advancement advancement, Entity boss) {
-		// Check if player already has the advancement
-		if (player.getAdvancements().getOrStartProgress(advancement).isDone()) {
+	private static void giveAdvancementToPlayer(ServerPlayer player, Advancement advancement) {
+		if (player.getAdvancements().getOrStartProgress(advancement).isDone())
 			return;
-		}
-		// Award all criteria for the advancement
-		for (String criterionName : advancement.getCriteria().keySet()) {
+		for (String criterionName : advancement.getCriteria().keySet())
 			player.getAdvancements().award(advancement, criterionName);
-		}
-		// Optional: Send individual message
-		player.displayClientMessage(Component.literal("§aAchievement unlocked: " + advancement.getDisplay().getTitle().getString()), true);
 	}
 
-	// ============ UTILITY METHODS ============
-	// Method to add new boss-advancement mappings at runtime (optional)
 	public static void addBossAdvancement(String entityName, String advancementId) {
 		BOSS_TO_ADVANCEMENT.put(entityName, advancementId);
 	}
 
-	// Method to get all configured bosses
 	public static Set<String> getConfiguredBosses() {
 		return BOSS_TO_ADVANCEMENT.keySet();
 	}
 
-	// Method to check if a boss has an advancement configured
 	public static boolean hasAdvancementConfigured(String entityName) {
 		return BOSS_TO_ADVANCEMENT.containsKey(entityName);
 	}
 
-	// Debug method to list all entities in the soloboss tag
 	public static void debugListSoloBosses(Level level) {
 		System.out.println("[SoloLeveling] Entities in soloboss tag:");
-		for (net.minecraft.world.entity.EntityType<?> entityType : ForgeRegistries.ENTITY_TYPES.getValues()) {
-			if (entityType.is(SOLO_BOSS_TAG)) {
-				ResourceLocation location = ForgeRegistries.ENTITY_TYPES.getKey(entityType);
-				String advancementId = BOSS_TO_ADVANCEMENT.get(location.toString());
-				System.out.println("  - " + location + " -> " + (advancementId != null ? advancementId : "NO ADVANCEMENT"));
-			}
+		for (EntityType<?> entityType : ForgeRegistries.ENTITY_TYPES.getValues()) {
+			if (!entityType.is(SOLO_BOSS_TAG))
+				continue;
+			ResourceLocation location = ForgeRegistries.ENTITY_TYPES.getKey(entityType);
+			String advancementId = location == null ? null : BOSS_TO_ADVANCEMENT.get(location.toString());
+			System.out.println("  - " + location + " -> "
+					+ (advancementId == null ? "NO ADVANCEMENT" : advancementId));
 		}
 	}
 }

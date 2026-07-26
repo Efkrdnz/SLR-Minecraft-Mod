@@ -37,13 +37,16 @@ public class GrandMageOverlayOverlay {
 			y = entity.getY();
 			z = entity.getZ();
 		}
+		boolean visible = IsGrandMageProcedure.execute(entity);
+		if (!visible)
+			return;
 		RenderSystem.disableDepthTest();
 		RenderSystem.depthMask(false);
 		RenderSystem.enableBlend();
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		if (IsGrandMageProcedure.execute(entity)) {
+		if (visible) {
 			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/grandmagereworked.png"), w / 2 + 160, h / 2 + 49, 0, 0, 47, 10, 47, 10);
 
 		}

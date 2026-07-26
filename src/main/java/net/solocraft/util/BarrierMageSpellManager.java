@@ -6,6 +6,7 @@ import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -431,6 +432,16 @@ public final class BarrierMageSpellManager {
 		tick(ACTIVE_MIRRORS);
 		tick(ACTIVE_COLLAPSES);
 		tick(ACTIVE_BASTIONS);
+	}
+
+	@SubscribeEvent
+	public static void onServerStopped(ServerStoppedEvent event) {
+		ACTIVE_BOLTS.clear();
+		ACTIVE_REPULSIONS.clear();
+		ACTIVE_PRISONS.clear();
+		ACTIVE_MIRRORS.clear();
+		ACTIVE_COLLAPSES.clear();
+		ACTIVE_BASTIONS.clear();
 	}
 
 	private static <T extends ActiveCast> void tick(List<T> casts) {

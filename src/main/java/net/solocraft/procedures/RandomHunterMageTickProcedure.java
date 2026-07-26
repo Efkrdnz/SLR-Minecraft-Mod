@@ -4,6 +4,7 @@ import net.solocraft.entity.HunterEntity;
 import net.solocraft.util.ArcaneMageSpellManager;
 import net.solocraft.util.BarrierMageSpellManager;
 import net.solocraft.util.FireMageSpellManager;
+import net.solocraft.util.StormMageSpellManager;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -60,12 +61,44 @@ public class RandomHunterMageTickProcedure {
 						rand = Mth.nextInt(RandomSource.create(), 1, 100);
 						String specialization = entity.getPersistentData().getString("sl_hunter_mage_specialization");
 						if (specialization.isBlank()) {
-							specialization = switch (entity.level().getRandom().nextInt(3)) {
+							specialization = switch (entity.level().getRandom().nextInt(4)) {
 								case 1 -> "barrier";
 								case 2 -> "arcane";
+								case 3 -> "storm";
 								default -> "fire";
 							};
 							entity.getPersistentData().putString("sl_hunter_mage_specialization", specialization);
+						}
+						if ("storm".equals(specialization)) {
+							String stormSpell;
+							if (stage == 1)
+								stormSpell = StormMageSpellManager.STATIC_NEEDLE;
+							else if (stage == 2)
+								stormSpell = rand <= 52 ? StormMageSpellManager.STATIC_NEEDLE
+										: rand <= 78 ? StormMageSpellManager.THUNDERCLAP
+										: StormMageSpellManager.SLIPSTREAM;
+							else if (stage == 3)
+								stormSpell = rand <= 32 ? StormMageSpellManager.STATIC_NEEDLE
+										: rand <= 55 ? StormMageSpellManager.LIGHTNING_ROD
+										: rand <= 78 ? StormMageSpellManager.THUNDERCLAP
+										: StormMageSpellManager.SLIPSTREAM;
+							else if (stage == 4)
+								stormSpell = rand <= 34 ? StormMageSpellManager.CHAIN_LIGHTNING
+										: rand <= 56 ? StormMageSpellManager.LIGHTNING_ROD
+										: rand <= 76 ? StormMageSpellManager.THUNDERCLAP
+										: rand <= 90 ? StormMageSpellManager.STATIC_NEEDLE
+										: StormMageSpellManager.THUNDERHEAD;
+							else
+								stormSpell = rand <= 30 ? StormMageSpellManager.CHAIN_LIGHTNING
+										: rand <= 46 ? StormMageSpellManager.THUNDERHEAD
+										: rand <= 58 ? StormMageSpellManager.SKYBREAKER
+										: rand <= 69 ? StormMageSpellManager.LIGHTNING_ROD
+										: rand <= 82 ? StormMageSpellManager.THUNDERCLAP
+										: rand <= 93 ? StormMageSpellManager.SLIPSTREAM
+										: StormMageSpellManager.TEMPEST_INCARNATE;
+							if (!StormMageSpellManager.castNpc(entity, stormSpell))
+								StormMageSpellManager.castNpc(entity, StormMageSpellManager.STATIC_NEEDLE);
+							return;
 						}
 						if ("arcane".equals(specialization)) {
 							String arcaneSpell;

@@ -56,7 +56,7 @@ public class AbilitiesGUIScreen extends AbstractContainerScreen<AbilitiesGUIMenu
 
 	@Override
 	public boolean isPauseScreen() {
-		return true;
+		return false;
 	}
 
 	@Override

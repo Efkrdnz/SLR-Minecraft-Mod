@@ -1,0 +1,13 @@
+{
+  "display": {
+    "icon": { "item": "sololeveling:runestone_cold_blood" },
+    "title": { "translate": "advancements.system.dkc_radiru_bloodshed.title" },
+    "description": { "translate": "advancements.system.dkc_radiru_bloodshed.descr" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": { "bloodshed": { "trigger": "minecraft:impossible" } },
+  "parent": "sololeveling:system/dkc_radiru"
+}

@@ -14,19 +14,19 @@ public final class SkillCategoryRegistry {
 	private static final Category TANKER = new Category("T", 0xEAF2FF);
 	private static final Category HEALER = new Category("H", 0x58F28A);
 	private static final Category RANGER = new Category("R", 0x71D83D);
-	private static final Category MAGE = new Category("M", 0xC18CFF);
 	private static final Category ARCANE_MAGE = new Category("AM", 0xB66CFF);
 	private static final Category FIRE_MAGE = new Category("FM", 0xFF6A32);
 	private static final Category BARRIER_MAGE = new Category("BM", 0x62DFFF);
-	private static final Category SUMMONING_MAGE = new Category("SM", 0xE66DFF);
-	private static final Category CURSE_MAGE = new Category("CM", 0x9255E8);
+	private static final Category STORM_MAGE = new Category("ST", 0xFFD45A);
+	private static final Category FORBIDDEN = new Category("FB", 0xFF3434);
 
 	private static final Map<String, Category> SKILLS = new HashMap<>();
 
 	static {
 		register(ASSASSIN, Set.of(
-				"Shadowstep", "Backstab", "Stealth", "Quickslashes", "Dualwield",
-				"Critical Attack", "Mutilation", "Murderious Intent"));
+				AssassinSkillManager.GHOST_STEP, AssassinSkillManager.NIGHT_REND,
+				AssassinSkillManager.STEALTH, AssassinSkillManager.FLASH_CUT, AssassinSkillManager.DUALWIELD,
+				"Critical Attack", "Mutilation", "Murderious Intent", "Dagger Throw", "Dagger Rush"));
 		register(FIGHTER, Set.of(
 				"Ground Slam", "Slash Dash", "Cross Strike", "Critical Strike", "Slash Fury",
 				"Sword Dance", "Sword of Light", "Sword Beam"));
@@ -37,17 +37,16 @@ public final class SkillCategoryRegistry {
 				"Heal Beam", "Haste Buff", "Purification", "Physical Buff", "Overheal",
 				"Blessing Mark"));
 		register(RANGER, Set.of(
-				"Back Step", "Hawkeye", "Hyper Focus", "Sharpshooter", "High Value Target",
-				"Proximity Trap", "Detection"));
+				RangerCombatManager.MANA_QUIVER, RangerCombatManager.BACK_STEP,
+				RangerCombatManager.HAWKEYE, RangerCombatManager.RAPID_FIRE,
+				RangerCombatManager.HYPER_FOCUS, RangerCombatManager.SHARPSHOOTER,
+				RangerCombatManager.HIGH_VALUE_TARGET, RangerCombatManager.ARROW_SHOWER,
+				RangerCombatManager.LEGACY_PROXIMITY_TRAP, "Detection"));
 		register(FIRE_MAGE, FireMageSpellManager.FIRE_SKILLS);
 		register(BARRIER_MAGE, BarrierMageSpellManager.BARRIER_SKILLS);
-		register(MAGE, Set.of("Magic Missiles", "Lightball", "Light Ball", "Water Slash"));
-		register(ARCANE_MAGE, Set.of(
-				"Aether Bolt", "Vector Step",
-				"Polarity Sphere", "Runic Relay", "Astral Arsenal", "Dimensional Rend",
-				"Grand Formula: Convergence"));
-		register(SUMMONING_MAGE, Set.of("Light Golem"));
-		register(CURSE_MAGE, Set.of("Curse Sphere", "Curse Smoke", "Curse Chains"));
+		register(ARCANE_MAGE, ArcaneMageSpellManager.ARCANE_SKILLS);
+		register(STORM_MAGE, StormMageSpellManager.STORM_SKILLS);
+		register(FORBIDDEN, Set.of("Cold Blood"));
 	}
 
 	private SkillCategoryRegistry() {

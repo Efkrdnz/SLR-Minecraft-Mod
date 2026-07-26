@@ -71,6 +71,8 @@ public class GateSpawnerUtil {
 			spawn(serverLevel, SololevelingModEntities.PORTAL_ANCIENT_GOLEM.get(), pos);
 		} else if (Math.random() < 1 / 6.0F) {
 			spawn(serverLevel, SololevelingModEntities.PORTAL_LAB.get(), pos);
+		} else if (Math.random() < 1 / 6.0F) {
+			spawn(serverLevel, SololevelingModEntities.PORTAL_CEMETERY.get(), pos);
 		} else if (Math.random() < 1 / 10.0F) {
 			if (!SololevelingModVariables.MapVariables.get(world).RedGate) {
 				spawn(serverLevel, SololevelingModEntities.RED_GATE.get(), pos);

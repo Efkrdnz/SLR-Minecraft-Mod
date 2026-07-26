@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 
 import java.util.Comparator;
 
-@Mod.EventBusSubscriber
 public class MutilationTargetingTickProcedure {
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {

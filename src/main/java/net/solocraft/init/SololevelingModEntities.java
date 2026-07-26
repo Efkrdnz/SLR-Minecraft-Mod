@@ -1,6 +1,7 @@
 package net.solocraft.init;
 
 import net.solocraft.entity.RadiruBloodSpearEntity;
+import net.solocraft.entity.EsilRadiruEntity;
 import net.solocraft.entity.ArcaneVfxEntity;
 import net.solocraft.entity.BarrierVfxEntity;
 import net.solocraft.entity.FireMageVfxEntity;
@@ -124,6 +125,7 @@ import net.solocraft.entity.DetectEyeInvEntity;
 import net.solocraft.entity.DemonKnightEntity;
 import net.solocraft.entity.DemonEntity;
 import net.solocraft.entity.DaggerSlashEntity;
+import net.solocraft.entity.ThrownDaggerEntity;
 import net.solocraft.entity.DualWieldFlurryEntity;
 import net.solocraft.entity.DKnight3Entity;
 import net.solocraft.entity.DKnight2Entity;
@@ -408,6 +410,8 @@ public class SololevelingModEntities {
 			.setTrackingRange(1).setUpdateInterval(3).setCustomClientFactory(AfterImage2Entity::new).fireImmune().sized(0.6f, 1.8f));
 	public static final RegistryObject<EntityType<SecretaryEntity>> SECRETARY = register("secretary", EntityType.Builder.<SecretaryEntity>of(SecretaryEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64)
 			.setUpdateInterval(3).setCustomClientFactory(SecretaryEntity::new).fireImmune().sized(0.6f, 1.8f));
+	public static final RegistryObject<EntityType<EsilRadiruEntity>> ESIL_RADIRU = register("esil_radiru", EntityType.Builder.<EsilRadiruEntity>of(EsilRadiruEntity::new, MobCategory.CREATURE).setShouldReceiveVelocityUpdates(true)
+			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(EsilRadiruEntity::new).fireImmune().sized(0.6f, 1.8f));
 	public static final RegistryObject<EntityType<ElderBeastEntity>> ELDER_BEAST = register("elder_beast",
 			EntityType.Builder.<ElderBeastEntity>of(ElderBeastEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(ElderBeastEntity::new)
 
@@ -422,6 +426,8 @@ public class SololevelingModEntities {
 					.sized(3f, 2f));
 	public static final RegistryObject<EntityType<DaggerSlashEntity>> DAGGER_SLASH = register("dagger_slash", EntityType.Builder.<DaggerSlashEntity>of(DaggerSlashEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true)
 			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(DaggerSlashEntity::new).fireImmune().sized(1f, 1f));
+	public static final RegistryObject<EntityType<ThrownDaggerEntity>> THROWN_DAGGER = register("thrown_dagger", EntityType.Builder.<ThrownDaggerEntity>of(ThrownDaggerEntity::new, MobCategory.MISC).setShouldReceiveVelocityUpdates(true)
+			.setTrackingRange(96).setUpdateInterval(1).setCustomClientFactory(ThrownDaggerEntity::new).sized(0.45f, 0.25f));
 	public static final RegistryObject<EntityType<ArrowSplashEntity>> ARROW_SPLASH = register("arrow_splash", EntityType.Builder.<ArrowSplashEntity>of(ArrowSplashEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true)
 			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(ArrowSplashEntity::new).fireImmune().sized(0.2f, 0.2f));
 	public static final RegistryObject<EntityType<GoblinClubEntity>> GOBLIN_CLUB = register("goblin_club",
@@ -483,7 +489,7 @@ public class SololevelingModEntities {
 	public static final RegistryObject<EntityType<SkeletonSummonerEntity>> SKELETON_SUMMONER = register("skeleton_summoner",
 			EntityType.Builder.<SkeletonSummonerEntity>of(SkeletonSummonerEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(SkeletonSummonerEntity::new)
 
-					.sized(0.6f, 1.8f));
+					.sized(1.2f, 3.4f));
 	public static final RegistryObject<EntityType<MagicalSkullEntity>> MAGICAL_SKULL = register("magical_skull",
 			EntityType.Builder.<MagicalSkullEntity>of(MagicalSkullEntity::new, MobCategory.MONSTER).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(MagicalSkullEntity::new)
 
@@ -789,6 +795,7 @@ public class SololevelingModEntities {
 		event.put(AFTER_IMAGE_1.get(), AfterImage1Entity.createAttributes().build());
 		event.put(AFTER_IMAGE_2.get(), AfterImage2Entity.createAttributes().build());
 		event.put(SECRETARY.get(), SecretaryEntity.createAttributes().build());
+		event.put(ESIL_RADIRU.get(), EsilRadiruEntity.createAttributes().build());
 		event.put(ELDER_BEAST.get(), ElderBeastEntity.createAttributes().build());
 		event.put(DETECT_EYE_INV.get(), DetectEyeInvEntity.createAttributes().build());
 		event.put(ICE_BALL.get(), IceBallEntity.createAttributes().build());

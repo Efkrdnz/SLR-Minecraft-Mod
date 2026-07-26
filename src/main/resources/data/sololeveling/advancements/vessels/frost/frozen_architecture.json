@@ -1,0 +1,10 @@
+{
+  "display": {
+    "icon": { "item": "minecraft:ice" },
+    "title": { "translate": "advancements.vessels.frost.frozen_architecture.title" },
+    "description": { "translate": "advancements.vessels.frost.frozen_architecture.descr" },
+    "frame": "goal", "show_toast": true, "announce_to_chat": false, "hidden": false
+  },
+  "criteria": { "unlock": { "trigger": "minecraft:impossible" } },
+  "parent": "sololeveling:vessels/frost/frozen_path"
+}

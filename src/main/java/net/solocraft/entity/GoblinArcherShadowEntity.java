@@ -479,7 +479,6 @@ public class GoblinArcherShadowEntity extends TamableAnimal implements GeoEntity
 	public void baseTick() {
 		super.baseTick();
 		GoblinArcherShadowOnEntityTickUpdateProcedure.execute(this.level(), this);
-		this.refreshDimensions();
 	}
 
 	@Override

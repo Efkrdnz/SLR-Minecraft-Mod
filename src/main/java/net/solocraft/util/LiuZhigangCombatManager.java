@@ -79,6 +79,8 @@ public final class LiuZhigangCombatManager {
 	private static final String BEAM_COOLDOWN = "liu_charged_sword_beam";
 	private static final String FLASH_COOLDOWN = "liu_dragon_flash";
 	private static final String NEXT_STRIKE = "liu_next_enhanced_strike";
+	private static final String STRIKE_PRESSURE_STACKS = "liu_enhanced_strike_pressure";
+	private static final String STRIKE_PRESSURE_LAST = "liu_enhanced_strike_pressure_last";
 	private static final String FALL_SAFE_UNTIL = "liu_fall_safe_until";
 	private static final String COUNTER_UNTIL = "liu_counter_until";
 	private static final String COUNTER_CHARGES = "liu_counter_charges";
@@ -97,6 +99,14 @@ public final class LiuZhigangCombatManager {
 	private static final int EXECUTION_MAX_LINK_NODES = 48;
 	private static final int EXECUTION_MAX_LINKS = 24;
 	private static final double EXECUTION_LINK_RANGE_SQR = 20.0D * 20.0D;
+	private static final int ENHANCED_STRIKE_RECOVERY_TICKS = 6;
+	private static final int ENHANCED_STRIKE_FINISHER_RECOVERY_TICKS = 8;
+	private static final int ENHANCED_STRIKE_PRESSURE_RESET_TICKS = 45;
+	private static final int ENHANCED_STRIKE_PRESSURE_CAP = 6;
+	private static final double ENHANCED_STRIKE_PRESSURE_COST_STEP = 0.22D;
+	private static final float CHARGED_BEAM_DAMAGE_MULTIPLIER = 0.72F;
+	private static final float ENHANCED_STRIKE_DAMAGE_MULTIPLIER = 0.72F;
+	private static final float DANCE_WAVE_BEAM_DAMAGE_MULTIPLIER = 0.82F;
 
 	private static final TagKey<net.minecraft.world.item.Item> NORMAL_SWORDS = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "nsword"));
 	private static final TagKey<net.minecraft.world.item.Item> DAGGERS = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "dagger"));
@@ -235,7 +245,7 @@ public final class LiuZhigangCombatManager {
 			default -> 0.42F + partial * 0.3F;
 		};
 		float damage = swordSkillDamage(player, state.weaponPower,
-				multiplier * (state.dual ? 1.1D : 1.0D));
+				multiplier * (state.dual ? 1.1D : 1.0D)) * CHARGED_BEAM_DAMAGE_MULTIPLIER;
 		Vec3 look = player.getLookAngle().normalize();
 		Vec3 origin = player.getEyePosition().add(look.scale(1.9D)).add(0.0D, -0.22D, 0.0D);
 		LiuSwordBeamEntity.spawn(player.serverLevel(), player, origin, look, tier, state.dual,
@@ -259,16 +269,21 @@ public final class LiuZhigangCombatManager {
 		if (!isCombatStance(player) || !player.isAlive())
 			return;
 		long now = player.level().getGameTime();
-		if (player.getPersistentData().getLong(NEXT_STRIKE) > now)
+		int pressure = refreshedEnhancedStrikePressure(player, now);
+		if (player.getPersistentData().getLong(NEXT_STRIKE) > now) {
+			addEnhancedStrikePressure(player, now);
 			return;
+		}
 		ItemStack stack = offhand ? player.getOffhandItem() : player.getMainHandItem();
 		if (!isMeleeWeapon(stack))
 			return;
 		boolean finisher = Math.floorMod(comboIndex, 4) == 3;
-		int mana = VesselManaScaling.strengthScaledCost(player, finisher ? 42 : 26, 0.45D);
+		int mana = enhancedStrikeManaCost(player, finisher, pressure);
 		if (!consumeManaSilently(player, mana))
 			return;
-		player.getPersistentData().putLong(NEXT_STRIKE, now + 2L);
+		player.getPersistentData().putLong(NEXT_STRIKE, now
+				+ (finisher ? ENHANCED_STRIKE_FINISHER_RECOVERY_TICKS : ENHANCED_STRIKE_RECOVERY_TICKS));
+		addEnhancedStrikePressure(player, now);
 		int color = colorFor(stack);
 		int otherColor = colorFor(offhand ? player.getMainHandItem() : player.getOffhandItem());
 		boolean dual = isMeleeWeapon(player.getMainHandItem()) && isMeleeWeapon(player.getOffhandItem());
@@ -287,7 +302,8 @@ public final class LiuZhigangCombatManager {
 				color, dual ? otherColor : color, finisher ? 4.9F : 3.55F, finisher ? 8.2F : 6.2F,
 				strikeRoll, finisher ? 8 : 6, finisher && dual, finisher ? 1.38F : 1.12F);
 
-		float damage = swordSkillDamage(player, stack, finisher ? 0.78D : 0.5D);
+		float damage = swordSkillDamage(player, stack, finisher ? 0.78D : 0.5D)
+				* ENHANCED_STRIKE_DAMAGE_MULTIPLIER;
 		SololevelingMod.queueServerWork(1, () -> {
 			if (!player.isAlive() || !isCombatStance(player))
 				return;
@@ -562,37 +578,45 @@ public final class LiuZhigangCombatManager {
 		return root;
 	}
 
-	public static void restrainExecutionTarget(ServerPlayer owner, LivingEntity target, int durationTicks) {
-		if (!isValidTarget(owner, target))
-			return;
-		long until = owner.level().getGameTime() + Math.max(2, durationTicks);
+	public static boolean registerExecutionTarget(ServerPlayer owner, UUID beamId, LivingEntity target,
+			UUID markerEffect, float damage, int primaryColor, int secondaryColor, boolean dual,
+			boolean allowCreate) {
+		if (owner == null || beamId == null || markerEffect == null || !isValidTarget(owner, target))
+			return false;
+		List<ExecutionState> pending = EXECUTIONS.computeIfAbsent(owner.getUUID(),
+				ignored -> new ArrayList<>());
+		ExecutionState state = null;
+		for (ExecutionState candidate : pending) {
+			if (beamId.equals(candidate.beamId)) {
+				state = candidate;
+				break;
+			}
+		}
+		if (state == null) {
+			if (!allowCreate) {
+				if (pending.isEmpty())
+					EXECUTIONS.remove(owner.getUUID());
+				return false;
+			}
+			state = new ExecutionState(beamId,
+					owner.level().getGameTime() + EXECUTION_DELAY_TICKS, damage,
+					primaryColor, secondaryColor, dual);
+			pending.add(state);
+		}
+		UUID targetId = target.getUUID();
+		state.targets.add(targetId);
+		UUID previousMarker = state.markerEffects.put(targetId, markerEffect);
+		if (previousMarker != null && !previousMarker.equals(markerEffect))
+			removeVfx(owner.serverLevel(), previousMarker);
+
+		long until = state.detonateAt + 3L;
+		int remainingTicks = (int) Math.max(2L, until - target.level().getGameTime());
 		CompoundTag data = target.getPersistentData();
 		data.putUUID(EXECUTION_SLOW_OWNER, owner.getUUID());
 		data.putLong(EXECUTION_SLOW_UNTIL, Math.max(data.getLong(EXECUTION_SLOW_UNTIL), until));
 		target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
-				Math.max(2, durationTicks), 2, false, false, true));
-	}
-
-	public static void scheduleExecutionDetonation(ServerPlayer owner, Set<UUID> ids,
-			Map<UUID, UUID> markerEffects, float damage, int primaryColor, int secondaryColor,
-			boolean dual) {
-		if (ids.isEmpty())
-			return;
-		long detonateAt = owner.level().getGameTime() + EXECUTION_DELAY_TICKS;
-		Set<UUID> targets = new HashSet<>(ids);
-		for (UUID id : targets) {
-			LivingEntity target = living(owner.serverLevel(), id);
-			if (target != null) {
-				CompoundTag data = target.getPersistentData();
-				data.putUUID(EXECUTION_SLOW_OWNER, owner.getUUID());
-				data.putLong(EXECUTION_SLOW_UNTIL, detonateAt + 3L);
-				target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
-						EXECUTION_DELAY_TICKS + 3, 2, false, false, true));
-			}
-		}
-		EXECUTIONS.computeIfAbsent(owner.getUUID(), ignored -> new ArrayList<>())
-				.add(new ExecutionState(detonateAt, targets, new HashMap<>(markerEffects), damage,
-						primaryColor, secondaryColor, dual));
+				remainingTicks, 2, false, false, true));
+		return true;
 	}
 
 	public static boolean isValidTarget(Player player, LivingEntity target) {
@@ -829,7 +853,7 @@ public final class LiuZhigangCombatManager {
 						primaryHandColor(player), secondaryHandColor(player), manifested ? 4.8F : 3.6F,
 						manifested ? 25.0F : 19.0F, 3.5F,
 						swordSkillDamage(player, player.getMainHandItem(),
-								0.9D * (manifested ? 1.15D : 1.0D)));
+								0.9D * (manifested ? 1.15D : 1.0D)) * DANCE_WAVE_BEAM_DAMAGE_MULTIPLIER);
 			});
 		}
 	}
@@ -1002,6 +1026,9 @@ public final class LiuZhigangCombatManager {
 		if (entity instanceof ServerPlayer player) {
 			cancelBeamCharge(player);
 			cancelPendingExecutions(player);
+			player.getPersistentData().remove(NEXT_STRIKE);
+			player.getPersistentData().remove(STRIKE_PRESSURE_STACKS);
+			player.getPersistentData().remove(STRIKE_PRESSURE_LAST);
 		}
 		FlashChargeState charge = FLASH_CHARGES.remove(id);
 		if (charge != null && charge.markerId != null && entity instanceof ServerPlayer player)
@@ -1009,6 +1036,32 @@ public final class LiuZhigangCombatManager {
 		FLASH_DASHES.remove(id);
 		DANCES.remove(id);
 		DOMAINS.remove(id);
+	}
+
+	private static int refreshedEnhancedStrikePressure(ServerPlayer player, long now) {
+		CompoundTag data = player.getPersistentData();
+		long last = data.getLong(STRIKE_PRESSURE_LAST);
+		if (last <= 0L || now < last || now - last > ENHANCED_STRIKE_PRESSURE_RESET_TICKS) {
+			data.remove(STRIKE_PRESSURE_STACKS);
+			data.remove(STRIKE_PRESSURE_LAST);
+			return 0;
+		}
+		return Mth.clamp(data.getInt(STRIKE_PRESSURE_STACKS), 0, ENHANCED_STRIKE_PRESSURE_CAP);
+	}
+
+	private static void addEnhancedStrikePressure(ServerPlayer player, long now) {
+		CompoundTag data = player.getPersistentData();
+		int pressure = refreshedEnhancedStrikePressure(player, now);
+		data.putInt(STRIKE_PRESSURE_STACKS, Math.min(ENHANCED_STRIKE_PRESSURE_CAP, pressure + 1));
+		data.putLong(STRIKE_PRESSURE_LAST, now);
+	}
+
+	private static int enhancedStrikeManaCost(ServerPlayer player, boolean finisher, int pressure) {
+		int base = VesselManaScaling.strengthScaledCost(player, finisher ? 42 : 26, 0.45D);
+		if (pressure <= 0)
+			return base;
+		return (int) Math.ceil(base * (1.0D + ENHANCED_STRIKE_PRESSURE_COST_STEP
+				* Math.min(pressure, ENHANCED_STRIKE_PRESSURE_CAP)));
 	}
 
 	private static boolean sameHeldWeapons(ServerPlayer player, BeamChargeState state) {
@@ -1208,6 +1261,7 @@ public final class LiuZhigangCombatManager {
 	}
 
 	private static final class ExecutionState {
+		private final UUID beamId;
 		private final long detonateAt;
 		private final Set<UUID> targets;
 		private final Map<UUID, UUID> markerEffects;
@@ -1217,11 +1271,12 @@ public final class LiuZhigangCombatManager {
 		private final boolean dual;
 		private boolean impactSent;
 
-		private ExecutionState(long detonateAt, Set<UUID> targets, Map<UUID, UUID> markerEffects,
-				float damage, int primaryColor, int secondaryColor, boolean dual) {
+		private ExecutionState(UUID beamId, long detonateAt, float damage,
+				int primaryColor, int secondaryColor, boolean dual) {
+			this.beamId = beamId;
 			this.detonateAt = detonateAt;
-			this.targets = targets;
-			this.markerEffects = markerEffects;
+			this.targets = new HashSet<>();
+			this.markerEffects = new HashMap<>();
 			this.damage = damage;
 			this.primaryColor = primaryColor;
 			this.secondaryColor = secondaryColor;

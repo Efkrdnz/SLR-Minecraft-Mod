@@ -6,6 +6,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.StealthBossDetectionHelper;
 import net.solocraft.entity.RulersAuthorityAuraEntity;
 import net.solocraft.entity.HunterEntity;
+import net.solocraft.entity.ThrownDaggerEntity;
 
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -27,15 +28,20 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
@@ -59,6 +65,14 @@ public final class RulersAuthorityManager {
     private static final String COOLDOWN = "telekinesis";
     private static final String LAUNCH_PROTECTION = "sl_telekinesis_launch_protection_until";
     private static final int HOLD_TICKS = 5;
+    private static final double DAGGER_AUTHORITY_INITIAL_BASE = 240.0D;
+    private static final double DAGGER_HAND_INITIAL_BASE = 170.0D;
+    private static final double DAGGER_AUTHORITY_DRAIN_BASE = 92.0D;
+    private static final double DAGGER_HAND_DRAIN_BASE = 64.0D;
+    private static final double DAGGER_AUTHORITY_INITIAL_MAX_MANA_PERCENT = 0.035D;
+    private static final double DAGGER_HAND_INITIAL_MAX_MANA_PERCENT = 0.025D;
+    private static final double DAGGER_AUTHORITY_DRAIN_MAX_MANA_PERCENT = 0.018D;
+    private static final double DAGGER_HAND_DRAIN_MAX_MANA_PERCENT = 0.012D;
     private static final TagKey<net.minecraft.world.entity.EntityType<?>> BOSS_TAG =
             TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("soloboss"));
 
@@ -171,7 +185,7 @@ public final class RulersAuthorityManager {
         session.drainTicker++;
         if (session.drainTicker >= 20) {
             session.drainTicker = 0;
-            double drain = (session.authority ? 18.0D : 12.0D) + session.weight * 3.0D;
+            double drain = controlDrain(player, controlled, session);
             if (!consumeMana(player, drain)) {
                 player.displayClientMessage(Component.literal("Ruler's power released: not enough mana").withStyle(ChatFormatting.RED), true);
                 cancelSession(player, session);
@@ -293,7 +307,7 @@ public final class RulersAuthorityManager {
             session.controlledEntity = target;
             session.bossResistance = true;
             session.weight = entityWeight(target);
-            session.auraEntity = RulersAuthorityAuraEntity.spawn(player.serverLevel(), target, session.authority, true);
+            session.auraEntity = spawnControlAura(player.serverLevel(), target, session.authority, true);
             notifyControlledTarget(player, target);
             return;
         }
@@ -310,12 +324,12 @@ public final class RulersAuthorityManager {
             session.controlledEntity = target;
             session.bossResistance = true;
             session.weight = weight;
-            session.auraEntity = RulersAuthorityAuraEntity.spawn(player.serverLevel(), target, session.authority, true);
+            session.auraEntity = spawnControlAura(player.serverLevel(), target, session.authority, true);
             notifyControlledTarget(player, target);
             return;
         }
 
-        double initialCost = (session.authority ? 120.0D : 80.0D) + weight * 8.0D;
+        double initialCost = controlInitialCost(player, target, session.authority, weight);
         if (!consumeMana(player, initialCost)) {
             player.displayClientMessage(Component.literal("Not enough mana to seize " + target.getDisplayName().getString()).withStyle(ChatFormatting.RED), true);
             SESSIONS.remove(player.getUUID());
@@ -327,7 +341,7 @@ public final class RulersAuthorityManager {
         session.bossResistance = boss;
         session.originalNoGravity = target.isNoGravity();
         session.weight = weight;
-        session.auraEntity = RulersAuthorityAuraEntity.spawn(player.serverLevel(), target, session.authority, boss);
+        session.auraEntity = spawnControlAura(player.serverLevel(), target, session.authority, boss);
         if (!boss) {
             target.setNoGravity(true);
             target.setDeltaMovement(Vec3.ZERO);
@@ -382,7 +396,8 @@ public final class RulersAuthorityManager {
         if (authority && targets.isEmpty() && pull)
             pullNearbyItems(player, range * 0.7D, strength);
 
-        renderPressureWave(player.serverLevel(), player, pull, charged, range);
+        if (!hasDaggerTarget(targets))
+            renderPressureWave(player.serverLevel(), player, pull, charged, range);
         playTelekinesisSound(player, pull ? 1.35F : 0.95F);
         CooldownManager.set(player, "mana_refresh", 30);
         CooldownManager.set(player, COOLDOWN, charged ? (authority ? 32 : 42) : (authority ? 20 : 28));
@@ -398,6 +413,8 @@ public final class RulersAuthorityManager {
             direction = player.getLookAngle();
         direction = direction.normalize();
         target.setDeltaMovement(direction.x * strength, Math.max(0.22D, direction.y * strength + 0.28D), direction.z * strength);
+		if (target instanceof ThrownDaggerEntity dagger)
+			dagger.markRulersControlled(player.level().getGameTime());
         markTelekineticLaunch(target, 120);
         markVelocityChanged(target);
         dealPressureDamage(player, target, isBoss(target) ? 0.35F : 1.0F);
@@ -413,6 +430,8 @@ public final class RulersAuthorityManager {
         double distanceScale = Mth.clamp(direction.length() / 7.0D, 0.75D, 1.8D);
         Vec3 motion = direction.normalize().scale(strength * distanceScale);
         target.setDeltaMovement(motion);
+		if (target instanceof ThrownDaggerEntity dagger)
+			dagger.markRulersControlled(player.level().getGameTime());
         markTelekineticLaunch(target, 120);
         markVelocityChanged(target);
         dealPressureDamage(player, target, isBoss(target) ? 0.25F : 0.65F);
@@ -427,6 +446,8 @@ public final class RulersAuthorityManager {
         if (motion.length() > maximumSpeed)
             motion = motion.normalize().scale(maximumSpeed);
         target.setDeltaMovement(motion);
+		if (target instanceof ThrownDaggerEntity dagger)
+			dagger.markRulersControlled(player.level().getGameTime());
         target.fallDistance = 0;
         if (target instanceof LivingEntity living)
             living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 3, 5, false, false, false));
@@ -447,6 +468,8 @@ public final class RulersAuthorityManager {
         markTelekineticLaunch(target, 200);
         if (target instanceof Projectile projectile)
             projectile.setOwner(player);
+		if (target instanceof ThrownDaggerEntity dagger)
+			dagger.onRulersReleased();
         markVelocityChanged(target);
 
         if (target instanceof LivingEntity) {
@@ -658,7 +681,15 @@ public final class RulersAuthorityManager {
         }
     }
 
+    private static RulersAuthorityAuraEntity spawnControlAura(ServerLevel level, Entity target, boolean authority, boolean resisted) {
+        if (suppressDaggerRulerEffects(target))
+            return null;
+        return RulersAuthorityAuraEntity.spawn(level, target, authority, resisted);
+    }
+
     private static void renderNegation(ServerLevel level, Entity target) {
+        if (suppressDaggerRulerEffects(target))
+            return;
         Vec3 center = target.getBoundingBox().getCenter();
         level.sendParticles(ParticleTypes.ELECTRIC_SPARK, center.x, center.y, center.z, 30,
                 target.getBbWidth() * 0.48D, target.getBbHeight() * 0.35D,
@@ -669,6 +700,9 @@ public final class RulersAuthorityManager {
     }
 
     private static Entity findLookTarget(ServerPlayer player, double range) {
+		ThrownDaggerEntity priorityDagger = findPriorityDagger(player, range);
+		if (priorityDagger != null)
+			return priorityDagger;
         Vec3 start = player.getEyePosition();
         Vec3 end = start.add(player.getLookAngle().scale(range));
         HitResult blockHit = player.level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER,
@@ -703,7 +737,9 @@ public final class RulersAuthorityManager {
         if (candidate == null || candidate == player || !candidate.isAlive() || candidate.isSpectator()
                 || candidate.isPassengerOfSameVehicle(player) || candidate == player.getVehicle())
             return false;
-        if (!(candidate instanceof LivingEntity || candidate instanceof ItemEntity || candidate instanceof Projectile))
+		if (candidate instanceof ThrownDaggerEntity dagger)
+			return dagger.isPhysical() && dagger.isOwnedBy(player);
+		if (!(candidate instanceof LivingEntity || candidate instanceof ItemEntity || candidate instanceof Projectile))
             return false;
         if (candidate instanceof TamableAnimal tame && tame.isOwnedBy(player))
             return false;
@@ -713,6 +749,22 @@ public final class RulersAuthorityManager {
             return false;
         return true;
     }
+
+	private static ThrownDaggerEntity findPriorityDagger(ServerPlayer player, double range) {
+		Vec3 eye = player.getEyePosition();
+		Vec3 look = player.getLookAngle().normalize();
+		return player.level().getEntitiesOfClass(ThrownDaggerEntity.class,
+				player.getBoundingBox().inflate(range), dagger -> dagger.isAlive() && dagger.isPhysical()
+						&& dagger.isOwnedBy(player) && dagger.distanceToSqr(player) <= range * range).stream()
+				.filter(dagger -> {
+					Vec3 direction = dagger.getBoundingBox().getCenter().subtract(eye);
+					return direction.lengthSqr() > 0.01D && look.dot(direction.normalize()) >= 0.35D
+							&& player.hasLineOfSight(dagger);
+				})
+				.max(Comparator.comparingDouble(dagger -> look.dot(
+						dagger.getBoundingBox().getCenter().subtract(eye).normalize())))
+				.orElse(null);
+	}
 
     private static boolean sameParty(ServerPlayer player, Player other) {
         String playerParty = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
@@ -731,6 +783,57 @@ public final class RulersAuthorityManager {
         double volume = Math.max(0.25D, entity.getBbWidth() * entity.getBbWidth() * entity.getBbHeight());
         double health = entity instanceof LivingEntity living ? living.getMaxHealth() / 45.0D : 0.5D;
         return Mth.clamp(0.5D + volume * 0.35D + health, 0.75D, 10.0D);
+    }
+
+    private static double controlInitialCost(ServerPlayer player, Entity target, boolean authority, double weight) {
+        if (target instanceof ThrownDaggerEntity dagger) {
+            double meleeDamage = daggerMeleeDamage(dagger.getDaggerStack());
+            double maxMana = maximumMana(player);
+            double base = authority ? DAGGER_AUTHORITY_INITIAL_BASE : DAGGER_HAND_INITIAL_BASE;
+            double damageScale = authority ? 14.0D : 10.0D;
+            double percent = authority ? DAGGER_AUTHORITY_INITIAL_MAX_MANA_PERCENT : DAGGER_HAND_INITIAL_MAX_MANA_PERCENT;
+            return base + meleeDamage * damageScale + maxMana * percent;
+        }
+        return (authority ? 120.0D : 80.0D) + weight * 8.0D;
+    }
+
+    private static double controlDrain(ServerPlayer player, Entity target, ControlSession session) {
+        if (target instanceof ThrownDaggerEntity dagger) {
+            double meleeDamage = daggerMeleeDamage(dagger.getDaggerStack());
+            double maxMana = maximumMana(player);
+            double base = session.authority ? DAGGER_AUTHORITY_DRAIN_BASE : DAGGER_HAND_DRAIN_BASE;
+            double damageScale = session.authority ? 8.0D : 5.5D;
+            double percent = session.authority ? DAGGER_AUTHORITY_DRAIN_MAX_MANA_PERCENT : DAGGER_HAND_DRAIN_MAX_MANA_PERCENT;
+            return base + meleeDamage * damageScale + maxMana * percent;
+        }
+        return (session.authority ? 18.0D : 12.0D) + session.weight * 3.0D;
+    }
+
+    private static double daggerMeleeDamage(ItemStack stack) {
+        if (stack == null || stack.isEmpty())
+            return 4.0D;
+        double addition = 0.0D;
+        double multiplier = 1.0D;
+        for (AttributeModifier modifier : stack.getAttributeModifiers(EquipmentSlot.MAINHAND).get(Attributes.ATTACK_DAMAGE)) {
+            if (modifier.getOperation() == AttributeModifier.Operation.ADDITION) {
+                addition += modifier.getAmount();
+            } else if (modifier.getOperation() == AttributeModifier.Operation.MULTIPLY_BASE) {
+                multiplier += modifier.getAmount();
+            } else if (modifier.getOperation() == AttributeModifier.Operation.MULTIPLY_TOTAL) {
+                multiplier *= 1.0D + modifier.getAmount();
+            }
+        }
+        double enchantment = EnchantmentHelper.getDamageBonus(stack, MobType.UNDEFINED);
+        return Mth.clamp(addition * multiplier + enchantment, 4.0D, 40.0D);
+    }
+
+    private static double maximumMana(ServerPlayer player) {
+        SololevelingModVariables.PlayerVariables variables = player
+                .getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(null);
+        if (variables == null)
+            return 1000.0D;
+        double fallback = 1000.0D + Math.max(0.0D, variables.Intelligence) * 100.0D;
+        return Math.max(1.0D, Math.max(Math.max(variables.Mana, variables.MP), fallback));
     }
 
     private static void dealPressureDamage(ServerPlayer player, Entity target, float multiplier) {
@@ -773,7 +876,7 @@ public final class RulersAuthorityManager {
             }
         }
 
-        if (thrown.level() instanceof ServerLevel level) {
+        if (!suppressDaggerRulerEffects(thrown) && thrown.level() instanceof ServerLevel level) {
             level.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y, impact.z, state.slammed ? 3 : 1,
                     0.25D, 0.2D, 0.25D, 0.02D);
             level.sendParticles(ParticleTypes.ELECTRIC_SPARK, impact.x, impact.y, impact.z, state.authority ? 24 : 14,
@@ -799,6 +902,8 @@ public final class RulersAuthorityManager {
     }
 
     private static void renderControlEffect(ServerLevel level, ServerPlayer player, Entity target, ControlSession session) {
+        if (suppressDaggerRulerEffects(target))
+            return;
         if (player.tickCount % 2 != 0)
             return;
         Vec3 start = player.getEyePosition().add(player.getLookAngle().scale(0.45D));
@@ -838,10 +943,24 @@ public final class RulersAuthorityManager {
     }
 
     private static void renderReleaseEffect(ServerLevel level, Entity target, boolean slam) {
+        if (suppressDaggerRulerEffects(target))
+            return;
         Vec3 center = target.getBoundingBox().getCenter();
         level.sendParticles(slam ? ParticleTypes.ENCHANTED_HIT : ParticleTypes.ELECTRIC_SPARK,
                 center.x, center.y, center.z, 16, target.getBbWidth() * 0.3D,
                 target.getBbHeight() * 0.25D, target.getBbWidth() * 0.3D, 0.12D);
+    }
+
+    private static boolean hasDaggerTarget(List<Entity> targets) {
+        for (Entity target : targets) {
+            if (suppressDaggerRulerEffects(target))
+                return true;
+        }
+        return false;
+    }
+
+    private static boolean suppressDaggerRulerEffects(Entity target) {
+        return target instanceof ThrownDaggerEntity;
     }
 
     private static void playTelekinesisSound(ServerPlayer player, float pitch) {

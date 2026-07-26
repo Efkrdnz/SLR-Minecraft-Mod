@@ -110,7 +110,7 @@ public class SlashEffectEntity extends Entity {
 
 	public float getFade(float partialTick) {
 		float age = this.tickCount + partialTick;
-		return Math.max(0.0F, 1.0F - age / LIFETIME);
+		return Math.max(0.0F, 1.0F - age / lifetime());
 	}
 
 	@Override
@@ -122,12 +122,14 @@ public class SlashEffectEntity extends Entity {
 			this.dealtDamage = true;
 			this.damageTargets();
 		}
-		if (this.tickCount >= LIFETIME) {
+		if (this.tickCount >= lifetime()) {
 			this.discard();
 		}
 	}
 
 	private void damageTargets() {
+		if (this.damage <= 0.0F)
+			return;
 		Entity owner = this.getOwner();
 		if (!(owner instanceof LivingEntity livingOwner))
 			return;
@@ -150,6 +152,10 @@ public class SlashEffectEntity extends Entity {
 				target.setLastHurtByPlayer(player);
 			}
 		}
+	}
+
+	private int lifetime() {
+		return this.getVariant() >= 100 ? 5 : LIFETIME;
 	}
 
 	@Override

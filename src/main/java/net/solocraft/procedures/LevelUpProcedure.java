@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.SystemNotifications;
 import net.solocraft.util.SystemPlayerAccess;
+import net.solocraft.util.RangerCombatManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.fml.common.Mod;
@@ -67,6 +68,8 @@ public class LevelUpProcedure {
 				if (newLevel / 25 > initialLevel / 25) {
 					playerVars.HunterRank = Math.min(6, initialRank + (newLevel / 25 - initialLevel / 25));
 				}
+				int rankPromotions = Math.max(0,
+						(int) Math.round(playerVars.HunterRank - initialRank));
 				// Apply stat increases
 				playerVars.Vitality += levelsGained;
 				playerVars.Strength += levelsGained;
@@ -78,6 +81,8 @@ public class LevelUpProcedure {
 				playerVars.syncPlayerVariables(entity);
 				// Client-side effects
 				if (!world.isClientSide()) {
+					if (rankPromotions > 0)
+						grantRankSkills(entity, (int) Math.round(playerVars.Classes), rankPromotions);
 					if (entity instanceof ServerPlayer player) {
 						SystemNotifications.showTitleUnder(player, SystemNotifications.ACCENT, 80,
 								Component.literal("LEVEL UP").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD),
@@ -102,5 +107,27 @@ public class LevelUpProcedure {
 				}
 			}
 		});
+	}
+
+	private static void grantRankSkills(Entity entity, int playerClass, int promotions) {
+		if (entity == null || promotions <= 0)
+			return;
+		if (playerClass == 6) {
+			if (entity instanceof ServerPlayer player)
+				RangerCombatManager.reconcileRanger(player);
+			return;
+		}
+		for (int promotion = 0; promotion < promotions; promotion++) {
+			switch (playerClass) {
+				case 1 -> MasterylvlupassassinProcedure.execute(entity);
+				case 2 -> MasterylvlupMageProcedure.execute(entity);
+				case 3 -> MasterylvlupFighterProcedure.execute(entity);
+				case 4 -> MasterylvlupTankerProcedure.execute(entity);
+				case 5 -> MasterylvlupHealerProcedure.execute(entity);
+				default -> {
+					return;
+				}
+			}
+		}
 	}
 }

@@ -1,22 +1,18 @@
 package net.solocraft.procedures;
 
 import net.solocraft.dungeon.ProceduralDungeonGateHandler;
+import net.solocraft.dungeon.ProceduralDungeonRank;
 import net.solocraft.network.SololevelingModVariables;
-import net.solocraft.init.SololevelingModItems;
+import net.solocraft.util.MagicReadingHelper;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.util.RandomSource;
-import net.minecraft.util.Mth;
 import net.minecraft.tags.TagKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
 import net.minecraft.core.registries.Registries;
 
 import java.util.List;
@@ -30,8 +26,7 @@ public class Portal1RightClickedOnEntityProcedure {
 			ProceduralDungeonGateHandler.enter(world, x, y, z, entity, sourceentity);
 			return;
 		}
-		double rand = 0;
-		if (!((sourceentity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MAGIC_READER.get())) {
+		if (!MagicReadingHelper.isHoldingMagicReader(sourceentity)) {
 			if (net.solocraft.guild.GuildGateHelper.prepareGateEntry(world, entity, sourceentity))
 				return;
 			{
@@ -68,9 +63,7 @@ public class Portal1RightClickedOnEntityProcedure {
 			}
 			sourceentity.setNoGravity(true);
 		} else {
-			rand = Mth.nextInt(RandomSource.create(), 201, 399);
-			if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-				_player.displayClientMessage(Component.literal(("Magic Reading: " + Math.round(rand))), false);
+			MagicReadingHelper.showRankReading(sourceentity, ProceduralDungeonRank.D);
 		}
 	}
 }

@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
+import net.solocraft.util.InstanceDungeonKeyAccess;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -57,9 +58,7 @@ public class RewardCollectProcedure {
 					});
 				}
 				if (entity instanceof Player _player) {
-					ItemStack _setstack = new ItemStack(SololevelingModItems.INSTANCE_DUNGEON_KEY.get());
-					_setstack.setCount(1);
-					ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
+					InstanceDungeonKeyAccess.grantInitialKey(_player);
 				}
 				{
 					double _setval = 1;
@@ -164,9 +163,13 @@ public class RewardCollectProcedure {
 				Item itemm = ForgeRegistries.ITEMS.getValue(itemLocation);
 				if (itemm != null && itemm != Items.AIR) {
 					if (entity instanceof Player _player) {
-						ItemStack _setstack = new ItemStack(itemm);
-						_setstack.setCount(1);
-						ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
+						if (itemm == SololevelingModItems.INSTANCE_DUNGEON_KEY.get()) {
+							InstanceDungeonKeyAccess.grantInitialKey(_player);
+						} else {
+							ItemStack _setstack = new ItemStack(itemm);
+							_setstack.setCount(1);
+							ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
+						}
 					}
 				} else {
 					System.err.println("[SoloLeveling] Invalid item reward: " + itemResourceLocation);

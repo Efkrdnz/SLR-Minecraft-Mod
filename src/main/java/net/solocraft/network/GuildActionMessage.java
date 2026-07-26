@@ -239,13 +239,15 @@ public class GuildActionMessage {
                     // Check and deduct hire cost
                     int cost = GuildHunter.hireCost(recruit.rank);
                     ItemStack costItem = getCostItem(recruit.rank);
-                    if (!hasEnoughItems(player, costItem, cost)) {
+                    if (!player.isCreative() && !hasEnoughItems(player, costItem, cost)) {
                         player.sendSystemMessage(net.minecraft.network.chat.Component.literal(
                                 "§cNot enough " + GuildHunter.hireMaterialName(recruit.rank)
                                 + "! Need §e" + cost + "§c."));
                         return;
                     }
-                    removeItems(player, costItem, cost);
+                    if (!player.isCreative()) {
+                        removeItems(player, costItem, cost);
+                    }
 
                     guild.recruitPool.remove(recruit);
                     guild.removeHunterFromAllTeams(recruit.id);

@@ -95,10 +95,18 @@ public class TrainingOnTickProcedure {
 					});
 				}
 				if (secretQuest) {
-					DkcQuestManager.unlock(entity);
-					RewardCollectProcedure.execute(entity, "FR");
-					RewardCollectProcedure.execute(entity, "SP20");
-					RewardCollectProcedure.execute(entity, "ITEM:sololeveling:redkey");
+					r1 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_1;
+					r2 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_2;
+					r3 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_3;
+					RewardCollectProcedure.execute(entity, r1);
+					RewardCollectProcedure.execute(entity, r2);
+					RewardCollectProcedure.execute(entity, r3);
+					if (entity instanceof ServerPlayer) {
+						RewardCollectProcedure.execute(entity, "FR");
+						RewardCollectProcedure.execute(entity, "SP20");
+						RewardCollectProcedure.execute(entity, "ITEM:sololeveling:redkey");
+						DkcQuestManager.unlock(entity);
+					}
 					DailyQuestHelper.completeSecretQuest(entity);
 				} else {
 					r1 = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).reward_1;
@@ -135,9 +143,8 @@ public class TrainingOnTickProcedure {
 								Component.literal("SECRET QUEST COMPLETE").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
 								Component.literal("DKC Key\n20 Skill Points\nFull Recovery").withStyle(ChatFormatting.LIGHT_PURPLE));
 					} else {
-						SystemNotifications.showTitleUnder(player, 0xFFFF9A3D, 100,
-								Component.literal("DAILY QUEST COMPLETE").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-								Component.literal("Rewards received.\nCheck your inventory and stats.").withStyle(ChatFormatting.GRAY));
+						SystemNotifications.showTitle(player, 0xFFFF9A3D, 100,
+								Component.literal("DAILY QUEST COMPLETE").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 					}
 				}
 				{

@@ -8,8 +8,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.TickEvent;
 
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.resources.ResourceLocation;
@@ -18,10 +18,11 @@ import net.minecraft.core.registries.Registries;
 
 import javax.annotation.Nullable;
 
-import java.util.Comparator;
-
 @Mod.EventBusSubscriber
 public class DunIgrisDetectionProcedure {
+	private static final ResourceKey<Level> IGRIS_DIMENSION = ResourceKey.create(Registries.DIMENSION,
+			new ResourceLocation("sololeveling", "dungeon_dimension_igris"));
+
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
 		if (event.phase == TickEvent.Phase.END) {
@@ -36,35 +37,19 @@ public class DunIgrisDetectionProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity) {
 		if (entity == null)
 			return;
-		if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_igris")))) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).tpd == false) {
-				if (!world.getEntitiesOfClass(Portal12Entity.class, AABB.ofSize(new Vec3((entity.getX()), (entity.getY()), (entity.getZ())), 202, 202, 202), e -> true).isEmpty()) {
-					if (Math.sqrt(Math.pow(entity.getX() - ((Entity) world.getEntitiesOfClass(Portal12Entity.class, AABB.ofSize(new Vec3((entity.getX()), (entity.getY()), (entity.getZ())), 202, 202, 202), e -> true).stream().sorted(new Object() {
-						Comparator<Entity> compareDistOf(double _x, double _y, double _z) {
-							return Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_x, _y, _z));
-						}
-					}.compareDistOf((entity.getX()), (entity.getY()), (entity.getZ()))).findFirst().orElse(null)).getX(), 2)
-							+ Math.pow(entity.getY() - ((Entity) world.getEntitiesOfClass(Portal12Entity.class, AABB.ofSize(new Vec3((entity.getX()), (entity.getY()), (entity.getZ())), 202, 202, 202), e -> true).stream().sorted(new Object() {
-								Comparator<Entity> compareDistOf(double _x, double _y, double _z) {
-									return Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_x, _y, _z));
-								}
-							}.compareDistOf((entity.getX()), (entity.getY()), (entity.getZ()))).findFirst().orElse(null)).getY(), 2)
-							+ Math.pow(entity.getZ() - ((Entity) world.getEntitiesOfClass(Portal12Entity.class, AABB.ofSize(new Vec3((entity.getX()), (entity.getY()), (entity.getZ())), 202, 202, 202), e -> true).stream().sorted(new Object() {
-								Comparator<Entity> compareDistOf(double _x, double _y, double _z) {
-									return Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_x, _y, _z));
-								}
-							}.compareDistOf((entity.getX()), (entity.getY()), (entity.getZ()))).findFirst().orElse(null)).getZ(), 2)) <= 3) {
-						{
-							boolean _setval = true;
-							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-								capability.tpd = _setval;
-								capability.syncPlayerVariables(entity);
-							});
-						}
-						entity.setNoGravity(false);
-					}
-				}
-			}
-		}
+		if (!entity.level().dimension().equals(IGRIS_DIMENSION))
+			return;
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			if (capability.tpd)
+				return;
+			AABB nearby = AABB.ofSize(entity.position(), 6.0D, 6.0D, 6.0D);
+			boolean reachedPortal = !world.getEntitiesOfClass(Portal12Entity.class, nearby,
+					portal -> portal.distanceToSqr(entity) <= 9.0D).isEmpty();
+			if (!reachedPortal)
+				return;
+			capability.tpd = true;
+			capability.syncPlayerVariables(entity);
+			entity.setNoGravity(false);
+		});
 	}
 }

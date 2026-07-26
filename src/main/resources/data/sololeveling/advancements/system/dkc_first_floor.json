@@ -1,0 +1,13 @@
+{
+  "display": {
+    "icon": { "item": "minecraft:blaze_powder" },
+    "title": { "translate": "advancements.system.dkc_first_floor.title" },
+    "description": { "translate": "advancements.system.dkc_first_floor.descr" },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": true
+  },
+  "criteria": { "floor": { "trigger": "minecraft:impossible" } },
+  "parent": "sololeveling:system/dkc_entered"
+}

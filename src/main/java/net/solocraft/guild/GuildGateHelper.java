@@ -11,6 +11,7 @@ import net.solocraft.entity.PortalSEntity;
 import net.solocraft.entity.PortalSewersEntity;
 import net.solocraft.entity.RandomCaveLargeEntity;
 import net.solocraft.entity.RedGateEntity;
+import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraft.core.registries.Registries;
@@ -160,7 +161,7 @@ public final class GuildGateHelper {
             vars.GatesCleared = vars.GatesCleared + token;
         }
         if (gate instanceof RedGateEntity || (gate != null && "red_gate".equals(entityPath(gate)))) {
-            vars.RedGate = false;
+            vars.RedGate = SnowRedGateArenaManager.hasActiveArena(level.getServer());
         }
         vars.syncData(level);
 

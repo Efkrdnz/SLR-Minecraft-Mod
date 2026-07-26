@@ -33,30 +33,28 @@ public class CreativeResetProcedure {
 	private static void execute(@Nullable Event event, Entity entity) {
 		if (entity == null)
 			return;
-		if (new Object() {
-			public boolean checkGamemode(Entity _ent) {
-				if (_ent instanceof ServerPlayer _serverPlayer) {
-					return _serverPlayer.gameMode.getGameModeForPlayer() == GameType.CREATIVE;
-				} else if (_ent.level().isClientSide() && _ent instanceof Player _player) {
-					return Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()) != null && Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()).getGameMode() == GameType.CREATIVE;
-				}
-				return false;
+		if (!isCreative(entity))
+			return;
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			if (capability.Fatigue != 0.0D || capability.Mana != CREATIVE_MANA
+					|| capability.MP != CREATIVE_MANA) {
+				capability.Fatigue = 0.0D;
+				capability.Mana = CREATIVE_MANA;
+				capability.MP = CREATIVE_MANA;
+				capability.syncPlayerVariables(entity);
 			}
-		}.checkGamemode(entity)) {
-			{
-				double _setval = 0;
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Fatigue = _setval;
-					capability.syncPlayerVariables(entity);
-				});
-			}
-			{
-				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.Mana = CREATIVE_MANA;
-					capability.MP = CREATIVE_MANA;
-					capability.syncPlayerVariables(entity);
-				});
-			}
-		}
+		});
+	}
+
+	private static boolean isCreative(Entity entity) {
+		if (entity instanceof ServerPlayer serverPlayer)
+			return serverPlayer.gameMode.getGameModeForPlayer() == GameType.CREATIVE;
+		if (!entity.level().isClientSide() || !(entity instanceof Player player))
+			return false;
+		var connection = Minecraft.getInstance().getConnection();
+		if (connection == null)
+			return false;
+		var playerInfo = connection.getPlayerInfo(player.getGameProfile().getId());
+		return playerInfo != null && playerInfo.getGameMode() == GameType.CREATIVE;
 	}
 }

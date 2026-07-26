@@ -6,6 +6,7 @@ import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -13,6 +14,7 @@ import net.minecraftforge.network.PacketDistributor;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -45,40 +47,43 @@ import net.minecraft.world.entity.player.Player;
  *   At 5 stacks an AoE burst heals nearby players and resets.
  *   Stacks are permanent — they never decay between casts.
  *
- * Ranger – Focus
- *   Standing still for 1 s starts building focus (0→100 over 2.5 s).
- *   Moving resets focus to 0.
- *   At 100 %, consuming focus (consumeRangerFocus) grants Strength II for 3 s.
+ * Ranger – Focus / Deadeye
+ *   Eligible arrow hits build Focus, with bonuses for distant and marked targets.
+ *   A full gauge empowers the next eligible arrow, or fuels evolved Hyper Focus.
+ *   Partial Focus is preserved while aiming, decays gradually while idle or
+ *   sprinting, and loses a chunk when a nearby attacker hits the Ranger.
  */
 @Mod.EventBusSubscriber
 public final class ClassPassiveManager {
 
     // ── PersistentData keys ───────────────────────────────────────────────────
-    private static final String A_HITS    = "sl_a_hits";   // int:  assassin raw hit count
-    private static final String A_TIMER   = "sl_a_timer";  // long: ms of last hit
     private static final String F_POWER   = "sl_f_power";  // double: 0-100 fighter gauge
     private static final String T_STACKS  = "sl_t_stacks"; // int:  tanker wall stacks
     private static final String T_TIMER   = "sl_t_timer";  // long: ms of last hit received
     private static final String H_STACKS  = "sl_h_stacks"; // int:  healer resonance stacks
     private static final String R_FOCUS   = "sl_r_focus";  // double: 0-100 ranger focus
-    private static final String R_LAST_X  = "sl_r_lx";    // double: last tick X
-    private static final String R_LAST_Z  = "sl_r_lz";    // double: last tick Z
-    private static final String R_STILL   = "sl_r_still"; // long: ms player has been still
+    private static final String R_LAST_DECAY = "sl_r_last_decay";
 
     // ── Timings ───────────────────────────────────────────────────────────────
-    private static final long   ASSASSIN_DECAY_MS  =  8_000L;
     private static final long   TANK_DECAY_MS      = 10_000L;
-    /** ms of stillness before focus starts charging (after the 1 s warm-up). */
-    private static final long   RANGER_WARMUP_MS   =  1_000L;
-    /** ms to charge from 0 → 100 % after the warm-up. */
-    private static final long   RANGER_CHARGE_MS   =  2_500L;
 
     // ── Caps ──────────────────────────────────────────────────────────────────
-    private static final int    ASSASSIN_TIER_MAX  = 10;
     private static final int    TANK_WALL_MAX      = 10;
     private static final int    HEALER_RES_MAX     =  5;
 
     private ClassPassiveManager() {}
+
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && playerClass(player) == 6)
+            sync(player, 4, getRangerFocus(player));
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player && playerClass(player) == 6)
+            sync(player, 4, getRangerFocus(player));
+    }
 
     // ═════════════════════════════════════════════════════════════════════════
     // LivingHurtEvent
@@ -90,11 +95,7 @@ public final class ClassPassiveManager {
         Entity src = event.getSource().getEntity();
         if (src instanceof ServerPlayer attacker) {
             int cls = playerClass(attacker);
-            if (cls == 1) { // Assassin
-                int tier = processAssassinHit(attacker);
-                if (tier > 0)
-                    event.setAmount(event.getAmount() * (1f + tier * 0.05f));
-            } else if (cls == 3) { // Fighter
+            if (cls == 3) { // Fighter
                 processFighterHit(attacker, event.getAmount());
             }
         }
@@ -110,7 +111,7 @@ public final class ClassPassiveManager {
     }
 
     // ═════════════════════════════════════════════════════════════════════════
-    // PlayerTickEvent — decay timers and Ranger focus charging
+    // PlayerTickEvent — decay timers and Ranger focus decay
     // ═════════════════════════════════════════════════════════════════════════
 
     @SubscribeEvent
@@ -119,7 +120,6 @@ public final class ClassPassiveManager {
         if (!(event.player instanceof ServerPlayer sp)) return;
 
         switch (playerClass(sp)) {
-            case 1 -> tickAssassin(sp);
             case 4 -> tickTank(sp);
             case 6 -> tickRanger(sp);
         }
@@ -130,32 +130,6 @@ public final class ClassPassiveManager {
     // ═════════════════════════════════════════════════════════════════════════
 
     // ── Assassin ─────────────────────────────────────────────────────────────
-
-    /** Called when the Assassin lands a hit. Returns current tier (0-10). */
-    private static int processAssassinHit(ServerPlayer p) {
-        CompoundTag d   = p.getPersistentData();
-        long now        = System.currentTimeMillis();
-
-        if (now - d.getLong(A_TIMER) > ASSASSIN_DECAY_MS)
-            d.putInt(A_HITS, 0); // decay happened before this hit
-
-        int hits = Math.min(d.getInt(A_HITS) + 1, ASSASSIN_TIER_MAX * 5);
-        d.putInt(A_HITS, hits);
-        d.putLong(A_TIMER, now);
-
-        int tier = Math.min(hits / 5, ASSASSIN_TIER_MAX);
-        sync(p, 0, tier);
-        return tier;
-    }
-
-    private static void tickAssassin(ServerPlayer p) {
-        CompoundTag d = p.getPersistentData();
-        if (d.getInt(A_HITS) == 0) return;
-        if (System.currentTimeMillis() - d.getLong(A_TIMER) > ASSASSIN_DECAY_MS) {
-            d.putInt(A_HITS, 0);
-            sync(p, 0, 0);
-        }
-    }
 
     // ── Fighter ───────────────────────────────────────────────────────────────
 
@@ -228,59 +202,51 @@ public final class ClassPassiveManager {
     // ── Ranger ────────────────────────────────────────────────────────────────
 
     private static void tickRanger(ServerPlayer p) {
-        CompoundTag d   = p.getPersistentData();
-        double curX     = p.getX();
-        double curZ     = p.getZ();
-        double lastX    = d.getDouble(R_LAST_X);
-        double lastZ    = d.getDouble(R_LAST_Z);
-
-        boolean isStill = Math.abs(curX - lastX) < 0.05 && Math.abs(curZ - lastZ) < 0.05;
-        d.putDouble(R_LAST_X, curX);
-        d.putDouble(R_LAST_Z, curZ);
-
-        if (!isStill) {
-            // Reset on movement
-            if (d.getDouble(R_FOCUS) > 0 || d.getLong(R_STILL) > 0) {
-                d.putDouble(R_FOCUS, 0);
-                d.putLong(R_STILL, 0);
-                sync(p, 4, 0);
-            }
+        CompoundTag data = p.getPersistentData();
+        double focus = data.getDouble(R_FOCUS);
+        if (focus <= 0.0D || focus >= 100.0D)
             return;
-        }
-
-        // Accumulate still time (~50 ms per tick at 20 TPS)
-        long stillMs = Math.min(d.getLong(R_STILL) + 50L, RANGER_WARMUP_MS + RANGER_CHARGE_MS + 500L);
-        d.putLong(R_STILL, stillMs);
-
-        // Don't start charging until warm-up passed
-        if (stillMs < RANGER_WARMUP_MS) return;
-
-        double oldFocus = d.getDouble(R_FOCUS);
-        if (oldFocus >= 100.0) return; // already max, nothing to do
-
-        // Charge rate: 100 % over RANGER_CHARGE_MS
-        double inc      = (50.0 / RANGER_CHARGE_MS) * 100.0;
-        double newFocus = Math.min(oldFocus + inc, 100.0);
-        d.putDouble(R_FOCUS, newFocus);
-
-        // Sync on significant change (every 5 %) or at 100 %
-        if ((int)(newFocus / 5) > (int)(oldFocus / 5) || newFocus >= 100.0)
-            sync(p, 4, newFocus);
+        long now = p.level().getGameTime();
+        if (now - data.getLong(R_LAST_DECAY) < 10L)
+            return;
+        data.putLong(R_LAST_DECAY, now);
+        // Normal movement is allowed. Sprinting or lowering the bow only
+        // decays Focus gradually instead of deleting the entire setup.
+        double decay = p.isSprinting() ? 2.0D : (p.isUsingItem() ? 0.0D : 0.5D);
+        if (decay > 0.0D)
+            addRangerFocus(p, -decay);
     }
 
-    /**
-     * Called from UseSkillOnKeyPressedProcedure when a Ranger uses a ranged
-     * skill and focus is at 100 %.  Returns true if focus was consumed.
-     */
+    /** Returns true and empties the gauge when the Ranger has 100 Focus. */
     public static boolean consumeRangerFocus(ServerPlayer p) {
         CompoundTag d = p.getPersistentData();
         if (d.getDouble(R_FOCUS) < 100.0) return false;
         d.putDouble(R_FOCUS, 0.0);
-        d.putLong(R_STILL, 0);
         sync(p, 4, 0.0);
-        // Grant a short burst of Strength II
-        p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 60, 1, false, true));
         return true;
+    }
+
+    public static double getRangerFocus(ServerPlayer p) {
+        return p == null ? 0.0D : Mth.clamp(p.getPersistentData().getDouble(R_FOCUS), 0.0D, 100.0D);
+    }
+
+    public static void syncRangerFocus(ServerPlayer p) {
+        if (p != null && playerClass(p) == 6)
+            sync(p, 4, getRangerFocus(p));
+    }
+
+    public static void addRangerFocus(ServerPlayer p, double amount) {
+        if (p == null || playerClass(p) != 6 || Math.abs(amount) < 0.0001D)
+            return;
+        CompoundTag data = p.getPersistentData();
+        double oldFocus = Mth.clamp(data.getDouble(R_FOCUS), 0.0D, 100.0D);
+        double newFocus = Mth.clamp(oldFocus + amount, 0.0D, 100.0D);
+        if (Math.abs(newFocus - oldFocus) < 0.0001D)
+            return;
+        data.putDouble(R_FOCUS, newFocus);
+        if ((int) (newFocus / 2.0D) != (int) (oldFocus / 2.0D)
+                || newFocus == 0.0D || newFocus == 100.0D)
+            sync(p, 4, newFocus);
     }
 
     // ═════════════════════════════════════════════════════════════════════════

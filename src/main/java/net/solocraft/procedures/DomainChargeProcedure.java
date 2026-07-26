@@ -45,7 +45,7 @@ public class DomainChargeProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1 && entity instanceof ServerPlayer _plr0 && _plr0.level() instanceof ServerLevel
+		if (entity instanceof ServerPlayer _plr0 && _plr0.level() instanceof ServerLevel
 				&& _plr0.getAdvancements().getOrStartProgress(_plr0.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:monarchs_domain"))).isDone()) {
 			if (entity.isShiftKeyDown()) {
 				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).domain < 70) {

@@ -102,7 +102,15 @@ public class SystemNotificationWorldRenderer {
 			float currentHalfHeight = size[1] * s * 0.5f;
 			if (idx > 0)
 				stackCenter += previousHalfHeight + stackGap + currentHalfHeight;
-			Vec3 offset = cameraScreenOffset(cam, stackCenter);
+			float horizontal;
+			if (net.solocraft.util.SystemClientConfig.isDynamicNotificationsEnabled()) {
+				float panelHalfWidth = size[0] * s * 0.5F;
+				horizontal = Math.max(0.48F, panelHalfWidth + 0.20F);
+			} else {
+				horizontal = LEFT_AMT
+						+ net.solocraft.util.SystemClientConfig.getNotificationHorizontalOffset();
+			}
+			Vec3 offset = cameraScreenOffset(cam, stackCenter, horizontal);
 
 			ps.pushPose();
 			ps.translate(offset.x, offset.y, offset.z);
@@ -123,12 +131,12 @@ public class SystemNotificationWorldRenderer {
 		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 	}
 
-	private static Vec3 cameraScreenOffset(Camera cam, float stackOffset) {
+	private static Vec3 cameraScreenOffset(Camera cam, float stackOffset, float horizontal) {
 		Vec3 forward = Vec3.directionFromRotation(cam.getXRot(), cam.getYRot()).normalize();
 		Vec3 left = new Vec3(cam.getLeftVector()).normalize();
 		Vec3 up = new Vec3(cam.getUpVector()).normalize();
 		return forward.scale(DIST)
-				.add(left.scale(LEFT_AMT))
+				.add(left.scale(horizontal))
 				.add(up.scale(UP_AMT + stackOffset));
 	}
 

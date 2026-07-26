@@ -1,14 +1,20 @@
 {
-  "has_precipitation": true,
-  "temperature": 0.5,
-  "downfall": 0.5,
+  "has_precipitation": false,
+  "temperature": 2.0,
+  "downfall": 0.0,
   "effects": {
-    "foliage_color": -10092544,
-    "grass_color": -10092544,
-    "sky_color": -10092544,
-    "fog_color": -10092544,
-    "water_color": -10092544,
-    "water_fog_color": -10092544
+    "fog_color": 5903637,
+    "sky_color": 11939104,
+    "water_color": 4526605,
+    "water_fog_color": 2754825,
+    "foliage_color": 3678233,
+    "grass_color": 3153947,
+    "mood_sound": {
+      "sound": "minecraft:ambient.basalt_deltas.mood",
+      "tick_delay": 6000,
+      "block_search_extent": 8,
+      "offset": 2.0
+    }
   },
   "spawners": {
     "monster": [],

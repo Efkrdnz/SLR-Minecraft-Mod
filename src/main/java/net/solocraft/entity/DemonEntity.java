@@ -53,7 +53,8 @@ public class DemonEntity extends Monster implements GeoEntity {
 	private static final int BODY_THIN = 1;
 	private static final int TEXTURE_VARIANT_COUNT = 3;
 	private static final float MIN_VISUAL_SCALE = 0.9f;
-	private static final float MAX_VISUAL_SCALE = 1.12f;
+	private static final float MAX_NATURAL_VISUAL_SCALE = 1.12f;
+	private static final float MAX_VISUAL_SCALE = 1.70f;
 	private static final String BODY_VARIANT_TAG = "DemonBodyVariant";
 	private static final String TEXTURE_VARIANT_TAG = "DemonTextureVariant";
 	private static final String VISUAL_SCALE_TAG = "DemonVisualScale";
@@ -101,10 +102,16 @@ public class DemonEntity extends Monster implements GeoEntity {
 		return this.entityData.get(VISUAL_SCALE);
 	}
 
+	/** Allows authored elite variants to grow beyond the ordinary random range. */
+	public void setVisualScale(float scale) {
+		this.entityData.set(VISUAL_SCALE, Math.max(MIN_VISUAL_SCALE, Math.min(MAX_VISUAL_SCALE, scale)));
+	}
+
 	public void randomizeAppearance() {
 		this.entityData.set(BODY_VARIANT, this.random.nextBoolean() ? BODY_THIN : BODY_BROAD);
 		this.entityData.set(TEXTURE_VARIANT, this.random.nextInt(TEXTURE_VARIANT_COUNT));
-		this.entityData.set(VISUAL_SCALE, MIN_VISUAL_SCALE + this.random.nextFloat() * (MAX_VISUAL_SCALE - MIN_VISUAL_SCALE));
+		this.setVisualScale(MIN_VISUAL_SCALE
+				+ this.random.nextFloat() * (MAX_NATURAL_VISUAL_SCALE - MIN_VISUAL_SCALE));
 	}
 
 	@Override
@@ -135,6 +142,14 @@ public class DemonEntity extends Monster implements GeoEntity {
 	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
+	}
+
+	@Override
+	protected boolean shouldDespawnInPeaceful() {
+		CompoundTag data = getPersistentData();
+		if (data.getBoolean("radiru_resident") || data.getBoolean("radiru_training_dummy"))
+			return false;
+		return super.shouldDespawnInPeaceful();
 	}
 
 	@Override
@@ -175,7 +190,7 @@ public class DemonEntity extends Monster implements GeoEntity {
 		if (compound.contains(BODY_VARIANT_TAG) && compound.contains(TEXTURE_VARIANT_TAG) && compound.contains(VISUAL_SCALE_TAG)) {
 			this.entityData.set(BODY_VARIANT, compound.getInt(BODY_VARIANT_TAG) == BODY_THIN ? BODY_THIN : BODY_BROAD);
 			this.entityData.set(TEXTURE_VARIANT, Math.max(0, Math.min(TEXTURE_VARIANT_COUNT - 1, compound.getInt(TEXTURE_VARIANT_TAG))));
-			this.entityData.set(VISUAL_SCALE, Math.max(MIN_VISUAL_SCALE, Math.min(MAX_VISUAL_SCALE, compound.getFloat(VISUAL_SCALE_TAG))));
+			this.setVisualScale(compound.getFloat(VISUAL_SCALE_TAG));
 		} else {
 			// Existing demons saved with the former fixed appearance migrate once when loaded.
 			this.randomizeAppearance();
@@ -186,11 +201,15 @@ public class DemonEntity extends Monster implements GeoEntity {
 	public void baseTick() {
 		super.baseTick();
 		this.refreshDimensions();
+		net.solocraft.dkc.DkcWaveRuntime.tick(this);
 	}
 
 	@Override
 	public EntityDimensions getDimensions(Pose p_33597_) {
-		return super.getDimensions(p_33597_).scale((float) 0.8);
+		float eliteCollisionScale = this.getVisualScale() <= MAX_NATURAL_VISUAL_SCALE
+				? 1.0F
+				: Math.min(1.4F, this.getVisualScale() / MAX_NATURAL_VISUAL_SCALE);
+		return super.getDimensions(p_33597_).scale(0.8F * eliteCollisionScale);
 	}
 
 	public static void init() {

@@ -1,0 +1,13 @@
+{
+  "display": {
+    "icon": { "item": "minecraft:feather" },
+    "title": { "translate": "advancements.vessels.sung_il_hwan.title" },
+    "description": { "translate": "advancements.vessels.sung_il_hwan.descr" },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": { "vessel": { "trigger": "minecraft:impossible" } },
+  "parent": "sololeveling:system/vessel"
+}

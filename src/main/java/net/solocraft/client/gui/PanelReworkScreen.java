@@ -60,7 +60,7 @@ public class PanelReworkScreen extends AbstractContainerScreen<PanelReworkMenu> 
 
 	@Override
 	public boolean isPauseScreen() {
-		return true;
+		return false;
 	}
 
 	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/panel_rework.png");

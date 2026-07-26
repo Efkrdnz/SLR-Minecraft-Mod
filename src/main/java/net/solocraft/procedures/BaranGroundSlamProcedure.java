@@ -61,7 +61,7 @@ public class BaranGroundSlamProcedure {
 		if (MF == 12) {
 			// Primary slam
 			dealShockwave(world, baran, x, y, z, 7.0,
-					phase2 ? 35f : 28f, true, ParticleTypes.EXPLOSION);
+					phase2 ? 29f : 23f, true, ParticleTypes.EXPLOSION);
 			if (world instanceof ServerLevel sl) {
 				sl.playSound(null, BlockPos.containing(x, y, z),
 						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")),
@@ -72,7 +72,7 @@ public class BaranGroundSlamProcedure {
 		if (MF == 22) {
 			// Secondary ripple
 			dealShockwave(world, baran, x, y, z, 12.0,
-					phase2 ? 18f : 14f, false, ParticleTypes.LARGE_SMOKE);
+					phase2 ? 15f : 12f, false, ParticleTypes.LARGE_SMOKE);
 			if (world instanceof ServerLevel sl) {
 				sl.playSound(null, BlockPos.containing(x, y, z),
 						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.stone.break")),
@@ -82,7 +82,7 @@ public class BaranGroundSlamProcedure {
 
 		// Phase 2 third wave
 		if (phase2 && MF == 32) {
-			dealShockwave(world, baran, x, y, z, 16.0, 10f, false, ParticleTypes.CAMPFIRE_COSY_SMOKE);
+			dealShockwave(world, baran, x, y, z, 16.0, 8f, false, ParticleTypes.CAMPFIRE_COSY_SMOKE);
 		}
 
 		int resetAt = phase2 ? 65 : 50;

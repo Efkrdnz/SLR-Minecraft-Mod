@@ -1,14 +1,12 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.dkc.DkcFloorRegistry;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.core.registries.Registries;
 
 public class DkcdebugoutputProcedure {
 	public static void execute(Entity entity) {
@@ -29,7 +27,7 @@ public class DkcdebugoutputProcedure {
 					: 0)), false);
 			// Current Floor
 			int currentFloor = 0;
-			if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_dkc")))) {
+			if (DkcFloorRegistry.isDkc(entity.level())) {
 				currentFloor = DKCFloorDetectorProcedure.getCurrentFloor(entity);
 			}
 			player.displayClientMessage(Component.literal("§eCurrent Floor: §6" + (currentFloor > 0 ? currentFloor : "None")), false);

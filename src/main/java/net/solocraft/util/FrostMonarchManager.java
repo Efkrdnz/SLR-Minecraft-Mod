@@ -1131,6 +1131,16 @@ public final class FrostMonarchManager {
 		return FrozenCellResult.TRACKED;
 	}
 
+	/**
+	 * Places or refreshes one protected, self-restoring Frost Causeway cell.
+	 * Structure abilities use this entry point so they inherit the exact same
+	 * claim, block-entity, fluid, entity-collision, and chunk-safety rules as
+	 * Frozen Path.
+	 */
+	public static boolean placeTemporaryIce(ServerPlayer player, BlockPos pos) {
+		return player != null && pos != null && freezePathCell(player, pos) == FrozenCellResult.TRACKED;
+	}
+
 	private static void updateGlacialPursuit(ServerPlayer player, long now) {
 		GlacialPursuitState state = GLACIAL_PURSUITS.get(player.getUUID());
 		if (state == null)

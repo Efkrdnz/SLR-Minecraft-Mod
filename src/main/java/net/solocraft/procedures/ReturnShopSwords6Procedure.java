@@ -25,6 +25,14 @@ public class ReturnShopSwords6Procedure {
 				return "\u00A7c" + 3400;
 			}
 		}
+		if ((entity instanceof Player _plrSlotItem && _plrSlotItem.containerMenu instanceof Supplier _splr && _splr.get() instanceof Map _slt ? ((Slot) _slt.get((int) slot)).getItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MYTHIC_DAGGER
+				.get()) {
+			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).golds >= 3675) {
+				return "\u00A7a" + 3675;
+			} else {
+				return "\u00A7c" + 3675;
+			}
+		}
 		if ((entity instanceof Player _plrSlotItem && _plrSlotItem.containerMenu instanceof Supplier _splr && _splr.get() instanceof Map _slt ? ((Slot) _slt.get((int) slot)).getItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.E_TIER_SWORD
 				.get()) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).golds >= 200) {

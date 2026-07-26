@@ -21,6 +21,7 @@ import net.minecraftforge.fml.common.Mod;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -39,12 +40,17 @@ public class JobSkillManager {
 	public static final String SHADOW_COMMAND = "Shadow Command";
 	public static final String SHADOW_EXCHANGE = "Shadow Exchange";
 	public static final String SHADOW_MANIFESTATION = "Shadow Manifestation";
+	public static final String RUNESTONE_SHADOW_EXCHANGE_TAG =
+			"slr_runestone_skill_shadow_exchange";
+	public static final String RUNESTONE_SHADOW_MANIFESTATION_TAG =
+			"slr_runestone_skill_shadow_manifestation";
 	public static final String FIRE_CHARGE = "Fire Charge";
 	public static final String METEOR_RAIN = "Meteor Rain";
 	public static final String FIREFLIES = "Fireflies";
 	public static final String ICE_SPEAR = "Ice Spear";
 	public static final String FLASH_FREEZE = FrostMonarchManager.FLASH_FREEZE;
 	public static final String FROZEN_PATH = FrostMonarchManager.FROZEN_PATH;
+	public static final String FROZEN_ARCHITECTURE = FrostArchitectureManager.SKILL;
 	public static final String FROST_COUNTER = FrostMonarchManager.FROST_COUNTER;
 	public static final String ABSOLUTE_ZERO = FrostMonarchManager.ABSOLUTE_ZERO;
 	public static final String FROST_SPIRITUALIZATION = FrostMonarchManager.SPIRITUALIZATION;
@@ -81,7 +87,7 @@ public class JobSkillManager {
 			LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION);
 	private static final List<String> FROST_SKILLS = List.of(
 			ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH,
-			FROST_COUNTER, ABSOLUTE_ZERO, FROST_SPIRITUALIZATION);
+			FROZEN_ARCHITECTURE, FROST_COUNTER, ABSOLUTE_ZERO, FROST_SPIRITUALIZATION);
 	private static final List<String> BEAST_SKILLS = List.of(
 			BEAST_CLAW_RIFT, BEAST_RUBBLE_JAW, BEAST_KINGS_MAUL,
 			BEAST_RECONSTITUTION, BEAST_WHITE_FANG);
@@ -91,7 +97,7 @@ public class JobSkillManager {
 			FIRE_CHARGE, METEOR_RAIN, FIREFLIES,
 			"Ice Ball", "Ice Chunk", "Snow Screen", "Stillness Decree", "Pale Causeway",
 			"Winter Remembers", "Whiteout Procession",
-			ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROST_COUNTER,
+			ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROZEN_ARCHITECTURE, FROST_COUNTER,
 			ABSOLUTE_ZERO, FROST_SPIRITUALIZATION,
 			THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION,
 			LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE, LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION,
@@ -115,6 +121,18 @@ public class JobSkillManager {
 
 	public static boolean isJobSkill(String skill) {
 		return ALL_JOB_SKILLS.contains(skill);
+	}
+
+	public static void markRunestoneSkill(Entity entity, String tag) {
+		if (entity != null && tag != null && !tag.isBlank())
+			runestoneData(entity).putBoolean(tag, true);
+	}
+
+	public static boolean hasRunestoneSkill(Entity entity, String tag) {
+		if (entity == null || tag == null || tag.isBlank())
+			return false;
+		return runestoneData(entity).getBoolean(tag)
+				|| entity.getPersistentData().getBoolean(tag);
 	}
 
 	public static boolean isWhiteFlameSkill(String skill) {
@@ -154,12 +172,16 @@ public class JobSkillManager {
 	}
 
 	public static List<Component> tooltip(Entity entity, String skill) {
+		if (RangerCombatManager.isRangerSkill(skill))
+			return RangerCombatManager.tooltip(entity, skill);
 		if (FireMageSpellManager.isFireSkill(skill))
 			return FireMageSpellManager.tooltip(entity, skill);
 		if (BarrierMageSpellManager.isBarrierSkill(skill))
 			return BarrierMageSpellManager.tooltip(entity, skill);
 		if (ArcaneMageSpellManager.isArcaneSkill(skill))
 			return ArcaneMageSpellManager.tooltip(entity, skill);
+		if (StormMageSpellManager.isStormSkill(skill))
+			return StormMageSpellManager.tooltip(entity, skill);
 		if (isFrostSkill(skill))
 			return frostTooltip(entity, skill);
 		if (isWhiteFlameSkill(skill))
@@ -216,6 +238,12 @@ public class JobSkillManager {
 				lines.add(Component.literal("Hold to steer a piercing ice current that forms a two-block-wide road.").withStyle(ChatFormatting.GRAY));
 				lines.add(Component.literal("Sneak before casting to ride it; release to rupture the current.").withStyle(ChatFormatting.AQUA));
 				lines.add(Component.literal((manifested ? "210" : "180") + " MP + upkeep | 7-8s cooldown after release").withStyle(ChatFormatting.YELLOW));
+			}
+			case FROZEN_ARCHITECTURE -> {
+				lines.add(Component.literal("Hold to open the sovereign construction wheel.").withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Move the mouse left or right; release to build the shape at the top.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal("Temporary, protected ice | " + (manifested ? "300" : "340")
+						+ " MP | 9s cooldown").withStyle(ChatFormatting.YELLOW));
 			}
 			case FROST_COUNTER -> {
 				lines.add(Component.literal("Parry the next hit and retaliate with a freezing rupture.").withStyle(ChatFormatting.GRAY));
@@ -341,7 +369,7 @@ public class JobSkillManager {
 			}
 			case HELLSTORM_DOMINION -> {
 				lines.add(Component.literal("Claim a moving domain that hunts nearby enemies with lightning.").withStyle(ChatFormatting.GRAY));
-				lines.add(Component.literal("Branded enemies are prioritized and suffer amplified strikes.").withStyle(ChatFormatting.AQUA));
+				lines.add(Component.literal("Branded enemies are prioritized; repeated strikes on one target lose power.").withStyle(ChatFormatting.AQUA));
 				lines.add(Component.literal(manifested ? "Manifested: larger domain, denser storm, longer reign." : "850 MP | 19.5s cooldown").withStyle(ChatFormatting.YELLOW));
 			}
 			case RADIRU_BLOOD_SPEAR -> {
@@ -425,6 +453,9 @@ public class JobSkillManager {
 			case ICE_SPEAR -> FrostMonarchManager.castIceSpear(entity);
 			case FLASH_FREEZE -> FrostMonarchManager.castFlashFreeze(entity);
 			case FROZEN_PATH -> FrostMonarchManager.castFrozenPath(entity);
+			case FROZEN_ARCHITECTURE -> {
+				// Selection is committed by the dedicated server-validated radial packet on release.
+			}
 			case FROST_COUNTER -> FrostMonarchManager.castFrostCounter(entity);
 			case ABSOLUTE_ZERO -> FrostMonarchManager.castAbsoluteZero(entity);
 			case FROST_SPIRITUALIZATION -> FrostMonarchManager.toggleSpiritualization(entity);
@@ -461,7 +492,7 @@ public class JobSkillManager {
 			case SHADOW_MANIFESTATION, THOMAS_MANIFESTATION -> "job_4";
 			case THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE,
 					LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE, LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION,
-					ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROST_COUNTER,
+					ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROZEN_ARCHITECTURE, FROST_COUNTER,
 					ABSOLUTE_ZERO, BEAST_CLAW_RIFT, BEAST_RUBBLE_JAW, BEAST_KINGS_MAUL,
 					BEAST_RECONSTITUTION, BEAST_WHITE_FANG -> skill;
 			default -> skill;
@@ -531,18 +562,29 @@ public class JobSkillManager {
 	}
 
 	private static List<String> skillsForEntityJob(Entity entity, int job) {
-		if (job != 1)
-			return skillsForJob(job);
-		List<String> skills = new ArrayList<>();
-		skills.add(ARISE);
-		skills.add(SHADOW_SUMMON);
-		skills.add(DISMISS_SHADOWS);
-		skills.add(SHADOW_COMMAND);
-		if (DoesHaveExchangeProcedure.execute(entity))
+		ArrayList<String> skills = new ArrayList<>(VesselProgressionManager.unlockedSkills(entity, job));
+		SololevelingModVariables.PlayerVariables vars = entity.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables());
+		if (vars.ShadowExchange
+				&& hasRunestoneSkill(entity, RUNESTONE_SHADOW_EXCHANGE_TAG)
+				&& !skills.contains(SHADOW_EXCHANGE))
 			skills.add(SHADOW_EXCHANGE);
-		if (DoesHaveShadowManifestationProcedure.execute(entity))
+		if (vars.ShadowBody
+				&& hasRunestoneSkill(entity, RUNESTONE_SHADOW_MANIFESTATION_TAG)
+				&& !skills.contains(SHADOW_MANIFESTATION))
 			skills.add(SHADOW_MANIFESTATION);
-		return skills;
+		return List.copyOf(skills);
+	}
+
+	private static CompoundTag runestoneData(Entity entity) {
+		CompoundTag entityData = entity.getPersistentData();
+		if (!(entity instanceof Player))
+			return entityData;
+		CompoundTag persisted = entityData.getCompound(Player.PERSISTED_NBT_TAG);
+		if (!entityData.contains(Player.PERSISTED_NBT_TAG))
+			entityData.put(Player.PERSISTED_NBT_TAG, persisted);
+		return persisted;
 	}
 
 	private static List<String> mergedJobSkillList(Entity entity, String plist, List<String> granted, boolean keepFormations) {

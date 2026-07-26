@@ -10,13 +10,11 @@ import net.solocraft.dungeon.runtime.DungeonReturnPortalSpawner;
 import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 import net.solocraft.entity.Portal1Entity;
 import net.solocraft.guild.GuildGateHelper;
-import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.MagicReadingHelper;
 import net.solocraft.util.UrgentQuestManager;
 
-import net.minecraft.commands.CommandSource;
-import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -25,14 +23,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.AABB;
@@ -102,7 +98,7 @@ public class ProceduralDungeonGateHandler {
 	public static void enter(LevelAccessor world, double x, double y, double z, Entity gate, Entity sourceentity) {
 		if (gate == null || sourceentity == null)
 			return;
-		if (isMagicReader(sourceentity)) {
+		if (MagicReadingHelper.isHoldingMagicReader(sourceentity)) {
 			showMagicReading(gate, sourceentity);
 			return;
 		}
@@ -114,22 +110,31 @@ public class ProceduralDungeonGateHandler {
 		}
 		if (GuildGateHelper.prepareGateEntry(world, gate, sourceentity))
 			return;
+		if (isProceduralRedGate(gate)) {
+			clearDatapackBinding(gate);
+			SnowRedGateArenaManager.enterProcedural(world, gate, player, nearbyPartyMembers(world, gate, player));
+			return;
+		}
 		Optional<ResourceLocation> boundDungeon = datapackDungeon(gate);
 		if (boundDungeon.isPresent()) {
 			var definition = DungeonDataManager.dungeon(boundDungeon.get());
 			if (definition.isEmpty()) {
-				player.sendSystemMessage(Component.literal("This gate's custom dungeon is missing or invalid after datapack reload. Ask an operator to re-enable the pack or unbind the gate."));
-				return;
-			}
-			ProceduralDungeonRank gateRank = rankFor(gate);
-			if (!definition.get().supportsRank(gateRank)) {
-				player.sendSystemMessage(Component.literal("This " + gateRank.name() + "-rank gate cannot open "
-						+ boundDungeon.get() + "; the dungeon allows ranks " + rankText(definition.get().allowedRanks()) + "."));
-				return;
+				if (gate.getPersistentData().getBoolean(GENERATED)) {
+					player.sendSystemMessage(Component.literal("This generated custom dungeon is unavailable. Its datapack must be restored before the gate can be used."));
+					return;
+				}
+				SololevelingMod.LOGGER.warn("Clearing unavailable custom dungeon binding {} from unused procedural gate {} and using the built-in generator",
+						boundDungeon.get(), gate.getUUID());
+				clearDatapackBinding(gate);
+			} else {
+				ProceduralDungeonRank gateRank = rankFor(gate);
+				if (!definition.get().supportsRank(gateRank)) {
+					player.sendSystemMessage(Component.literal("This " + gateRank.name() + "-rank gate cannot open "
+							+ boundDungeon.get() + "; the dungeon allows ranks " + rankText(definition.get().allowedRanks()) + "."));
+					return;
+				}
 			}
 		}
-		if (isProceduralRedGate(gate) && isLocked(gate))
-			return;
 		boolean turnsRed = !gate.getPersistentData().getBoolean(GENERATED) && shouldTurnRed(world);
 		if (turnsRed)
 			turnRed(world, gate);
@@ -142,8 +147,6 @@ public class ProceduralDungeonGateHandler {
 			prepareEntrant(world, x, y, z, gate, entrant);
 		Runnable teleport = () -> teleportEntrants(gate, entrants);
 		if (turnsRed) {
-			for (ServerPlayer entrant : entrants)
-				showRedGateTitle(entrant);
 			SololevelingMod.queueServerWork(10, teleport);
 		} else {
 			teleport.run();
@@ -168,6 +171,7 @@ public class ProceduralDungeonGateHandler {
 
 	private static void turnRed(LevelAccessor world, Entity gate) {
 		SnowRedGateArenaManager.assignTerritoryIfMissing(gate);
+		clearDatapackBinding(gate);
 		gate.getPersistentData().putBoolean(PROCEDURAL_RED, true);
 		gate.getPersistentData().putBoolean("slr_is_red_gate", true);
 		gate.getPersistentData().putString(THEME, DungeonTheme.ICE.name());
@@ -177,6 +181,13 @@ public class ProceduralDungeonGateHandler {
 		}
 		SololevelingModVariables.MapVariables.get(world).RedGate = true;
 		SololevelingModVariables.MapVariables.get(world).syncData(world);
+	}
+
+	private static void clearDatapackBinding(Entity gate) {
+		if (gate == null)
+			return;
+		gate.getPersistentData().remove(DATAPACK_DUNGEON);
+		gate.getPersistentData().remove(DATAPACK_INSTANCE);
 	}
 
 	private static List<ServerPlayer> nearbyPartyMembers(LevelAccessor world, Entity gate, ServerPlayer player) {
@@ -206,13 +217,6 @@ public class ProceduralDungeonGateHandler {
 		entrant.getPersistentData().remove("slr_dungeon_instance");
 		UrgentQuestManager.markDungeonId(entrant, isProceduralRedGate(gate) ? "red_gate" : "procedural");
 		entrant.setNoGravity(true);
-	}
-
-	private static void showRedGateTitle(ServerPlayer player) {
-		if (player.level().isClientSide() || player.getServer() == null)
-			return;
-		player.getServer().getCommands().performPrefixedCommand(new CommandSourceStack(CommandSource.NULL, player.position(), player.getRotationVector(), player.serverLevel(), 4, player.getName().getString(), player.getDisplayName(),
-				player.getServer(), player), "/title @s title [\"\",{\"text\":\"Red Gate?\",\"color\":\"red\"}]");
 	}
 
 	private static void teleportEntrants(Entity gate, List<ServerPlayer> entrants) {
@@ -334,36 +338,14 @@ public class ProceduralDungeonGateHandler {
 		}
 	}
 
-	private static boolean isMagicReader(Entity entity) {
-		return (entity instanceof LivingEntity living ? living.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MAGIC_READER.get();
-	}
-
 	private static void showMagicReading(Entity gate, Entity sourceentity) {
 		if (!(sourceentity instanceof Player player) || player.level().isClientSide())
 			return;
 		if (isProceduralRedGate(gate)) {
-			String[] readings = {"9999", "ERROR", "N/A", "Cannot Read!"};
-			player.displayClientMessage(Component.literal("Magic Reading: " + readings[Mth.nextInt(RandomSource.create(), 0, readings.length - 1)]), false);
+			MagicReadingHelper.showUnreadableReading(player);
 			return;
 		}
-		ProceduralDungeonRank rank = rankFor(gate);
-		int min = switch (rank) {
-			case E -> 101;
-			case D -> 201;
-			case C -> 401;
-			case B -> 601;
-			case A -> 801;
-			case S -> 1001;
-		};
-		int max = switch (rank) {
-			case E -> 199;
-			case D -> 399;
-			case C -> 599;
-			case B -> 799;
-			case A -> 999;
-			case S -> 1499;
-		};
-		player.displayClientMessage(Component.literal("Magic Reading: " + Mth.nextInt(RandomSource.create(), min, max)), false);
+		MagicReadingHelper.showRankReading(player, rankFor(gate));
 	}
 
 	private static void dismissOwnedShadows(LevelAccessor world, double x, double y, double z, Entity sourceentity) {

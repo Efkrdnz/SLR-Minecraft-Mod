@@ -1,6 +1,8 @@
 package net.solocraft.util;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.dkc.DkcFloorRegistry;
+import net.solocraft.dkc.DkcSpatialLayout;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModParticleTypes;
@@ -428,9 +430,19 @@ public class ShadowMonarchManager {
 	public static boolean isInDungeon(Player player) {
 		if (player == null)
 			return false;
+		if (DkcFloorRegistry.isSharedDkc(player.level())) {
+			// The server authorizes dungeon-only commands only for a player who is
+			// inside their allocated floor and still has an active DKC run. The
+			// client has no synchronized slot/run state, so coordinates are enough
+			// there to keep the command UI responsive; the server remains decisive.
+			if (player instanceof ServerPlayer serverPlayer)
+				return player.getPersistentData().getBoolean(DkcSpatialLayout.ACTIVE_RUN_TAG)
+						&& DkcSpatialLayout.floor(serverPlayer) > 0;
+			return DkcSpatialLayout.floorAt(player.blockPosition()) > 0;
+		}
 		SololevelingModVariables.PlayerVariables vars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		String dimension = player.level().dimension().location().getPath();
-		return vars.dungeoning || vars.dkc_started || dimension.contains("dungeon") || dimension.contains("castle");
+		return vars.dungeoning || dimension.contains("dungeon") || dimension.contains("castle");
 	}
 
 	public static boolean isTrackedShadowEntity(Entity entity) {

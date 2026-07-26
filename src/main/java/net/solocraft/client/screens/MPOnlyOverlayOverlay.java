@@ -53,13 +53,16 @@ public class MPOnlyOverlayOverlay {
 			y = entity.getY();
 			z = entity.getZ();
 		}
+		boolean visible = MPOnlyOverlayDisplayOverlayIngameProcedure.execute(entity);
+		if (!visible)
+			return;
 		RenderSystem.disableDepthTest();
 		RenderSystem.depthMask(false);
 		RenderSystem.enableBlend();
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		if (MPOnlyOverlayDisplayOverlayIngameProcedure.execute(entity)) {
+		if (visible) {
 			if (Mana0Procedure.execute(entity)) {
 				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/bar1.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}

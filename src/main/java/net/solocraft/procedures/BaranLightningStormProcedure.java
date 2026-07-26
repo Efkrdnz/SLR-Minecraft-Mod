@@ -24,7 +24,7 @@ import net.minecraft.sounds.SoundSource;
  *   10  – first bolt cluster (3 bolts around target)
  *   20  – second bolt cluster (3 bolts, tighter)
  *   30  – third bolt cluster (4 bolts in a ring) — phase 2: 6 bolts
- *   40  – direct strike on target position (deals 20 damage separately)
+ *   40  – direct strike on target position (deals 8 damage separately)
  *   Phase 2 extra: MF=50 → fourth bolt cluster (5 bolts)
  *   ≥65 – reset to idle  (phase 2: ≥80)
  *
@@ -54,13 +54,6 @@ public class BaranLightningStormProcedure {
 				sl.playSound(null, BlockPos.containing(target.getX(), target.getY(), target.getZ()),
 						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.lightning_bolt.thunder")),
 						SoundSource.HOSTILE, 1.2f, 1.5f);
-				// Warn players nearby
-				for (net.minecraft.server.level.ServerPlayer sp : sl.players()) {
-					if (sp.distanceTo(baran) <= 100) {
-						sp.displayClientMessage(
-								net.minecraft.network.chat.Component.literal("§e⚡ Baran calls down the storm!"), true);
-					}
-				}
 			}
 		}
 
@@ -84,7 +77,7 @@ public class BaranLightningStormProcedure {
 				// Extra magic damage from the concentrated strike
 				target.hurt(new net.minecraft.world.damagesource.DamageSource(
 						world.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
-								.getHolderOrThrow(net.minecraft.world.damagesource.DamageTypes.LIGHTNING_BOLT), baran), 20f);
+								.getHolderOrThrow(net.minecraft.world.damagesource.DamageTypes.LIGHTNING_BOLT), baran), 8f);
 			}
 		}
 

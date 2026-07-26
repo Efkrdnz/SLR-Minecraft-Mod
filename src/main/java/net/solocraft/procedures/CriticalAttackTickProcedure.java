@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 
 import java.util.Comparator;
 
-@Mod.EventBusSubscriber
 public class CriticalAttackTickProcedure {
 	@SubscribeEvent
 	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {

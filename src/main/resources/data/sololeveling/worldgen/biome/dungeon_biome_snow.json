@@ -1,5 +1,5 @@
 {
-  "has_precipitation": true,
+  "has_precipitation": false,
   "temperature": -1,
   "downfall": 1,
   "effects": {
@@ -32,9 +32,7 @@
     [],
     [],
     [],
-    [
-      "sololeveling:dungeon_biome_snow_tree"
-    ],
+    [],
     []
   ]
 }

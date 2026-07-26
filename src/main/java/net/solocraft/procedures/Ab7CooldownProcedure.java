@@ -8,7 +8,7 @@ public class Ab7CooldownProcedure {
 	public static boolean execute(Entity entity) {
 		if (entity == null)
 			return false;
-		if (CooldownManager.isOnCooldown(entity, "Shadowstep") || CooldownManager.isOnCooldown(entity, "Detection")
+		if (CooldownManager.isOnCooldown(entity, "Ghost Step") || CooldownManager.isOnCooldown(entity, "Detection")
 				|| CooldownManager.isOnCooldown(entity, "Ground Slam")
 				|| CooldownManager.isOnCooldown(entity, "Shield Bash")
 				|| CooldownManager.isOnCooldown(entity, "Physical Buff")) {

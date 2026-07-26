@@ -186,6 +186,10 @@ public final class JobChangeQuestManager {
 			selectionError(player, "That vessel does not exist.");
 			return;
 		}
+		if (VesselManager.isWorkInProgress(definition)) {
+			selectionError(player, "WIP (Work in progress)");
+			return;
+		}
 
 		AssignmentResult result = VesselManager.assignPlayer(player, definition, true);
 		if (result == AssignmentResult.LOCKED) {

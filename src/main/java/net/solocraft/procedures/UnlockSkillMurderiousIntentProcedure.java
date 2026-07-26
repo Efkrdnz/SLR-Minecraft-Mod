@@ -19,9 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.network.chat.Component;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.Advancement;
 
@@ -44,8 +42,7 @@ public class UnlockSkillMurderiousIntentProcedure {
 		if (entity == null || sourceentity == null)
 			return;
 		if (sourceentity instanceof Player) {
-			if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_snow")))
-					|| entity.level().dimension().equals(SnowRedGateArenaManager.dimensionFor(RiftTerritory.FROST))) {
+			if (SnowRedGateArenaManager.arenaTerritory(entity).orElse(null) == RiftTerritory.FROST) {
 				if (entity instanceof BarukaEntity || (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level >= 60) {
 					if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 0) {
 						if (Math.random() < (15) / ((float) 100)) {

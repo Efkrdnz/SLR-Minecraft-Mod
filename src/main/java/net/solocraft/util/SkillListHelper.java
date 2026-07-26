@@ -21,6 +21,7 @@ public class SkillListHelper {
 			JobSkillManager.ICE_SPEAR,
 			JobSkillManager.FLASH_FREEZE,
 			JobSkillManager.FROZEN_PATH,
+			JobSkillManager.FROZEN_ARCHITECTURE,
 			JobSkillManager.FROST_COUNTER,
 			JobSkillManager.ABSOLUTE_ZERO,
 			JobSkillManager.FROST_SPIRITUALIZATION,

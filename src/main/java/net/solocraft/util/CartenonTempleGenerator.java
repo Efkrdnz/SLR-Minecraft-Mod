@@ -8,6 +8,7 @@ import net.solocraft.entity.StatueswordEntity;
 import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -141,6 +142,11 @@ public final class CartenonTempleGenerator {
 				completed.add(entry.getKey());
 		}
 		completed.forEach(ACTIVE_BUILDS::remove);
+	}
+
+	@SubscribeEvent
+	public static void onServerStopped(ServerStoppedEvent event) {
+		ACTIVE_BUILDS.clear();
 	}
 
 	private record BuildKey(ResourceKey<Level> dimension, BlockPos origin) {

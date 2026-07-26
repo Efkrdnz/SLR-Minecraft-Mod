@@ -29,23 +29,13 @@ public class IsInDungeonProcedure {
 		if (entity == null)
 			return;
 		if (world.getLevelData().getGameTime() % 10 == 0) {
-			if (IsInDungeonBiomeProcedure.execute(world, x, y, z)) {
-				{
-					boolean _setval = true;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.dungeoning = _setval;
-						capability.syncPlayerVariables(entity);
-					});
+			boolean inDungeon = IsInDungeonBiomeProcedure.execute(world, x, y, z);
+			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+				if (capability.dungeoning != inDungeon) {
+					capability.dungeoning = inDungeon;
+					capability.syncPlayerVariables(entity);
 				}
-			} else {
-				{
-					boolean _setval = false;
-					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-						capability.dungeoning = _setval;
-						capability.syncPlayerVariables(entity);
-					});
-				}
-			}
+			});
 		}
 	}
 }

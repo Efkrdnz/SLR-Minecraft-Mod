@@ -40,8 +40,8 @@ public class RedkeyItem extends Item {
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
 		list.add(Component.literal("A key carved from a dying throne's shadow.").withStyle(ChatFormatting.DARK_PURPLE));
-		list.add(Component.literal("Right click in the Overworld to enter the castle.").withStyle(ChatFormatting.DARK_RED));
-		list.add(Component.literal("Right click inside the castle to return where you stood.").withStyle(ChatFormatting.DARK_PURPLE));
+		list.add(Component.literal("Consumed when it opens the Demon King's Castle.").withStyle(ChatFormatting.DARK_RED));
+		list.add(Component.literal("Afterward, return through the System's DKC path.").withStyle(ChatFormatting.DARK_PURPLE));
 		list.add(Component.literal("The castle remembers every hand that opens it.").withStyle(ChatFormatting.GRAY));
 		if (itemstack.hasTag() && itemstack.getTag().hasUUID(OWNER_UUID_TAG)) {
 			list.add(Component.literal("Bound to: " + itemstack.getTag().getString(OWNER_NAME_TAG)).withStyle(ChatFormatting.DARK_GRAY));

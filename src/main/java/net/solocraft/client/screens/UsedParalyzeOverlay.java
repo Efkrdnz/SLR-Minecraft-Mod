@@ -38,13 +38,16 @@ public class UsedParalyzeOverlay {
 			y = entity.getY();
 			z = entity.getZ();
 		}
+		boolean visible = ParalyzeViewConditionProcedure.execute(entity);
+		if (!visible)
+			return;
 		RenderSystem.disableDepthTest();
 		RenderSystem.depthMask(false);
 		RenderSystem.enableBlend();
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
-		if (ParalyzeViewConditionProcedure.execute(entity)) {
+		if (visible) {
 			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/notice.png"), w / 2 + -8, h / 2 + -117, 0, 0, 16, 16, 16, 16);
 
 			event.getGuiGraphics().drawString(Minecraft.getInstance().font, Component.translatable("gui.sololeveling.used_paralyze.label_used_paralyze"), w / 2 + -37, h / 2 + -100, -13312, false);

@@ -9,6 +9,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.api.distmarker.Dist;
 
@@ -69,7 +70,7 @@ public class RenderDamageNumberProcedure {
 		final double z;
 		final double offsetX;
 		final double offsetZ;
-		final float amount;
+		final String text;
 		final int color;
 		final long createdAt;
 
@@ -77,7 +78,7 @@ public class RenderDamageNumberProcedure {
 			this.x = x;
 			this.y = y;
 			this.z = z;
-			this.amount = amount;
+			this.text = formatDamage(amount);
 			this.color = color;
 			this.createdAt = System.currentTimeMillis();
 			this.offsetX = (Math.random() - 0.5D) * 0.55D;
@@ -105,6 +106,13 @@ public class RenderDamageNumberProcedure {
 	public static void setScale(float width, float height) {
 		RenderDamageNumberProcedure.textWidth = width;
 		RenderDamageNumberProcedure.textHeight = height;
+	}
+
+	@SubscribeEvent
+	public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+		DAMAGE_NUMBERS.clear();
+		data.clear();
+		provider = null;
 	}
 
 	public static void renderBlock(BlockState blockState, double x, double y, double z, float yaw, float pitch, float roll, float scale, boolean glowing) {
@@ -262,20 +270,23 @@ public class RenderDamageNumberProcedure {
 
 	@SubscribeEvent
 	public static void renderModels(RenderLevelStageEvent event) {
-		provider = event;
-		if (provider.getStage() == RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
-			ClientLevel level = Minecraft.getInstance().level;
-			Entity entity = provider.getCamera().getEntity();
-			Vec3 pos = entity.getPosition(provider.getPartialTick());
-			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-			execute(provider);
-			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-			RenderSystem.defaultBlendFunc();
-			RenderSystem.disableBlend();
-			RenderSystem.enableCull();
-			RenderSystem.enableDepthTest();
-			RenderSystem.depthMask(true);
+		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES)
+			return;
+		if (!SystemClientConfig.isDamageNumbersEnabled()) {
+			DAMAGE_NUMBERS.clear();
+			return;
 		}
+		if (DAMAGE_NUMBERS.isEmpty())
+			return;
+		provider = event;
+		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+		execute(provider);
+		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+		RenderSystem.defaultBlendFunc();
+		RenderSystem.disableBlend();
+		RenderSystem.enableCull();
+		RenderSystem.enableDepthTest();
+		RenderSystem.depthMask(true);
 	}
 
 	public static void execute() {
@@ -314,7 +325,7 @@ public class RenderDamageNumberProcedure {
 			}
 			float rise = age * 0.85F;
 			float alpha = 1.0F - age;
-			String text = formatDamage(number.amount);
+			String text = number.text;
 			int color = applyAlpha(number.color, alpha);
 			int shadow = applyAlpha(0xFF020814, alpha * 0.72F);
 

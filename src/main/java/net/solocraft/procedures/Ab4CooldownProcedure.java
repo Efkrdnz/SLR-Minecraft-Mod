@@ -8,9 +8,10 @@ public class Ab4CooldownProcedure {
 	public static boolean execute(Entity entity) {
 		if (entity == null)
 			return false;
-		if (CooldownManager.isOnCooldown(entity, "Water Slash") || CooldownManager.isOnCooldown(entity, "Slash Fury")
+		if (CooldownManager.isOnCooldown(entity, "Slash Fury")
 				|| CooldownManager.isOnCooldown(entity, "Murderious Intent") || CooldownManager.isOnCooldown(entity, "Overheal")
-				|| CooldownManager.isOnCooldown(entity, "Proximity Trap") || CooldownManager.isOnCooldown(entity, "Reinforcement")) {
+				|| CooldownManager.isOnCooldown(entity, "Proximity Trap") || CooldownManager.isOnCooldown(entity, "Reinforcement")
+				|| CooldownManager.isOnCooldown(entity, "Cold Blood")) {
 			return true;
 		}
 		return false;

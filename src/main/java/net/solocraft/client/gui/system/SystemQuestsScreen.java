@@ -37,7 +37,7 @@ public class SystemQuestsScreen extends SystemScreen {
 			y += 32;
 		}
 		if (DkcQuestManager.isVisible(player))
-			addRenderableWidget(new SystemButton(x, y, bw, bh, Component.literal("Demon King's Castle"), b -> sendQuest(1)));
+			addRenderableWidget(new SystemButton(x, y, bw, bh, DkcQuestManager.buttonLabel(player), b -> sendQuest(1)));
 	}
 
 	private void sendQuest(int id) {

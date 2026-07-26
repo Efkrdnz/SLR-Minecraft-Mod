@@ -1,5 +1,7 @@
 package net.solocraft.procedures;
 
+import net.solocraft.dkc.DkcFloorBuilder;
+import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModBlocks;
 
@@ -18,12 +20,19 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
 
 public class DeepslateKeyblockDKCRightClickedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
+			return;
+		if (entity instanceof ServerPlayer player && DkcFloorRegistry.isDkc(player.level())) {
+			DkcFloorBuilder.handlePermit(player, BlockPos.containing(x, y, z));
+			return;
+		}
+		if (DkcFloorRegistry.isDkc(world))
 			return;
 		boolean found = false;
 		double sx = 0;

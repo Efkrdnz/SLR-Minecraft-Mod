@@ -32,8 +32,8 @@ public final class LiuCombatClientEvents {
 			return;
 
 		if (event.isAttack()) {
-			if (!ModList.get().isLoaded("bettercombat") && LiuZhigangCombatManager.isMeleeWeapon(player.getMainHandItem()))
-				sendEnhancedAttack(false, vanillaCombo++);
+			if (!ModList.get().isLoaded("bettercombat"))
+				sendVanillaEnhancedAttack(player);
 			return;
 		}
 
@@ -72,6 +72,19 @@ public final class LiuCombatClientEvents {
 				|| !LiuZhigangCombatManager.isCombatStance(minecraft.player))
 			return;
 		SololevelingMod.PACKET_HANDLER.sendToServer(new LiuAttackMessage(offhand, comboIndex));
+	}
+
+	private static void sendVanillaEnhancedAttack(LocalPlayer player) {
+		boolean mainhand = LiuZhigangCombatManager.isMeleeWeapon(player.getMainHandItem());
+		boolean offhand = LiuZhigangCombatManager.isMeleeWeapon(player.getOffhandItem());
+		if (!mainhand && !offhand)
+			return;
+		if (mainhand && offhand) {
+			int step = Math.floorMod(vanillaCombo++, 3);
+			sendEnhancedAttack(step == 1, step == 2 ? 3 : step);
+			return;
+		}
+		sendEnhancedAttack(offhand, vanillaCombo++);
 	}
 
 	public static boolean isCharging() {

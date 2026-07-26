@@ -682,7 +682,10 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
                 if (i%2==0) gg.fill(divX+2, ry, guiLeft+GUI_W-4, ry+rowH2-1, 0x20FFFFFF);
                 String nameTrim = h.name.length()>9 ? h.name.substring(0,8)+"…" : h.name;
                 gg.drawString(font, GuildHunter.rankColor(h.rank)+"["+h.rank+"] §f"+nameTrim+" §7· "+GuildHunter.classColor(h.hunterClass)+h.hunterClass, rPanelX, ry+2, 0xFFFFFFFF, false);
-                gg.drawString(font, "§7Cost: §e"+GuildHunter.hireCost(h.rank)+" "+GuildHunter.rankColor(h.rank)+GuildHunter.hireMaterialName(h.rank), rPanelX, ry+11, 0xFFFFFFFF, false);
+                String hireCost = minecraft.player != null && minecraft.player.isCreative()
+                        ? "§aCost: FREE §7(Creative)"
+                        : "§7Cost: §e"+GuildHunter.hireCost(h.rank)+" "+GuildHunter.rankColor(h.rank)+GuildHunter.hireMaterialName(h.rank);
+                gg.drawString(font, hireCost, rPanelX, ry+11, 0xFFFFFFFF, false);
                 if (menu.viewerIsOwner) {
                     int hx = guiLeft+GUI_W-40;
                     boolean hov = mx>=hx&&mx<=hx+34&&my>=ry+2&&my<=ry+16;

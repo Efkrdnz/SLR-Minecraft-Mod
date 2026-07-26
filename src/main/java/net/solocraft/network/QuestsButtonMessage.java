@@ -4,12 +4,12 @@ package net.solocraft.network;
 import net.solocraft.world.inventory.QuestsMenu;
 import net.solocraft.procedures.OpenPathGuiProcedure;
 import net.solocraft.procedures.JobChangeQuestEntryProcedure;
-import net.solocraft.procedures.DemonKingsCastleKeyUseProcedure;
 import net.solocraft.procedures.DKCPathTeleportProcedure;
 import net.solocraft.procedures.DailyQuestGUIOpenProcedure;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.SololevelingMod;
 import net.solocraft.util.DkcQuestManager;
+import net.solocraft.dkc.DkcFloorRegistry;
 
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -18,13 +18,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.core.BlockPos;
 
 import java.util.function.Supplier;
@@ -32,7 +28,6 @@ import java.util.HashMap;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class QuestsButtonMessage {
-	private static final ResourceKey<Level> DKC_DIMENSION = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling", "dungeon_dimension_dkc"));
 	private final int buttonID, x, y, z;
 
 	public QuestsButtonMessage(FriendlyByteBuf buffer) {
@@ -84,15 +79,20 @@ public class QuestsButtonMessage {
 		if (buttonID == 1) {
 			if (!(entity instanceof ServerPlayer player) || !DkcQuestManager.isVisible(player))
 				return;
-			if (player.level().dimension().equals(DKC_DIMENSION)) {
+			if (DkcFloorRegistry.isDkc(player.level())) {
 				DKCPathTeleportProcedure.returnToSavedOverworld(player);
+				player.closeContainer();
+				return;
+			}
+			if (DkcQuestManager.hasRadiruCastleAccess(player)) {
+				DKCPathTeleportProcedure.enterRadiruCastle(player);
 				player.closeContainer();
 				return;
 			}
 			SololevelingModVariables.PlayerVariables vars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 			if (!vars.dkc_started && vars.dkc_cleared <= 0) {
-				DemonKingsCastleKeyUseProcedure.execute(world, player, ItemStack.EMPTY);
-				player.closeContainer();
+				player.displayClientMessage(Component.literal(
+						"\u00A75Claim and use the Demon King's Castle Key to break the first seal."), true);
 				return;
 			}
 			OpenPathGuiProcedure.execute(world, x, y, z, player);

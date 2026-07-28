@@ -18,6 +18,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 
 import java.util.ArrayList;
@@ -89,24 +90,28 @@ public final class JobChangeQuestManager {
 		return Math.max(1, entity.level().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_POINTS));
 	}
 
-	public static void unlock(Entity entity) {
-		if (entity == null || isFinished(entity))
-			return;
-		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+	public static boolean isOverworld(Entity entity) {
+		return entity != null && Level.OVERWORLD.equals(entity.level().dimension());
+	}
+
+	public static boolean unlock(Entity entity) {
+		if (!(entity instanceof ServerPlayer player) || !isOverworld(player) || isUnlocked(player) || isFinished(player))
+			return false;
+		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			if (!contains(capability.unlocked_quests, QUEST_ID))
 				capability.unlocked_quests = append(capability.unlocked_quests);
 			capability.jobkey = true;
-			capability.syncPlayerVariables(entity);
+			capability.syncPlayerVariables(player);
 		});
-		if (entity instanceof ServerPlayer player)
-			SystemNotifications.showTitleUnder(player, ACCENT, 100,
-					Component.literal("QUEST UNLOCKED").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
-					Component.literal("Job Change Quest").withStyle(ChatFormatting.LIGHT_PURPLE));
+		SystemNotifications.showTitleUnder(player, ACCENT, 100,
+				Component.literal("QUEST UNLOCKED").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
+				Component.literal("Job Change Quest").withStyle(ChatFormatting.LIGHT_PURPLE));
+		return true;
 	}
 
-	public static void startDungeonRun(ServerPlayer player) {
-		if (player == null)
-			return;
+	public static boolean startDungeonRun(ServerPlayer player) {
+		if (player == null || !isOverworld(player))
+			return false;
 		player.getPersistentData().remove(SELECTION_AUTHORIZED);
 		player.getPersistentData().remove(COMMAND_SELECTION_AUTHORIZED);
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -116,6 +121,7 @@ public final class JobChangeQuestManager {
 			capability.instancecomplete = false;
 			capability.syncPlayerVariables(player);
 		});
+		return true;
 	}
 
 	/** Starts the post-Igris trial for the killer and nearby members of their party. */
@@ -266,16 +272,47 @@ public final class JobChangeQuestManager {
 		entity.getPersistentData().remove(COMMAND_SELECTION_AUTHORIZED);
 	}
 
-	public static void unlockIfEligible(LevelAccessor world, Entity entity, int requiredLevel) {
-		if (entity == null || world == null)
+	/**
+	 * Clears every durable and transient Job Change receipt for a character
+	 * reset. In particular, both quest-token lists must be cleared together:
+	 * leaving either token behind permanently blocks {@link #unlockIfEligible}.
+	 */
+	public static void resetForPlayerReset(ServerPlayer player) {
+		if (player == null)
 			return;
-		SololevelingModVariables.PlayerVariables vars = vars(entity);
+		player.getPersistentData().remove(SELECTION_AUTHORIZED);
+		player.getPersistentData().remove(COMMAND_SELECTION_AUTHORIZED);
+		player.getPersistentData().remove("slr_job_change_dungeon");
+		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
+			capability.unlocked_quests = removeToken(capability.unlocked_quests, QUEST_ID);
+			capability.finished_quests = removeToken(capability.finished_quests, QUEST_ID);
+			capability.jobtimer = STATE_IDLE;
+			capability.jobadvpoint = 0;
+			capability.JobChange_timer = 0;
+			capability.instancecomplete = false;
+			capability.giftstatus = false;
+			capability.jobkey = false;
+			capability.JOB = 0;
+			capability.syncPlayerVariables(player);
+		});
+		player.setNoGravity(false);
+		closeSelection(player);
+	}
+
+	public static void unlockIfEligible(LevelAccessor world, Entity entity, int requiredLevel) {
+		if (!(entity instanceof ServerPlayer player) || world == null)
+			return;
+		SololevelingModVariables.PlayerVariables vars = vars(player);
 		if (vars.JOB > 0 && state(vars) == STATE_IDLE) {
-			finish(entity);
+			// Admin vessel assignment and legacy reconciliation are not normal
+			// quest initiation and remain valid in every dimension.
+			finish(player);
 			return;
 		}
+		if (!isOverworld(player))
+			return;
 		if (vars.Player && vars.Level >= requiredLevel && vars.JOB == 0 && !contains(vars.finished_quests, QUEST_ID) && !contains(vars.unlocked_quests, QUEST_ID))
-			unlock(entity);
+			unlock(player);
 	}
 
 	public static boolean hasAdvancementPlayerNear(Entity portal, double range) {
@@ -452,5 +489,16 @@ public final class JobChangeQuestManager {
 		if (list == null || list.equals("\"\"") || list.isBlank())
 			return TOKEN;
 		return list + TOKEN;
+	}
+
+	private static String removeToken(String list, String id) {
+		if (list == null || list.isBlank())
+			return "";
+		StringBuilder result = new StringBuilder();
+		for (String entry : list.split(",")) {
+			if (!entry.isBlank() && !entry.equals(id))
+				result.append(entry).append(',');
+		}
+		return result.toString();
 	}
 }

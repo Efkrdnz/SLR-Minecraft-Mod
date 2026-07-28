@@ -1,7 +1,6 @@
 package net.solocraft.procedures;
 
 import net.solocraft.world.inventory.DailyQuestsMenu;
-import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.SystemPlayerAccess;
 
 import net.minecraftforge.network.NetworkHooks;
@@ -23,24 +22,20 @@ public class DailyQuestGUIOpenProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null || !SystemPlayerAccess.hasSystem(entity))
 			return;
-		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).ActiveDaily) {
-			if (entity instanceof ServerPlayer _ent) {
-				BlockPos _bpos = BlockPos.containing(x, y, z);
-				NetworkHooks.openScreen((ServerPlayer) _ent, new MenuProvider() {
-					@Override
-					public Component getDisplayName() {
-						return Component.literal("DailyQuests");
-					}
+		if (entity instanceof ServerPlayer serverPlayer) {
+			BlockPos menuPosition = BlockPos.containing(x, y, z);
+			NetworkHooks.openScreen(serverPlayer, new MenuProvider() {
+				@Override
+				public Component getDisplayName() {
+					return Component.literal("DailyQuests");
+				}
 
-					@Override
-					public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
-						return new DailyQuestsMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(_bpos));
-					}
-				}, _bpos);
-			}
-		} else {
-			if (entity instanceof Player _player && !_player.level().isClientSide())
-				_player.displayClientMessage(Component.literal("There are no active quests"), false);
+				@Override
+				public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
+					return new DailyQuestsMenu(id, inventory,
+							new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(menuPosition));
+				}
+			}, menuPosition);
 		}
 	}
 }

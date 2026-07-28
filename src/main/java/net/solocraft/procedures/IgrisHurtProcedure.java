@@ -1,5 +1,6 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.IgrisCombatTeleportHelper;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.entity.IgrisShadowEntity;
 import net.solocraft.entity.BloodRedComIgrisEntity;
@@ -14,7 +15,6 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.particles.SimpleParticleType;
 
@@ -71,18 +71,15 @@ public class IgrisHurtProcedure {
 			} else if (tprand == 2) {
 				rand = Mth.nextInt(RandomSource.create(), 1, 5);
 				if (rand == 3) {
-					if (world instanceof ServerLevel _level)
-						_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GLOW_AURA_RED.get()), x, y, z, 4, 0.5, 1.5, 0.5, 0);
-					{
-						Entity _ent = entity;
-						_ent.teleportTo((sourceentity.getX() + 1 * sourceentity.getLookAngle().x), (sourceentity.getY() + 0.25), (sourceentity.getZ() + 1 * sourceentity.getLookAngle().z));
-						if (_ent instanceof ServerPlayer _serverPlayer)
-							_serverPlayer.connection.teleport((sourceentity.getX() + 1 * sourceentity.getLookAngle().x), (sourceentity.getY() + 0.25), (sourceentity.getZ() + 1 * sourceentity.getLookAngle().z), _ent.getYRot(), _ent.getXRot());
-					}
-					if (world instanceof ServerLevel _level)
-						_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GLOW_AURA_RED.get()), x, y, z, 4, 0.5, 1.5, 0.5, 0);
-					if (event != null && event.isCancelable()) {
-						event.setCanceled(true);
+					Vec3 origin = entity.position();
+					if (IgrisCombatTeleportHelper.tryDodgeAttacker(entity, sourceentity)) {
+						if (world instanceof ServerLevel _level) {
+							_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GLOW_AURA_RED.get()), origin.x, origin.y, origin.z, 4, 0.5, 1.5, 0.5, 0);
+							_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GLOW_AURA_RED.get()), entity.getX(), entity.getY(), entity.getZ(), 4, 0.5, 1.5, 0.5, 0);
+						}
+						if (event != null && event.isCancelable()) {
+							event.setCanceled(true);
+						}
 					}
 				}
 			}

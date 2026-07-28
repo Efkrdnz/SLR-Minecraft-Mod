@@ -2,6 +2,7 @@
 package net.solocraft.item;
 
 import net.solocraft.procedures.RunestoneShieldBashRCProcedure;
+import net.solocraft.procedures.TankerProgressionHelper;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
@@ -32,14 +33,16 @@ public class RunestoneShieldBashItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Shield Bash\""));
-		list.add(Component.literal("User can use \"Shield Bash\" which launches user to forward knocking and stunning enemies if hit with a shield in offhand."));
+		TankerTooltipHelper.addRunestone(list, TankerProgressionHelper.SHIELD_BASH,
+				"tooltip.sololeveling.tanker.runestone.shield_bash.description",
+				"E", 180, "2.5", 8);
 	}
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
-		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		RunestoneShieldBashRCProcedure.execute(entity, ar.getObject());
-		return ar;
+		ItemStack stack = entity.getItemInHand(hand);
+		if (!world.isClientSide())
+			RunestoneShieldBashRCProcedure.execute(entity, stack);
+		return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
 	}
 }

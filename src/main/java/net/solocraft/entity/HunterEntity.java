@@ -60,6 +60,8 @@ import net.minecraft.nbt.CompoundTag;
 import javax.annotation.Nullable;
 
 public class HunterEntity extends TamableAnimal {
+	private static final String STORY_TEMPLE_FOLLOW_MARKER =
+			"slr_story_intro_follow_owner";
 	public static final EntityDataAccessor<String> DATA_Rank = SynchedEntityData.defineId(HunterEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> DATA_HunterClass = SynchedEntityData.defineId(HunterEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<Integer> DATA_TopIn = SynchedEntityData.defineId(HunterEntity.class, EntityDataSerializers.INT);
@@ -118,7 +120,23 @@ public class HunterEntity extends TamableAnimal {
 		super.registerGoals();
 		this.getNavigation().getNodeEvaluator().setCanOpenDoors(true);
 		this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal(this, Monster.class, true, true));
+		this.targetSelector.addGoal(2,
+				new NearestAttackableTargetGoal<Monster>(
+						this, Monster.class, true, true) {
+					@Override
+					public boolean canUse() {
+						return !HunterEntity.this.getPersistentData()
+								.getBoolean(STORY_TEMPLE_FOLLOW_MARKER)
+								&& super.canUse();
+					}
+
+					@Override
+					public boolean canContinueToUse() {
+						return !HunterEntity.this.getPersistentData()
+								.getBoolean(STORY_TEMPLE_FOLLOW_MARKER)
+								&& super.canContinueToUse();
+					}
+				});
 		this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
@@ -165,6 +183,20 @@ public class HunterEntity extends TamableAnimal {
 		this.goalSelector.addGoal(9, new FloatGoal(this));
 		this.goalSelector.addGoal(10, new OpenDoorGoal(this, false));
 		this.goalSelector.addGoal(11, new OpenDoorGoal(this, true));
+	}
+
+	public boolean isStoryTempleFollower() {
+		return this.getPersistentData().getBoolean(
+				STORY_TEMPLE_FOLLOW_MARKER);
+	}
+
+	@Override
+	public void setTarget(@Nullable LivingEntity target) {
+		if (isStoryTempleFollower()) {
+			super.setTarget(null);
+			return;
+		}
+		super.setTarget(target);
 	}
 
 	@Override

@@ -209,6 +209,7 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_TRANSFIGURATION_GATE_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.MONARCH_TERRITORY_BEGINNING_GATE_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.PORTAL_1_SPAWN_EGG.get());
+				tabData.accept(SololevelingModItems.DATAPACK_GATE_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.PORTAL_LUSH_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.PORTAL_KARGALGANS_THRONE_ROOM_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.RANDOM_CAVE_LARGE_SPAWN_EGG.get());

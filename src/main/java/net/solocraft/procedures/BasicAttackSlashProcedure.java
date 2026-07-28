@@ -1,7 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.BasicAttackSlashEntity;
-import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -22,7 +22,7 @@ public class BasicAttackSlashProcedure {
 			return;
 		livingEntity.swing(InteractionHand.MAIN_HAND, true);
 		float attack = (float) livingEntity.getAttribute(Attributes.ATTACK_DAMAGE).getValue();
-		double strength = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).map(cap -> cap.Strength).orElse(0.0D);
+		double strength = TemporaryStatBonusManager.effectiveStrength(entity);
 		float damage = switch (style) {
 			case BasicAttackSlashEntity.STYLE_FIST -> (float) ((3.0D + strength / 18.0D) * (swingIndex == 1 ? 1.45D : 1.0D));
 			case BasicAttackSlashEntity.STYLE_DAGGER -> attack * 0.72F;

@@ -29,36 +29,44 @@ public class JobChangeQuestEntryProcedure {
 	private static final double PLAYER_PORTAL_ENTRY_X_OFFSET = 3.0D;
 	private static final ResourceKey<Level> IGRIS_DIMENSION = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_igris"));
 
-	public static void execute(LevelAccessor world, Entity entity) {
+	public static boolean execute(LevelAccessor world, Entity entity) {
 		if (!(entity instanceof ServerPlayer player) || world == null)
-			return;
+			return false;
 		if (!JobChangeQuestManager.isVisible(player)) {
 			player.displayClientMessage(Component.literal("\u00A75No active Job Change Quest."), true);
-			return;
+			return false;
 		}
 		if (JobChangeQuestManager.isSelectionPending(player)) {
 			JobChangeQuestManager.requestSelectionScreen(player);
-			return;
+			return false;
 		}
 		if (JobChangeQuestManager.isShadowPresentation(player)) {
 			player.displayClientMessage(Component.literal("\u00A75Your Job assignment is still in progress."), true);
-			return;
+			return false;
 		}
 		if (player.level().dimension() == IGRIS_DIMENSION) {
 			player.displayClientMessage(Component.literal("\u00A75Job Change Quest is already active."), true);
-			return;
+			return false;
+		}
+		if (!JobChangeQuestManager.isOverworld(player)) {
+			player.displayClientMessage(Component.literal(
+					"\u00A7cThe Job Change Quest can only be entered from the Minecraft Overworld."), true);
+			return false;
 		}
 		boolean resume = JobChangeQuestManager.canResumeDungeon(player);
-		if (!resume)
-			saveEntryState(player);
-		player.getPersistentData().putBoolean("slr_job_change_dungeon", true);
-		player.setNoGravity(true);
 		ResourceKey<Level> destinationType = IGRIS_DIMENSION;
 		ServerLevel nextLevel = player.server.getLevel(destinationType);
 		if (nextLevel == null) {
-			player.setNoGravity(false);
-			return;
+			player.displayClientMessage(Component.literal("\u00A7cThe Job Change dungeon is unavailable."), true);
+			return false;
 		}
+		if (!resume) {
+			if (!JobChangeQuestManager.startDungeonRun(player))
+				return false;
+			saveEntryState(player);
+		}
+		player.getPersistentData().putBoolean("slr_job_change_dungeon", true);
+		player.setNoGravity(true);
 		player.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0));
 		player.teleportTo(nextLevel, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
 		player.connection.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
@@ -92,6 +100,7 @@ public class JobChangeQuestEntryProcedure {
 					spawnIgrisDungeon(player);
 			});
 		});
+		return true;
 	}
 
 	private static void protectDuringDungeonLoad(ServerPlayer player) {
@@ -114,7 +123,6 @@ public class JobChangeQuestEntryProcedure {
 			capability.tpd = false;
 			capability.syncPlayerVariables(player);
 		});
-		JobChangeQuestManager.startDungeonRun(player);
 	}
 
 	private static void spawnIgrisDungeon(ServerPlayer player) {

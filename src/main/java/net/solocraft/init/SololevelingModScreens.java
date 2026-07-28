@@ -18,6 +18,7 @@ import net.solocraft.client.gui.StoreGUIScreen;
 import net.solocraft.client.gui.SpecialCraftingGUIScreen;
 import net.solocraft.client.gui.ShopScreen;
 import net.solocraft.client.gui.ShadowSummonGUIScreen;
+import net.solocraft.client.gui.ShadowCustomizationScreen;
 import net.solocraft.client.gui.ShadowDismissScreen;
 import net.solocraft.client.gui.ShadowCommandScreen;
 import net.solocraft.client.gui.ShadowGUIScreen;
@@ -76,6 +77,7 @@ public class SololevelingModScreens {
 			MenuScreens.register(SololevelingModMenus.SHOP.get(), ShopScreen::new);
 			MenuScreens.register(SololevelingModMenus.FOOD_GUI.get(), FoodGuiScreen::new);
 			MenuScreens.register(SololevelingModMenus.SHADOW_SUMMON_GUI.get(), ShadowSummonGUIScreen::new);
+			MenuScreens.register(SololevelingModMenus.SHADOW_CUSTOMIZATION.get(), ShadowCustomizationScreen::new);
 			MenuScreens.register(SololevelingModMenus.SHADOW_DISMISS.get(), ShadowDismissScreen::new);
 			MenuScreens.register(SololevelingModMenus.SHADOW_COMMAND.get(), ShadowCommandScreen::new);
 			MenuScreens.register(SololevelingModMenus.READER_GUI.get(), ReaderGUIScreen::new);

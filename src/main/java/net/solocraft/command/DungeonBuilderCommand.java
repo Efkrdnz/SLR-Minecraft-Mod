@@ -158,7 +158,7 @@ public final class DungeonBuilderCommand {
 		player.sendSystemMessage(Component.literal("4. SIMULATE: preview a seed. EXPORT: Validate, resolve errors, then Export Pack.").withStyle(ChatFormatting.GRAY));
 		player.sendSystemMessage(Component.literal("Encounters are automatic unless you deliberately assign a Trigger Region to their encounter ID.").withStyle(ChatFormatting.YELLOW));
 		player.sendSystemMessage(Component.literal("Commands remain available for automation and recovery; Studio is the recommended authoring path.").withStyle(ChatFormatting.DARK_GRAY));
-		player.sendSystemMessage(Component.literal("Runtime diagnostics: /slrdungeon list, issues, pool test, generate, instances, and bindgate.").withStyle(ChatFormatting.DARK_AQUA));
+		player.sendSystemMessage(Component.literal("Runtime diagnostics: /slrdungeon list, issues, pool test, generate, and instances.").withStyle(ChatFormatting.DARK_AQUA));
 		player.sendSystemMessage(Component.literal("Sneak + right-click air to cycle modes. Sneak-right-click interactive blocks to mark them.").withStyle(ChatFormatting.YELLOW));
 		return 1;
 	}
@@ -201,9 +201,9 @@ public final class DungeonBuilderCommand {
 				player.sendSystemMessage(Component.literal("LAYOUT - press Dungeons > New and create test:simple_dungeon. Include all three rooms.").withStyle(ChatFormatting.WHITE));
 				player.sendSystemMessage(Component.literal("Use PROCEDURAL + LINEAR, Min 3, Max 3. Setup: D rank, minecraft:bedrock, thickness 1; then press the Layout Apply button.").withStyle(ChatFormatting.YELLOW));
 				player.sendSystemMessage(Component.literal("SIMULATE seed 12345. EXPORT: Validate, fix every blocking issue, then Export Pack.").withStyle(ChatFormatting.GREEN));
-				player.sendSystemMessage(Component.literal("Enable the exact printed file/<folder>, run /reload, then inspect /slrdungeon issues.").withStyle(ChatFormatting.GRAY));
-				player.sendSystemMessage(Component.literal("Test selection: /slrdungeon generate test:simple_dungeon seed 12345 confirm").withStyle(ChatFormatting.AQUA));
-				player.sendSystemMessage(Component.literal("Gameplay: bind an unused D-rank procedural gate with /slrdungeon bindgate test:simple_dungeon.").withStyle(ChatFormatting.AQUA));
+				player.sendSystemMessage(Component.literal("Export enables and reloads the generated pack automatically; wait for the ready confirmation.").withStyle(ChatFormatting.GRAY));
+				player.sendSystemMessage(Component.literal("Test it with the Datapack Dungeon Gate spawn egg and choose test:simple_dungeon in its screen.").withStyle(ChatFormatting.AQUA));
+				player.sendSystemMessage(Component.literal("Valid exported dungeons also enter the natural datapack-gate pool automatically.").withStyle(ChatFormatting.AQUA));
 			}
 			default -> {
 				return 0;

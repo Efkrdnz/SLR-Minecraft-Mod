@@ -6,6 +6,7 @@ import net.solocraft.entity.Portal12Entity;
 import net.solocraft.entity.PortalSewersEntity;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.MagicReadingHelper;
+import net.solocraft.util.PlayerEntryGenerationGuard;
 
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
@@ -53,6 +54,8 @@ public class PortalSewersRightClickedOnEntityProcedure {
 		if (!beginEntry(player, gate))
 			return;
 
+		String gateId = gate.getStringUUID();
+		long entryGeneration = PlayerEntryGenerationGuard.begin(player);
 		boolean generateDungeon = !gate.getEntityData().get(PortalSewersEntity.DATA_usedbefore);
 		if (generateDungeon)
 			gate.getEntityData().set(PortalSewersEntity.DATA_usedbefore, true);
@@ -63,7 +66,6 @@ public class PortalSewersRightClickedOnEntityProcedure {
 		double targetX = gate.getPersistentData().getDouble("tpx");
 		double targetY = gate.getPersistentData().getDouble("tpy");
 		double targetZ = gate.getPersistentData().getDouble("tpz");
-		String gateId = gate.getStringUUID();
 		UUID playerId = player.getUUID();
 		player.getPersistentData().putDouble("tpx", targetX);
 		player.getPersistentData().putDouble("tpy", targetY);
@@ -72,14 +74,16 @@ public class PortalSewersRightClickedOnEntityProcedure {
 
 		SololevelingMod.queueServerWork(10, () -> {
 			ServerPlayer currentPlayer = currentPlayer(player.getServer(), playerId, player);
-			if (currentPlayer == null) {
-				abortEntry(player, gate, gateId, generateDungeon);
+			if (!isCurrentEntry(currentPlayer, entryGeneration, gateId)) {
+				abortEntry(player, gate, gateId, generateDungeon,
+						entryGeneration);
 				return;
 			}
 
 			ServerLevel destination = currentPlayer.getServer().getLevel(DUNGEON_DIMENSION);
 			if (destination == null) {
-				abortEntry(currentPlayer, gate, gateId, generateDungeon);
+				abortEntry(currentPlayer, gate, gateId, generateDungeon,
+						entryGeneration);
 				return;
 			}
 
@@ -90,8 +94,9 @@ public class PortalSewersRightClickedOnEntityProcedure {
 
 			SololevelingMod.queueServerWork(5, () -> {
 				ServerPlayer teleportedPlayer = currentPlayer(currentPlayer.getServer(), playerId, currentPlayer);
-				if (teleportedPlayer == null || teleportedPlayer.level().dimension() != DUNGEON_DIMENSION) {
-					abortEntry(currentPlayer, gate, gateId, generateDungeon);
+				if (!isCurrentEntry(teleportedPlayer, entryGeneration, gateId) || teleportedPlayer.level().dimension() != DUNGEON_DIMENSION) {
+					abortEntry(currentPlayer, gate, gateId, generateDungeon,
+							entryGeneration);
 					return;
 				}
 
@@ -100,8 +105,9 @@ public class PortalSewersRightClickedOnEntityProcedure {
 
 				SololevelingMod.queueServerWork(10, () -> {
 					ServerPlayer readyPlayer = currentPlayer(teleportedPlayer.getServer(), playerId, teleportedPlayer);
-					if (readyPlayer == null || readyPlayer.level().dimension() != DUNGEON_DIMENSION) {
-						abortEntry(teleportedPlayer, gate, gateId, generateDungeon);
+					if (!isCurrentEntry(readyPlayer, entryGeneration, gateId) || readyPlayer.level().dimension() != DUNGEON_DIMENSION) {
+						abortEntry(teleportedPlayer, gate, gateId,
+								generateDungeon, entryGeneration);
 						return;
 					}
 
@@ -116,6 +122,11 @@ public class PortalSewersRightClickedOnEntityProcedure {
 				});
 			});
 		});
+	}
+
+	private static boolean isCurrentEntry(ServerPlayer player, long entryGeneration, String gateId) {
+		return PlayerEntryGenerationGuard.isCurrent(player, entryGeneration)
+				&& gateId.equals(player.getPersistentData().getString(ENTRY_GATE_KEY));
 	}
 
 	private static boolean beginEntry(ServerPlayer player, PortalSewersEntity gate) {
@@ -134,10 +145,23 @@ public class PortalSewersRightClickedOnEntityProcedure {
 		}
 	}
 
-	private static void abortEntry(ServerPlayer player, PortalSewersEntity gate, String gateId, boolean generationWasClaimed) {
-		player.setNoGravity(false);
-		finishEntry(player, gateId);
-		if (generationWasClaimed && !gate.isRemoved())
+	private static void abortEntry(ServerPlayer player,
+			PortalSewersEntity gate, String gateId,
+			boolean generationWasClaimed, long entryGeneration) {
+		ServerPlayer livePlayer = player.getServer() == null ? null
+				: player.getServer().getPlayerList().getPlayer(
+						player.getUUID());
+		ServerPlayer stateOwner = livePlayer == null ? player : livePlayer;
+		boolean newerEntry = PlayerEntryGenerationGuard.capture(stateOwner)
+				!= entryGeneration;
+		boolean newerEntryOwnsGate = newerEntry && gateId.equals(
+				stateOwner.getPersistentData().getString(ENTRY_GATE_KEY));
+		if (!newerEntry) {
+			stateOwner.setNoGravity(false);
+			finishEntry(stateOwner, gateId);
+		}
+		if (generationWasClaimed && !newerEntryOwnsGate
+				&& !gate.isRemoved())
 			gate.getEntityData().set(PortalSewersEntity.DATA_usedbefore, false);
 	}
 

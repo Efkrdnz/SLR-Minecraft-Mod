@@ -1,42 +1,31 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModSounds;
 import net.solocraft.entity.HunterEntity;
 
-import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 
-import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.AxeItem;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Mth;
-import net.minecraft.tags.TagKey;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
-import net.minecraft.client.Minecraft;
 
 import org.joml.Vector3f;
 
@@ -79,7 +68,6 @@ public class TankerDamageDealProcedure {
 		double angle = 0;
 		double y_pos = 0;
 		double radius = 0;
-		double rnk = 0;
 		if (sourceentity instanceof HunterEntity) {
 			if ((sourceentity instanceof HunterEntity _datEntS ? _datEntS.getEntityData().get(HunterEntity.DATA_HunterClass) : "").equals("Tanker")) {
 				RandomSource random = RandomSource.create();
@@ -235,79 +223,6 @@ public class TankerDamageDealProcedure {
 				} else {
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, x, (y + 1.4), z, 2, 0.05, 0.05, 0.05, 1);
-				}
-			}
-		}
-		if (entity instanceof HunterEntity) {
-			if ((entity instanceof HunterEntity _datEntS ? _datEntS.getEntityData().get(HunterEntity.DATA_Rank) : "").equals("S")) {
-				rnk = 5;
-			} else if ((entity instanceof HunterEntity _datEntS ? _datEntS.getEntityData().get(HunterEntity.DATA_Rank) : "").equals("A")) {
-				rnk = 4;
-			} else if ((entity instanceof HunterEntity _datEntS ? _datEntS.getEntityData().get(HunterEntity.DATA_Rank) : "").equals("B")) {
-				rnk = 3;
-			} else if ((entity instanceof HunterEntity _datEntS ? _datEntS.getEntityData().get(HunterEntity.DATA_Rank) : "").equals("C")) {
-				rnk = 2;
-			} else if ((entity instanceof HunterEntity _datEntS ? _datEntS.getEntityData().get(HunterEntity.DATA_Rank) : "").equals("D")) {
-				rnk = 1;
-			}
-			if (sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("dm")))) {
-				if (sourceentity.getPersistentData().getDouble("Level") > 0) {
-					if (Math.random() < (5 * rnk) / ((float) sourceentity.getPersistentData().getDouble("Level"))) {
-						if (event != null && event.isCancelable()) {
-							event.setCanceled(true);
-						}
-						entity.setDeltaMovement(new Vec3((Mth.nextDouble(RandomSource.create(), 0.5, 1.2)), 0, (Mth.nextDouble(RandomSource.create(), 0.5, 1.2))));
-						if (world instanceof ServerLevel _level)
-							_level.sendParticles(ParticleTypes.LARGE_SMOKE, x, (y + 1.4), z, 12, 0.05, 0.05, 0.05, 1);
-					}
-				}
-			} else if (sourceentity instanceof Player) {
-				if (new Object() {
-					public boolean checkGamemode(Entity _ent) {
-						if (_ent instanceof ServerPlayer _serverPlayer) {
-							return _serverPlayer.gameMode.getGameModeForPlayer() == GameType.SURVIVAL;
-						} else if (_ent.level().isClientSide() && _ent instanceof Player _player) {
-							return Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()) != null
-									&& Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()).getGameMode() == GameType.SURVIVAL;
-						}
-						return false;
-					}
-				}.checkGamemode(sourceentity) || new Object() {
-					public boolean checkGamemode(Entity _ent) {
-						if (_ent instanceof ServerPlayer _serverPlayer) {
-							return _serverPlayer.gameMode.getGameModeForPlayer() == GameType.ADVENTURE;
-						} else if (_ent.level().isClientSide() && _ent instanceof Player _player) {
-							return Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()) != null
-									&& Minecraft.getInstance().getConnection().getPlayerInfo(_player.getGameProfile().getId()).getGameMode() == GameType.ADVENTURE;
-						}
-						return false;
-					}
-				}.checkGamemode(sourceentity)) {
-					if (!(damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:mage")))) {
-						if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Player) {
-							if (Math.random() < (5 * rnk) / ((float) (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level + 15)) {
-								if (event != null && event.isCancelable()) {
-									event.setCanceled(true);
-								}
-								if (world instanceof ServerLevel _level)
-									_level.sendParticles(ParticleTypes.LARGE_SMOKE, x, (y + 1.4), z, 12, 0.05, 0.05, 0.05, 1);
-								entity.setDeltaMovement(new Vec3((Mth.nextDouble(RandomSource.create(), 0.5, 1.2)), 0, (Mth.nextDouble(RandomSource.create(), 0.5, 1.2))));
-								if (entity instanceof Mob _entity && sourceentity instanceof LivingEntity _ent)
-									_entity.setTarget(_ent);
-							}
-						} else {
-							if (Math.random() < (rnk) / ((float) (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).HunterRank + 6)) {
-								if (event != null && event.isCancelable()) {
-									event.setCanceled(true);
-								}
-								if (world instanceof ServerLevel _level)
-									_level.sendParticles(ParticleTypes.LARGE_SMOKE, x, (y + 1.4), z, 12, 0.05, 0.05, 0.05, 1);
-								entity.setDeltaMovement(new Vec3((Mth.nextDouble(RandomSource.create(), 0.5, 1.2)), 0, (Mth.nextDouble(RandomSource.create(), 0.5, 1.2))));
-								if (entity instanceof Mob _entity && sourceentity instanceof LivingEntity _ent)
-									_entity.setTarget(_ent);
-							}
-						}
-					}
 				}
 			}
 		}

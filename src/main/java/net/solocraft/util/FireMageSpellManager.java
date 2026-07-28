@@ -15,6 +15,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -56,6 +57,8 @@ public final class FireMageSpellManager {
 
 	private static final String SCORCH_DATA = "sl_fire_scorch";
 	private static final String FLASHFIRE_GUARD = "sl_flashfire_guard_until";
+	private static final String VFX_OWNER = "sl_fire_vfx_owner";
+	private static final String FLAME_WEAVING_HITS = "sl_flame_weaving_hits";
 	private static final double[] COST_MULTIPLIER = {0.0D, 1.0D, 1.10D, 1.20D, 1.30D, 1.40D};
 	private static final double CREMATION_BASE_MANA_PERCENT = 0.025D;
 	private static final double CREMATION_MANA_PER_DAMAGE = 4.0D;
@@ -69,6 +72,66 @@ public final class FireMageSpellManager {
 	private static final List<DelayedBurst> DELAYED_BURSTS = new ArrayList<>();
 
 	private FireMageSpellManager() {
+	}
+
+	/**
+	 * Cancels one player's Fire runtime without resolving any pending impact.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null || player.getServer() == null)
+			return;
+		UUID playerId = player.getUUID();
+		ACTIVE_PROJECTILES.removeIf(cast -> {
+			if (!playerId.equals(cast.casterId))
+				return false;
+			cast.finish(null, false);
+			return true;
+		});
+		ACTIVE_DASHES.removeIf(cast -> {
+			if (!playerId.equals(cast.casterId))
+				return false;
+			cast.finish();
+			return true;
+		});
+		ACTIVE_CREMATIONS.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_FURNACES.removeIf(cast -> {
+			if (!playerId.equals(cast.casterId))
+				return false;
+			cast.finish();
+			return true;
+		});
+		ACTIVE_HEAVENFALL.removeIf(cast -> {
+			if (!playerId.equals(cast.casterId))
+				return false;
+			cast.finish();
+			return true;
+		});
+		ACTIVE_COLLAPSES.removeIf(cast -> playerId.equals(cast.casterId));
+		DELAYED_BURSTS.removeIf(cast -> playerId.equals(cast.casterId));
+		player.getPersistentData().remove(FLASHFIRE_GUARD);
+		player.getPersistentData().remove(FLAME_WEAVING_HITS);
+
+		String scorchKey = playerId.toString();
+		ArrayList<FireMageVfxEntity> ownedEffects = new ArrayList<>();
+		for (ServerLevel level : player.getServer().getAllLevels()) {
+			for (Entity entity : level.getAllEntities()) {
+				if (entity instanceof LivingEntity living) {
+					CompoundTag scorch = living.getPersistentData().getCompound(SCORCH_DATA);
+					if (scorch.contains(scorchKey)) {
+						scorch.remove(scorchKey);
+						if (scorch.isEmpty())
+							living.getPersistentData().remove(SCORCH_DATA);
+						else
+							living.getPersistentData().put(SCORCH_DATA, scorch);
+					}
+				}
+				if (entity instanceof FireMageVfxEntity effect
+						&& effect.getPersistentData().hasUUID(VFX_OWNER)
+						&& playerId.equals(effect.getPersistentData().getUUID(VFX_OWNER)))
+					ownedEffects.add(effect);
+			}
+		}
+		ownedEffects.forEach(Entity::discard);
 	}
 
 	public static boolean isFireSkill(String skill) {
@@ -469,12 +532,12 @@ public final class FireMageSpellManager {
 				hitPositions.add(target.getBoundingBox().getCenter());
 				if (kind == ProjectileKind.WEAVING) {
 					if (MageCombatHelper.hurt(level, caster, target, damage)) {
-						int hits = caster.getPersistentData().getInt("sl_flame_weaving_hits") + 1;
+						int hits = caster.getPersistentData().getInt(FLAME_WEAVING_HITS) + 1;
 						if (hits >= 3) {
 							addScorch(level, caster, target, 1);
 							hits = 0;
 						}
-						caster.getPersistentData().putInt("sl_flame_weaving_hits", hits);
+						caster.getPersistentData().putInt(FLAME_WEAVING_HITS, hits);
 					}
 					if (hitTargets.size() >= pierceLimit)
 						return true;
@@ -1029,8 +1092,11 @@ public final class FireMageSpellManager {
 			primaryColor = OrbOfAvariceManager.BLUE_FIRE_PRIMARY;
 			secondaryColor = OrbOfAvariceManager.BLUE_FIRE_SECONDARY;
 		}
-		return FireMageVfxEntity.spawn(level, x, y, z, style, stage, scale, length,
-				lifetime, yaw, pitch, primaryColor, secondaryColor);
+		FireMageVfxEntity effect = FireMageVfxEntity.spawn(level, x, y, z, style, stage,
+				scale, length, lifetime, yaw, pitch, primaryColor, secondaryColor);
+		if (caster != null)
+			effect.getPersistentData().putUUID(VFX_OWNER, caster.getUUID());
+		return effect;
 	}
 
 	private static void spawnLink(ServerLevel level, Entity caster, Vec3 start, Vec3 end, int stage) {

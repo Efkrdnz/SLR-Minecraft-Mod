@@ -1,0 +1,20 @@
+{
+  "replace": false,
+  "values": [
+    "#minecraft:hunters",
+    "sololeveling:training_bot",
+    "sololeveling:secretary",
+    "sololeveling:sung_jin_woo",
+    "sololeveling:thomas_andre",
+    "sololeveling:after_image",
+    "sololeveling:after_image_1",
+    "sololeveling:after_image_2",
+    "sololeveling:arrow_splash",
+    "sololeveling:detect_eye_inv",
+    "sololeveling:fx_puddle",
+    "sololeveling:fxspik",
+    "sololeveling:ice_chunk",
+    "sololeveling:icecle",
+    "sololeveling:magic_eye"
+  ]
+}

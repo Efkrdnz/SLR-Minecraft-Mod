@@ -17,6 +17,9 @@ import net.solocraft.procedures.ReturnSPProcedure;
 import net.solocraft.procedures.ReturnStrengthProcedure;
 import net.solocraft.procedures.ReturnTitleProcedure;
 import net.solocraft.procedures.ReturnVitalityProcedure;
+import net.solocraft.util.TemporaryStatBonusManager;
+import net.solocraft.util.TemporaryStatBonusManager.BonusSource;
+import net.solocraft.util.TemporaryStatBonusManager.Stat;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -27,6 +30,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SystemPanelScreen extends SystemScreen {
@@ -37,7 +41,7 @@ public class SystemPanelScreen extends SystemScreen {
 			List.of(tipTitle("Strength"), tipText("Increases physical attack damage.")),
 			List.of(tipTitle("Agility"), tipText("Increases movement speed and mobility.")),
 			List.of(tipTitle("Perception"), tipText("Raises your chance to auto-dodge attacks.")),
-			List.of(tipTitle("Vitality"), tipText("Increases your maximum health (HP).")),
+			List.of(tipTitle("Vitality"), tipText("Increases maximum health (HP) and armor.")),
 			List.of(tipTitle("Intelligence"), tipText("Increases your maximum mana (MP).")));
 
 	public SystemPanelScreen() {
@@ -63,11 +67,11 @@ public class SystemPanelScreen extends SystemScreen {
 				() -> sendPanelAction(5),
 				() -> openChild(new SystemQuestsScreen()),
 				() -> openChild(new SystemRewardsScreen()),
-				() -> openChild(new SystemTrainScreen()),
+				() -> openChild(new PartyScreen(false)),
 				() -> sendPanelAction(8),
 				this::openSkills
 		};
-		String[] navLabels = { "Shop", "Quests", "Rewards", "Train", "Craft", "Skills" };
+		String[] navLabels = { "Shop", "Quests", "Rewards", "Party", "Craft", "Skills" };
 		int navX0 = panelX + 12;
 		int navY0 = panelY + 236;
 		int navW = 53;
@@ -119,8 +123,14 @@ public class SystemPanelScreen extends SystemScreen {
 
 		divider(g, panelY + 118);
 		g.drawString(font, "ATTRIBUTES", lx, panelY + 122, ACCENT, false);
-		for (int i = 0; i < 5; i++)
-			g.drawString(font, statString(entity, i), lx, panelY + STAT_ROW0 + i * STAT_STEP, TEXT_MAIN, false);
+		for (int i = 0; i < 5; i++) {
+			String baseText = statString(entity, i);
+			int y = panelY + STAT_ROW0 + i * STAT_STEP;
+			g.drawString(font, baseText, lx, y, TEXT_MAIN, false);
+			Component bonus = bonusComponent(entity, i);
+			if (!bonus.getString().isEmpty())
+				g.drawString(font, bonus, lx + font.width(baseText), y, 0xFFFFFFFF, false);
+		}
 
 		g.drawString(font, ReturnSPProcedure.execute(entity), lx, panelY + 218, 0xFFFFD966, false);
 		divider(g, panelY + 230);
@@ -140,7 +150,13 @@ public class SystemPanelScreen extends SystemScreen {
 
 		for (int i = 0; i < 5; i++) {
 			int y = panelY + STAT_ROW0 + i * STAT_STEP;
-			if (isOver(mouseX, mouseY, lx, y, font.width(statString(entity, i)), 10))
+			String baseText = statString(entity, i);
+			Component bonus = bonusComponent(entity, i);
+			int bonusX = lx + font.width(baseText);
+			if (!bonus.getString().isEmpty()
+					&& isOver(mouseX, mouseY, bonusX, y, font.width(bonus), 10))
+				return bonusTooltip(entity, i);
+			if (isOver(mouseX, mouseY, lx, y, font.width(baseText), 10))
 				return STAT_TIPS.get(i);
 		}
 		if (isOver(mouseX, mouseY, panelX + panelW - 29, panelY + 3, 12, 12))
@@ -163,6 +179,40 @@ public class SystemPanelScreen extends SystemScreen {
 			case 2 -> ReturnPerceptionProcedure.execute(entity);
 			case 3 -> ReturnVitalityProcedure.execute(entity);
 			default -> ReturnIntelligenceProcedure.execute(entity);
+		};
+	}
+
+	private static Component bonusComponent(Player entity, int statIndex) {
+		double bonus = TemporaryStatBonusManager.bonusValue(entity, stat(statIndex));
+		if (bonus <= 0.0D)
+			return Component.empty();
+		return Component.literal(" (+" + TemporaryStatBonusManager.format(bonus) + ")")
+				.withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD);
+	}
+
+	private static List<Component> bonusTooltip(Player entity, int statIndex) {
+		Stat stat = stat(statIndex);
+		List<BonusSource> sources = TemporaryStatBonusManager.sources(entity, stat);
+		double total = sources.stream().mapToDouble(BonusSource::amount).sum();
+		List<Component> tooltip = new ArrayList<>();
+		tooltip.add(Component.literal("Temporary " + stat.displayName() + " (+" +
+				TemporaryStatBonusManager.format(total) + ")")
+				.withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
+		for (BonusSource source : sources) {
+			tooltip.add(Component.literal("+" + TemporaryStatBonusManager.format(source.amount()) + " from ")
+					.withStyle(ChatFormatting.GREEN)
+					.append(source.displayName().copy().withStyle(ChatFormatting.GRAY)));
+		}
+		return tooltip;
+	}
+
+	private static Stat stat(int statIndex) {
+		return switch (statIndex) {
+			case 0 -> Stat.STRENGTH;
+			case 1 -> Stat.AGILITY;
+			case 2 -> Stat.PERCEPTION;
+			case 3 -> Stat.VITALITY;
+			default -> Stat.INTELLIGENCE;
 		};
 	}
 

@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModBlocks;
 import net.solocraft.util.InstanceDungeonKeyAccess;
+import net.solocraft.util.PlayerEntryGenerationGuard;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.level.LevelAccessor;
@@ -31,6 +32,7 @@ public class InstanceDungeonKeyRightclickedOnBlockProcedure {
         if (!(player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
                 .orElse(new SololevelingModVariables.PlayerVariables())).Player
                 || !InstanceDungeonKeyAccess.canEnter(player)) return;
+        final long entryGeneration = PlayerEntryGenerationGuard.begin(player);
         InstanceDungeonKeyAccess.markClaimed(player);
 
         // Ensure quest progress is correct
@@ -80,16 +82,21 @@ public class InstanceDungeonKeyRightclickedOnBlockProcedure {
 
         // First, teleport the player to the dungeon dimension
         SololevelingMod.queueServerWork(10, () -> {
+            if (!PlayerEntryGenerationGuard.isCurrent(player, entryGeneration)) return;
             if (player.level().dimension() != dungeonDimension) {
                 player.teleportTo(targetWorld, randX + PLAYER_PORTAL_ENTRY_X_OFFSET, safeRandY, randZ, player.getYRot(), player.getXRot());
             }
 
             // Wait a bit, then move the player to the correct location
             SololevelingMod.queueServerWork(10, () -> {
+                if (!PlayerEntryGenerationGuard.isCurrent(player, entryGeneration)
+                        || player.level().dimension() != dungeonDimension) return;
                 player.teleportTo(randX + PLAYER_PORTAL_ENTRY_X_OFFSET, safeRandY, randZ);
 
                 // Spawn the dungeon structure in the correct dimension
                 SololevelingMod.queueServerWork(10, () -> {
+                    if (!PlayerEntryGenerationGuard.isCurrent(player, entryGeneration)
+                            || player.level().dimension() != dungeonDimension) return;
                     if (!targetWorld.isClientSide() && player.getServer() != null) {
                         player.getServer().getCommands().performPrefixedCommand(
                                 new CommandSourceStack(
@@ -105,7 +112,11 @@ public class InstanceDungeonKeyRightclickedOnBlockProcedure {
                                 ),
                                 "execute in sololeveling:dungeon_dimension_kasaka run spawninstance"
                         );
-                        SololevelingMod.queueServerWork(30, () -> DunKasakaTeleportAndSpawnProcedure.execute(player.level(), player));
+                        SololevelingMod.queueServerWork(30, () -> {
+                            if (PlayerEntryGenerationGuard.isCurrent(player, entryGeneration)
+                                    && player.level().dimension() == dungeonDimension)
+                                DunKasakaTeleportAndSpawnProcedure.execute(player.level(), player);
+                        });
                     }
                 });
             });

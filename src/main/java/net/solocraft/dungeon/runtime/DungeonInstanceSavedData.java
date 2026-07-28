@@ -35,7 +35,7 @@ import java.util.UUID;
  */
 public final class DungeonInstanceSavedData extends SavedData {
 	private static final String DATA_NAME = "sololeveling_dungeon_instances";
-	private static final int SCHEMA_VERSION = 4;
+	private static final int SCHEMA_VERSION = 5;
 
 	public static final int MAX_INSTANCES = 256;
 	public static final int MAX_PARTICIPANTS = 64;
@@ -400,6 +400,8 @@ public final class DungeonInstanceSavedData extends SavedData {
 		private final long createdGameTime;
 		private final Runnable dirty;
 		private boolean completed;
+		private boolean returnPortalDeferred;
+		private boolean returnPortalSuppressed;
 		private final Set<UUID> participants = new LinkedHashSet<>();
 		@Nullable
 		private BlockPos playerStart;
@@ -455,6 +457,30 @@ public final class DungeonInstanceSavedData extends SavedData {
 			if (this.completed == completed)
 				return false;
 			this.completed = completed;
+			dirty.run();
+			return true;
+		}
+
+		public boolean returnPortalDeferred() {
+			return returnPortalDeferred;
+		}
+
+		public boolean setReturnPortalDeferred(boolean deferred) {
+			if (returnPortalDeferred == deferred)
+				return false;
+			returnPortalDeferred = deferred;
+			dirty.run();
+			return true;
+		}
+
+		public boolean returnPortalSuppressed() {
+			return returnPortalSuppressed;
+		}
+
+		public boolean setReturnPortalSuppressed(boolean suppressed) {
+			if (returnPortalSuppressed == suppressed)
+				return false;
+			returnPortalSuppressed = suppressed;
 			dirty.run();
 			return true;
 		}
@@ -661,6 +687,8 @@ public final class DungeonInstanceSavedData extends SavedData {
 			tag.putInt("EffectiveLevel", effectiveLevel);
 			tag.putLong("CreatedGameTime", createdGameTime);
 			tag.putBoolean("Completed", completed);
+			tag.putBoolean("ReturnPortalDeferred", returnPortalDeferred);
+			tag.putBoolean("ReturnPortalSuppressed", returnPortalSuppressed);
 
 			ListTag participantList = new ListTag();
 			for (UUID participant : participants) {
@@ -708,6 +736,8 @@ public final class DungeonInstanceSavedData extends SavedData {
 			Instance instance = new Instance(id, dungeonId, dimension, tag.getLong("Seed"),
 					clampLevel(tag.getInt("EffectiveLevel")), Math.max(0L, tag.getLong("CreatedGameTime")), dirty);
 			instance.completed = tag.getBoolean("Completed");
+			instance.returnPortalDeferred = tag.getBoolean("ReturnPortalDeferred");
+			instance.returnPortalSuppressed = tag.getBoolean("ReturnPortalSuppressed");
 
 			ListTag participantList = tag.getList("Participants", Tag.TAG_COMPOUND);
 			int participantLimit = Math.min(participantList.size(), MAX_PARTICIPANTS);

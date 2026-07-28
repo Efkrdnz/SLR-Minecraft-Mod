@@ -4,76 +4,99 @@ package net.solocraft.network;
 import net.solocraft.procedures.DKCPathTeleportProcedure;
 import net.solocraft.SololevelingMod;
 import net.solocraft.world.inventory.PathMenu;
-import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.dkc.DkcFloorRegistry;
 
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.core.BlockPos;
 
 import java.util.function.Supplier;
+
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class PathButtonMessage {
-	private final int buttonID, x, y, z;
-
-	public PathButtonMessage(FriendlyByteBuf buffer) {
-		this.buttonID = buffer.readInt();
-		this.x = buffer.readInt();
-		this.y = buffer.readInt();
-		this.z = buffer.readInt();
+	public enum Action {
+		ENTER_FLOOR,
+		EXIT_CASTLE
 	}
 
+	private final Action action;
+	private final int floor;
+
+	public PathButtonMessage(FriendlyByteBuf buffer) {
+		this.action = buffer.readEnum(Action.class);
+		this.floor = buffer.readVarInt();
+	}
+
+	/**
+	 * Compatibility constructor for the generated Floor 1-20 buttons.
+	 * Prefer {@link #enterFloor(int)} in the tower screen.
+	 */
 	public PathButtonMessage(int buttonID, int x, int y, int z) {
-		this.buttonID = buttonID;
-		this.x = x;
-		this.y = y;
-		this.z = z;
+		this(Action.ENTER_FLOOR, buttonID + 1);
+	}
+
+	private PathButtonMessage(Action action, int floor) {
+		this.action = action;
+		this.floor = floor;
+	}
+
+	public static PathButtonMessage enterFloor(int floor) {
+		return new PathButtonMessage(Action.ENTER_FLOOR, floor);
+	}
+
+	public static PathButtonMessage enterFloor(int floor, int x, int y, int z) {
+		return enterFloor(floor);
+	}
+
+	public static PathButtonMessage exitCastle() {
+		return new PathButtonMessage(Action.EXIT_CASTLE, 0);
+	}
+
+	public static PathButtonMessage exitCastle(int x, int y, int z) {
+		return exitCastle();
 	}
 
 	public static void buffer(PathButtonMessage message, FriendlyByteBuf buffer) {
-		buffer.writeInt(message.buttonID);
-		buffer.writeInt(message.x);
-		buffer.writeInt(message.y);
-		buffer.writeInt(message.z);
+		buffer.writeEnum(message.action);
+		buffer.writeVarInt(message.floor);
 	}
 
 	public static void handler(PathButtonMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
 		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
-			Player entity = context.getSender();
-			int buttonID = message.buttonID;
-			int x = message.x;
-			int y = message.y;
-			int z = message.z;
-			handleButtonAction(entity, buttonID, x, y, z);
-		});
+		context.enqueueWork(() -> handleButtonAction(context.getSender(), message));
 		context.setPacketHandled(true);
 	}
 
+	/** Compatibility entry point retained until all generated screen code is replaced. */
 	public static void handleButtonAction(Player entity, int buttonID, int x, int y, int z) {
+		handleButtonAction(entity, enterFloor(buttonID + 1));
+	}
+
+	private static void handleButtonAction(Player entity, PathButtonMessage message) {
 		if (!(entity instanceof ServerPlayer player) || !(player.containerMenu instanceof PathMenu))
 			return;
-		Level world = player.level();
-		// security measure to prevent arbitrary chunk generation
-		if (!world.hasChunkAt(new BlockPos(x, y, z)))
-			return;
-		SololevelingModVariables.PlayerVariables vars = player
-				.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.orElse(new SololevelingModVariables.PlayerVariables());
-		if ((!vars.dkc_started && vars.dkc_cleared <= 0)
-				|| net.solocraft.dkc.DkcFloorRegistry.isDkc(player.level()))
-			return;
-		// buttonID 0-19 correspond to floors 1-20; DkcEnterFloor procedures were empty stubs
-		if (buttonID >= 0 && buttonID < 20) {
+		if (message.action == Action.EXIT_CASTLE) {
+			if (!DkcFloorRegistry.isDkc(player.level()))
+				return;
 			player.closeContainer();
-			DKCPathTeleportProcedure.execute(player, buttonID + 1);
+			DKCPathTeleportProcedure.returnToSavedOverworld(player);
+			return;
 		}
+		if (message.action != Action.ENTER_FLOOR
+				|| message.floor < DkcFloorRegistry.FIRST_FLOOR
+				|| message.floor > DkcFloorRegistry.LAST_FLOOR)
+			return;
+		// Never trust the menu snapshot or the requested floor. Preflight every
+		// live rule before closing the menu, then execute rechecks once more.
+		if (!DKCPathTeleportProcedure.canTravelToFloor(player, message.floor, true))
+			return;
+		player.closeContainer();
+		DKCPathTeleportProcedure.execute(player, message.floor);
 	}
 
 	@SubscribeEvent

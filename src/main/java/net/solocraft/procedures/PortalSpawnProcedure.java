@@ -2,7 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModGameRules;
-import net.solocraft.entity.Portal1Entity;
+import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.dungeon.DungeonTheme;
 import net.solocraft.dungeon.ProceduralDungeonRank;
 import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
@@ -38,7 +38,8 @@ public class PortalSpawnProcedure {
 			entity.getPersistentData().putDouble("tpx", (Mth.nextInt(random, -299999, 299999)));
 			entity.getPersistentData().putDouble("tpy", (Mth.nextInt(random, 60, 120)));
 			entity.getPersistentData().putDouble("tpz", (Mth.nextInt(random, -299999, 299999)));
-			if (entity instanceof Portal1Entity && !entity.getPersistentData().contains("slr_procedural_gate")) {
+			if (entity.getType() == SololevelingModEntities.PORTAL_1.get()
+					&& !entity.getPersistentData().contains("slr_procedural_gate")) {
 				ProceduralDungeonRank[] ranks = ProceduralDungeonRank.values();
 				DungeonTheme[] themes = DungeonTheme.values();
 				ProceduralDungeonRank rank = ranks[Mth.nextInt(random, 0, ranks.length - 1)];

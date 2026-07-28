@@ -38,6 +38,16 @@ public final class DkcQuestProgressTracker {
 	private DkcQuestProgressTracker() {
 	}
 
+	/** Clears the server hold/cache and closes the client's DKC tracker. */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null || player.server == null)
+			return;
+		unmarkHeld(player.server, player.getUUID());
+		forget(player.server, player.getUUID());
+		forgetPressLimit(player.server, player.getUUID());
+		send(player, Snapshot.INACTIVE);
+	}
+
 	public static void tick(ServerPlayer player) {
 		if (player == null || player.server == null
 				|| player.tickCount % SYNC_INTERVAL_TICKS != Math.floorMod(player.getId(), SYNC_INTERVAL_TICKS)

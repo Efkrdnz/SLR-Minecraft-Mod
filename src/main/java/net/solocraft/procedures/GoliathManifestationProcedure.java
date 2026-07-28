@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.SololevelingMod;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryArmorSessionManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -28,6 +29,7 @@ public class GoliathManifestationProcedure {
 			return;
 		if (isWearingFullGoliath(entity)) {
 			restoreArmor(entity);
+			TemporaryArmorSessionManager.finishAfterRestore(entity);
 			return;
 		}
 		if (isWearingAnyGoliath(entity))
@@ -38,12 +40,22 @@ public class GoliathManifestationProcedure {
 			return;
 		}
 		saveArmor(entity);
+		long manifestationSession =
+				TemporaryArmorSessionManager.begin(entity);
 		playStartSound(world, x, y, z);
 		SololevelingMod.queueServerWork(5, () -> {
+			if (!TemporaryArmorSessionManager.canEquipGoliath(
+					entity, manifestationSession)) {
+				TemporaryArmorSessionManager.abandonIfCurrent(
+						entity, manifestationSession);
+				return;
+			}
 			equip(entity, EquipmentSlot.FEET, SololevelingModItems.GOLIATH_ARMOR_BOOTS.get());
 			equip(entity, EquipmentSlot.LEGS, SololevelingModItems.GOLIATH_ARMOR_LEGGINGS.get());
 			equip(entity, EquipmentSlot.CHEST, SololevelingModItems.GOLIATH_ARMOR_CHESTPLATE.get());
 			equip(entity, EquipmentSlot.HEAD, SololevelingModItems.GOLIATH_ARMOR_HELMET.get());
+			TemporaryArmorSessionManager.markEquipped(
+					entity, manifestationSession);
 		});
 	}
 

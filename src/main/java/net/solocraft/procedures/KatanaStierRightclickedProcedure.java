@@ -1,7 +1,7 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
+import net.solocraft.util.TemporaryStatBonusManager;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -58,7 +58,7 @@ public class KatanaStierRightclickedProcedure {
 						entityiterator.setDeltaMovement(new Vec3((2 * entity.getLookAngle().x), 0, (2 * entity.getLookAngle().z)));
 						entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.PLAYER_ATTACK), entity),
 								(float) (((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getBaseValue()
-										+ (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 20));
+										+ TemporaryStatBonusManager.effectiveStrength(entity) / 20.0D));
 					}
 				}
 			}

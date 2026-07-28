@@ -5,6 +5,7 @@ import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.dkc.DkcRunSavedData;
 import net.solocraft.dkc.DkcRadiruManager;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.VesselProgressionManager;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -31,6 +32,7 @@ public class DKCLevelItemRightclickedProcedure {
 		DkcRadiruManager.normalizeDebugProgress(player, cleared);
 		DkcRunSavedData.get(player.server).setDebugProgress(player, cleared);
 		DkcRadiruManager.reconcileDebugProgress(player, cleared);
+		VesselProgressionManager.reconcileEntitlements(player);
 	}
 
 	/** Sets one exact floor as a fresh test attempt, then moves the target there. */
@@ -48,6 +50,7 @@ public class DKCLevelItemRightclickedProcedure {
 		resetFloorAttempt(player, floor);
 		DkcRadiruManager.normalizeDebugProgress(player, cleared);
 		DkcRunSavedData.get(player.server).setDebugProgress(player, cleared);
+		VesselProgressionManager.reconcileEntitlements(player);
 		DkcFloorBuilder.debugTeleportToFloor(player, floor, () -> {
 			DkcFloorBuilder.resetEncounterForDebug(player, floor);
 			DkcRadiruManager.reconcileDebugProgress(player, cleared);

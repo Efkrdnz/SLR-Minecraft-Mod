@@ -3,6 +3,8 @@ package net.solocraft.util;
 import net.solocraft.SololevelingMod;
 import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.dkc.DkcSpatialLayout;
+import net.solocraft.dungeon.runtime.DungeonInstanceSavedData;
+import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModParticleTypes;
@@ -23,6 +25,7 @@ import net.solocraft.entity.TuskShadowEntity;
 import net.solocraft.procedures.SkillSlotHelper;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -55,8 +58,14 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.UUID;
 
 public class ShadowMonarchManager {
@@ -92,7 +101,11 @@ public class ShadowMonarchManager {
 	private static final String SHADOW_OWNER = "sl_shadow_owner";
 	private static final String SHADOW_COMMAND = "sl_shadow_command";
 	private static final String PLAYER_COMMAND = "sl_shadow_command_mode";
+	private static final String PLAYER_RESET_GENERATION = "sl_shadow_reset_generation";
+	private static final String SHADOW_GENERATION = "sl_shadow_generation";
 	private static final String SHADOW_INVENTORY = "sl_shadow_inventory";
+	private static final String EQUIPMENT = "equipment";
+	private static final String SHADOW_EQUIPMENT = "sl_shadow_equipment";
 	private static final String CACHED_LEVEL_CAP = "shadow_level_cap";
 	private static final String BASE_HEALTH = "sl_shadow_base_health";
 	private static final String BASE_ATTACK = "sl_shadow_base_attack";
@@ -101,9 +114,22 @@ public class ShadowMonarchManager {
 	private static final String INSUFFICIENT_MANA_NOTICE = "sl_shadow_mana_notice";
 	private static final String SAVED_HEALTH = "health";
 	private static final String SAVED_HEALTH_AT = "health_saved_at";
+	private static final String PROCEDURAL_DUNGEON_TAG = "slr_procedural_dungeon";
 	private static final TagKey<EntityType<?>> SHADOW_ENTITY_TAG = TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows"));
+	private static final int CLEAR_SCAN_INTERVAL_TICKS = 20;
+	private static final int CLEAR_REPATH_INTERVAL_TICKS = 30;
+	private static final int CLEAR_STUCK_TICKS = 80;
+	private static final int CLEAR_FAILED_TARGET_COOLDOWN_TICKS = 120;
+	private static final int CLEAR_MAX_CANDIDATES = 128;
+	private static final int CLEAR_MAX_PATH_ATTEMPTS_PER_TICK = 8;
+	private static final int CLEAR_MAX_TARGET_CHOICES_PER_SHADOW = 5;
+	private static final Map<UUID, ClearDungeonState> CLEAR_DUNGEON_STATES = new HashMap<>();
 
 	private ShadowMonarchManager() {
+	}
+
+	public record ShadowDisplayProgress(int rank, int level, int rankXp, int rankXpNeeded,
+			int nextRank, boolean levelCapped, boolean maxRank) {
 	}
 
 	public static boolean isFormationSkill(String skill) {
@@ -273,26 +299,32 @@ public class ShadowMonarchManager {
 		return result;
 	}
 
-	public static void grantKillXp(Player owner, Entity shadowEntity, Entity killed) {
-		if (owner == null || shadowEntity == null || killed == null)
-			return;
+	public static int grantCombatXp(Player owner, String shadowId,
+			Entity shadowEntity, int targetXpPool, double shadowDamage,
+			double countedTargetDamage) {
+		if (owner == null || shadowId == null || shadowId.isEmpty())
+			return 0;
 		ensureRoster(owner);
-		String id = shadowEntity.getPersistentData().getString(SHADOW_ID);
-		if (id.isEmpty())
-			return;
-		CompoundTag shadow = getShadow(owner, id);
+		CompoundTag shadow = getShadow(owner, shadowId);
 		if (shadow == null)
-			return;
+			return 0;
 		int level = Math.max(1, shadow.getInt("level"));
 		int levelCap = shadowLevelCap(owner);
 		int xp = Math.max(0, shadow.getInt("xp"));
-		if (shadowEntity.getPersistentData().getInt(APPLIED_LEVEL) != level || shadowEntity.getPersistentData().getInt(APPLIED_RANK) != rankOf(shadow))
-			applyLevelStatsPreservingHealth(shadowEntity, shadow);
+		Entity activeShadow = shadowId.equals(getShadowRosterId(shadowEntity))
+				? shadowEntity : null;
+		if (activeShadow != null
+				&& (activeShadow.getPersistentData().getInt(APPLIED_LEVEL) != level
+						|| activeShadow.getPersistentData().getInt(APPLIED_RANK) != rankOf(shadow)))
+			applyLevelStatsPreservingHealth(activeShadow, shadow);
 		if (level >= levelCap) {
-			return;
+			return 0;
 		}
-		long earnedXp = Math.max(5, (int) Math.ceil(killed.getBbWidth() * killed.getBbHeight() * 4.0));
-		xp = (int) Math.min(Integer.MAX_VALUE, xp + earnedXp);
+		int earnedXp = ShadowExperienceRules.contributionXp(targetXpPool,
+				shadowDamage, countedTargetDamage, level);
+		if (earnedXp <= 0)
+			return 0;
+		xp = (int) Math.min(Integer.MAX_VALUE, (long) xp + earnedXp);
 		int needed = xpNeeded(level, shadow.getString("type"));
 		boolean leveled = false;
 		while (level < levelCap && xp >= needed) {
@@ -308,10 +340,11 @@ public class ShadowMonarchManager {
 		shadow.putInt("level", level);
 		shadow.putInt("xp", xp);
 		owner.getPersistentData().put(ROOT, root(owner));
-		if (leveled)
-			applyLevelStats(shadowEntity, shadow, false);
+		if (leveled && activeShadow != null)
+			applyLevelStats(activeShadow, shadow, false);
 		if (leveled && owner instanceof ServerPlayer player)
 			player.displayClientMessage(Component.literal(shadow.getString("name") + " reached Lv." + level), true);
+		return earnedXp;
 	}
 
 	public static void collectManaStoneDropsFromKill(Entity shadowEntity, Entity killed) {
@@ -346,6 +379,62 @@ public class ShadowMonarchManager {
 				shadowEntity.spawnAtLocation(stack);
 		}
 		data.remove(SHADOW_INVENTORY);
+	}
+
+	/**
+	 * Copies the authoritative shadow roster to the replacement player entity.
+	 * Forge does not carry arbitrary {@link Entity#getPersistentData()} across a
+	 * death clone, while the legacy capability counters do. Without this copy,
+	 * {@link #ensureRoster(Player)} sees those counters after respawn and rebuilds
+	 * the same number of shadows as brand-new level-one entries.
+	 */
+	public static void preserveProgressAfterPlayerClone(Player original, Player replacement) {
+		if (original == null || replacement == null || replacement.level().isClientSide())
+			return;
+		CompoundTag originalData = original.getPersistentData();
+		CompoundTag replacementData = replacement.getPersistentData();
+		if (originalData.contains(ROOT, Tag.TAG_COMPOUND))
+			replacementData.put(ROOT, originalData.getCompound(ROOT).copy());
+		else
+			replacementData.remove(ROOT);
+		if (originalData.contains(PLAYER_COMMAND, Tag.TAG_STRING))
+			replacementData.putString(PLAYER_COMMAND, originalData.getString(PLAYER_COMMAND));
+		else
+			replacementData.remove(PLAYER_COMMAND);
+		if (originalData.contains(PLAYER_RESET_GENERATION, Tag.TAG_LONG))
+			replacementData.putLong(PLAYER_RESET_GENERATION, originalData.getLong(PLAYER_RESET_GENERATION));
+		else
+			replacementData.remove(PLAYER_RESET_GENERATION);
+	}
+
+	/**
+	 * Releases only the exact roster slot occupied by a shadow that has died.
+	 * Its level, XP, rank, name and saved boss health remain on that slot, making
+	 * a later summon a revival instead of a fresh extraction. Matching the entity
+	 * UUID prevents a late death from unlinking a newer replacement summon.
+	 */
+	public static void handleTrackedShadowDeath(Entity shadowEntity) {
+		if (shadowEntity == null || shadowEntity.level().isClientSide()
+				|| !(shadowEntity.level() instanceof ServerLevel level))
+			return;
+		CompoundTag entityData = shadowEntity.getPersistentData();
+		if (!entityData.hasUUID(SHADOW_OWNER))
+			return;
+		String shadowId = entityData.getString(SHADOW_ID);
+		if (shadowId.isEmpty())
+			return;
+		Player owner = findOnlineOwner(level, entityData.getUUID(SHADOW_OWNER));
+		if (owner == null)
+			return;
+		CompoundTag shadow = getShadow(owner, shadowId);
+		if (shadow == null || !shadow.hasUUID("summoned")
+				|| !shadowEntity.getUUID().equals(shadow.getUUID("summoned")))
+			return;
+		shadow.remove("summoned");
+		owner.getPersistentData().put(ROOT, root(owner));
+		String type = shadow.getString("type");
+		if (!type.isEmpty())
+			updateLegacySpawnCounter(owner, type, -1);
 	}
 
 	public static void saveBossHealthBeforeDespawn(Entity ownerEntity, Entity shadowEntity) {
@@ -462,9 +551,84 @@ public class ShadowMonarchManager {
 		return data.hasUUID(SHADOW_OWNER) ? data.getUUID(SHADOW_OWNER) : null;
 	}
 
+	public static String getShadowRosterId(Entity entity) {
+		if (entity == null)
+			return "";
+		return entity.getPersistentData().getString(SHADOW_ID);
+	}
+
 	public static boolean isOwnedShadow(Entity shadow, LivingEntity owner) {
 		UUID ownerId = getShadowOwnerUUID(shadow);
 		return isShadowEntity(shadow) && owner != null && ownerId != null && ownerId.equals(owner.getUUID());
+	}
+
+	/**
+	 * Shared, fail-closed predicate for scripted shadow attacks. In addition to
+	 * the normal hostile-target rules this applies party, team, tame-owner and
+	 * shadow-owner checks from {@link MageCombatHelper}, so area attacks cannot
+	 * splash the monarch or any allied unit.
+	 */
+	public static boolean canShadowDamage(Entity shadow, Entity candidate) {
+		if (!(shadow instanceof Mob mob) || !(candidate instanceof LivingEntity target)
+				|| !(shadow instanceof TamableAnimal tame) || !(tame.getOwner() instanceof Player owner))
+			return false;
+		if (!target.isAlive() || !target.isAttackable() || target.isInvulnerable())
+			return false;
+		Player targetPlayer = target instanceof Player player ? player
+				: target instanceof TamableAnimal targetTame
+						&& targetTame.getOwner() instanceof Player player ? player : null;
+		if (targetPlayer != null && haveSameGuild(owner, targetPlayer))
+			return false;
+		return MageCombatHelper.isValidTarget(shadow, target)
+				&& isValidShadowTarget(target, mob, owner);
+	}
+
+	private static boolean haveSameGuild(Player first, Player second) {
+		double firstGuild = first.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(data -> data.GuildCode).orElse(0.0D);
+		double secondGuild = second.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(data -> data.GuildCode).orElse(0.0D);
+		return Double.isFinite(firstGuild) && firstGuild != 0.0D
+				&& Double.compare(firstGuild, secondGuild) == 0;
+	}
+
+	/**
+	 * Removes one player's shadow roster and every currently loaded summon.
+	 * Stored mana stones are dropped before entities are discarded. A generation
+	 * marker also invalidates summons in unloaded chunks when they load later.
+	 */
+	public static void resetPlayerProgress(ServerPlayer player) {
+		if (player == null || player.server == null)
+			return;
+		CompoundTag playerData = player.getPersistentData();
+		if (playerData.contains(ROOT, Tag.TAG_COMPOUND)) {
+			ListTag roster = playerData.getCompound(ROOT).getList(SHADOWS, Tag.TAG_COMPOUND);
+			for (int index = 0; index < roster.size(); index++)
+				returnEquipmentToPlayer(player, roster.getCompound(index));
+		}
+		long currentGeneration = playerData.getLong(PLAYER_RESET_GENERATION);
+		long nextGeneration = currentGeneration == Long.MAX_VALUE
+				? 1L : Math.max(1L, currentGeneration + 1L);
+		playerData.putLong(PLAYER_RESET_GENERATION, nextGeneration);
+		CLEAR_DUNGEON_STATES.remove(player.getUUID());
+
+		ArrayList<Entity> loadedOwnedShadows = new ArrayList<>();
+		for (ServerLevel level : player.server.getAllLevels()) {
+			for (Entity entity : level.getAllEntities()) {
+				UUID ownerId = getShadowOwnerUUID(entity);
+				if (player.getUUID().equals(ownerId)
+						&& (isShadowEntity(entity) || isTrackedShadowEntity(entity)))
+					loadedOwnedShadows.add(entity);
+			}
+		}
+		for (Entity shadow : loadedOwnedShadows) {
+			dropStoredShadowInventory(shadow);
+			shadow.discard();
+		}
+		playerData.remove(ROOT);
+		playerData.remove(PLAYER_COMMAND);
 	}
 
 	public static boolean haveSameShadowOwner(Entity first, Entity second) {
@@ -485,6 +649,7 @@ public class ShadowMonarchManager {
 		}
 		ensureRoster(player);
 		absorbVisibleOwnedShadows(player);
+		CLEAR_DUNGEON_STATES.remove(player.getUUID());
 		player.getPersistentData().putString(PLAYER_COMMAND, command);
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			capability.berserk = COMMAND_BERSERK.equals(command);
@@ -525,31 +690,115 @@ public class ShadowMonarchManager {
 	}
 
 	public static int highestRankForDisplay(Player player, String requestedType) {
-		if (player == null)
-			return RANK_NORMAL;
-		String type = normalizeShadowType(requestedType);
-		int highest = startingRank(type);
-		ListTag roster = shadows(player);
-		for (int i = 0; i < roster.size(); i++) {
-			CompoundTag shadow = roster.getCompound(i);
-			if (type.equals(shadow.getString("type")))
-				highest = Math.max(highest, rankOf(shadow));
-		}
-		return highest;
+		return progressForDisplay(player, requestedType).rank();
 	}
 
 	public static int highestLevelForDisplay(Player player, String requestedType) {
+		return progressForDisplay(player, requestedType).level();
+	}
+
+	public static ShadowDisplayProgress progressForDisplay(Player player, String requestedType) {
+		String type = normalizeShadowType(requestedType == null ? "" : requestedType);
+		int initialRank = startingRank(type);
+		if (player == null || type.isEmpty())
+			return new ShadowDisplayProgress(initialRank, 1, 0, 1, initialRank, true, false);
+		CompoundTag shadow = strongestOwnedShadow(player, type);
+		if (shadow == null)
+			return new ShadowDisplayProgress(initialRank, 1, 0, 1, initialRank, true, false);
+
+		int level = Math.max(1, shadow.getInt("level"));
+		int rank = rankOf(shadow);
+		int maximumRank = isBoss(type) ? RANK_GRAND_MARSHAL : RANK_ELITE_KNIGHT;
+		boolean grandMarshalClaimedByAnother = rank == RANK_MARSHAL
+				&& !root(player).getString(GRAND_MARSHAL_ID).isEmpty()
+				&& !shadow.getString("id").equals(root(player).getString(GRAND_MARSHAL_ID));
+		boolean maximum = rank >= maximumRank || grandMarshalClaimedByAnother;
+		int nextRank = maximum ? rank : Math.min(maximumRank, rank + 1);
+
+		int bandStart = level < 10 ? 1 : level - Math.floorMod(level, 10);
+		long nextMilestoneLong = ((long) level / 10L + 1L) * 10L;
+		int nextMilestone = (int) Math.min(MAX_SAFE_SHADOW_LEVEL, nextMilestoneLong);
+		long progress = Math.max(0, shadow.getInt("xp"));
+		for (int current = bandStart; current < level; current++)
+			progress = saturatingDisplayXpAdd(progress, xpNeeded(current, type));
+		long requirement = 0L;
+		for (int current = bandStart; current < nextMilestone; current++)
+			requirement = saturatingDisplayXpAdd(requirement, xpNeeded(current, type));
+		int needed = (int) Math.max(1L, Math.min(Integer.MAX_VALUE, requirement));
+		int earned = (int) Math.max(0L, Math.min(needed, progress));
+		return new ShadowDisplayProgress(rank, level, earned, needed, nextRank,
+				level >= shadowLevelCap(player), maximum);
+	}
+
+	private static long saturatingDisplayXpAdd(long current, int amount) {
+		return Math.min(Integer.MAX_VALUE, Math.max(0L, current) + Math.max(0, amount));
+	}
+
+	public static boolean isCustomizableBoss(String requestedType) {
+		String type = normalizeShadowType(requestedType == null ? "" : requestedType);
+		return "igris".equals(type) || "tusk".equals(type);
+	}
+
+	public static boolean isValidBossEquipment(String requestedType, ItemStack stack) {
+		if (stack == null || stack.isEmpty())
+			return true;
+		String type = normalizeShadowType(requestedType == null ? "" : requestedType);
+		return stack.getCount() == 1 && ("igris".equals(type)
+				&& stack.is(SololevelingModItems.DEMON_KINGS_LONG_SWORD.get())
+				|| "tusk".equals(type) && stack.is(SololevelingModItems.ORB_OF_AVARICE.get()));
+	}
+
+	public static ItemStack equipmentForDisplay(Player player, String requestedType) {
 		if (player == null)
-			return 1;
-		String type = normalizeShadowType(requestedType);
-		int highest = 1;
-		ListTag roster = shadows(player);
-		for (int i = 0; i < roster.size(); i++) {
-			CompoundTag shadow = roster.getCompound(i);
-			if (type.equals(shadow.getString("type")))
-				highest = Math.max(highest, Math.max(1, shadow.getInt("level")));
+			return ItemStack.EMPTY;
+		String type = normalizeShadowType(requestedType == null ? "" : requestedType);
+		CompoundTag shadow = strongestOwnedShadow(player, type);
+		return equipmentOf(shadow).copy();
+	}
+
+	public static boolean hasEquipmentForDisplay(Player player, String requestedType) {
+		return !equipmentForDisplay(player, requestedType).isEmpty();
+	}
+
+	/**
+	 * Replaces the equipment on the strongest owned entry represented by a boss
+	 * card. The full stack tag is retained, while both the public API and menu
+	 * slot independently enforce the per-boss item whitelist.
+	 */
+	public static boolean setEquipmentForDisplay(Player player, String requestedType, ItemStack requestedStack) {
+		if (player == null || player.level().isClientSide())
+			return false;
+		String type = normalizeShadowType(requestedType == null ? "" : requestedType);
+		if (!isCustomizableBoss(type))
+			return false;
+		ensureRoster(player);
+		CompoundTag shadow = strongestOwnedShadow(player, type);
+		ItemStack stack = requestedStack == null ? ItemStack.EMPTY : requestedStack.copy();
+		if (shadow == null || !isValidBossEquipment(type, stack))
+			return false;
+		if (stack.isEmpty()) {
+			shadow.remove(EQUIPMENT);
+		} else {
+			stack.setCount(1);
+			shadow.put(EQUIPMENT, stack.save(new CompoundTag()));
 		}
-		return highest;
+		if (shadow.hasUUID("summoned")) {
+			Entity summoned = findSummonedEntity(player, shadow.getUUID("summoned"));
+			if (summoned != null)
+				syncEquipmentTag(summoned, shadow);
+		}
+		player.getPersistentData().put(ROOT, root(player));
+		return true;
+	}
+
+	public static boolean isEquipmentEquipped(Entity shadowEntity, Item item) {
+		if (shadowEntity == null || item == null)
+			return false;
+		CompoundTag data = shadowEntity.getPersistentData();
+		if (!data.contains(SHADOW_EQUIPMENT, Tag.TAG_STRING))
+			return false;
+		return BuiltInRegistries.ITEM.getKey(item).toString()
+				.equals(data.getString(SHADOW_EQUIPMENT));
 	}
 
 	public static String typeForSummonButton(int buttonId) {
@@ -624,6 +873,47 @@ public class ShadowMonarchManager {
 		return Math.max(legacySpawned(player, normalized), rosterCount);
 	}
 
+	/**
+	 * Ticks every summoned shadow from the owner's roster. This intentionally
+	 * avoids a world/AABB lookup per player; roster UUIDs are the authoritative
+	 * summoned instances.
+	 */
+	public static void tickCommandedShadows(ServerPlayer owner) {
+		if (owner == null || !owner.isAlive() || !(owner.level() instanceof ServerLevel level))
+			return;
+		List<Mob> clearDungeonShadows = new ArrayList<>();
+		for (Mob mob : summonedOwnedMobs(owner)) {
+			if ((level.getGameTime() + mob.getId()) % 20L < 10L)
+				synchronizeShadowLevel(owner, mob);
+			if (!isCurrentSummonedInstance(owner, mob)) {
+				dropStoredShadowInventory(mob);
+				mob.discard();
+				continue;
+			}
+			String command = commandOrDefault(mob.getPersistentData().getString(SHADOW_COMMAND));
+			if (COMMAND_CLEAR_DUNGEON.equals(command)) {
+				if (isInDungeon(owner))
+					clearDungeonShadows.add(mob);
+				else {
+					mob.setTarget(null);
+					mob.getNavigation().stop();
+				}
+				continue;
+			}
+			applyCommandTarget(mob, owner, command);
+		}
+		if (clearDungeonShadows.isEmpty())
+			CLEAR_DUNGEON_STATES.remove(owner.getUUID());
+		else
+			tickClearDungeonCoordinator(owner, clearDungeonShadows);
+		cleanupClearDungeonStates(level.getGameTime());
+	}
+
+	/**
+	 * Compatibility entry point for callers that only have one shadow. Clear
+	 * Dungeon assignment is owner-scoped and therefore handled by
+	 * {@link #tickCommandedShadows(ServerPlayer)}.
+	 */
 	public static void tickCommandedShadow(Entity entity) {
 		if (!(entity instanceof Mob mob) || !(entity.level() instanceof ServerLevel level))
 			return;
@@ -634,12 +924,20 @@ public class ShadowMonarchManager {
 		if (owner != null && (level.getGameTime() + entity.getId()) % 20L == 0L)
 			synchronizeShadowLevel(owner, entity);
 		if (owner != null && !isCurrentSummonedInstance(owner, entity)) {
+			dropStoredShadowInventory(entity);
 			entity.discard();
 			return;
 		}
 		String command = commandOrDefault(data.getString(SHADOW_COMMAND));
 		if (owner == null || !owner.isAlive()) {
 			mob.setTarget(null);
+			return;
+		}
+		if (COMMAND_CLEAR_DUNGEON.equals(command)) {
+			if (!isInDungeon(owner)) {
+				mob.setTarget(null);
+				mob.getNavigation().stop();
+			}
 			return;
 		}
 		applyCommandTarget(mob, owner, command);
@@ -779,12 +1077,15 @@ public class ShadowMonarchManager {
 		spawned.getPersistentData().putString(SHADOW_ID, shadow.getString("id"));
 		spawned.getPersistentData().putString(SHADOW_TYPE, shadow.getString("type"));
 		spawned.getPersistentData().putUUID(SHADOW_OWNER, owner.getUUID());
+		spawned.getPersistentData().putLong(SHADOW_GENERATION,
+				owner.getPersistentData().getLong(PLAYER_RESET_GENERATION));
 		String command = commandOrDefault(owner.getPersistentData().getString(PLAYER_COMMAND));
 		spawned.getPersistentData().putString(SHADOW_COMMAND, command);
 		shadow.putUUID("summoned", spawned.getUUID());
 		owner.getPersistentData().put(ROOT, root(owner));
 		if (spawned instanceof TamableAnimal tame)
 			tame.tame(owner);
+		syncEquipmentTag(spawned, shadow);
 		applyLevelStats(spawned, shadow, true);
 		if (spawned instanceof Mob mob)
 			applyCommandTarget(mob, owner, command);
@@ -819,6 +1120,13 @@ public class ShadowMonarchManager {
 		}
 		if (COMMAND_CLEAR_DUNGEON.equals(command) && !isInDungeon(owner)) {
 			shadow.setTarget(null);
+			shadow.getNavigation().stop();
+			return;
+		}
+		if (COMMAND_CLEAR_DUNGEON.equals(command)) {
+			// Clear Dungeon target acquisition is deliberately owner-scoped. The
+			// level tick coordinator shares one bounded candidate refresh and path
+			// budget across the full summoned group.
 			return;
 		}
 		if (COMMAND_PROTECT.equals(command)) {
@@ -826,15 +1134,11 @@ public class ShadowMonarchManager {
 			shadow.setTarget(threat);
 			return;
 		}
-		boolean requireReachablePath = COMMAND_CLEAR_DUNGEON.equals(command);
 		LivingEntity current = shadow.getTarget();
-		if (isValidShadowTarget(current, shadow, owner) && (!requireReachablePath || canReachShadowTarget(shadow, current)))
+		if (isValidShadowTarget(current, shadow, owner))
 			return;
-		double range = COMMAND_CLEAR_DUNGEON.equals(command) ? 96.0D : 48.0D;
-		LivingEntity target = findNearestHostile(shadow, owner, range, requireReachablePath);
+		LivingEntity target = findNearestHostile(shadow, owner, 48.0D);
 		shadow.setTarget(target);
-		if (target == null && requireReachablePath)
-			shadow.getNavigation().stop();
 	}
 
 	private static void resetShadowCommandState(Mob shadow) {
@@ -908,9 +1212,22 @@ public class ShadowMonarchManager {
 		return target == owner || isOwnedShadow(target, owner);
 	}
 
-	private static LivingEntity findNearestHostile(Mob shadow, Player owner, double range, boolean requireReachablePath) {
-		return shadow.level().getEntitiesOfClass(LivingEntity.class, shadow.getBoundingBox().inflate(range), target -> isValidShadowTarget(target, shadow, owner) && (!requireReachablePath || canReachShadowTarget(shadow, target))).stream()
+	private static LivingEntity findNearestHostile(Mob shadow, Player owner, double range) {
+		return shadow.level().getEntitiesOfClass(LivingEntity.class, shadow.getBoundingBox().inflate(range), target -> isValidShadowTarget(target, shadow, owner)).stream()
 				.min((a, b) -> Double.compare(a.distanceToSqr(shadow), b.distanceToSqr(shadow))).orElse(null);
+	}
+
+	public static boolean shouldFollowOwner(Entity shadow) {
+		if (shadow == null)
+			return false;
+		return !COMMAND_CLEAR_DUNGEON.equals(commandOrDefault(shadow.getPersistentData().getString(SHADOW_COMMAND)));
+	}
+
+	public static boolean isValidClearDungeonTarget(LivingEntity target, Mob shadow, Player owner) {
+		if (!(owner instanceof ServerPlayer serverOwner) || target == null || target.level() != owner.level()
+				|| !isValidShadowTarget(target, shadow, owner))
+			return false;
+		return matchesDungeonContext(target, serverOwner, dungeonTargetContext(serverOwner));
 	}
 
 	private static boolean isValidShadowTarget(LivingEntity target, Mob shadow, Player owner) {
@@ -932,6 +1249,336 @@ public class ShadowMonarchManager {
 			return true;
 		Path path = shadow.getNavigation().createPath(target.blockPosition(), 0);
 		return path != null && path.canReach();
+	}
+
+	private static void tickClearDungeonCoordinator(ServerPlayer owner, List<Mob> shadows) {
+		ServerLevel level = owner.serverLevel();
+		long now = level.getGameTime();
+		DungeonTargetContext context = dungeonTargetContext(owner);
+		ClearDungeonState state = CLEAR_DUNGEON_STATES.computeIfAbsent(owner.getUUID(), ignored -> new ClearDungeonState());
+		if (state.lastSeenTick > now || !context.key().equals(state.contextKey)) {
+			state.reset(context.key(), now);
+			for (Mob shadow : shadows) {
+				shadow.setTarget(null);
+				shadow.getNavigation().stop();
+			}
+		}
+		state.lastSeenTick = now;
+		state.failedUntil.entrySet().removeIf(entry -> entry.getValue() <= now);
+		state.progress.keySet().removeIf(shadowId -> shadows.stream().noneMatch(shadow -> shadow.getUUID().equals(shadowId)));
+		if (now >= state.nextCandidateScanTick) {
+			state.candidateIds = collectClearDungeonCandidates(owner, shadows, context).stream().map(Entity::getUUID).toList();
+			state.nextCandidateScanTick = now + CLEAR_SCAN_INTERVAL_TICKS;
+		}
+
+		Map<UUID, Integer> assignments = new HashMap<>();
+		for (Mob shadow : shadows) {
+			LivingEntity current = shadow.getTarget();
+			if (isValidClearDungeonTarget(current, shadow, owner)
+					&& !isFailedTarget(state, shadow, current, now))
+				assignments.merge(current.getUUID(), 1, Integer::sum);
+		}
+
+		PathAttemptBudget pathBudget = new PathAttemptBudget();
+		for (Mob shadow : shadows) {
+			LivingEntity current = shadow.getTarget();
+			if (isValidClearDungeonTarget(current, shadow, owner)
+					&& !isFailedTarget(state, shadow, current, now)) {
+				if (tickClearTargetProgress(state, shadow, current, now, pathBudget))
+					continue;
+				assignments.computeIfPresent(current.getUUID(), (id, count) -> count > 1 ? count - 1 : null);
+			} else {
+				shadow.setTarget(null);
+				state.progress.remove(shadow.getUUID());
+			}
+			assignClearDungeonTarget(owner, shadow, state, assignments, now, pathBudget);
+		}
+	}
+
+	private static boolean tickClearTargetProgress(ClearDungeonState state, Mob shadow, LivingEntity target,
+			long now, PathAttemptBudget pathBudget) {
+		ClearShadowProgress progress = state.progress.computeIfAbsent(shadow.getUUID(), ignored -> new ClearShadowProgress());
+		double distance = shadow.distanceToSqr(target);
+		if (!target.getUUID().equals(progress.targetId)) {
+			progress.reset(target, shadow, distance, now);
+			return true;
+		}
+		boolean hasUsefulSight = shadow.hasLineOfSight(target);
+		boolean closeEnoughToFight = hasUsefulSight
+				&& CombatRangeHelper.withinSurfaceRange(shadow, target, 7.0D);
+		boolean damagedTarget = target.getHealth() + 0.01F < progress.lastTargetHealth;
+		if (closeEnoughToFight || damagedTarget || distance + 1.0D < progress.lastDistance)
+			progress.lastProgressTick = now;
+		progress.lastDistance = distance;
+		progress.lastTargetHealth = target.getHealth();
+
+		if (!hasUsefulSight && shadow.getNavigation().isDone() && now >= progress.nextRepathTick
+				&& pathBudget.tryUse()) {
+			startClearDungeonPath(shadow, target);
+			progress.nextRepathTick = now + clearRepathDelay(shadow);
+		}
+		if (now - progress.lastProgressTick < CLEAR_STUCK_TICKS)
+			return true;
+		failClearDungeonTarget(state, shadow, target, now);
+		return false;
+	}
+
+	private static void assignClearDungeonTarget(ServerPlayer owner, Mob shadow, ClearDungeonState state,
+			Map<UUID, Integer> assignments, long now, PathAttemptBudget pathBudget) {
+		if (!(shadow.level() instanceof ServerLevel level))
+			return;
+		Set<UUID> examined = new HashSet<>();
+		for (int choice = 0; choice < CLEAR_MAX_TARGET_CHOICES_PER_SHADOW; choice++) {
+			LivingEntity candidate = selectClearDungeonCandidate(owner, shadow, state, assignments, examined, now, level);
+			if (candidate == null)
+				break;
+			examined.add(candidate.getUUID());
+			boolean hasSight = shadow.hasLineOfSight(candidate);
+			if (shadow instanceof ShadowKaiselinEntity && !hasSight) {
+				failClearDungeonTarget(state, shadow, candidate, now);
+				continue;
+			}
+			if (!hasSight && !pathBudget.tryUse())
+				break;
+			if (!hasSight && !startClearDungeonPath(shadow, candidate)) {
+				failClearDungeonTarget(state, shadow, candidate, now);
+				continue;
+			}
+			shadow.setTarget(candidate);
+			ClearShadowProgress progress = state.progress.computeIfAbsent(shadow.getUUID(), ignored -> new ClearShadowProgress());
+			progress.reset(candidate, shadow, shadow.distanceToSqr(candidate), now);
+			assignments.merge(candidate.getUUID(), 1, Integer::sum);
+			return;
+		}
+		shadow.setTarget(null);
+		shadow.getNavigation().stop();
+	}
+
+	private static LivingEntity selectClearDungeonCandidate(ServerPlayer owner, Mob shadow,
+			ClearDungeonState state, Map<UUID, Integer> assignments, Set<UUID> examined,
+			long now, ServerLevel level) {
+		LivingEntity best = null;
+		int bestAssignments = Integer.MAX_VALUE;
+		double bestDistance = Double.MAX_VALUE;
+		for (UUID candidateId : state.candidateIds) {
+			if (examined.contains(candidateId))
+				continue;
+			Entity entity = level.getEntity(candidateId);
+			if (!(entity instanceof LivingEntity candidate)
+					|| !isValidClearDungeonTarget(candidate, shadow, owner)
+					|| isFailedTarget(state, shadow, candidate, now))
+				continue;
+			int assigned = assignments.getOrDefault(candidateId, 0);
+			double distance = shadow.distanceToSqr(candidate);
+			if (assigned < bestAssignments || assigned == bestAssignments && distance < bestDistance) {
+				best = candidate;
+				bestAssignments = assigned;
+				bestDistance = distance;
+			}
+		}
+		return best;
+	}
+
+	private static boolean startClearDungeonPath(Mob shadow, LivingEntity target) {
+		if (shadow instanceof ShadowKaiselinEntity)
+			return shadow.hasLineOfSight(target);
+		Path path = shadow.getNavigation().createPath(target.blockPosition(), 0);
+		if (path == null)
+			return false;
+		// A partial path is useful here: normal follow ranges are often shorter
+		// than a dungeon corridor. Controlled repaths advance the shadow in
+		// bounded steps, while the progress watchdog rejects sealed targets.
+		return shadow.getNavigation().moveTo(path, 1.0D);
+	}
+
+	private static long clearRepathDelay(Mob shadow) {
+		return CLEAR_REPATH_INTERVAL_TICKS + Math.floorMod(shadow.getId(), 10);
+	}
+
+	private static void failClearDungeonTarget(ClearDungeonState state, Mob shadow, LivingEntity target, long now) {
+		state.failedUntil.put(new ClearTargetKey(shadow.getUUID(), target.getUUID()),
+				now + CLEAR_FAILED_TARGET_COOLDOWN_TICKS);
+		state.progress.remove(shadow.getUUID());
+		if (shadow.getTarget() == target)
+			shadow.setTarget(null);
+		shadow.getNavigation().stop();
+	}
+
+	private static boolean isFailedTarget(ClearDungeonState state, Mob shadow, LivingEntity target, long now) {
+		return state.failedUntil.getOrDefault(new ClearTargetKey(shadow.getUUID(), target.getUUID()), 0L) > now;
+	}
+
+	private static List<LivingEntity> collectClearDungeonCandidates(ServerPlayer owner, List<Mob> shadows,
+			DungeonTargetContext context) {
+		ServerLevel level = owner.serverLevel();
+		Comparator<LivingEntity> nearestFirst = Comparator.comparingDouble(candidate -> distanceToShadowGroup(candidate, shadows));
+		PriorityQueue<LivingEntity> nearest = new PriorityQueue<>(CLEAR_MAX_CANDIDATES, nearestFirst.reversed());
+		Set<UUID> seen = new HashSet<>();
+		if (context.instanceId() != null) {
+			DungeonInstanceSavedData.get(level).getInstance(context.instanceId()).ifPresent(instance -> {
+				if (!instance.dimension().equals(level.dimension())
+						|| !instance.participants().isEmpty() && !instance.participants().contains(owner.getUUID()))
+					return;
+				for (DungeonInstanceSavedData.EncounterState encounter : instance.encounters()) {
+					if (!encounter.activated() || encounter.completed())
+						continue;
+					for (UUID mobId : encounter.trackedMobs()) {
+						Entity entity = level.getEntity(mobId);
+						if (entity instanceof LivingEntity candidate && seen.add(candidate.getUUID())
+								&& isValidClearDungeonTarget(candidate, shadows.get(0), owner))
+							offerBoundedCandidate(nearest, candidate, nearestFirst);
+					}
+				}
+			});
+		} else {
+			// Legacy/fixed dungeons do not expose encounter UUIDs. Scan the loaded
+			// entity set once for the whole group and retain only the closest
+			// bounded set from the matching gate tag, DKC floor, or private level.
+			for (Entity entity : level.getAllEntities()) {
+				if (entity instanceof LivingEntity candidate && seen.add(candidate.getUUID())
+						&& isValidClearDungeonTarget(candidate, shadows.get(0), owner))
+					offerBoundedCandidate(nearest, candidate, nearestFirst);
+			}
+		}
+		ArrayList<LivingEntity> result = new ArrayList<>(nearest);
+		result.sort(nearestFirst);
+		return result;
+	}
+
+	private static void offerBoundedCandidate(PriorityQueue<LivingEntity> candidates,
+			LivingEntity candidate, Comparator<LivingEntity> nearestFirst) {
+		if (candidates.size() < CLEAR_MAX_CANDIDATES) {
+			candidates.offer(candidate);
+			return;
+		}
+		LivingEntity farthest = candidates.peek();
+		if (farthest != null && nearestFirst.compare(candidate, farthest) < 0) {
+			candidates.poll();
+			candidates.offer(candidate);
+		}
+	}
+
+	private static double distanceToShadowGroup(LivingEntity candidate, List<Mob> shadows) {
+		double closest = Double.MAX_VALUE;
+		for (Mob shadow : shadows)
+			closest = Math.min(closest, candidate.distanceToSqr(shadow));
+		return closest;
+	}
+
+	private static DungeonTargetContext dungeonTargetContext(ServerPlayer owner) {
+		CompoundTag data = owner.getPersistentData();
+		String instanceText = data.getString(DungeonMobLevelAdapter.INSTANCE_TAG).trim();
+		UUID instanceId = parseUuid(instanceText);
+		String legacyTag = data.getString(DungeonMobLevelAdapter.LEGACY_DUNGEON_TAG);
+		boolean strictLegacyTag = data.getBoolean(PROCEDURAL_DUNGEON_TAG);
+		int dkcFloor = DkcFloorRegistry.isSharedDkc(owner.level()) ? DkcSpatialLayout.floor(owner) : 0;
+		String key = owner.level().dimension().location() + "|" + (instanceId == null ? "" : instanceId)
+				+ "|" + legacyTag + "|" + strictLegacyTag + "|" + dkcFloor;
+		return new DungeonTargetContext(key, instanceId, legacyTag, strictLegacyTag, dkcFloor);
+	}
+
+	private static boolean matchesDungeonContext(LivingEntity target, ServerPlayer owner,
+			DungeonTargetContext context) {
+		if (target.level() != owner.level())
+			return false;
+		if (context.instanceId() != null)
+			return context.instanceId().toString().equals(
+					target.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG));
+		if (context.dkcFloor() > 0)
+			return DkcSpatialLayout.isEntityInOwnedFloor(target, owner.getUUID(), context.dkcFloor());
+		if (!context.legacyTag().isEmpty()) {
+			String targetTag = target.getPersistentData().getString(DungeonMobLevelAdapter.LEGACY_DUNGEON_TAG);
+			// Generated procedural runs tag every encounter and must match
+			// exactly. Older fixed dungeon dimensions predate mob tagging, so
+			// untagged mobs remain eligible while another run's explicit tag does
+			// not.
+			return context.legacyTag().equals(targetTag)
+					|| !context.strictLegacyTag() && targetTag.isEmpty();
+		}
+		return target.level().dimension().equals(owner.level().dimension());
+	}
+
+	private static UUID parseUuid(String value) {
+		if (value == null || value.isBlank())
+			return null;
+		try {
+			return UUID.fromString(value);
+		} catch (IllegalArgumentException ignored) {
+			return null;
+		}
+	}
+
+	private static List<Mob> summonedOwnedMobs(ServerPlayer owner) {
+		ArrayList<Mob> result = new ArrayList<>();
+		ListTag roster = shadows(owner);
+		ServerLevel level = owner.serverLevel();
+		for (int index = 0; index < roster.size(); index++) {
+			CompoundTag shadow = roster.getCompound(index);
+			if (!shadow.hasUUID("summoned"))
+				continue;
+			Entity entity = level.getEntity(shadow.getUUID("summoned"));
+			if (entity instanceof Mob mob && mob.isAlive())
+				result.add(mob);
+		}
+		return result;
+	}
+
+	private static void cleanupClearDungeonStates(long now) {
+		if (now % 1200L != 0L)
+			return;
+		CLEAR_DUNGEON_STATES.entrySet().removeIf(entry ->
+				entry.getValue().lastSeenTick > now || now - entry.getValue().lastSeenTick > 1200L);
+	}
+
+	private record DungeonTargetContext(String key, UUID instanceId, String legacyTag,
+			boolean strictLegacyTag, int dkcFloor) {
+	}
+
+	private record ClearTargetKey(UUID shadowId, UUID targetId) {
+	}
+
+	private static final class PathAttemptBudget {
+		private int used;
+
+		private boolean tryUse() {
+			if (used >= CLEAR_MAX_PATH_ATTEMPTS_PER_TICK)
+				return false;
+			used++;
+			return true;
+		}
+	}
+
+	private static final class ClearShadowProgress {
+		private UUID targetId;
+		private double lastDistance;
+		private float lastTargetHealth;
+		private long lastProgressTick;
+		private long nextRepathTick;
+
+		private void reset(LivingEntity target, Mob shadow, double distance, long now) {
+			targetId = target.getUUID();
+			lastDistance = distance;
+			lastTargetHealth = target.getHealth();
+			lastProgressTick = now;
+			nextRepathTick = now + clearRepathDelay(shadow);
+		}
+	}
+
+	private static final class ClearDungeonState {
+		private String contextKey = "";
+		private long nextCandidateScanTick;
+		private long lastSeenTick;
+		private List<UUID> candidateIds = List.of();
+		private final Map<ClearTargetKey, Long> failedUntil = new HashMap<>();
+		private final Map<UUID, ClearShadowProgress> progress = new HashMap<>();
+
+		private void reset(String contextKey, long now) {
+			this.contextKey = contextKey;
+			nextCandidateScanTick = now;
+			candidateIds = List.of();
+			failedUntil.clear();
+			progress.clear();
+		}
 	}
 
 	private static String normalizeCommand(String command) {
@@ -1365,6 +2012,7 @@ public class ShadowMonarchManager {
 		if (shadow == null)
 			return;
 		boolean changed = normalizeShadowProgress(owner, shadow);
+		syncEquipmentTag(shadowEntity, shadow);
 		int level = Math.max(1, shadow.getInt("level"));
 		if (shadowEntity.getPersistentData().getInt(APPLIED_LEVEL) != level || shadowEntity.getPersistentData().getInt(APPLIED_RANK) != rankOf(shadow))
 			applyLevelStatsPreservingHealth(shadowEntity, shadow);
@@ -1433,6 +2081,11 @@ public class ShadowMonarchManager {
 	private static boolean isCurrentSummonedInstance(Player owner, Entity entity) {
 		if (owner == null || entity == null)
 			return true;
+		long ownerGeneration = owner.getPersistentData()
+				.getLong(PLAYER_RESET_GENERATION);
+		if (ownerGeneration != entity.getPersistentData()
+				.getLong(SHADOW_GENERATION))
+			return false;
 		String id = entity.getPersistentData().getString(SHADOW_ID);
 		if (id.isEmpty())
 			return true;
@@ -1452,6 +2105,43 @@ public class ShadowMonarchManager {
 				return shadow;
 		}
 		return null;
+	}
+
+	private static CompoundTag strongestOwnedShadow(Player player, String type) {
+		if (player == null || type == null || type.isEmpty())
+			return null;
+		CompoundTag best = null;
+		for (CompoundTag shadow : ownedRosterWithinLimit(player, type)) {
+			if (isBetterShadow(shadow, best))
+				best = shadow;
+		}
+		return best;
+	}
+
+	private static ItemStack equipmentOf(CompoundTag shadow) {
+		if (shadow == null || !shadow.contains(EQUIPMENT, Tag.TAG_COMPOUND))
+			return ItemStack.EMPTY;
+		return ItemStack.of(shadow.getCompound(EQUIPMENT));
+	}
+
+	private static void syncEquipmentTag(Entity entity, CompoundTag shadow) {
+		if (entity == null)
+			return;
+		ItemStack equipment = equipmentOf(shadow);
+		if (equipment.isEmpty())
+			entity.getPersistentData().remove(SHADOW_EQUIPMENT);
+		else
+			entity.getPersistentData().putString(SHADOW_EQUIPMENT,
+					BuiltInRegistries.ITEM.getKey(equipment.getItem()).toString());
+	}
+
+	private static void returnEquipmentToPlayer(Player player, CompoundTag shadow) {
+		ItemStack equipment = equipmentOf(shadow);
+		if (player == null || equipment.isEmpty())
+			return;
+		shadow.remove(EQUIPMENT);
+		if (!player.getInventory().add(equipment))
+			player.drop(equipment, false);
 	}
 
 	private static CompoundTag getFormation(Entity entity, String id) {
@@ -1776,6 +2466,7 @@ public class ShadowMonarchManager {
 					updateLegacySpawnCounter(player, type, -1);
 				}
 			}
+			returnEquipmentToPlayer(player, shadow);
 			shadows.remove(removeIndex);
 		}
 	}

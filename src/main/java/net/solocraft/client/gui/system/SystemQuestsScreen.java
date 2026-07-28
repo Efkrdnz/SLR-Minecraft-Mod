@@ -51,7 +51,7 @@ public class SystemQuestsScreen extends SystemScreen {
 
 	@Override
 	protected void renderContent(GuiGraphics g, int mouseX, int mouseY, float partialTicks) {
-		String sub = "Choose an objective";
+		String sub = "Review System objectives";
 		g.drawString(this.font, sub, panelX + (panelW - this.font.width(sub)) / 2, panelY + 26, TEXT_SUB, false);
 	}
 }

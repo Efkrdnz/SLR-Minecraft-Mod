@@ -2,6 +2,7 @@
 package net.solocraft.item;
 
 import net.solocraft.procedures.RunestoneWillpowerRCProcedure;
+import net.solocraft.procedures.TankerProgressionHelper;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
@@ -32,14 +33,16 @@ public class RunestoneWillpowerItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Willpower\""));
-		list.add(Component.literal("User can use \"Willpower\" which allows user to absorb and not take damage for some time and at the end of the effect, user will be dealt the quarter of total absorbed damage without killing him."));
+		TankerTooltipHelper.addRunestone(list, TankerProgressionHelper.WILLPOWER,
+				"tooltip.sololeveling.tanker.runestone.willpower.description",
+				"A", 650, "9", 45);
 	}
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
-		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		RunestoneWillpowerRCProcedure.execute(entity, ar.getObject());
-		return ar;
+		ItemStack stack = entity.getItemInHand(hand);
+		if (!world.isClientSide())
+			RunestoneWillpowerRCProcedure.execute(entity, stack);
+		return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
 	}
 }

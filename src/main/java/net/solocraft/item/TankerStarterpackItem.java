@@ -1,11 +1,13 @@
 
 package net.solocraft.item;
 
-import net.solocraft.procedures.AssasinStarterpackRightclickedProcedure;
+import net.solocraft.procedures.TankerStarterpackRightclickedProcedure;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.Rarity;
@@ -32,12 +34,21 @@ public class TankerStarterpackItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
+		list.add(Component.translatable("tooltip.sololeveling.tanker.starter.baseline")
+				.withStyle(ChatFormatting.GOLD));
+		list.add(Component.translatable("tooltip.sololeveling.tanker.starter.contents")
+				.withStyle(ChatFormatting.GRAY));
+		list.add(Component.translatable("tooltip.sololeveling.tanker.starter.shield")
+				.withStyle(ChatFormatting.BLUE));
+		list.add(Component.translatable("tooltip.sololeveling.tanker.starter.redemption")
+				.withStyle(ChatFormatting.DARK_GRAY));
 	}
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
-		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		AssasinStarterpackRightclickedProcedure.execute(entity, ar.getObject());
-		return ar;
+		ItemStack stack = entity.getItemInHand(hand);
+		if (!world.isClientSide() && entity instanceof ServerPlayer player)
+			TankerStarterpackRightclickedProcedure.execute(player, stack);
+		return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
 	}
 }

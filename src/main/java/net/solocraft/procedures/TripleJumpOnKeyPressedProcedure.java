@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModParticleTypes;
+import net.solocraft.util.TemporaryStatBonusManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -27,7 +28,7 @@ public class TripleJumpOnKeyPressedProcedure {
 		if (entity == null)
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).tjonoff == true) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Speed >= 31
+			if (TemporaryStatBonusManager.effectiveAgility(entity) >= 31.0D
 					&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level >= 25) {
 				if (new Object() {
 					public boolean checkGamemode(Entity _ent) {

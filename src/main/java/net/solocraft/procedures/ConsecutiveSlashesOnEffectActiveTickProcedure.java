@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModMobEffects;
 
@@ -58,7 +59,7 @@ public class ConsecutiveSlashesOnEffectActiveTickProcedure {
 						DamageSource _damageSource = new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity);
 						if (_damageSource != null) {
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
-									(float) ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 50 + 2));
+									(float) (TemporaryStatBonusManager.effectiveStrength(entity) / 50.0D + 2.0D));
 						}
 					}
 				}

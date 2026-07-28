@@ -122,6 +122,23 @@ public final class FrostMonarchManager {
 	private FrostMonarchManager() {
 	}
 
+	/**
+	 * Cancels every player-owned Frost runtime without resolving its finishers.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null)
+			return;
+		boolean interruptedPursuit =
+				GLACIAL_PURSUITS.containsKey(player.getUUID());
+		clearAll(player, true);
+		if (interruptedPursuit)
+			player.getPersistentData().putLong(PATH_FALL_PROTECTION_UNTIL,
+					Math.max(player.getPersistentData().getLong(
+									PATH_FALL_PROTECTION_UNTIL),
+							player.level().getGameTime() + 50L));
+		PlayerAuraSystem.clearContinuous(player);
+	}
+
 	public static boolean isFrostMonarch(Entity entity) {
 		return entity != null && entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 				.map(data -> (int) data.JOB == 3).orElse(false);
@@ -1877,7 +1894,8 @@ public final class FrostMonarchManager {
 
 	private static float spearPrimaryDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
-		double damage = 22.0D + data.Strength / 8.0D + data.Intelligence / 14.0D;
+		double damage = 22.0D + TemporaryStatBonusManager.effectiveStrength(player) / 8.0D
+				+ data.Intelligence / 14.0D;
 		if (target instanceof Player)
 			damage *= 0.75D;
 		if (manifested)
@@ -1887,32 +1905,37 @@ public final class FrostMonarchManager {
 
 	private static float flashFreezeDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
-		return scaleFrostDamage(12.0D + data.Strength / 18.0D + data.Intelligence / 10.0D,
+		return scaleFrostDamage(12.0D + TemporaryStatBonusManager.effectiveStrength(player) / 18.0D
+						+ data.Intelligence / 10.0D,
 				target, manifested);
 	}
 
 	private static float frostCounterDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
-		return scaleFrostDamage(16.0D + data.Strength / 12.0D + data.Intelligence / 12.0D,
+		return scaleFrostDamage(16.0D + TemporaryStatBonusManager.effectiveStrength(player) / 12.0D
+						+ data.Intelligence / 12.0D,
 				target, manifested);
 	}
 
 	private static float glacialPursuitDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
-		return scaleFrostDamage(14.0D + data.Strength / 14.0D + data.Intelligence / 10.0D,
+		return scaleFrostDamage(14.0D + TemporaryStatBonusManager.effectiveStrength(player) / 14.0D
+						+ data.Intelligence / 10.0D,
 				target, manifested);
 	}
 
 	private static float absoluteZeroPulseDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
-		return scaleFrostDamage(4.0D + data.Strength / 50.0D + data.Intelligence / 30.0D,
+		return scaleFrostDamage(4.0D + TemporaryStatBonusManager.effectiveStrength(player) / 50.0D
+						+ data.Intelligence / 30.0D,
 				target, manifested);
 	}
 
 	private static float absoluteZeroDetonationDamage(ServerPlayer player, LivingEntity target,
 			boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
-		return scaleFrostDamage(18.0D + data.Strength / 14.0D + data.Intelligence / 9.0D,
+		return scaleFrostDamage(18.0D + TemporaryStatBonusManager.effectiveStrength(player) / 14.0D
+						+ data.Intelligence / 9.0D,
 				target, manifested);
 	}
 

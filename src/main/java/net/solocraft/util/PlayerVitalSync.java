@@ -12,6 +12,7 @@ import net.minecraft.world.entity.player.Player;
 /** Keeps derived player vitals and their client representation in agreement. */
 public final class PlayerVitalSync {
 	private static final double CREATIVE_MANA = 1_000_000.0D;
+	private static final double ARMOR_PER_VITALITY = 0.06D;
 
 	private PlayerVitalSync() {
 	}
@@ -24,7 +25,7 @@ public final class PlayerVitalSync {
 
 			AttributeInstance armor = player.getAttribute(Attributes.ARMOR);
 			if (armor != null)
-				armor.setBaseValue(0.05D * variables.Vitality);
+				armor.setBaseValue(ARMOR_PER_VITALITY * variables.Vitality);
 		});
 	}
 

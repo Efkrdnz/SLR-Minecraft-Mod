@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.init.SololevelingModParticleTypes;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -79,7 +80,7 @@ public class SlashFurryBroadProcedure {
 					for (Entity entityiterator : _entfound) {
 						if (!(entity == entityiterator || entityiterator instanceof ExperienceOrb || entityiterator instanceof ItemEntity)) {
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:fighter"))), entity),
-									(float) (10 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 12));
+									(float) (10 + TemporaryStatBonusManager.effectiveStrength(entity) / 12.0D));
 							entityiterator.setDeltaMovement(new Vec3((1 * entity.getLookAngle().x), (0.875 * entity.getLookAngle().y), (1 * entity.getLookAngle().z)));
 						}
 					}

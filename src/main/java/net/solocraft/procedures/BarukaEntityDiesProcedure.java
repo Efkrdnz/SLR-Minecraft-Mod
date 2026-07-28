@@ -1,5 +1,6 @@
 package net.solocraft.procedures;
 
+import net.solocraft.dungeon.ProceduralDungeonCompletionHandler;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.BarukaEntity;
@@ -180,10 +181,15 @@ public class BarukaEntityDiesProcedure {
 					}
 				}
 			}
-			if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_snow")))) {
+			if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION,
+					new ResourceLocation("sololeveling:dungeon_dimension_snow")))
+					&& !ProceduralDungeonCompletionHandler.isExitHandled(entity)) {
 				if (world instanceof ServerLevel _level) {
 					Entity entityToSpawn = SololevelingModEntities.PORTAL_12.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 					if (entityToSpawn != null) {
+						String dungeonTag = entity.getPersistentData().getString("dungeon_tag");
+						if (!dungeonTag.isBlank())
+							entityToSpawn.getPersistentData().putString("dungeon_tag", dungeonTag);
 					}
 				}
 			}

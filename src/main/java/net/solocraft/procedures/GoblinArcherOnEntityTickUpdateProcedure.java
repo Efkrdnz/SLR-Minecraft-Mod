@@ -17,6 +17,10 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 
 public class GoblinArcherOnEntityTickUpdateProcedure {
+	private static final int DRAW_TICKS = 12;
+	private static final int RELEASE_TICKS = 22;
+	private static final int ATTACK_CYCLE_TICKS = 80;
+
 	public static void execute(Entity entity) {
 		if (entity == null)
 			return;
@@ -45,8 +49,11 @@ public class GoblinArcherOnEntityTickUpdateProcedure {
 				}
 			} else {
 				entity.getPersistentData().putDouble("MF", 0);
+				entity.getPersistentData().putBoolean("CanShoot", false);
+				if (entity instanceof LivingEntity _entity)
+					_entity.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 			}
-			if (entity.getPersistentData().getDouble("MF") == 10) {
+			if (entity.getPersistentData().getDouble("MF") == DRAW_TICKS) {
 				if (entity instanceof GoblinArcherEntity) {
 					((GoblinArcherEntity) entity).setAnimation("empty");
 				}
@@ -54,37 +61,37 @@ public class GoblinArcherOnEntityTickUpdateProcedure {
 					((GoblinArcherEntity) entity).setAnimation("shoot");
 				}
 			}
-			if (entity.getPersistentData().getDouble("MF") == 18) {
-				{
-					Entity _shootFrom = entity;
-					Level projectileLevel = _shootFrom.level();
-					if (!projectileLevel.isClientSide()) {
-						Projectile _entityToSpawn = new Object() {
-							public Projectile getArrow(Level level, Entity shooter, float damage, int knockback) {
-								AbstractArrow entityToSpawn = new Arrow(EntityType.ARROW, level);
-								entityToSpawn.setOwner(shooter);
-								entityToSpawn.setBaseDamage(damage);
-								entityToSpawn.setKnockback(knockback);
-								entityToSpawn.setCritArrow(true);
-								return entityToSpawn;
-							}
-						}.getArrow(projectileLevel, entity, 2, (int) 0.1);
-						_entityToSpawn.setPos(_shootFrom.getX(), _shootFrom.getEyeY() - 0.1, _shootFrom.getZ());
-						Entity target = entity instanceof Mob mob ? mob.getTarget() : null;
-						if (target != null) {
-							double dx = target.getX() - _shootFrom.getX();
-							double dz = target.getZ() - _shootFrom.getZ();
-							double horizontal = Math.sqrt(dx * dx + dz * dz);
-							double dy = target.getY() + target.getBbHeight() * 0.5D - _entityToSpawn.getY();
-							_entityToSpawn.shoot(dx, dy + horizontal * 0.12D, dz, 2.5F, 2.0F);
-							projectileLevel.addFreshEntity(_entityToSpawn);
-						}
-					}
-				}
+			if (entity.getPersistentData().getDouble("MF") == RELEASE_TICKS) {
+				if (entity instanceof Mob mob)
+					fireArrow(mob);
 			}
-			if (entity.getPersistentData().getDouble("MF") == 60) {
+			if (entity.getPersistentData().getDouble("MF") >= ATTACK_CYCLE_TICKS) {
 				entity.getPersistentData().putDouble("MF", 0);
 			}
 		}
+	}
+
+	private static void fireArrow(Mob shooter) {
+		if (!shooter.isAlive() || shooter.level().isClientSide())
+			return;
+		LivingEntity target = shooter.getTarget();
+		if (target == null || !target.isAlive() || target.level() != shooter.level()
+				|| !shooter.getSensing().hasLineOfSight(target)
+				|| !CombatRangeHelper.withinSurfaceRange(shooter, target, 24.0D))
+			return;
+
+		Level projectileLevel = shooter.level();
+		AbstractArrow arrow = new Arrow(EntityType.ARROW, projectileLevel);
+		arrow.setOwner(shooter);
+		arrow.setBaseDamage(2);
+		arrow.setKnockback(0);
+		arrow.setCritArrow(true);
+		arrow.setPos(shooter.getX(), shooter.getEyeY() - 0.1D, shooter.getZ());
+		double dx = target.getX() - shooter.getX();
+		double dz = target.getZ() - shooter.getZ();
+		double horizontal = Math.sqrt(dx * dx + dz * dz);
+		double dy = target.getY() + target.getBbHeight() * 0.5D - arrow.getY();
+		arrow.shoot(dx, dy + horizontal * 0.12D, dz, 2.5F, 2.0F);
+		projectileLevel.addFreshEntity(arrow);
 	}
 }

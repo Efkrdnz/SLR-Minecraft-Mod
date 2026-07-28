@@ -2,6 +2,7 @@ package net.solocraft.client.gui;
 
 import net.solocraft.SololevelingMod;
 import net.solocraft.client.gui.system.SystemContainerScreen;
+import net.solocraft.client.gui.system.PartyScreen;
 import net.solocraft.client.gui.system.SystemScreen;
 import net.solocraft.client.gui.system.SystemSettingsScreen;
 import net.solocraft.client.gui.system.SystemTooltip;
@@ -59,7 +60,20 @@ public class EquippedAbilitiesScreen extends SystemContainerScreen<EquippedAbili
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 		ShopStyle.panel(g, leftPos + pRelX, topPos + pRelY, pW, pH);
-		ShopStyle.titleBar(g, this.font, leftPos + pRelX, topPos + pRelY, pW, "SKILL SLOTS");
+		int panelLeft = leftPos + pRelX;
+		int panelTop = topPos + pRelY;
+		if (SystemPlayerAccess.hasSystem(entity)) {
+			ShopStyle.titleBar(g, this.font, panelLeft, panelTop, pW, "SKILL SLOTS");
+		} else {
+			g.fill(panelLeft, panelTop, panelLeft + pW, panelTop + 16, 0x66102A3E);
+			g.fill(panelLeft, panelTop + 16, panelLeft + pW, panelTop + 17, ShopStyle.ACCENT);
+			int titleLeft = panelLeft + 44;
+			int titleRight = panelLeft + pW - 109;
+			String title = "SKILL SLOTS";
+			g.drawString(this.font, title,
+					titleLeft + (titleRight - titleLeft - this.font.width(title)) / 2,
+					panelTop + 4, ShopStyle.ACCENT, false);
+		}
 
 		int startY = topPos + pRelY + 34;
 		for (int i = 0; i < ROWS; i++) {
@@ -113,7 +127,7 @@ public class EquippedAbilitiesScreen extends SystemContainerScreen<EquippedAbili
 	public void init() {
 		super.init();
 		boolean systemPlayer = SystemPlayerAccess.hasSystem(entity);
-		this.addRenderableWidget(new SystemScreen.SystemButton(leftPos + pRelX + 3, topPos + pRelY + 2, 42, 12,
+		this.addRenderableWidget(new SystemScreen.SystemButton(leftPos + pRelX + 3, topPos + pRelY + 2, systemPlayer ? 42 : 38, 12,
 				Component.literal(systemPlayer ? "< Back" : "Close"), b -> {
 			if (systemPlayer && this.minecraft != null && this.minecraft.player != null) {
 				this.minecraft.player.closeContainer();
@@ -123,6 +137,8 @@ public class EquippedAbilitiesScreen extends SystemContainerScreen<EquippedAbili
 			}
 		}));
 		if (!systemPlayer) {
+			this.addRenderableWidget(new SystemScreen.SystemButton(leftPos + pRelX + pW - 106, topPos + pRelY + 2,
+					45, 12, Component.literal("Party"), b -> openNonSystemParty()));
 			this.addRenderableWidget(new SystemScreen.SystemButton(leftPos + pRelX + pW - 58, topPos + pRelY + 2,
 					55, 12, Component.literal("Settings"), b -> openNonSystemSettings()));
 		}
@@ -152,6 +168,13 @@ public class EquippedAbilitiesScreen extends SystemContainerScreen<EquippedAbili
 			return;
 		this.minecraft.player.closeContainer();
 		this.minecraft.setScreen(new SystemSettingsScreen(true));
+	}
+
+	private void openNonSystemParty() {
+		if (this.minecraft == null || this.minecraft.player == null)
+			return;
+		this.minecraft.player.closeContainer();
+		this.minecraft.setScreen(new PartyScreen(true));
 	}
 
 	private int displaySlot(int row) {

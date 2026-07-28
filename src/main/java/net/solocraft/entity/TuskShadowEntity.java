@@ -469,6 +469,11 @@ public class TuskShadowEntity extends TamableAnimal implements GeoEntity {
 				Level world = TuskShadowEntity.this.level();
 				return super.canUse() && IsNotBerserkProcedure.execute(entity);
 			}
+
+			@Override
+			public boolean canContinueToUse() {
+				return super.canContinueToUse() && IsNotBerserkProcedure.execute(TuskShadowEntity.this);
+			}
 		});
 		this.goalSelector.addGoal(20, new RandomStrollGoal(this, 0.25));
 		this.goalSelector.addGoal(21, new OwnerHurtByTargetGoal(this));

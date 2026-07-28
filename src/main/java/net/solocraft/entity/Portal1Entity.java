@@ -70,7 +70,7 @@ public class Portal1Entity extends PathfinderMob implements GeoEntity {
 		this(SololevelingModEntities.PORTAL_1.get(), world);
 	}
 
-	public Portal1Entity(EntityType<Portal1Entity> type, Level world) {
+	public Portal1Entity(EntityType<? extends Portal1Entity> type, Level world) {
 		super(type, world);
 		xpReward = 0;
 		setNoAi(true);

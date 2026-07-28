@@ -15,6 +15,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
@@ -85,6 +86,34 @@ public final class ArcaneMageSpellManager {
 	private static final List<DelayedBurst> DELAYED_BURSTS = new ArrayList<>();
 
 	private ArcaneMageSpellManager() {
+	}
+
+	/**
+	 * Cancels one player's Arcane runtime without resolving any pending spell.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null || player.getServer() == null)
+			return;
+		UUID playerId = player.getUUID();
+		FORMULAS.remove(playerId);
+		ANCHORS.remove(playerId);
+		RELAYS.remove(playerId);
+		ARSENALS.remove(playerId);
+		ACTIVE_BOLTS.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_POLARITIES.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_RENDS.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_CONVERGENCES.removeIf(cast -> playerId.equals(cast.casterId));
+		DELAYED_BURSTS.removeIf(cast -> playerId.equals(cast.casterId));
+
+		ArrayList<ArcaneVfxEntity> ownedEffects = new ArrayList<>();
+		for (ServerLevel level : player.getServer().getAllLevels()) {
+			for (Entity entity : level.getAllEntities()) {
+				if (entity instanceof ArcaneVfxEntity effect
+						&& effect.getOwnerId().filter(playerId::equals).isPresent())
+					ownedEffects.add(effect);
+			}
+		}
+		ownedEffects.forEach(Entity::discard);
 	}
 
 	public static boolean isArcaneSkill(String skill) {

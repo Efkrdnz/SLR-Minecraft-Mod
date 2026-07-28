@@ -38,7 +38,7 @@ import java.util.List;
 public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonGUIMenu> {
 	private final static HashMap<String, Object> guistate = ShadowSummonGUIMenu.guistate;
 
-	private static final int PANEL_W = 420;
+	private static final int PANEL_W = 500;
 	private static final int PANEL_H = 292;
 	private static final int ACCENT = 0xFFB75CFF;
 	private static final int ACCENT_BLUE = 0xFF43C8FF;
@@ -52,10 +52,15 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	private static final int NORMAL_H = 142;
 	private static final int BOSS_X = 284;
 	private static final int BOSS_Y = 51;
-	private static final int BOSS_W = 118;
+	private static final int BOSS_W = 198;
 	private static final int BOSS_H = 142;
 	private static final int BUTTON_H = 27;
 	private static final int BUTTON_GAP = 8;
+	private static final int BOSS_SUMMON_H = 40;
+	private static final int BOSS_CUSTOMIZE_H = 15;
+	private static final int BOSS_CONTROL_GAP = 2;
+	private static final int BOSS_ROW_H = BOSS_SUMMON_H + BOSS_CONTROL_GAP + BOSS_CUSTOMIZE_H;
+	private static final int BOSS_ROW_GAP = 6;
 	private static final long ANIM_MS = 190L;
 	private static final float OPEN_SOUND_PITCH = 0.78F;
 	private static final float CLOSE_SOUND_PITCH = 0.72F;
@@ -69,6 +74,7 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	private final List<SummonEntry> normalEntries = new ArrayList<>();
 	private final List<SummonEntry> bossEntries = new ArrayList<>();
 	private final List<SummonButton> summonButtons = new ArrayList<>();
+	private final List<CustomizeButton> customizeButtons = new ArrayList<>();
 
 	private ControlButton formationModeButton;
 	private ControlButton saveFormationButton;
@@ -252,17 +258,20 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		normalEntries.clear();
 		bossEntries.clear();
 		summonButtons.clear();
+		customizeButtons.clear();
 		addEntries();
 		for (SummonEntry entry : normalEntries)
 			addSummonButton(entry, false);
-		for (SummonEntry entry : bossEntries)
+		for (SummonEntry entry : bossEntries) {
 			addSummonButton(entry, true);
+			addCustomizeButton(entry);
+		}
 
 		formationModeButton = new ControlButton(this.leftPos + 18, this.topPos + 226, 104, 20, Component.literal("Formation: OFF"), b -> toggleFormationMode());
 		guistate.put("button:button_formation_mode", formationModeButton);
 		this.addRenderableWidget(formationModeButton);
 
-		formationNameBox = new EditBox(this.font, this.leftPos + 132, this.topPos + 227, 166, 18, Component.literal("Formation Name"));
+		formationNameBox = new EditBox(this.font, this.leftPos + 132, this.topPos + 227, 246, 18, Component.literal("Formation Name"));
 		formationNameBox.setMaxLength(24);
 		formationNameBox.setValue("Formation");
 		formationNameBox.setTextColor(TEXT_MAIN);
@@ -270,12 +279,12 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		formationNameBox.visible = false;
 		this.addRenderableWidget(formationNameBox);
 
-		saveFormationButton = new ControlButton(this.leftPos + 306, this.topPos + 226, 96, 20, Component.literal("Save Formation"), b -> saveFormation());
+		saveFormationButton = new ControlButton(this.leftPos + 386, this.topPos + 226, 96, 20, Component.literal("Save Formation"), b -> saveFormation());
 		saveFormationButton.visible = false;
 		guistate.put("button:button_save_formation", saveFormationButton);
 		this.addRenderableWidget(saveFormationButton);
 
-		dismissButton = new ControlButton(this.leftPos + 306, this.topPos + 258, 96, 20, Component.literal("Dismiss"), b -> openDismiss());
+		dismissButton = new ControlButton(this.leftPos + 386, this.topPos + 258, 96, 20, Component.literal("Dismiss"), b -> openDismiss());
 		guistate.put("button:button_shadow_dismiss", dismissButton);
 		this.addRenderableWidget(dismissButton);
 		layoutSummonButtons();
@@ -340,10 +349,20 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	}
 
 	private void addSummonButton(SummonEntry entry, boolean boss) {
-		SummonButton button = new SummonButton(0, 0, boss ? BOSS_W - 12 : 118, BUTTON_H, entry, boss, b -> summon(entry));
+		SummonButton button = new SummonButton(0, 0, boss ? BOSS_W - 12 : 118,
+				boss ? BOSS_SUMMON_H : BUTTON_H, entry, boss, b -> summon(entry));
 		button.visible = false;
 		summonButtons.add(button);
 		guistate.put("button:shadow_summon_" + entry.id, button);
+		this.addRenderableWidget(button);
+	}
+
+	private void addCustomizeButton(SummonEntry entry) {
+		CustomizeButton button = new CustomizeButton(0, 0, BOSS_W - 12,
+				BOSS_CUSTOMIZE_H, entry, b -> customize(entry));
+		button.visible = false;
+		customizeButtons.add(button);
+		guistate.put("button:shadow_customize_" + entry.id, button);
 		this.addRenderableWidget(button);
 	}
 
@@ -353,6 +372,10 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		normalScroll = clamp(normalScroll, 0, maxScroll(visibleNormals.size(), visibleNormalRows(), true));
 		bossScroll = clamp(bossScroll, 0, maxScroll(visibleBosses.size(), visibleBossRows(), false));
 		for (SummonButton button : summonButtons) {
+			button.visible = false;
+			button.active = false;
+		}
+		for (CustomizeButton button : customizeButtons) {
 			button.visible = false;
 			button.active = false;
 		}
@@ -387,15 +410,32 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			if (button == null)
 				continue;
 			int row = i - start;
-			button.setPosition(leftPos + BOSS_X + 6, topPos + BOSS_Y + row * (BUTTON_H + BUTTON_GAP));
+			int rowY = topPos + BOSS_Y + row * (BOSS_ROW_H + BOSS_ROW_GAP);
+			button.setPosition(leftPos + BOSS_X + 6, rowY);
 			button.setClip(leftPos + BOSS_X, topPos + BOSS_Y, BOSS_W, BOSS_H);
 			button.visible = true;
 			button.active = true;
+			CustomizeButton customize = customizeButtonFor(entries.get(i));
+			if (customize != null && menu.isCustomizable(entries.get(i).id)) {
+				customize.setPosition(leftPos + BOSS_X + 6,
+						rowY + BOSS_SUMMON_H + BOSS_CONTROL_GAP);
+				customize.setClip(leftPos + BOSS_X, topPos + BOSS_Y, BOSS_W, BOSS_H);
+				customize.visible = true;
+				customize.active = true;
+			}
 		}
 	}
 
 	private SummonButton buttonFor(SummonEntry entry) {
 		for (SummonButton button : summonButtons) {
+			if (button.entry == entry)
+				return button;
+		}
+		return null;
+	}
+
+	private CustomizeButton customizeButtonFor(SummonEntry entry) {
+		for (CustomizeButton button : customizeButtons) {
 			if (button.entry == entry)
 				return button;
 		}
@@ -425,7 +465,7 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	}
 
 	private int visibleBossRows() {
-		return Math.max(1, BOSS_H / (BUTTON_H + BUTTON_GAP));
+		return Math.max(1, BOSS_H / (BOSS_ROW_H + BOSS_ROW_GAP));
 	}
 
 	private int maxScroll(int entryCount, int visibleRows, boolean twoColumns) {
@@ -438,6 +478,13 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			return;
 		String payload = hasShiftDown() ? "all" : "";
 		SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowSummonGUIButtonMessage(entry.id, x, y, z, payload));
+	}
+
+	private void customize(SummonEntry entry) {
+		if (!menu.isCustomizable(entry.id))
+			return;
+		SololevelingMod.PACKET_HANDLER.sendToServer(
+				new ShadowSummonGUIButtonMessage(200 + entry.id, x, y, z));
 	}
 
 	private void toggleFormationMode() {
@@ -483,18 +530,19 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		int x = leftPos;
 		int y = topPos;
 		outline(g, x + 12, y + 32, 254, 170, 0x7743C8FF);
-		outline(g, x + 278, y + 32, 130, 170, 0x88B75CFF);
-		outline(g, x + 12, y + 218, 396, 32, 0x7743C8FF);
-		outline(g, x + 12, y + 254, 396, 26, 0x7743C8FF);
+		outline(g, x + BOSS_X - 6, y + 32, BOSS_W + 12, 170, 0x88B75CFF);
+		outline(g, x + 12, y + 218, imageWidth - 24, 32, 0x7743C8FF);
+		outline(g, x + 12, y + 254, imageWidth - 24, 26, 0x7743C8FF);
 		g.fill(x + 13, y + 33, x + 265, y + 47, 0x33124B76);
-		g.fill(x + 279, y + 33, x + 407, y + 47, 0x331D0B31);
-		g.fill(x + 13, y + 219, x + 407, y + 225, 0x33124B76);
-		g.fill(x + 13, y + 255, x + 407, y + 261, 0x33124B76);
+		g.fill(x + BOSS_X - 5, y + 33, x + BOSS_X + BOSS_W + 5, y + 47, 0x331D0B31);
+		g.fill(x + 13, y + 219, x + imageWidth - 13, y + 225, 0x33124B76);
+		g.fill(x + 13, y + 255, x + imageWidth - 13, y + 261, 0x33124B76);
 		drawScrollHint(g, x + 256, y + 52, y + 191, visibleEntries(normalEntries).size(), visibleNormalRows(), normalScroll, true);
-		drawScrollHint(g, x + 397, y + 52, y + 191, visibleEntries(bossEntries).size(), visibleBossRows(), bossScroll, false);
+		drawScrollHint(g, x + BOSS_X + BOSS_W - 5, y + 52, y + 191,
+				visibleEntries(bossEntries).size(), visibleBossRows(), bossScroll, false);
 		if (formationMode) {
-			outline(g, x + 129, y + 224, 172, 24, ACCENT_DIM);
-			g.fill(x + 130, y + 225, x + 300, y + 247, 0x55102338);
+			outline(g, x + 129, y + 224, 252, 24, ACCENT_DIM);
+			g.fill(x + 130, y + 225, x + 380, y + 247, 0x55102338);
 		}
 	}
 
@@ -632,8 +680,57 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			g.drawString(font, count, getX() + width - countWidth - 7, getY() + 4, boss ? 0xFFDBA6FF : 0xFF9EDFFF, false);
 			int rank = menu.shadowRank(entry.id);
 			String rankName = ShadowMonarchManager.rankDisplayName(rank);
-			g.drawCenteredString(font, rankName, getX() + width / 2, getY() + 15, ShadowMonarchManager.rankColor(rank));
+			if (boss)
+				renderBossProgress(g, font, rank, rankName);
+			else
+				g.drawCenteredString(font, rankName, getX() + width / 2, getY() + 15,
+						ShadowMonarchManager.rankColor(rank));
 			g.disableScissor();
+		}
+
+		private void renderBossProgress(GuiGraphics g, Font font, int rank,
+				String rankName) {
+			int level = menu.shadowLevel(entry.id);
+			String levelText = "Lv." + level;
+			String rankContext;
+			if (menu.isMaxRank(entry.id)) {
+				rankContext = rankName + "  |  MAX";
+			} else {
+				String next = ShadowMonarchManager.rankDisplayName(menu.nextRank(entry.id));
+				rankContext = rankName + " -> " + next;
+			}
+			int contextWidth = Math.max(18, width - font.width(levelText) - 22);
+			rankContext = trimToWidth(font, rankContext, contextWidth);
+			g.drawString(font, levelText, getX() + 7, getY() + 14,
+					ShadowMonarchManager.rankColor(rank), false);
+			g.drawString(font, rankContext,
+					getX() + width - font.width(rankContext) - 7, getY() + 14,
+					ShadowMonarchManager.rankColor(rank), false);
+
+			int barX = getX() + 7;
+			int barY = getY() + 25;
+			int barW = width - 14;
+			int xp = menu.rankXp(entry.id);
+			int needed = Math.max(1, menu.rankXpNeeded(entry.id));
+			boolean maxRank = menu.isMaxRank(entry.id);
+			int fill = maxRank ? barW : (int) Math.round(barW
+					* Math.min(1.0D, xp / (double) needed));
+			g.fill(barX, barY, barX + barW, barY + 4, 0xCC080510);
+			if (fill > 0)
+				g.fill(barX, barY, barX + fill, barY + 4,
+						maxRank ? 0xFFFFC84A : ACCENT);
+			outline(g, barX, barY, barW, 4, maxRank ? 0xFFFFC84A : ACCENT_DIM);
+
+			String xpText;
+			if (maxRank)
+				xpText = "MAX RANK";
+			else if (menu.isAtLevelCap(entry.id))
+				xpText = "LEVEL CAP  |  " + xp + " / " + needed + " XP";
+			else
+				xpText = xp + " / " + needed + " XP";
+			xpText = trimToWidth(font, xpText, width - 14);
+			g.drawCenteredString(font, xpText, getX() + width / 2, getY() + 30,
+					menu.isAtLevelCap(entry.id) && !maxRank ? 0xFFFFC85C : TEXT_SUB);
 		}
 
 		private String trimToWidth(Font font, String text, int maximumWidth) {
@@ -642,6 +739,53 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			String suffix = "...";
 			int allowed = Math.max(0, maximumWidth - font.width(suffix));
 			return font.plainSubstrByWidth(text, allowed) + suffix;
+		}
+	}
+
+	private class CustomizeButton extends Button {
+		private final SummonEntry entry;
+		private int clipX;
+		private int clipY;
+		private int clipW;
+		private int clipH;
+
+		CustomizeButton(int x, int y, int w, int h, SummonEntry entry,
+				OnPress onPress) {
+			super(x, y, w, h, Component.literal("CUSTOMIZE"), onPress,
+					DEFAULT_NARRATION);
+			this.entry = entry;
+		}
+
+		void setClip(int x, int y, int w, int h) {
+			this.clipX = x;
+			this.clipY = y;
+			this.clipW = w;
+			this.clipH = h;
+		}
+
+		@Override
+		protected void renderWidget(GuiGraphics g, int mouseX, int mouseY,
+				float partialTicks) {
+			if (!visible)
+				return;
+			ResponsiveGuiScale.Transform transform = ResponsiveGuiScale.fit(
+					Minecraft.getInstance().getWindow().getGuiScaledWidth(),
+					Minecraft.getInstance().getWindow().getGuiScaledHeight(),
+					PANEL_W + 8, PANEL_H + 8);
+			ResponsiveGuiScale.enableScissor(g, transform, clipX, clipY,
+					clipX + clipW, clipY + clipH);
+			boolean equipped = menu.isEquipped(entry.id);
+			boolean hovered = this.isHoveredOrFocused();
+			int border = hovered ? 0xFFFFFFFF : equipped ? 0xFFFFC84A : ACCENT;
+			g.fill(getX(), getY(), getX() + width, getY() + height,
+					hovered ? 0x994A1D68 : equipped ? 0x553A2910 : 0x55102338);
+			outline(g, getX(), getY(), width, height, border);
+			Font font = Minecraft.getInstance().font;
+			String label = equipped ? "CUSTOMIZE  |  EQUIPPED" : "CUSTOMIZE";
+			g.drawCenteredString(font, label, getX() + width / 2,
+					getY() + (height - 8) / 2,
+					hovered ? 0xFFFFFFFF : equipped ? 0xFFFFD77A : TEXT_MAIN);
+			g.disableScissor();
 		}
 	}
 

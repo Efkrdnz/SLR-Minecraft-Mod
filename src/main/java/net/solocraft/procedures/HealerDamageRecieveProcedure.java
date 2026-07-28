@@ -36,6 +36,9 @@ public class HealerDamageRecieveProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
+		if (entity instanceof HunterEntity hunter
+				&& hunter.isStoryTempleFollower())
+			return;
 		double particleNum = 0;
 		double vX = 0;
 		double vY = 0;

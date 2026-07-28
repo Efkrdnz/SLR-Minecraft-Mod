@@ -41,13 +41,23 @@ public final class VesselProgressionManager {
 	@SubscribeEvent
 	public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
 		if (event.getEntity() instanceof ServerPlayer player)
-			sync(player);
+			reconcileEntitlements(player);
 	}
 
 	@SubscribeEvent
 	public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
 		if (event.getEntity() instanceof ServerPlayer player)
-			sync(player);
+			reconcileEntitlements(player);
+	}
+
+	/**
+	 * Re-evaluates every durable progression fact before rebuilding the player's
+	 * concrete job-skill list. Call this after a job or prerequisite milestone
+	 * changes so either completion order produces the same result immediately.
+	 */
+	public static void reconcileEntitlements(ServerPlayer player) {
+		sync(player);
+		JobSkillManager.syncJobSkills(player);
 	}
 
 	public static void sync(ServerPlayer player) {
@@ -55,6 +65,8 @@ public final class VesselProgressionManager {
 			return;
 
 		SololevelingModVariables.PlayerVariables vars = variables(player);
+		VesselManager.VesselDefinition definition = VesselManager.currentDefinition(player);
+		int resolvedJob = definition == null ? (int) vars.JOB : definition.jobId();
 		if (vars.Player) {
 			award(player, "system/root");
 			if (vars.Level >= 10)
@@ -69,10 +81,8 @@ public final class VesselProgressionManager {
 				award(player, "system/job_change");
 		}
 
-		syncDemonKingsCastle(player, vars);
+		syncDemonKingsCastle(player, vars, resolvedJob);
 		MageSpellProgression.reconcileVesselInheritance(player);
-		VesselManager.VesselDefinition definition = VesselManager.currentDefinition(player);
-		int resolvedJob = definition == null ? (int) vars.JOB : definition.jobId();
 		if (resolvedJob <= 0)
 			return;
 
@@ -87,11 +97,14 @@ public final class VesselProgressionManager {
 
 		boolean changed = false;
 		if (resolvedJob == 1) {
-			if (!vars.ShadowExchange && canUnlockShadowExchange(player)) {
+			if (!vars.ShadowExchange && VesselProgressionRules.canUnlockShadowExchange(
+					resolvedJob, vars.ShadowExchange, vars.shadowstorageusage)) {
 				vars.ShadowExchange = true;
 				changed = true;
 			}
-			if (!vars.ShadowBody && canUnlockShadowManifestation(player)) {
+			if (!vars.ShadowBody && VesselProgressionRules.canUnlockShadowManifestation(
+					resolvedJob, vars.ShadowBody, vars.Level, vars.shadowstorageusage,
+					vars.ShadowExchange, vars.dkc_cleared)) {
 				vars.ShadowBody = true;
 				changed = true;
 			}
@@ -102,6 +115,7 @@ public final class VesselProgressionManager {
 				capability.ShadowBody = vars.ShadowBody;
 				capability.syncPlayerVariables(player);
 			});
+			JobSkillManager.syncJobSkills(player);
 		}
 
 		syncSkillAdvancements(player, resolvedJob);
@@ -195,27 +209,26 @@ public final class VesselProgressionManager {
 
 	public static boolean canUnlockShadowExchange(Entity entity) {
 		SololevelingModVariables.PlayerVariables vars = variables(entity);
-		return (int) vars.JOB == 1 && (vars.ShadowExchange || vars.shadowstorageusage >= 30);
+		return VesselProgressionRules.canUnlockShadowExchange(
+				resolvedJob(entity, vars), vars.ShadowExchange, vars.shadowstorageusage);
 	}
 
 	public static boolean canUnlockShadowManifestation(Entity entity) {
 		SololevelingModVariables.PlayerVariables vars = variables(entity);
-		if ((int) vars.JOB != 1)
-			return false;
-		if (vars.ShadowBody)
-			return true; // Preserve legitimate unlocks from existing saves.
-		return vars.Level >= 120 && vars.shadowstorageusage >= 60 && vars.ShadowExchange
-				&& vars.dkc_cleared >= 10;
+		return VesselProgressionRules.canUnlockShadowManifestation(
+				resolvedJob(entity, vars), vars.ShadowBody, vars.Level,
+				vars.shadowstorageusage, vars.ShadowExchange, vars.dkc_cleared);
 	}
 
-	private static void syncDemonKingsCastle(ServerPlayer player, SololevelingModVariables.PlayerVariables vars) {
+	private static void syncDemonKingsCastle(ServerPlayer player,
+			SololevelingModVariables.PlayerVariables vars, int resolvedJob) {
 		if (vars.dkc_started || vars.dkc_cleared > 0)
 			award(player, "system/dkc_entered");
 		if (vars.dkc_cleared >= 1)
 			award(player, "system/dkc_first_floor");
 		if (vars.dkc_cleared >= 10) {
 			award(player, "system/dkc_midpoint");
-			if ((int) vars.JOB == 1)
+			if (VesselProgressionRules.hasMonarchsDomain(resolvedJob, vars.dkc_cleared))
 				award(player, "monarchs_domain");
 		}
 		if (vars.dkc_cleared >= 15) {
@@ -351,6 +364,11 @@ public final class VesselProgressionManager {
 				? new SololevelingModVariables.PlayerVariables()
 				: entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 						.orElse(new SololevelingModVariables.PlayerVariables());
+	}
+
+	private static int resolvedJob(Entity entity, SololevelingModVariables.PlayerVariables vars) {
+		VesselManager.VesselDefinition definition = VesselManager.currentDefinition(entity);
+		return definition == null ? (int) vars.JOB : definition.jobId();
 	}
 
 	private static void add(List<String> target, String... skills) {

@@ -1,6 +1,8 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.IgrisShadowEntity;
+import net.solocraft.util.ShadowEquipmentCombatHandler;
+import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -41,10 +43,11 @@ public class ShadowIgrisSlamProcedure {
 						final Vec3 _center = new Vec3((x + 2 * entity.getLookAngle().x), (entity.getY() + 1), (z + 2 * entity.getLookAngle().z));
 						List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(8 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 						for (Entity entityiterator : _entfound) {
-							if (!(entityiterator == entity) && entityiterator instanceof LivingEntity) {
-								if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-									_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, false));
-								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 9);
+							if (entityiterator instanceof LivingEntity living
+									&& ShadowMonarchManager.canShadowDamage(entity, living)) {
+								if (!living.level().isClientSide())
+									living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, false));
+								living.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 9);
 								if (world instanceof Level _level) {
 									if (!_level.isClientSide()) {
 										_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 1, (float) 0.5);
@@ -54,6 +57,7 @@ public class ShadowIgrisSlamProcedure {
 								}
 							}
 						}
+						ShadowEquipmentCombatHandler.tryIgrisImpactStorm(world, entity, _center);
 					}
 				}
 				if (entity.getPersistentData().getDouble("MF") >= 44) {

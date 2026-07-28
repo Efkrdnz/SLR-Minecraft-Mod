@@ -1,5 +1,6 @@
 # Gradle build system ignores
 .gradle/
+.gradle-*/
 build/
 
 # Other IDE related folders
@@ -17,6 +18,7 @@ temp/
 # Generated tool output
 __pycache__/
 *.py[cod]
+.impeccable/
 
 # Empty local scratch files
 /8)

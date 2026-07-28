@@ -93,6 +93,7 @@ import net.solocraft.item.ManaCrystalCItem;
 import net.solocraft.item.ManaCrystalBItem;
 import net.solocraft.item.ManaCrystalAItem;
 import net.solocraft.item.MonarchTerritoryGateSpawnEggItem;
+import net.solocraft.item.DatapackGateSpawnEggItem;
 import net.solocraft.item.MagicReaderItem;
 import net.solocraft.item.MageStarterpackItem;
 import net.solocraft.item.MageMasteryItemItem;
@@ -285,6 +286,8 @@ public class SololevelingModItems {
 	public static final RegistryObject<Item> MONARCH_TERRITORY_BEGINNING_GATE_SPAWN_EGG = REGISTRY.register("monarch_territory_beginning_gate_spawn_egg",
 			() -> new MonarchTerritoryGateSpawnEggItem(RiftTerritory.BEGINNING, -16777216, -5592406));
 	public static final RegistryObject<Item> PORTAL_1_SPAWN_EGG = REGISTRY.register("portal_1_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_1, -35072, -16711681, new Item.Properties()));
+	public static final RegistryObject<Item> DATAPACK_GATE_SPAWN_EGG = REGISTRY.register("datapack_gate_spawn_egg",
+			() -> new DatapackGateSpawnEggItem(-6750055, -10027009));
 	public static final RegistryObject<Item> PORTAL_LUSH_SPAWN_EGG = REGISTRY.register("portal_lush_spawn_egg", () -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_LUSH, -35072, -65536, new Item.Properties()));
 	public static final RegistryObject<Item> PORTAL_KARGALGANS_THRONE_ROOM_SPAWN_EGG = REGISTRY.register("portal_kargalgans_throne_room_spawn_egg",
 			() -> new ForgeSpawnEggItem(SololevelingModEntities.PORTAL_KARGALGANS_THRONE_ROOM, -6684673, -10066330, new Item.Properties()));

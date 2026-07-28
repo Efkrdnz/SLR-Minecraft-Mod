@@ -195,7 +195,11 @@ public final class CartenonTempleGenerator {
 					BlockPos worldPos = toWorld(localX, localY, localZ);
 					BlockState existing = level.getBlockState(worldPos);
 					if (!existing.equals(desired)) {
-						level.setBlock(worldPos, desired, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+						boolean placed = level.setBlock(worldPos, desired,
+								Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+						if (!placed && !level.getBlockState(worldPos).equals(desired))
+							return abort("block write was rejected at "
+									+ worldPos.toShortString(), null);
 						changesThisTick++;
 						changed++;
 					}
@@ -240,7 +244,12 @@ public final class CartenonTempleGenerator {
 			removePreviousTempleStatues();
 			spawnTempleStatues();
 			// Versioned hidden completion marker. A partial or legacy build never receives this block.
-			level.setBlock(toWorld(0, -2, 0), Blocks.LODESTONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+			BlockPos completionMarker = toWorld(0, -2, 0);
+			boolean markerPlaced = level.setBlock(completionMarker,
+					Blocks.LODESTONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+			if (!markerPlaced && !level.getBlockState(completionMarker).is(Blocks.LODESTONE))
+				return abort("completion marker write was rejected at "
+						+ completionMarker.toShortString(), null);
 			BlockPos center = toWorld(0, 1, 78);
 			level.playSound(null, center, SoundEvents.BEACON_ACTIVATE, SoundSource.BLOCKS, 1.6F, 0.62F);
 			level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, center.getX() + 0.5D, center.getY() + 1.5D,
@@ -260,6 +269,22 @@ public final class CartenonTempleGenerator {
 					SololevelingMod.LOGGER.error("Cartenon Temple completion callback failed", exception);
 				}
 			}
+			return true;
+		}
+
+		private boolean abort(String reason, RuntimeException exception) {
+			String message = "Cartenon Temple construction stopped for " + ownerName
+					+ ": " + reason;
+			if (exception == null)
+				SololevelingMod.LOGGER.error(message);
+			else
+				SololevelingMod.LOGGER.error(message, exception);
+			ServerPlayer owner = ownerId == null ? null
+					: level.getServer().getPlayerList().getPlayer(ownerId);
+			if (owner != null)
+				owner.sendSystemMessage(Component.literal(
+						"The Cartenon Temple failed to stabilize. Try the hidden gate again.")
+						.withStyle(ChatFormatting.RED));
 			return true;
 		}
 

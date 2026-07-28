@@ -127,7 +127,7 @@ public final class WeaponTooltipProfiles {
 				l("Dragon Resonance", "Completes the paired current of Kamish's fangs.")));
 		add("demon_kings_dagger", p("S", RELIC, "Dagger", FLAME, 0xFFAE35, 0x731728, 8.0F, 8,
 				l("A dagger claimed from Baran, King of Demons.", "Its dormant flame answers when its twin is drawn."),
-				l("Two as One", "Dual wielding adds the wielder's Strength.")));
+				l("Two as One", "Dual wielding grants bonus Strength equal to the wielder's permanent Strength.")));
 		add("kasakas_venom_fangs", p("C", C, "Dagger", VENOM, 0x57E37D, 0x1B5B3F, 8.3F, 6,
 				l("A dagger fashioned from Kasaka's venom fang.", "Residual poison still circulates through the weapon."),
 				l("Paralyze", "Seizes targets up to C rank.", "Bleed", "The serrated fang leaves persistent wounds.")));

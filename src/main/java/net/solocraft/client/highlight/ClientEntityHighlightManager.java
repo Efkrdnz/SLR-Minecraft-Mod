@@ -32,6 +32,7 @@ import java.util.UUID;
 public final class ClientEntityHighlightManager {
 	private static final int MAX_TARGETS = 2048;
 	private static final int MAX_SOURCES_PER_TARGET = 16;
+	private static final int MAX_VISIBLE_PARTY_TARGETS = 7;
 	private static final Map<UUID, Map<String, Highlight>> HIGHLIGHTS = new HashMap<>();
 	private static final Set<UUID> VISIBLE_TARGETS = new HashSet<>();
 	private static long clientTick;
@@ -103,15 +104,23 @@ public final class ClientEntityHighlightManager {
 				evictOldestTarget();
 		}
 		Map<String, Highlight> sources = HIGHLIGHTS.computeIfAbsent(targetId, ignored -> new HashMap<>());
+		int safePriority = Math.max(0, priority);
 		if (!sources.containsKey(source) && sources.size() >= MAX_SOURCES_PER_TARGET) {
-			sources.entrySet().stream()
-					.min(Comparator.comparingLong(entry -> entry.getValue().sequence()))
-					.map(Map.Entry::getKey).ifPresent(sources::remove);
+			Map.Entry<String, Highlight> weakest = sources.entrySet().stream()
+					.min(Comparator
+							.comparingInt((Map.Entry<String, Highlight> entry) ->
+									entry.getValue().priority())
+							.thenComparingLong(entry -> entry.getValue().sequence()))
+					.orElse(null);
+			if (weakest != null && weakest.getValue().priority() > safePriority)
+				return;
+			if (weakest != null)
+				sources.remove(weakest.getKey());
 		}
 		int safeDuration = Math.max(0, durationTicks);
 		long expiresAt = safeDuration == 0 ? Long.MAX_VALUE : saturatingAdd(clientTick, safeDuration);
 		sources.put(source, new Highlight(dimension, color & 0xFFFFFF, expiresAt,
-				Math.max(0, priority), ++sequence));
+				safePriority, ++sequence));
 		selectionDirty = true;
 	}
 
@@ -221,17 +230,22 @@ public final class ClientEntityHighlightManager {
 			if (selected.isEmpty())
 				continue;
 			Highlight highlight = selected.get();
+			Highlight partyHighlight = activePartyHighlight(sources, dimension);
+			boolean partyMember = partyHighlight != null;
+			boolean selectedPartyColor = partyHighlight == highlight;
 			boolean targeted = entity.getUUID().equals(aimedTarget);
-			boolean boss = highlight.priority() >= EntityHighlightSystem.PRIORITY_DUNGEON_BOSS
-					|| highlight.color() == EntityHighlightSystem.COLOR_WAVE_BOSS;
-			boolean elite = !boss && (highlight.priority() >= EntityHighlightSystem.PRIORITY_DUNGEON_ELITE
-					|| highlight.color() == EntityHighlightSystem.COLOR_WAVE_ELITE);
+			boolean boss = !selectedPartyColor
+					&& (highlight.priority() >= EntityHighlightSystem.PRIORITY_DUNGEON_BOSS
+							|| highlight.color() == EntityHighlightSystem.COLOR_WAVE_BOSS);
+			boolean elite = !boss && !selectedPartyColor
+					&& (highlight.priority() >= EntityHighlightSystem.PRIORITY_DUNGEON_ELITE
+							|| highlight.color() == EntityHighlightSystem.COLOR_WAVE_ELITE);
 			double distanceSqr = minecraft.player.distanceToSqr(entity);
-			if (!boss && !targeted && distanceSqr > rangeSqr)
+			if (!boss && !targeted && !partyMember && distanceSqr > rangeSqr)
 				continue;
 			boolean visible = minecraft.player.hasLineOfSight(entity);
 			int tier = boss ? 2 : elite ? 1 : 0;
-			if (!targeted && tier == 0) {
+			if (!targeted && !partyMember && tier == 0) {
 				if (density == SystemClientConfig.OUTLINE_DENSITY_MINIMAL && visible)
 					continue;
 				if (density == SystemClientConfig.OUTLINE_DENSITY_BALANCED
@@ -239,19 +253,28 @@ public final class ClientEntityHighlightManager {
 					continue;
 			}
 			candidates.add(new Candidate(entity.getUUID(), highlight, distanceSqr,
-					targeted, visible, tier));
+					targeted, visible, tier, partyMember));
 		}
 
 		candidates.sort(Comparator
 				.comparingInt((Candidate candidate) -> candidate.targeted() ? 0 : 1)
 				.thenComparingInt(candidate -> -candidate.tier())
+				.thenComparingInt(candidate -> candidate.partyMember() ? 0 : 1)
 				.thenComparingInt(candidate -> candidate.visible() ? 1 : 0)
 				.thenComparingInt(candidate -> -candidate.highlight().priority())
 				.thenComparingDouble(Candidate::distanceSqr));
 		int limitedTargets = 0;
+		int partyTargets = 0;
 		for (Candidate candidate : candidates) {
 			if (candidate.tier() == 2 || candidate.targeted()) {
 				VISIBLE_TARGETS.add(candidate.targetId());
+				continue;
+			}
+			if (candidate.partyMember()) {
+				if (partyTargets >= MAX_VISIBLE_PARTY_TARGETS)
+					continue;
+				VISIBLE_TARGETS.add(candidate.targetId());
+				partyTargets++;
 				continue;
 			}
 			if (limitedTargets >= targetLimit)
@@ -273,6 +296,13 @@ public final class ClientEntityHighlightManager {
 		return left > Long.MAX_VALUE - right ? Long.MAX_VALUE : left + right;
 	}
 
+	private static Highlight activePartyHighlight(Map<String, Highlight> sources,
+			ResourceLocation dimension) {
+		Highlight party = sources.get(EntityHighlightSystem.SOURCE_PARTY_MEMBERS);
+		return party != null && party.dimension().equals(dimension)
+				&& sourceEnabled(EntityHighlightSystem.SOURCE_PARTY_MEMBERS) ? party : null;
+	}
+
 	private static String cleanSource(String source) {
 		if (source == null || source.isBlank())
 			return "default";
@@ -286,6 +316,6 @@ public final class ClientEntityHighlightManager {
 	}
 
 	private record Candidate(UUID targetId, Highlight highlight, double distanceSqr,
-			boolean targeted, boolean visible, int tier) {
+			boolean targeted, boolean visible, int tier, boolean partyMember) {
 	}
 }

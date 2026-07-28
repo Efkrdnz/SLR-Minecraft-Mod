@@ -398,6 +398,11 @@ public class ShadowHighOrcEntity extends TamableAnimal implements GeoEntity {
 				Level world = ShadowHighOrcEntity.this.level();
 				return super.canUse() && IsNotBerserkProcedure.execute(entity);
 			}
+
+			@Override
+			public boolean canContinueToUse() {
+				return super.canContinueToUse() && IsNotBerserkProcedure.execute(ShadowHighOrcEntity.this);
+			}
 		});
 		this.goalSelector.addGoal(18, new RandomStrollGoal(this, 0.5));
 		this.goalSelector.addGoal(19, new OwnerHurtByTargetGoal(this));

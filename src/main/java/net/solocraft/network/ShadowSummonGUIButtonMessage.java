@@ -2,6 +2,7 @@
 package net.solocraft.network;
 
 import net.solocraft.world.inventory.ShadowDismissMenu;
+import net.solocraft.world.inventory.ShadowCustomizationMenu;
 import net.solocraft.world.inventory.ShadowSummonGUIMenu;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.SololevelingMod;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ShadowSummonGUIButtonMessage {
+	private static final int CUSTOMIZE_BUTTON_OFFSET = 200;
 	private final int buttonID, x, y, z;
 	private final String payload;
 
@@ -85,6 +87,11 @@ public class ShadowSummonGUIButtonMessage {
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
+		if (buttonID >= CUSTOMIZE_BUTTON_OFFSET
+				&& buttonID < CUSTOMIZE_BUTTON_OFFSET + 13) {
+			openCustomization(entity, buttonID - CUSTOMIZE_BUTTON_OFFSET, x, y, z);
+			return;
+		}
 		if (buttonID == 100) {
 			String name = ShadowMonarchManager.saveFormationFromSummoned(entity, payload);
 			if (!name.isEmpty() && !entity.level().isClientSide())
@@ -134,6 +141,37 @@ public class ShadowSummonGUIButtonMessage {
 				return new ShadowDismissMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(pos));
 			}
 		}, pos);
+	}
+
+	private static void openCustomization(Player entity, int summonButtonId,
+			int x, int y, int z) {
+		if (!(entity instanceof ServerPlayer serverPlayer)
+				|| !(entity.containerMenu instanceof ShadowSummonGUIMenu summonMenu)
+				|| summonMenu.x != x || summonMenu.y != y || summonMenu.z != z)
+			return;
+		String type = ShadowMonarchManager.typeForSummonButton(summonButtonId);
+		if (!ShadowMonarchManager.isCustomizableBoss(type)
+				|| !ShadowMonarchManager.hasShadowForDisplay(serverPlayer, type))
+			return;
+		BlockPos pos = new BlockPos(x, y, z);
+		NetworkHooks.openScreen(serverPlayer, new MenuProvider() {
+			@Override
+			public Component getDisplayName() {
+				return Component.literal("Shadow Customization");
+			}
+
+			@Override
+			public AbstractContainerMenu createMenu(int id, Inventory inventory,
+					Player player) {
+				FriendlyByteBuf data = new FriendlyByteBuf(Unpooled.buffer());
+				data.writeBlockPos(pos);
+				data.writeUtf(type, 24);
+				return new ShadowCustomizationMenu(id, inventory, data);
+			}
+		}, data -> {
+			data.writeBlockPos(pos);
+			data.writeUtf(type, 24);
+		});
 	}
 
 	@SubscribeEvent

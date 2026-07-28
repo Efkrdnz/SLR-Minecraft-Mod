@@ -136,6 +136,22 @@ public final class AssassinSkillManager {
 		return cast;
 	}
 
+	/** Clears one player's server-side Assassin combat session for a reset. */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null)
+			return;
+		CombatState removed = STATES.remove(player.getUUID());
+		if (removed == null)
+			removed = new CombatState();
+		if (removed.stealthUntil > 0L || removed.decoyId != null)
+			endStealth(player, removed);
+		removed.tempo = 0;
+		removed.nextTempoDecay = Long.MAX_VALUE;
+		removed.lastTempoActions.clear();
+		syncTempo(player, removed);
+		player.removeEffect(SololevelingModMobEffects.DUAL_WIELDING.get());
+	}
+
 	private static boolean castGhostStep(ServerPlayer player, CombatState state) {
 		long now = player.level().getGameTime();
 		if (player.isCreative()) {
@@ -700,7 +716,8 @@ public final class AssassinSkillManager {
 		double attack = player.getAttributeValue(Attributes.ATTACK_DAMAGE);
 		double offhand = DaggerThrowManager.isDagger(player.getOffhandItem()) ? attack * 0.25D : 0.0D;
 		return (float) Math.max(4.0D,
-				attack + offhand + vars.Speed * 0.08D + vars.perception * 0.06D);
+				attack + offhand + TemporaryStatBonusManager.effectiveAgility(player) * 0.08D
+						+ vars.perception * 0.06D);
 	}
 
 	private static void addTempo(ServerPlayer player, CombatState state, String action) {

@@ -27,6 +27,17 @@ public final class ProceduralDungeonGenerator {
 
 	public static ProceduralDungeonResult generate(ServerLevel level, BlockPos origin,
 			ProceduralDungeonSettings settings, Entity owner) {
+		return generate(level, origin, settings, owner, true);
+	}
+
+	/**
+	 * Generates a built-in procedural dungeon.
+	 *
+	 * @param spawnInitialReturnPortal whether to place the return portal in the
+	 *                                 generated entry room
+	 */
+	public static ProceduralDungeonResult generate(ServerLevel level, BlockPos origin,
+			ProceduralDungeonSettings settings, Entity owner, boolean spawnInitialReturnPortal) {
 		RandomSource random = level.getRandom();
 		int spacing = settings.rank.maxRoomSize + 16;
 		int gridSize = Math.max(112, settings.targetRooms * spacing + 72);
@@ -52,9 +63,10 @@ public final class ProceduralDungeonGenerator {
 		buildBedrockBacking(level, grid, bounds, baseY, offsetX, offsetZ, settings);
 		decorate(level, grid, roomCells, corridorCells, bounds, rooms, baseY, offsetX, offsetZ,
 				settings, random);
-		BlockPos portalPos = spawnReturnPortal(level, entry, baseY, offsetX, offsetZ, owner);
+		BlockPos portalPos = spawnInitialReturnPortal
+				? spawnReturnPortal(level, entry, baseY, offsetX, offsetZ, owner) : null;
 		int spawned = spawnEncounters(level, rooms, boss, baseY, offsetX, offsetZ, settings,
-				owner, random);
+				owner, random, !spawnInitialReturnPortal);
 
 		return new ProceduralDungeonResult(
 				new BlockPos(offsetX + entry.centerX(), baseY + 1, offsetZ + entry.centerZ()),
@@ -683,7 +695,8 @@ public final class ProceduralDungeonGenerator {
 
 	private static int spawnEncounters(ServerLevel level, List<DungeonRoom> rooms,
 			DungeonRoom bossRoom, int baseY, int offsetX, int offsetZ,
-			ProceduralDungeonSettings settings, Entity owner, RandomSource random) {
+			ProceduralDungeonSettings settings, Entity owner, RandomSource random,
+			boolean deferredReturnPortal) {
 		List<MobChoice> normalTypes = normalTypes(settings.rank);
 		EntityType<?> bossType = bossType(settings.rank);
 		String dungeonTag = owner == null ? ""
@@ -705,7 +718,8 @@ public final class ProceduralDungeonGenerator {
 					Entity spawnedEntity = choice.type().spawn(level, pos,
 							MobSpawnType.MOB_SUMMONED);
 					if (spawnedEntity != null) {
-						tagDungeonMob(spawnedEntity, dungeonTag, settings.rank);
+						tagDungeonMob(spawnedEntity, dungeonTag, settings.rank,
+								deferredReturnPortal);
 						DungeonMobVariantScaler.applyForRank(spawnedEntity, settings.rank, random);
 						spawned++;
 					}
@@ -716,7 +730,7 @@ public final class ProceduralDungeonGenerator {
 				new BlockPos(offsetX + bossRoom.centerX(), baseY + 1,
 						offsetZ + bossRoom.centerZ()), MobSpawnType.MOB_SUMMONED);
 		if (boss != null) {
-			tagDungeonMob(boss, dungeonTag, settings.rank);
+			tagDungeonMob(boss, dungeonTag, settings.rank, deferredReturnPortal);
 			spawned++;
 		}
 		return spawned;
@@ -748,9 +762,11 @@ public final class ProceduralDungeonGenerator {
 	}
 
 	private static void tagDungeonMob(Entity entity, String dungeonTag,
-			ProceduralDungeonRank rank) {
+			ProceduralDungeonRank rank, boolean deferredReturnPortal) {
 		if (!dungeonTag.isEmpty())
 			entity.getPersistentData().putString("dungeon_tag", dungeonTag);
+		if (deferredReturnPortal)
+			ProceduralDungeonCompletionHandler.markProceduralMob(entity);
 		entity.getPersistentData().putString(PROCEDURAL_RANK_TAG, rank.name());
 	}
 

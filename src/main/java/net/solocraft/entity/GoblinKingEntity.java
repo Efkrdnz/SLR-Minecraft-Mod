@@ -22,6 +22,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.monster.Pillager;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -102,6 +103,7 @@ public class GoblinKingEntity extends Monster implements GeoEntity {
 		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal(this, ServerPlayer.class, false, false));
 		this.targetSelector.addGoal(3, new NearestAttackableTargetGoal(this, Villager.class, false, false));
 		this.targetSelector.addGoal(4, new NearestAttackableTargetGoal(this, Pillager.class, false, false));
+		this.targetSelector.addGoal(0, new HurtByTargetGoal(this));
 		this.goalSelector.addGoal(5, new RandomStrollGoal(this, 1));
 		this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(7, new FloatGoal(this));
@@ -199,9 +201,9 @@ public class GoblinKingEntity extends Monster implements GeoEntity {
 	public static AttributeSupplier.Builder createAttributes() {
 		AttributeSupplier.Builder builder = Mob.createMobAttributes();
 		builder = builder.add(Attributes.MOVEMENT_SPEED, 0.3);
-		builder = builder.add(Attributes.MAX_HEALTH, 80);
-		builder = builder.add(Attributes.ARMOR, 16);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, 7);
+		builder = builder.add(Attributes.MAX_HEALTH, 72);
+		builder = builder.add(Attributes.ARMOR, 14);
+		builder = builder.add(Attributes.ATTACK_DAMAGE, 6);
 		builder = builder.add(Attributes.FOLLOW_RANGE, 32);
 		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 0.1);
 		builder = builder.add(Attributes.ATTACK_KNOCKBACK, 0.1);

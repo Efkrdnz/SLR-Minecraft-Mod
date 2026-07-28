@@ -17,6 +17,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.TagKey;
@@ -85,6 +86,36 @@ public final class BarrierMageSpellManager {
 	private static final List<BastionCast> ACTIVE_BASTIONS = new ArrayList<>();
 
 	private BarrierMageSpellManager() {
+	}
+
+	/**
+	 * Cancels one player's Barrier runtime without releasing or detonating it.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null || player.getServer() == null)
+			return;
+		UUID playerId = player.getUUID();
+		ACTIVE_BOLTS.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_REPULSIONS.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_PRISONS.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_MIRRORS.removeIf(cast -> playerId.equals(cast.ownerId));
+		ACTIVE_COLLAPSES.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_BASTIONS.removeIf(cast -> playerId.equals(cast.casterId));
+
+		String fractureKey = FRACTURE_PREFIX + playerId.toString().replace("-", "");
+		ArrayList<BarrierVfxEntity> ownedEffects = new ArrayList<>();
+		for (ServerLevel level : player.getServer().getAllLevels()) {
+			for (Entity entity : level.getAllEntities()) {
+				if (entity instanceof LivingEntity living) {
+					living.getPersistentData().remove(fractureKey);
+					living.getPersistentData().remove(fractureKey + FRACTURE_UNTIL_SUFFIX);
+				}
+				if (entity instanceof BarrierVfxEntity effect
+						&& effect.getOwnerId().filter(playerId::equals).isPresent())
+					ownedEffects.add(effect);
+			}
+		}
+		ownedEffects.forEach(BarrierVfxEntity::dissolve);
 	}
 
 	public static boolean isBarrierSkill(String skill) {

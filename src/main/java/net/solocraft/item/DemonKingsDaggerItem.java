@@ -58,7 +58,7 @@ public class DemonKingsDaggerItem extends SwordItem {
 		list.add(Component.literal("\u00A76SET EFFECT WILL ACTIVATE IF BOTH \"DEMON KING'S DAGGERS\" ARE EQUIPPED AT THE SAME TIME."));
 		list.add(Component.literal(".."));
 		list.add(Component.literal("\u00A76SET EFFECT \"TWO AS ONE\":"));
-		list.add(Component.literal("\u00A76ADDITIONAL ATTACK WIL APPLY TO EACH DAGGER BY THE AMOUNT OF STRENGTH STAT."));
+		list.add(Component.literal("\u00A76TWO AS ONE WILL GRANT BONUS STRENGTH EQUAL TO THE WIELDER'S PERMANENT STRENGTH."));
 	}
 
 	@Override

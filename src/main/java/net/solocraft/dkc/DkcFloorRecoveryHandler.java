@@ -2,6 +2,7 @@ package net.solocraft.dkc;
 
 import net.solocraft.SololevelingMod;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.PlayerEntryGenerationGuard;
 
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -31,7 +32,13 @@ public final class DkcFloorRecoveryHandler {
 				|| (vars.dungeoning && storedFloor > 0) || nearLegacyDistrict;
 		if (!DkcFloorRegistry.isDkc(player.level()) && !legacyStranded)
 			return;
-		SololevelingMod.queueServerWork(player.server, 20, () -> recover(player));
+		long entryGeneration =
+				PlayerEntryGenerationGuard.capture(player);
+		SololevelingMod.queueServerWork(player.server, 20, () -> {
+			if (PlayerEntryGenerationGuard.isCurrent(player,
+					entryGeneration))
+				recover(player);
+		});
 	}
 
 	private static void recover(ServerPlayer player) {

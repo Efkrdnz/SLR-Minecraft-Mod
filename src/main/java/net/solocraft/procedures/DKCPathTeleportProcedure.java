@@ -46,33 +46,58 @@ public class DKCPathTeleportProcedure {
 		if (!(entity instanceof ServerPlayer player) || player.server == null)
 			return;
 		boolean alreadyInDkc = DkcFloorRegistry.isDkc(player.level());
-		if (!alreadyInDkc) {
-			if (!player.level().dimension().equals(Level.OVERWORLD)) {
-				player.displayClientMessage(Component.literal("\u00A74The Demon King's Castle can only be entered from the Overworld."), true);
-				return;
-			}
-			if (!DKCCombatTrackerProcedure.canEnterCastle(player)) {
-				DKCCombatTrackerProcedure.sendCombatBlockedMessage(player);
-				return;
-			}
-		}
-		if (!isFloorAvailable(player, floor)) {
-			player.displayClientMessage(Component.literal("\u00A74That floor is still sealed."), true);
+		if (!canTravelToFloor(player, floor, true))
 			return;
-		}
 		PointSetProcedure.execute(player);
-		SololevelingModVariables.PlayerVariables vars = player
-				.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.orElse(new SololevelingModVariables.PlayerVariables());
-		if (vars.dkc_cleared >= DkcFloorRegistry.LAST_FLOOR) {
-			player.displayClientMessage(Component.literal("\u00A75The Demon King's Castle is already conquered. No path remains."), true);
-			return;
-		}
 		if (!alreadyInDkc) {
 			saveReturnPosition(player);
 			discardOwnedShadows(player);
 		}
 		DkcFloorBuilder.teleportToFloor(player, floor);
+	}
+
+	/**
+	 * Complete, side-effect-free path preflight shared by the menu packet and
+	 * the actual teleport. Live progression is deliberately checked here rather
+	 * than trusting the menu's opening snapshot.
+	 */
+	public static boolean canTravelToFloor(ServerPlayer player, int floor, boolean sendFeedback) {
+		if (player == null || player.server == null
+				|| floor < DkcFloorRegistry.FIRST_FLOOR
+				|| floor > DkcFloorRegistry.LAST_FLOOR)
+			return false;
+		boolean alreadyInDkc = DkcFloorRegistry.isDkc(player.level());
+		if (!alreadyInDkc && !player.level().dimension().equals(Level.OVERWORLD)) {
+			if (sendFeedback)
+				player.displayClientMessage(Component.literal(
+						"\u00A74The Demon King's Castle can only be entered from the Overworld."), true);
+			return false;
+		}
+		if (alreadyInDkc && DkcSpatialLayout.floor(player) == floor) {
+			if (sendFeedback)
+				player.displayClientMessage(Component.literal("\u00A74You are already on that floor."), true);
+			return false;
+		}
+		if (!DKCCombatTrackerProcedure.canEnterCastle(player)) {
+			if (sendFeedback)
+				DKCCombatTrackerProcedure.sendCombatBlockedMessage(player);
+			return false;
+		}
+		if (!isFloorAvailable(player, floor)) {
+			if (sendFeedback)
+				player.displayClientMessage(Component.literal("\u00A74That floor is still sealed."), true);
+			return false;
+		}
+		SololevelingModVariables.PlayerVariables vars = player
+				.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables());
+		if (vars.dkc_cleared >= DkcFloorRegistry.LAST_FLOOR) {
+			if (sendFeedback)
+				player.displayClientMessage(Component.literal(
+						"\u00A75The Demon King's Castle is already conquered. No path remains."), true);
+			return false;
+		}
+		return true;
 	}
 
 	/** Permanent post-conquest route granted by House Radiru's Floor 15 pact. */

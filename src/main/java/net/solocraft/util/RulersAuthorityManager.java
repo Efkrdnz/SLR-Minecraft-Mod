@@ -149,6 +149,30 @@ public final class RulersAuthorityManager {
         session.distance = Mth.clamp(session.distance + Math.signum(direction) * 1.5D, 3.0D, maximum);
     }
 
+    /**
+     * Drops only this player's live authority state. Unlike a normal release,
+     * reset must not throw, slam, damage, or start another cooldown.
+     */
+    public static void resetPlayerState(ServerPlayer player) {
+        if (player == null)
+            return;
+        UUID ownerId = player.getUUID();
+        ControlSession session = SESSIONS.remove(ownerId);
+        if (session != null) {
+            Entity controlled = getControlledEntity(player, session);
+            discardAura(session);
+            restoreGravity(controlled, session);
+        }
+
+        Iterator<Map.Entry<UUID, ThrownState>> iterator = THROWN.entrySet().iterator();
+        while (iterator.hasNext()) {
+            ThrownState state = iterator.next().getValue();
+            if (state.owner == null || !ownerId.equals(state.owner.getUUID()))
+                continue;
+            iterator.remove();
+        }
+    }
+
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))

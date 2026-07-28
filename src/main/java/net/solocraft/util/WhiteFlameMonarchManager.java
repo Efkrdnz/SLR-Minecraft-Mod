@@ -38,6 +38,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -72,6 +73,33 @@ public final class WhiteFlameMonarchManager {
 			new net.minecraft.resources.ResourceLocation("shadows"));
 
 	private WhiteFlameMonarchManager() {
+	}
+
+	/**
+	 * Ends loaded White Flame effects owned by one player. Delayed domain work
+	 * revalidates the player's NBT and is consequently canceled when the central
+	 * reset clears it.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null || player.server == null)
+			return;
+		UUID ownerId = player.getUUID();
+		List<DemonKnightEntity> summons = new ArrayList<>();
+		for (ServerLevel level : player.server.getAllLevels()) {
+			for (Entity entity : level.getAllEntities()) {
+				if (entity instanceof DemonKnightEntity knight
+						&& knight.getPersistentData().hasUUID(SUMMON_OWNER)
+						&& ownerId.equals(knight.getPersistentData().getUUID(SUMMON_OWNER)))
+					summons.add(knight);
+				if (entity instanceof LivingEntity living
+						&& living.getPersistentData().hasUUID(BRAND_OWNER)
+						&& ownerId.equals(living.getPersistentData().getUUID(BRAND_OWNER)))
+					clearBrand(living);
+			}
+		}
+		for (DemonKnightEntity summon : summons)
+			summon.discard();
+		PlayerAuraSystem.clearContinuous(player);
 	}
 
 	public static boolean isWhiteFlameVessel(Entity entity) {
@@ -487,6 +515,12 @@ public final class WhiteFlameMonarchManager {
 		target.getPersistentData().putLong(BRAND_UNTIL, now + duration);
 		target.getPersistentData().putInt(BRAND_STACKS,
 				Math.min(3, target.getPersistentData().getInt(BRAND_STACKS) + Math.max(1, stacks)));
+	}
+
+	private static void clearBrand(LivingEntity target) {
+		target.getPersistentData().remove(BRAND_UNTIL);
+		target.getPersistentData().remove(BRAND_STACKS);
+		target.getPersistentData().remove(BRAND_OWNER);
 	}
 
 	private static int brandStacks(LivingEntity target, ServerPlayer owner) {

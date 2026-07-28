@@ -4,6 +4,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.DkcQuestManager;
 import net.solocraft.util.RewardManager;
 import net.solocraft.util.SystemNotifications;
+import net.solocraft.util.daily.DailyQuestObjectiveManager;
 
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -17,64 +18,64 @@ import net.minecraft.world.entity.player.Player;
 
 @Mod.EventBusSubscriber
 public class DailyQuestHelper {
-	public static final double NORMAL_TRAINING_TARGET = 25;
-	public static final double SECRET_TRAINING_TARGET = 50;
-	public static final double NORMAL_RUN_TARGET = 500;
-	public static final double SECRET_RUN_TARGET = 1000;
+	public static final double NORMAL_MINING_TARGET = DailyQuestObjectiveManager.NORMAL_MINING_TARGET;
+	public static final double SECRET_MINING_TARGET = DailyQuestObjectiveManager.SECRET_MINING_TARGET;
+	public static final double NORMAL_THREAT_TARGET = DailyQuestObjectiveManager.NORMAL_THREAT_TARGET;
+	public static final double SECRET_THREAT_TARGET = DailyQuestObjectiveManager.SECRET_THREAT_TARGET;
+	public static final double NORMAL_RUN_TARGET = DailyQuestObjectiveManager.NORMAL_DISTANCE_TARGET;
+	public static final double SECRET_RUN_TARGET = DailyQuestObjectiveManager.SECRET_DISTANCE_TARGET;
 	private static final String SECRET_SKILL_POINTS_REWARD = "SP20";
 	private static final String SECRET_DKC_KEY_REWARD = "ITEM:sololeveling:redkey";
 
 	@SubscribeEvent
 	public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-		if (event.getEntity() instanceof ServerPlayer player)
+		if (event.getEntity() instanceof ServerPlayer player) {
+			clearSecretQuestIfDkcUnlocked(player);
 			recoverQueuedSecretRewards(player);
+		}
 	}
 
 	public static boolean isSecretQuest(Entity entity) {
 		if (entity == null)
 			return false;
-		return vars(entity).dailysecrettrans >= 2;
+		return !DkcQuestManager.isUnlocked(entity)
+				&& vars(entity).dailysecrettrans >= 2;
 	}
 
 	public static boolean isSecretQuestRevealed(Entity entity) {
 		if (entity == null)
 			return false;
-		return vars(entity).dailysecrettrans >= 3;
+		return !DkcQuestManager.isUnlocked(entity)
+				&& vars(entity).dailysecrettrans >= 3;
 	}
 
-	public static double trainingTarget(Entity entity) {
-		return isSecretQuest(entity) ? SECRET_TRAINING_TARGET : NORMAL_TRAINING_TARGET;
+	public static boolean canActivateSecretQuest(Entity entity) {
+		if (entity == null || DkcQuestManager.isUnlocked(entity))
+			return false;
+		SololevelingModVariables.PlayerVariables variables = vars(entity);
+		return variables.Level >= 30 && variables.dailysecrettrans != 0;
 	}
 
-	public static double runTarget(Entity entity) {
-		return isSecretQuest(entity) ? SECRET_RUN_TARGET : NORMAL_RUN_TARGET;
-	}
-
-	public static double visibleTrainingTarget(Entity entity) {
-		return NORMAL_TRAINING_TARGET;
-	}
-
-	public static double visibleRunTarget(Entity entity) {
-		return NORMAL_RUN_TARGET;
-	}
-
-	public static void activateSecretQuestIfEligible(Entity entity) {
-		if (entity == null)
-			return;
-		SololevelingModVariables.PlayerVariables vars = vars(entity);
-		if (vars.Level >= 30 && vars.dailysecrettrans != 0) {
-			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-				capability.dailysecrettrans = 2;
-				capability.syncPlayerVariables(entity);
-			});
-		}
+	public static boolean clearSecretQuestIfDkcUnlocked(Entity entity) {
+		if (entity == null || !DkcQuestManager.isUnlocked(entity)
+				|| vars(entity).dailysecrettrans == 0)
+			return false;
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.ifPresent(capability -> {
+					capability.dailysecrettrans = 0;
+					capability.syncPlayerVariables(entity);
+				});
+		return true;
 	}
 
 	public static void keepSecretQuestPending(Entity entity) {
 		if (entity == null)
 			return;
-		SololevelingModVariables.PlayerVariables vars = vars(entity);
-		if (vars.Level >= 30 && vars.dailysecrettrans != 0) {
+		if (DkcQuestManager.isUnlocked(entity)) {
+			clearSecretQuestIfDkcUnlocked(entity);
+			return;
+		}
+		if (canActivateSecretQuest(entity)) {
 			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 				capability.dailysecrettrans = 2;
 				capability.syncPlayerVariables(entity);
@@ -124,7 +125,9 @@ public class DailyQuestHelper {
 		if (entity == null)
 			return;
 		SololevelingModVariables.PlayerVariables vars = vars(entity);
-		if (vars.dailysecrettrans == 2 && previousValue <= normalTarget && newValue > normalTarget) {
+		if (!DkcQuestManager.isUnlocked(entity)
+				&& vars.dailysecrettrans == 2
+				&& previousValue <= normalTarget && newValue > normalTarget) {
 			sendSecretTransitionMessage(entity);
 			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 				capability.dailysecrettrans = 3;
@@ -139,6 +142,9 @@ public class DailyQuestHelper {
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			capability.ActiveDaily = false;
 			capability.dailytimer = 0;
+			capability.dailyMinedBlocks = 0;
+			capability.dailyThreatPoints = 0;
+			capability.dailyCombatWaived = false;
 			capability.situp = 0;
 			capability.squat = 0;
 			capability.pushup = 0;
@@ -147,6 +153,8 @@ public class DailyQuestHelper {
 			capability.isdailytraining = false;
 			capability.syncPlayerVariables(entity);
 		});
+		if (entity instanceof ServerPlayer serverPlayer)
+			DailyQuestObjectiveManager.resetQuestRuntime(serverPlayer);
 	}
 
 	public static void sendQuestFailedChat(Entity entity) {

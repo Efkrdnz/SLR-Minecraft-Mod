@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.JobChangeQuestManager;
 import net.solocraft.util.InstanceDungeonKeyAccess;
+import net.solocraft.util.StoryModeIntroSavedData;
 import net.solocraft.SololevelingMod;
 import net.solocraft.dungeon.runtime.DungeonEncounterRuntime;
 import net.solocraft.dungeon.runtime.DungeonInstanceSavedData;
@@ -32,6 +33,8 @@ import java.util.UUID;
 
 public class DungeonDimensionPlayerLeavesDimensionProcedure {
 	private static final double RETURN_X_OFFSET = 3.0D;
+	private static final String STORY_INTRO_DUNGEON_TAG =
+			"story_intro_ancient_golem";
 
 	public static void execute(LevelAccessor world, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
@@ -100,6 +103,8 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 					markGateCleared(world, dungeonTag);
 					if (!returnToSavedOverworld(sourceentity))
 						return;
+					if (sourceentity instanceof ServerPlayer player)
+						recordStoryDungeonClear(player, dungeonTag, scopedInstance);
 					sourceentity.getPersistentData().putBoolean("slr_procedural_dungeon", false);
 					sourceentity.getPersistentData().putBoolean("slr_procedural_red_gate", false);
 					resetDungeonReturnState(sourceentity);
@@ -120,8 +125,12 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 					if ((entityiterator.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_snow")))) {
 						if (!entityiterator.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank())
 							continue;
+						String dungeonTag = currentDungeonTag(entityiterator, entity);
 						if (!returnToSavedOverworld(entityiterator))
 							continue;
+						if (entityiterator instanceof ServerPlayer player)
+							recordStoryDungeonClear(player, dungeonTag,
+									Optional.empty());
 						entityiterator.getPersistentData().putString("dungeon_tag", "");
 						entityiterator.getPersistentData().putBoolean("slr_procedural_dungeon", false);
 						entityiterator.getPersistentData().putBoolean("slr_procedural_red_gate", false);
@@ -150,6 +159,8 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 					markGateCleared(world, dungeonTag);
 				if (!returnToSavedOverworld(sourceentity))
 					return;
+				if (scopedCompletion && sourceentity instanceof ServerPlayer player)
+					recordStoryDungeonClear(player, dungeonTag, scopedInstance);
 				if (!dungeonTag.isEmpty())
 					sourceentity.getPersistentData().putString("dungeon_tag", dungeonTag);
 				sourceentity.getPersistentData().putBoolean("slr_procedural_dungeon", false);
@@ -227,6 +238,26 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 		return true;
 	}
 
+	/**
+	 * Detaches a player from a completed dungeon when an alternate exit (currently
+	 * Cartenon) teleports them somewhere other than the normal return portal.
+	 */
+	public static void completeAlternateExit(ServerPlayer player) {
+		if (player == null)
+			return;
+		String dungeonTag = player.getPersistentData().getString("dungeon_tag");
+		Optional<DungeonInstanceSavedData.Instance> scopedInstance =
+				runtimeInstance(player, null);
+		markGateCleared(player.serverLevel(), dungeonTag);
+		recordStoryDungeonClear(player, dungeonTag, scopedInstance);
+		resetDungeonReturnState(player);
+		player.getPersistentData().remove("dungeon_tag");
+		player.getPersistentData().putBoolean("slr_procedural_dungeon", false);
+		player.getPersistentData().putBoolean("slr_procedural_red_gate", false);
+		player.setNoGravity(false);
+		player.fallDistance = 0.0F;
+	}
+
 	private static String currentDungeonTag(Entity player, Entity returnPortal) {
 		String tag = player.getPersistentData().getString("dungeon_tag");
 		if (tag == null || tag.isEmpty())
@@ -242,6 +273,19 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 			SololevelingModVariables.MapVariables.get(world).GatesCleared = SololevelingModVariables.MapVariables.get(world).GatesCleared + token;
 			SololevelingModVariables.MapVariables.get(world).syncData(world);
 		}
+	}
+
+	private static void recordStoryDungeonClear(ServerPlayer player,
+			String dungeonTag,
+			Optional<DungeonInstanceSavedData.Instance> scopedInstance) {
+		if (player == null || STORY_INTRO_DUNGEON_TAG.equals(dungeonTag))
+			return;
+		String receipt = scopedInstance
+				.map(instance -> "instance:" + instance.id())
+				.orElseGet(() -> dungeonTag == null || dungeonTag.isBlank()
+						? "" : "gate:" + dungeonTag);
+		StoryModeIntroSavedData.get(player.server)
+				.recordPostIntroDungeonClear(player.getUUID(), receipt);
 	}
 
 	private static void resetDungeonReturnState(Entity entity) {

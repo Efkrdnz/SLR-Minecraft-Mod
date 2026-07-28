@@ -1,7 +1,6 @@
 package net.solocraft.util;
 
 import net.solocraft.init.SololevelingModItems;
-import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
@@ -163,8 +162,7 @@ public final class LiuManifestationManager {
 
 	private static void refreshScaledAttributes(ItemStack stack, ServerPlayer player) {
 		CompoundTag tag = stack.getOrCreateTag();
-		double strength = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.map(capability -> capability.Strength).orElse(0.0D);
+		double strength = TemporaryStatBonusManager.effectiveStrength(player);
 		strength = Math.max(0.0D, strength);
 		if (tag.contains(SCALED_STRENGTH) && tag.contains("AttributeModifiers")
 				&& Math.abs(tag.getDouble(SCALED_STRENGTH) - strength) < 0.001D)

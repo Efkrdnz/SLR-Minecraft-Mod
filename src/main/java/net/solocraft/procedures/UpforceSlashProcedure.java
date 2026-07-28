@@ -24,6 +24,7 @@ import net.minecraft.core.BlockPos;
 import java.util.List;
 import java.util.Comparator;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.TemporaryStatBonusManager;
 
 public class UpforceSlashProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -63,7 +64,7 @@ public class UpforceSlashProcedure {
 					for (Entity entityiterator : _entfound) {
 						if (entityiterator instanceof LivingEntity && !(entityiterator == entity) && !(entityiterator instanceof TamableAnimal _tamIsTamedBy && entity instanceof LivingEntity _livEnt ? _tamIsTamedBy.isOwnedBy(_livEnt) : false)) {
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:fighter"))), entity),
-									(float) ((1 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 15)
+									(float) ((1 + TemporaryStatBonusManager.effectiveStrength(entity) / 15.0D)
 											* (5 / Math.sqrt(Math.pow(entity.getX() - entityiterator.getX(), 2) + Math.pow(entity.getY() - entityiterator.getY(), 2) + Math.pow(entity.getZ() - entityiterator.getZ(), 2)))));
 						}
 					}

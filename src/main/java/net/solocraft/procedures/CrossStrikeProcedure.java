@@ -1,7 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.CrossStrikeEntity;
-import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.util.CooldownManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -25,7 +25,7 @@ public class CrossStrikeProcedure {
 			return;
 		livingEntity.swing(InteractionHand.MAIN_HAND, true);
 		float attack = (float) livingEntity.getAttribute(Attributes.ATTACK_DAMAGE).getValue();
-		double strength = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).map(cap -> cap.Strength).orElse(0.0D);
+		double strength = TemporaryStatBonusManager.effectiveStrength(entity);
 		float damage = (float) (attack * 0.85F + 4.0D + strength / 40.0D);
 		CooldownManager.set(entity, "Cross Strike", 200);
 		CrossStrikeEntity.spawn(world, livingEntity, damage, 1.0F);

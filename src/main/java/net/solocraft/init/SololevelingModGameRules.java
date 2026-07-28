@@ -6,8 +6,15 @@ import net.minecraft.world.level.GameRules;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SololevelingModGameRules {
+	public static final GameRules.Key<GameRules.BooleanValue> SOLO_LEVELING_STORY_MODE = GameRules.register("soloLevelingStoryMode", GameRules.Category.PLAYER, GameRules.BooleanValue.create(false));
+	public static final GameRules.Key<GameRules.IntegerValue> SOLO_LEVELING_PROGRESSION_PRESET = GameRules.register("soloLevelingProgressionPreset", GameRules.Category.PLAYER, GameRules.IntegerValue.create(0));
+	public static final GameRules.Key<GameRules.IntegerValue> SOLO_LEVELING_DIFFICULTY_PRESET = GameRules.register("soloLevelingDifficultyPreset", GameRules.Category.MOBS, GameRules.IntegerValue.create(0));
 	public static final GameRules.Key<GameRules.IntegerValue> SOLO_LEVELING_XP_MULTIPLIER = GameRules.register("soloLevelingXPMultiplier", GameRules.Category.PLAYER, GameRules.IntegerValue.create(10));
 	public static final GameRules.Key<GameRules.IntegerValue> SOLO_LEVELING_JOB_CHANGE_LEVEL = GameRules.register("soloLevelingJobChangeLevel", GameRules.Category.PLAYER, GameRules.IntegerValue.create(40));
+	public static final GameRules.Key<GameRules.IntegerValue> SOLO_LEVELING_ENEMY_SCALE = GameRules.register("soloLevelingEnemyScale", GameRules.Category.MOBS, GameRules.IntegerValue.create(100));
+	public static final GameRules.Key<GameRules.IntegerValue> SOLO_LEVELING_BOSS_POWER = GameRules.register("soloLevelingBossPower", GameRules.Category.MOBS, GameRules.IntegerValue.create(100));
+	public static final GameRules.Key<GameRules.BooleanValue> SOLO_LEVELING_RANKED_GATES = GameRules.register("soloLevelingRankedGates", GameRules.Category.SPAWNING, GameRules.BooleanValue.create(true));
+	public static final GameRules.Key<GameRules.IntegerValue> SOLO_LEVELING_DEATH_RULES = GameRules.register("soloLevelingDeathRules", GameRules.Category.PLAYER, GameRules.IntegerValue.create(0));
 	public static final GameRules.Key<GameRules.IntegerValue> SOLO_LEVELING_MONARCH_LIMIT = GameRules.register("soloLevelingMonarchLimit", GameRules.Category.PLAYER, GameRules.IntegerValue.create(1));
 	public static final GameRules.Key<GameRules.IntegerValue> SOLO_LEVELING_JOB_CHANGE_POINTS = GameRules.register("soloLevelingJobChangePoints", GameRules.Category.PLAYER, GameRules.IntegerValue.create(50));
 	public static final GameRules.Key<GameRules.BooleanValue> SOLO_LEVELING_LORE_ACCURATE_RANKS = GameRules.register("soloLevelingLoreAccurateRanks", GameRules.Category.PLAYER, GameRules.BooleanValue.create(true));

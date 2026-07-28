@@ -2,6 +2,7 @@
 package net.solocraft.item;
 
 import net.solocraft.procedures.RunestoneTauntRCProcedure;
+import net.solocraft.procedures.TankerProgressionHelper;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
@@ -32,14 +33,16 @@ public class RunestoneTauntItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Taunt\""));
-		list.add(Component.literal("User can use \"Taunt\" which allows user to redirect mobs aggro towards him."));
+		TankerTooltipHelper.addRunestone(list, TankerProgressionHelper.TAUNT,
+				"tooltip.sololeveling.tanker.runestone.taunt.description",
+				"D", 100, "1.5", 12);
 	}
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
-		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		RunestoneTauntRCProcedure.execute(entity, ar.getObject());
-		return ar;
+		ItemStack stack = entity.getItemInHand(hand);
+		if (!world.isClientSide())
+			RunestoneTauntRCProcedure.execute(entity, stack);
+		return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
 	}
 }

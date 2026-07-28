@@ -29,6 +29,9 @@ public class HunterHurtProcedure {
 	private static void execute(@Nullable Event event, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
+		if (entity instanceof HunterEntity hunter
+				&& hunter.isStoryTempleFollower())
+			return;
 		if (entity instanceof HunterEntity) {
 			if (sourceentity instanceof HunterEntity) {
 				if (!((sourceentity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {

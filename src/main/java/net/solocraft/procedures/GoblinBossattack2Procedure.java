@@ -31,7 +31,7 @@ public class GoblinBossattack2Procedure {
 					if (!(entity == entityiterator)) {
 						if (world instanceof Level _level && !_level.isClientSide())
 							_level.explode(null, (entityiterator.getX()), (entityiterator.getY() + 1), (entityiterator.getZ()), 1, Level.ExplosionInteraction.NONE);
-						entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK)), 6);
+						entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK)), 5);
 					}
 				}
 			}

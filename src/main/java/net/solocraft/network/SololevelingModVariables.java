@@ -44,9 +44,6 @@ import java.util.ArrayList;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class SololevelingModVariables {
-	public static List<Object> parties = new ArrayList<>();
-	public static List<Object> partypassword = new ArrayList<>();
-
 	@SubscribeEvent
 	public static void init(FMLCommonSetupEvent event) {
 		SololevelingMod.addNetworkMessage(SavedDataSyncMessage.class, SavedDataSyncMessage::buffer, SavedDataSyncMessage::new, SavedDataSyncMessage::handler);
@@ -118,6 +115,11 @@ public class SololevelingModVariables {
 			clone.dailysecrettrans = original.dailysecrettrans;
 			clone.dailytasks = original.dailytasks;
 			clone.dailytimer = original.dailytimer;
+			clone.dailyQuestSchema = original.dailyQuestSchema;
+			clone.dailyMinedBlocks = original.dailyMinedBlocks;
+			clone.dailyThreatPoints = original.dailyThreatPoints;
+			clone.lastDailyQuestDay = original.lastDailyQuestDay;
+			clone.dailyCombatWaived = original.dailyCombatWaived;
 			clone.DeathX = original.DeathX;
 			clone.DeathY = original.DeathY;
 			clone.DeathZ = original.DeathZ;
@@ -624,6 +626,11 @@ public class SololevelingModVariables {
 		public double dailysecrettrans = 1.0;
 		public double dailytasks = 0;
 		public double dailytimer = 0.0;
+		public int dailyQuestSchema = 0;
+		public double dailyMinedBlocks = 0;
+		public double dailyThreatPoints = 0;
+		public long lastDailyQuestDay = Long.MIN_VALUE;
+		public boolean dailyCombatWaived = false;
 		public double DeathX = 0;
 		public double DeathY = 0;
 		public double DeathZ = 0;
@@ -900,6 +907,11 @@ public class SololevelingModVariables {
 			nbt.putDouble("dailysecrettrans", dailysecrettrans);
 			nbt.putDouble("dailytasks", dailytasks);
 			nbt.putDouble("dailytimer", dailytimer);
+			nbt.putInt("dailyQuestSchema", dailyQuestSchema);
+			nbt.putDouble("dailyMinedBlocks", dailyMinedBlocks);
+			nbt.putDouble("dailyThreatPoints", dailyThreatPoints);
+			nbt.putLong("lastDailyQuestDay", lastDailyQuestDay);
+			nbt.putBoolean("dailyCombatWaived", dailyCombatWaived);
 			nbt.putDouble("DeathX", DeathX);
 			nbt.putDouble("DeathY", DeathY);
 			nbt.putDouble("DeathZ", DeathZ);
@@ -1157,6 +1169,11 @@ public class SololevelingModVariables {
 			dailysecrettrans = nbt.contains("dailysecrettrans") ? nbt.getDouble("dailysecrettrans") : 1.0;
 			dailytasks = nbt.getDouble("dailytasks");
 			dailytimer = nbt.getDouble("dailytimer");
+			dailyQuestSchema = nbt.contains("dailyQuestSchema") ? nbt.getInt("dailyQuestSchema") : 0;
+			dailyMinedBlocks = nbt.getDouble("dailyMinedBlocks");
+			dailyThreatPoints = nbt.getDouble("dailyThreatPoints");
+			lastDailyQuestDay = nbt.contains("lastDailyQuestDay") ? nbt.getLong("lastDailyQuestDay") : Long.MIN_VALUE;
+			dailyCombatWaived = nbt.getBoolean("dailyCombatWaived");
 			DeathX = nbt.getDouble("DeathX");
 			DeathY = nbt.getDouble("DeathY");
 			DeathZ = nbt.getDouble("DeathZ");
@@ -1439,6 +1456,11 @@ public class SololevelingModVariables {
 					variables.dailysecrettrans = message.data.dailysecrettrans;
 					variables.dailytasks = message.data.dailytasks;
 					variables.dailytimer = message.data.dailytimer;
+					variables.dailyQuestSchema = message.data.dailyQuestSchema;
+					variables.dailyMinedBlocks = message.data.dailyMinedBlocks;
+					variables.dailyThreatPoints = message.data.dailyThreatPoints;
+					variables.lastDailyQuestDay = message.data.lastDailyQuestDay;
+					variables.dailyCombatWaived = message.data.dailyCombatWaived;
 					variables.DeathX = message.data.DeathX;
 					variables.DeathY = message.data.DeathY;
 					variables.DeathZ = message.data.DeathZ;

@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.init.SololevelingModParticleTypes;
 
 import net.minecraftforge.fml.common.Mod;
@@ -53,7 +54,7 @@ public class RushAttackProcedureProcedure {
 									entity);
 							if (_damageSource != null) {
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:fighter"))), entity),
-										(float) (4 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 20));
+										(float) (4 + TemporaryStatBonusManager.effectiveStrength(entity) / 20.0D));
 							}
 						}
 						entityiterator.setDeltaMovement(new Vec3((entity.getLookAngle().x * 2), (-1), (entity.getLookAngle().z * 2)));

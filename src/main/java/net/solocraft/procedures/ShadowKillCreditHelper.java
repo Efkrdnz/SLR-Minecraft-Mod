@@ -12,11 +12,11 @@ import net.minecraft.world.level.LevelAccessor;
 
 import java.util.UUID;
 
-final class ShadowKillCreditHelper {
+public final class ShadowKillCreditHelper {
 	private ShadowKillCreditHelper() {
 	}
 
-	static Player creditedPlayer(LevelAccessor world, Entity source) {
+	public static Player creditedPlayer(LevelAccessor world, Entity source) {
 		if (source == null)
 			return null;
 		if (source instanceof Player player)
@@ -37,12 +37,12 @@ final class ShadowKillCreditHelper {
 		return null;
 	}
 
-	static ServerPlayer creditedServerPlayer(LevelAccessor world, Entity source) {
+	public static ServerPlayer creditedServerPlayer(LevelAccessor world, Entity source) {
 		Player player = creditedPlayer(world, source);
 		return player instanceof ServerPlayer serverPlayer ? serverPlayer : null;
 	}
 
-	static Entity creditedSource(LevelAccessor world, Entity source) {
+	public static Entity creditedSource(LevelAccessor world, Entity source) {
 		Player player = creditedPlayer(world, source);
 		return player != null ? player : source;
 	}

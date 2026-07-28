@@ -1,9 +1,9 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.SololevelingMod;
+import net.solocraft.util.TemporaryStatBonusManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -63,7 +63,7 @@ public class DualWieldingDamageProcedure {
 							if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
 								_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 13, 5, false, false));
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.PLAYER_ATTACK), entity),
-									(float) (5 + Math.floor((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 40)));
+									(float) (5 + Math.floor(TemporaryStatBonusManager.effectiveStrength(entity) / 40.0D)));
 							if (world instanceof ServerLevel _level)
 								_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.CLEAVE.get()), (entityiterator.getX()), (entityiterator.getY() + entityiterator.getBbHeight() / 2), (entityiterator.getZ()), 1, 0.1, 0.3, 0.1,
 										0.1);

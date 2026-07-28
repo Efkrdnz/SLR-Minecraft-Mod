@@ -18,6 +18,7 @@ import net.solocraft.world.inventory.StoreGUIMenu;
 import net.solocraft.world.inventory.SpecialCraftingGUIMenu;
 import net.solocraft.world.inventory.ShopMenu;
 import net.solocraft.world.inventory.ShadowSummonGUIMenu;
+import net.solocraft.world.inventory.ShadowCustomizationMenu;
 import net.solocraft.world.inventory.ShadowDismissMenu;
 import net.solocraft.world.inventory.ShadowCommandMenu;
 import net.solocraft.world.inventory.ShadowGUIMenu;
@@ -74,6 +75,7 @@ public class SololevelingModMenus {
 	public static final RegistryObject<MenuType<ShopMenu>> SHOP = REGISTRY.register("shop", () -> IForgeMenuType.create(ShopMenu::new));
 	public static final RegistryObject<MenuType<FoodGuiMenu>> FOOD_GUI = REGISTRY.register("food_gui", () -> IForgeMenuType.create(FoodGuiMenu::new));
 	public static final RegistryObject<MenuType<ShadowSummonGUIMenu>> SHADOW_SUMMON_GUI = REGISTRY.register("shadow_summon_gui", () -> IForgeMenuType.create(ShadowSummonGUIMenu::new));
+	public static final RegistryObject<MenuType<ShadowCustomizationMenu>> SHADOW_CUSTOMIZATION = REGISTRY.register("shadow_customization", () -> IForgeMenuType.create(ShadowCustomizationMenu::new));
 	public static final RegistryObject<MenuType<ShadowDismissMenu>> SHADOW_DISMISS = REGISTRY.register("shadow_dismiss", () -> IForgeMenuType.create(ShadowDismissMenu::new));
 	public static final RegistryObject<MenuType<ShadowCommandMenu>> SHADOW_COMMAND = REGISTRY.register("shadow_command", () -> IForgeMenuType.create(ShadowCommandMenu::new));
 	public static final RegistryObject<MenuType<ReaderGUIMenu>> READER_GUI = REGISTRY.register("reader_gui", () -> IForgeMenuType.create(ReaderGUIMenu::new));

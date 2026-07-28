@@ -1,6 +1,5 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.level.LevelAccessor;
@@ -30,8 +29,7 @@ public class SLRPenaltyTriggerProcedure {
 			try {
 				for (Entity entityiterator : EntityArgument.getEntities(arguments, "name")) {
 					boolean keepSecret = DailyQuestHelper.isSecretQuest(entityiterator)
-							|| ((entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level >= 30
-									&& (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dailysecrettrans != 0);
+							|| DailyQuestHelper.canActivateSecretQuest(entityiterator);
 					DailyQuestHelper.sendQuestFailedChat(entityiterator);
 					DailyQuestHelper.resetDailyProgress(entityiterator);
 					if (keepSecret)

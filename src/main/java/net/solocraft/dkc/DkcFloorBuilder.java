@@ -122,6 +122,22 @@ public final class DkcFloorBuilder {
 	private DkcFloorBuilder() {
 	}
 
+	/**
+	 * Invalidates queued construction work and ready callbacks belonging to one
+	 * player. Queued server tasks may still wake up, but their canceled context
+	 * fails {@link #isContextCurrent(BuildContext)} before placing or finishing.
+	 */
+	public static void cancelPlayerBuilds(MinecraftServer server, UUID playerId) {
+		if (server == null || playerId == null)
+			return;
+		ACTIVE_BUILDS.forEach((key, context) -> {
+			if (key.server() == server && playerId.equals(key.player()))
+				cancelBuild(key, context);
+		});
+		OWNED_SPAWN_GUARDS.keySet().removeIf(key ->
+				key.server() == server && playerId.equals(key.player()));
+	}
+
 	public static void prepareFloor(ServerPlayer player, int floor) {
 		prepareFloor(player, floor, null, null);
 	}
@@ -244,6 +260,7 @@ public final class DkcFloorBuilder {
 			return;
 		}
 		try {
+			loadStepChunks(context.level, step.bounds);
 			if (step.clear)
 				clearAuthoredSpace(context.level, step.bounds);
 			else
@@ -254,6 +271,16 @@ public final class DkcFloorBuilder {
 			SololevelingMod.LOGGER.error("Failed to place DKC floor {} step {} for {}",
 					context.floor, stepName, context.player.getGameProfile().getName(), exception);
 		}
+	}
+
+	private static void loadStepChunks(ServerLevel level, BoundingBox bounds) {
+		int minChunkX = bounds.minX() >> 4;
+		int maxChunkX = bounds.maxX() >> 4;
+		int minChunkZ = bounds.minZ() >> 4;
+		int maxChunkZ = bounds.maxZ() >> 4;
+		for (int chunkX = minChunkX; chunkX <= maxChunkX; chunkX++)
+			for (int chunkZ = minChunkZ; chunkZ <= maxChunkZ; chunkZ++)
+				level.getChunk(chunkX, chunkZ);
 	}
 
 	private static void clearAuthoredSpace(ServerLevel level, BoundingBox bounds) {
@@ -344,10 +371,19 @@ public final class DkcFloorBuilder {
 		StructurePlaceSettings settings = placementSettings(placement, bounds);
 		// Client update without a neighbor-update storm; these authored districts
 		// contain no redstone logic that needs per-block propagation while placing.
-		template.placeInWorld(level, templateOrigin, templateOrigin, settings, level.random, 2);
+		if (!template.placeInWorld(level, templateOrigin, templateOrigin, settings,
+				level.random, 2))
+			throw new IllegalStateException("DKC structure placement wrote no blocks for "
+					+ placement.template + (bounds == null ? ""
+							: " in slice " + bounds));
 		for (StructureTemplate.StructureBlockInfo marker : template.filterBlocks(templateOrigin, settings, Blocks.STRUCTURE_BLOCK))
-			if (bounds == null || bounds.isInside(marker.pos()))
-				level.setBlock(marker.pos(), Blocks.AIR.defaultBlockState(), 2);
+			if (bounds == null || bounds.isInside(marker.pos())) {
+				boolean removed = level.setBlock(marker.pos(),
+						Blocks.AIR.defaultBlockState(), 2);
+				if (!removed && !level.isEmptyBlock(marker.pos()))
+					throw new IllegalStateException("Could not remove DKC structure marker at "
+							+ marker.pos().toShortString());
+			}
 	}
 
 	private static StructurePlaceSettings placementSettings(Placement placement,

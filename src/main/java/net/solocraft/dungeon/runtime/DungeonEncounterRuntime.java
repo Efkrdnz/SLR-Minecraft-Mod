@@ -1,9 +1,12 @@
 package net.solocraft.dungeon.runtime;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.dungeon.ProceduralDungeonCompletionHandler;
 import net.solocraft.dungeon.data.DungeonDataTypes.IntRange;
 import net.solocraft.dungeon.data.MobPoolResolver;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.procedures.ShadowKillCreditHelper;
+import net.solocraft.util.CartenonTempleManager;
 import net.solocraft.util.EntityHighlightSystem;
 import net.solocraft.util.SystemNotifications;
 
@@ -26,6 +29,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,10 +55,13 @@ public final class DungeonEncounterRuntime {
 		if (event.phase != TickEvent.Phase.END || ++tickCounter % ACTIVATION_INTERVAL != 0)
 			return;
 		MinecraftServer server = event.getServer();
+		ProceduralDungeonCompletionHandler.migrateLegacyUnscopedRuns(server);
 		DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(server);
 		for (DungeonInstanceSavedData.Instance instance : registry.listInstances()) {
-			if (instance.completed())
+			if (instance.completed()) {
+				ensureDeferredReturnPortal(server, instance);
 				continue;
+			}
 			ServerLevel level = server.getLevel(instance.dimension());
 			if (level == null)
 				continue;
@@ -83,6 +90,7 @@ public final class DungeonEncounterRuntime {
 					RETRY_AFTER.put(retryKey, level.getGameTime() + FAILED_ACTIVATION_RETRY_TICKS);
 			}
 		}
+		ProceduralDungeonCompletionHandler.ensureUnscopedReturnPortals(server);
 	}
 
 	/**
@@ -262,7 +270,8 @@ public final class DungeonEncounterRuntime {
 		if (encounter.sequenced())
 			scheduleNextWave(level, instance, encounter);
 		if (encounter.boss() && completionRequirementsMet(instance))
-			completeInstance(level.getServer(), instance);
+			completeInstance(level.getServer(), instance, entity,
+					event.getSource().getEntity());
 	}
 
 	private static void scheduleNextWave(ServerLevel level, DungeonInstanceSavedData.Instance instance,
@@ -300,9 +309,19 @@ public final class DungeonEncounterRuntime {
 	/** Removes persistent orphan mobs when an old instance/chunk is loaded again. */
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public static void onEntityJoin(EntityJoinLevelEvent event) {
-		if (event.getLevel().isClientSide() || !(event.getEntity() instanceof LivingEntity entity)
-				|| !entity.getPersistentData().getBoolean(DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG)
+		if (event.getLevel().isClientSide()
 				|| !(event.getLevel() instanceof ServerLevel level))
+			return;
+		if (ProceduralDungeonCompletionHandler.isDuplicateReturnPortal(
+				level, event.getEntity())
+				|| ProceduralDungeonCompletionHandler.isObsoleteScopedReturnPortal(
+						level, event.getEntity())) {
+			event.setCanceled(true);
+			event.getEntity().discard();
+			return;
+		}
+		if (!(event.getEntity() instanceof LivingEntity entity)
+				|| !entity.getPersistentData().getBoolean(DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG))
 			return;
 		String instanceText = entity.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG);
 		String encounterKey = entity.getPersistentData().getString(DungeonMobLevelAdapter.ENCOUNTER_TAG);
@@ -366,11 +385,49 @@ public final class DungeonEncounterRuntime {
 		return true;
 	}
 
-	private static void completeInstance(MinecraftServer server, DungeonInstanceSavedData.Instance instance) {
+	private static void completeInstance(MinecraftServer server,
+			DungeonInstanceSavedData.Instance instance, @Nullable LivingEntity defeatedBoss,
+			@Nullable Entity damageSource) {
 		if (!instance.setCompleted(true))
 			return;
 		clearInstanceHighlights(server, instance);
 		ServerLevel level = server.getLevel(instance.dimension());
+		boolean managedExit = instance.returnPortalDeferred()
+				|| SnowRedGateArenaManager.isArenaInstance(instance);
+		if (level != null && defeatedBoss != null && managedExit) {
+			boolean bossCreatedExit = instance.returnPortalDeferred();
+			BlockPos exitPosition = bossCreatedExit
+					? defeatedBoss.blockPosition()
+					: instance.exit().orElseGet(defeatedBoss::blockPosition);
+			if (bossCreatedExit)
+				instance.setExit(exitPosition);
+			String dungeonTag = completionDungeonTag(server, instance, defeatedBoss);
+			Entity creditedSource = ShadowKillCreditHelper.creditedSource(level, damageSource);
+			Optional<List<ServerPlayer>> exactParticipants =
+					activeInstanceParticipants(server, level, instance);
+			boolean cartenonSpawned = exactParticipants.isPresent()
+					&& CartenonTempleManager.onDungeonBossDefeated(
+							level, defeatedBoss, creditedSource, dungeonTag,
+							exactParticipants.get());
+			instance.setReturnPortalSuppressed(cartenonSpawned);
+			if (cartenonSpawned)
+				ProceduralDungeonCompletionHandler.chooseCartenonExit(level, dungeonTag);
+			if (cartenonSpawned) {
+				ProceduralDungeonCompletionHandler.discardMatchingReturnPortals(
+						level, instance.id(), dungeonTag);
+				ProceduralDungeonCompletionHandler.markExitHandled(defeatedBoss);
+			} else {
+				boolean portalReady = ProceduralDungeonCompletionHandler
+						.reconcileReturnPortal(level, instance.id(), dungeonTag,
+								exitPosition)
+						|| ProceduralDungeonCompletionHandler.spawnScopedReturnPortal(
+								level, exitPosition,
+								instance.exitFacing().orElse(null), instance,
+								dungeonTag);
+				if (portalReady)
+					ProceduralDungeonCompletionHandler.markExitHandled(defeatedBoss);
+			}
+		}
 		for (DungeonInstanceSavedData.EncounterState encounter : instance.encounters()) {
 			RETRY_AFTER.remove(retryKey(instance, encounter));
 			MISSING_SINCE.remove(retryKey(instance, encounter));
@@ -393,6 +450,68 @@ public final class DungeonEncounterRuntime {
 					Component.literal("Boss defeated."));
 		}
 		SololevelingMod.LOGGER.info("Completed dungeon instance {} ({})", instance.id(), instance.dungeonId());
+	}
+
+	/**
+	 * Cartenon may replace the only exit only when every authoritative participant
+	 * is present and can be granted access to that same hidden gate.
+	 */
+	private static Optional<List<ServerPlayer>> activeInstanceParticipants(MinecraftServer server,
+			ServerLevel level, DungeonInstanceSavedData.Instance instance) {
+		if (instance.participants().isEmpty())
+			return Optional.empty();
+		String instanceText = instance.id().toString();
+		List<ServerPlayer> participants = new ArrayList<>();
+		for (UUID participantId : instance.participants()) {
+			ServerPlayer participant = server.getPlayerList().getPlayer(participantId);
+			if (participant == null || participant.serverLevel() != level
+					|| !instanceText.equals(participant.getPersistentData().getString(
+							DungeonMobLevelAdapter.INSTANCE_TAG)))
+				return Optional.empty();
+			participants.add(participant);
+		}
+		return Optional.of(List.copyOf(participants));
+	}
+
+	private static void ensureDeferredReturnPortal(MinecraftServer server,
+			DungeonInstanceSavedData.Instance instance) {
+		if (!instance.returnPortalDeferred() || instance.returnPortalSuppressed()
+				|| SnowRedGateArenaManager.isArenaInstance(instance))
+			return;
+		ServerLevel level = server.getLevel(instance.dimension());
+		BlockPos exit = instance.exit().orElse(null);
+		if (level == null || exit == null || !level.hasChunkAt(exit))
+			return;
+		boolean participantPresent = level.players().stream().anyMatch(player ->
+				instance.participants().contains(player.getUUID())
+						&& instance.id().toString().equals(player.getPersistentData()
+								.getString(DungeonMobLevelAdapter.INSTANCE_TAG)));
+		if (!participantPresent || ProceduralDungeonCompletionHandler.reconcileReturnPortal(
+				level, instance.id(), "", exit))
+			return;
+		String dungeonTag = completionDungeonTag(server, instance, null);
+		ProceduralDungeonCompletionHandler.spawnScopedReturnPortal(level, exit,
+				instance.exitFacing().orElse(null), instance, dungeonTag);
+	}
+
+	private static String completionDungeonTag(MinecraftServer server,
+			DungeonInstanceSavedData.Instance instance, @Nullable Entity boss) {
+		if (boss != null) {
+			String bossTag = boss.getPersistentData().getString(
+					DungeonMobLevelAdapter.LEGACY_DUNGEON_TAG);
+			if (!bossTag.isBlank())
+				return bossTag;
+		}
+		for (UUID participantId : instance.participants()) {
+			ServerPlayer participant = server.getPlayerList().getPlayer(participantId);
+			if (participant == null)
+				continue;
+			String participantTag = participant.getPersistentData().getString(
+					DungeonMobLevelAdapter.LEGACY_DUNGEON_TAG);
+			if (!participantTag.isBlank())
+				return participantTag;
+		}
+		return instance.id().toString();
 	}
 
 	private static void setBossKilledCompatibility(ServerPlayer player) {

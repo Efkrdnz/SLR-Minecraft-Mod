@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.StoryModeIntroManager;
 import net.solocraft.util.SystemNotifications;
 import net.solocraft.entity.KamishEntity;
 import net.solocraft.entity.GoblinKingEntity;
@@ -44,6 +45,12 @@ public class RewardGainAdvProcedure {
 
 	private static void execute(@Nullable Event event, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
+			return;
+		// The Ancient Golem in the Story Mode prologue is a narrative encounter,
+		// not a repeatable reward boss. Its normal reward bundle otherwise
+		// remains pending until the player accepts the System, making those
+		// rewards appear to come from becoming a Player.
+		if (StoryModeIntroManager.isIntroActive(entity))
 			return;
 		boolean runtimeSpawn = entity.getPersistentData().getBoolean(
 				net.solocraft.dungeon.runtime.DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG);

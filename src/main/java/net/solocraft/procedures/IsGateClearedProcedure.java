@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.GateCompletionTokens;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -28,25 +29,23 @@ public class IsGateClearedProcedure {
 	}
 
 	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity) {
-		if (entity == null)
+		if (entity == null || entity.level().isClientSide() || entity.tickCount % 20 != 0)
 			return;
-		String uuid = "";
-		if (world.dayTime() % 20 == 0) {
-			if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals")))) {
-				if (SololevelingModVariables.MapVariables.get(world).GatesCleared.contains(entity.getStringUUID())) {
-					if (entity.getPersistentData().getBoolean("slr_is_red_gate")) {
-						SololevelingModVariables.MapVariables.get(world).RedGate = world.getServer() != null
-								&& SnowRedGateArenaManager.hasActiveArena(world.getServer());
-					}
-					if (!entity.level().isClientSide())
-						entity.discard();
-					SololevelingModVariables.MapVariables.get(world).GatesCleared = SololevelingModVariables.MapVariables.get(world).GatesCleared.replace(entity.getStringUUID(), "");
-					SololevelingModVariables.MapVariables.get(world).syncData(world);
-				}
-			}
-			if (!(entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).dungeoning) {
-				entity.getPersistentData().putString("dungeon_tag", "");
-			}
+
+		if (!entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals"))))
+			return;
+
+		SololevelingModVariables.MapVariables variables = SololevelingModVariables.MapVariables.get(world);
+		String gateId = entity.getStringUUID();
+		if (!GateCompletionTokens.contains(variables.GatesCleared, gateId))
+			return;
+
+		if (entity.getPersistentData().getBoolean("slr_is_red_gate")) {
+			variables.RedGate = world.getServer() != null
+					&& SnowRedGateArenaManager.hasActiveArena(world.getServer());
 		}
+		entity.discard();
+		variables.GatesCleared = GateCompletionTokens.remove(variables.GatesCleared, gateId);
+		variables.syncData(world);
 	}
 }

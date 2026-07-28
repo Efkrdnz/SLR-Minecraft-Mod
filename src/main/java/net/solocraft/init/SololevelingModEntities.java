@@ -68,6 +68,7 @@ import net.solocraft.entity.PortalCemeteryEntity;
 import net.solocraft.entity.PortalBeruEntity;
 import net.solocraft.entity.PortalAncientGolemEntity;
 import net.solocraft.entity.Portal1Entity;
+import net.solocraft.entity.DatapackGateEntity;
 import net.solocraft.entity.Portal12Entity;
 import net.solocraft.entity.PolarBearEntity;
 import net.solocraft.entity.OrcShadowEntity;
@@ -376,6 +377,9 @@ public class SololevelingModEntities {
 			EntityType.Builder.<PortalEntity>of(PortalEntity::new, MobCategory.CREATURE).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(PortalEntity::new).fireImmune().sized(0.6f, 1.8f));
 	public static final RegistryObject<EntityType<Portal1Entity>> PORTAL_1 = register("portal_1",
 			EntityType.Builder.<Portal1Entity>of(Portal1Entity::new, MobCategory.CREATURE).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(Portal1Entity::new).fireImmune().sized(0.6f, 1.8f));
+	public static final RegistryObject<EntityType<DatapackGateEntity>> DATAPACK_GATE = register("datapack_gate",
+			EntityType.Builder.<DatapackGateEntity>of(DatapackGateEntity::new, MobCategory.CREATURE).setShouldReceiveVelocityUpdates(true).setTrackingRange(64).setUpdateInterval(3)
+					.setCustomClientFactory(DatapackGateEntity::new).fireImmune().sized(0.6f, 1.8f));
 	public static final RegistryObject<EntityType<SpawnerPortalEntity>> SPAWNER_PORTAL = register("spawner_portal", EntityType.Builder.<SpawnerPortalEntity>of(SpawnerPortalEntity::new, MobCategory.CREATURE).setShouldReceiveVelocityUpdates(true)
 			.setTrackingRange(64).setUpdateInterval(3).setCustomClientFactory(SpawnerPortalEntity::new).fireImmune().sized(0.6f, 1.8f));
 	public static final RegistryObject<EntityType<Portal12Entity>> PORTAL_12 = register("portal_12",
@@ -778,6 +782,7 @@ public class SololevelingModEntities {
 		event.put(PORTAL_ANCIENT_GOLEM.get(), PortalAncientGolemEntity.createAttributes().build());
 		event.put(PORTAL.get(), PortalEntity.createAttributes().build());
 		event.put(PORTAL_1.get(), Portal1Entity.createAttributes().build());
+		event.put(DATAPACK_GATE.get(), Portal1Entity.createAttributes().build());
 		event.put(SPAWNER_PORTAL.get(), SpawnerPortalEntity.createAttributes().build());
 		event.put(PORTAL_12.get(), Portal12Entity.createAttributes().build());
 		event.put(PORTAL_SEWERS.get(), PortalSewersEntity.createAttributes().build());

@@ -1,20 +1,21 @@
 package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModParticleTypes;
-import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.particles.SimpleParticleType;
 
-import java.util.List;
-import java.util.Comparator;
-
 public class ShamanMagicWhileProjectileFlyingTickProcedure {
+	private static final double HOMING_SPEED = 0.25D;
+	private static final double HOMING_TURN_WEIGHT = 0.35D;
+	private static final int HOMING_TICKS = 40;
+	private static final int MAX_LIFETIME_TICKS = 100;
+
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, Entity immediatesourceentity) {
 		if (entity == null || immediatesourceentity == null)
 			return;
@@ -22,26 +23,21 @@ public class ShamanMagicWhileProjectileFlyingTickProcedure {
 		if (world instanceof ServerLevel _level)
 			_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.SHAMAN_MAGIC_PARTICLE.get()), (immediatesourceentity.getX()), (immediatesourceentity.getY()), (immediatesourceentity.getZ()), 2, 0.05, 0.05, 0.05, 0);
 		immediatesourceentity.getPersistentData().putDouble("life", (immediatesourceentity.getPersistentData().getDouble("life") + 1));
-		if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
-			if (immediatesourceentity.getPersistentData().getDouble("life") <= 40) {
-				{
-					final Vec3 _center = new Vec3(x, y, z);
-					List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(40 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
-					for (Entity entityiterator : _entfound) {
-						if ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == entityiterator) {
-							immediatesourceentity.getPersistentData().putDouble("delta", Math.sqrt(Math.pow(entityiterator.getX() - immediatesourceentity.getX(), 2)
-									+ Math.pow((entityiterator.getY() + entityiterator.getBbHeight()) - immediatesourceentity.getY(), 2) + Math.pow(entityiterator.getZ() - immediatesourceentity.getZ(), 2)));
-							SololevelingMod.queueServerWork(20, () -> {
-								immediatesourceentity.setDeltaMovement(new Vec3(((entityiterator.getX() - immediatesourceentity.getX()) / (4 * immediatesourceentity.getPersistentData().getDouble("delta"))),
-										(((entityiterator.getY() + entityiterator.getBbHeight()) - immediatesourceentity.getY()) / (4 * immediatesourceentity.getPersistentData().getDouble("delta"))),
-										((entityiterator.getZ() - immediatesourceentity.getZ()) / (4 * immediatesourceentity.getPersistentData().getDouble("delta")))));
-							});
-						}
-					}
-				}
+		LivingEntity target = entity instanceof Mob mob ? mob.getTarget() : null;
+		if (immediatesourceentity.getPersistentData().getDouble("life") <= HOMING_TICKS
+				&& target != null && target.isAlive()) {
+			Vec3 toTarget = new Vec3(target.getX(), target.getY() + target.getBbHeight() * 0.65D, target.getZ())
+					.subtract(immediatesourceentity.position());
+			if (toTarget.lengthSqr() > 1.0E-6D) {
+				Vec3 desiredVelocity = toTarget.normalize().scale(HOMING_SPEED);
+				Vec3 currentVelocity = immediatesourceentity.getDeltaMovement();
+				Vec3 steeredVelocity = currentVelocity.scale(1.0D - HOMING_TURN_WEIGHT)
+						.add(desiredVelocity.scale(HOMING_TURN_WEIGHT));
+				if (steeredVelocity.lengthSqr() > 1.0E-6D)
+					immediatesourceentity.setDeltaMovement(steeredVelocity.normalize().scale(HOMING_SPEED));
 			}
 		}
-		if (immediatesourceentity.getPersistentData().getDouble("life") >= 100) {
+		if (immediatesourceentity.getPersistentData().getDouble("life") >= MAX_LIFETIME_TICKS) {
 			if (!immediatesourceentity.level().isClientSide())
 				immediatesourceentity.discard();
 		}

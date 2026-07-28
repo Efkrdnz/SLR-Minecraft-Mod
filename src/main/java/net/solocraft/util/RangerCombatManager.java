@@ -122,6 +122,21 @@ public final class RangerCombatManager {
 	private RangerCombatManager() {
 	}
 
+	/**
+	 * Clears one player's scheduled Ranger attacks and transient targeting UI.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null)
+			return;
+		clearScheduledAttacks(player.getUUID());
+		clearLock(player);
+		clearMark(player);
+		EntityHighlightSystem.clearSource(player, HAWKEYE_SOURCE);
+		EntityHighlightSystem.clearSource(player, MARK_SOURCE);
+		player.getPersistentData().remove(HAWKEYE_UNTIL);
+		syncEmptyClient(player);
+	}
+
 	public static boolean isRangerSkill(String skill) {
 		return CORE_SKILLS.contains(skill) || LEGACY_PROXIMITY_TRAP.equals(skill);
 	}

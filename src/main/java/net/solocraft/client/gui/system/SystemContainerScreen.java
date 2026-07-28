@@ -169,11 +169,30 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 				reveal = 1.0f - eased;
 				if (raw >= 1.0f && !closed) {
 					closed = true;
+					onBeforeCloseAnimationFinished();
 					if (this.minecraft != null && this.minecraft.player != null)
 						this.minecraft.player.closeContainer();
+					onCloseAnimationFinished();
 				}
 			}
 		}
+	}
+
+	/**
+	 * Called after the collapse animation has closed the client container.
+	 * Subclasses can defer a server action or screen transition until this point
+	 * so neither operation cuts the animation short.
+	 */
+	protected void onCloseAnimationFinished() {
+	}
+
+	/**
+	 * Runs at the collapsed frame immediately before the local close-container
+	 * packet. Screens with a server action that requires their menu to remain
+	 * open can enqueue it here; connection packet ordering keeps that action
+	 * ahead of the ordinary close packet.
+	 */
+	protected void onBeforeCloseAnimationFinished() {
 	}
 
 	private void setWidgetsVisible(boolean visible) {
@@ -213,10 +232,12 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 		g.disableScissor();
 
 		if (reveal < 1.0f) {
-			g.fill(sx0, top, sx1, top + 1, ACCENT);
-			g.fill(sx0, bottom - 1, sx1, bottom, ACCENT);
-			g.fill(sx0, top + 1, sx1, top + 2, ACCENT_SOFT);
-			g.fill(sx0, bottom - 2, sx1, bottom - 1, ACCENT_SOFT);
+			int accent = revealAccent();
+			int accentSoft = revealAccentSoft();
+			g.fill(sx0, top, sx1, top + 1, accent);
+			g.fill(sx0, bottom - 1, sx1, bottom, accent);
+			g.fill(sx0, top + 1, sx1, top + 2, accentSoft);
+			g.fill(sx0, bottom - 2, sx1, bottom - 1, accentSoft);
 		}
 
 		if (state == State.OPEN) {
@@ -246,23 +267,26 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 
 	// ── background ─────────────────────────────────────────────────────────────
 
-	private void drawShaderBackground(GuiGraphics g, int ax, int ay, int mouseX, int mouseY) {
+	/**
+	 * Draws the contained animated background. Theme-specific container screens
+	 * can swap the shader and its uniforms without duplicating the responsive
+	 * reveal, clipping, or input plumbing supplied by this base class.
+	 */
+	protected void drawShaderBackground(GuiGraphics g, int ax, int ay, int mouseX, int mouseY) {
 		float localX = clamp01((mouseX - ax) / (float) pW);
 		float localY = clamp01((mouseY - ay) / (float) pH);
 
-		ShaderInstance shader = SystemBackgroundRenderTypes.get();
+		ShaderInstance shader = backgroundShader();
 		if (shader == null) {
-			g.fillGradient(ax, ay, ax + pW, ay + pH, 0xF0060D1F, 0xF0010209);
+			renderBackgroundFallback(g, ax, ay, localX, localY);
 			return;
 		}
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 		RenderSystem.disableCull();
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-		RenderSystem.setShader(SystemBackgroundRenderTypes::get);
-		AbstractUniform mouse = shader.safeGetUniform("MousePos");
-		mouse.set(localX, localY);
-		shader.safeGetUniform("MouseGlitch").set(1.0f);
+		RenderSystem.setShader(this::backgroundShader);
+		configureBackgroundShader(shader, localX, localY);
 
 		Matrix4f matrix = g.pose().last().pose();
 		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
@@ -278,7 +302,33 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 	}
 
-	private static float clamp01(float v) {
+	/** Shader used by this container theme, or {@code null} for the Java fallback. */
+	protected ShaderInstance backgroundShader() {
+		return SystemBackgroundRenderTypes.get();
+	}
+
+	/** Supplies theme-specific uniforms immediately before the background quad. */
+	protected void configureBackgroundShader(ShaderInstance shader, float localX, float localY) {
+		AbstractUniform mouse = shader.safeGetUniform("MousePos");
+		mouse.set(localX, localY);
+		shader.safeGetUniform("MouseGlitch").set(1.0f);
+	}
+
+	/** Pure-Java background used when the selected shader cannot be loaded. */
+	protected void renderBackgroundFallback(GuiGraphics g, int ax, int ay, float localX, float localY) {
+		g.fillGradient(ax, ay, ax + pW, ay + pH, 0xF0060D1F, 0xF0010209);
+	}
+
+	/** Bright seams used by the vertical open/close reveal. */
+	protected int revealAccent() {
+		return ACCENT;
+	}
+
+	protected int revealAccentSoft() {
+		return ACCENT_SOFT;
+	}
+
+	protected static float clamp01(float v) {
 		return v < 0f ? 0f : (v > 1f ? 1f : v);
 	}
 }

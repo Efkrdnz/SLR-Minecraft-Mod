@@ -52,11 +52,16 @@ import net.minecraft.nbt.CompoundTag;
 import javax.annotation.Nullable;
 
 public class StatueOfGodEntity extends Monster implements GeoEntity {
+	private static final String STORY_STATUE_TAG = "slr_story_intro_statue";
+	private static final String STORY_INSTANCE_TAG = "slr_story_intro_instance";
+	private static final String STORY_OWNER_TAG = "slr_story_intro_owner";
+	private static final String STORY_HUNTER_TAG = "slr_story_intro_hunter";
 	public static final EntityDataAccessor<Boolean> SHOOT = SynchedEntityData.defineId(StatueOfGodEntity.class, EntityDataSerializers.BOOLEAN);
 	public static final EntityDataAccessor<String> ANIMATION = SynchedEntityData.defineId(StatueOfGodEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> TEXTURE = SynchedEntityData.defineId(StatueOfGodEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> DATA_state = SynchedEntityData.defineId(StatueOfGodEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<Boolean> DATA_smiled = SynchedEntityData.defineId(StatueOfGodEntity.class, EntityDataSerializers.BOOLEAN);
+	public static final EntityDataAccessor<Boolean> DATA_story_upright = SynchedEntityData.defineId(StatueOfGodEntity.class, EntityDataSerializers.BOOLEAN);
 	public static final EntityDataAccessor<Integer> DATA_default_x = SynchedEntityData.defineId(StatueOfGodEntity.class, EntityDataSerializers.INT);
 	public static final EntityDataAccessor<Integer> DATA_default_y = SynchedEntityData.defineId(StatueOfGodEntity.class, EntityDataSerializers.INT);
 	public static final EntityDataAccessor<Integer> DATA_default_z = SynchedEntityData.defineId(StatueOfGodEntity.class, EntityDataSerializers.INT);
@@ -86,6 +91,7 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 		this.entityData.define(TEXTURE, "statue_of_god");
 		this.entityData.define(DATA_state, "throne");
 		this.entityData.define(DATA_smiled, true);
+		this.entityData.define(DATA_story_upright, false);
 		this.entityData.define(DATA_default_x, 0);
 		this.entityData.define(DATA_default_y, 0);
 		this.entityData.define(DATA_default_z, 0);
@@ -109,14 +115,48 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 		super.registerGoals();
 		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, false) {
 			@Override
+			public boolean canUse() {
+				return !StatueOfGodEntity.this.isStoryIntroStatue()
+						&& super.canUse();
+			}
+
+			@Override
+			public boolean canContinueToUse() {
+				return !StatueOfGodEntity.this.isStoryIntroStatue()
+						&& super.canContinueToUse();
+			}
+
+			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
 				return 25;
 			}
 		});
 	}
 
+	public boolean isStoryIntroStatue() {
+		return this.getPersistentData().getBoolean(STORY_STATUE_TAG);
+	}
+
 	private boolean isValidCombatTarget(LivingEntity candidate) {
+		if (this.getPersistentData().getBoolean(STORY_STATUE_TAG))
+			return isValidStoryCombatTarget(candidate);
 		return candidate instanceof Player player && player.isAlive() && !player.isCreative() && !player.isSpectator();
+	}
+
+	private boolean isValidStoryCombatTarget(LivingEntity candidate) {
+		if (candidate == null || !candidate.isAlive())
+			return false;
+
+		CompoundTag statueData = this.getPersistentData();
+		if (candidate instanceof HunterEntity hunter) {
+			CompoundTag hunterData = hunter.getPersistentData();
+			return hunterData.getBoolean(STORY_HUNTER_TAG)
+					&& hunterData.getInt(STORY_INSTANCE_TAG) == statueData.getInt(STORY_INSTANCE_TAG);
+		}
+		if (!(candidate instanceof Player player) || player.isCreative() || player.isSpectator()
+				|| !statueData.hasUUID(STORY_OWNER_TAG))
+			return false;
+		return player.getUUID().equals(statueData.getUUID(STORY_OWNER_TAG));
 	}
 
 	@Override
@@ -171,6 +211,7 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 		compound.putString("Texture", this.getTexture());
 		compound.putString("Datastate", this.entityData.get(DATA_state));
 		compound.putBoolean("Datasmiled", this.entityData.get(DATA_smiled));
+		compound.putBoolean("DataStoryUpright", this.entityData.get(DATA_story_upright));
 		compound.putInt("Datadefault_x", this.entityData.get(DATA_default_x));
 		compound.putInt("Datadefault_y", this.entityData.get(DATA_default_y));
 		compound.putInt("Datadefault_z", this.entityData.get(DATA_default_z));
@@ -185,6 +226,8 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 			this.entityData.set(DATA_state, compound.getString("Datastate"));
 		if (compound.contains("Datasmiled"))
 			this.entityData.set(DATA_smiled, compound.getBoolean("Datasmiled"));
+		if (compound.contains("DataStoryUpright"))
+			this.entityData.set(DATA_story_upright, compound.getBoolean("DataStoryUpright"));
 		if (compound.contains("Datadefault_x"))
 			this.entityData.set(DATA_default_x, compound.getInt("Datadefault_x"));
 		if (compound.contains("Datadefault_y"))
@@ -254,7 +297,9 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	private PlayState movementPredicate(AnimationState event) {
 		if (this.animationprocedure.equals("empty")) {
 			String state = this.entityData.get(DATA_state);
-			if (state.equals("aggresive")) {
+			boolean storyWakeFinished = state.equals("waking")
+					&& this.entityData.get(DATA_story_upright);
+			if (state.equals("aggresive") || storyWakeFinished) {
 				if (isActuallyMoving()) {
 					return event.setAndContinue(RawAnimation.begin().thenLoop("walk"));
 				}

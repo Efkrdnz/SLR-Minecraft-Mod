@@ -66,7 +66,7 @@ public class QuestsScreen extends AbstractContainerScreen<QuestsMenu> {
 
 	private Component dkcButtonTooltip() {
 		if (entity != null && DkcFloorRegistry.isDkc(entity.level())) {
-			return Component.literal("Return to the Overworld");
+			return Component.literal("Open the Castle Tower");
 		}
 		if (DkcQuestManager.hasRadiruCastleAccess(entity)) {
 			return Component.literal("Travel to Radiru Castle");

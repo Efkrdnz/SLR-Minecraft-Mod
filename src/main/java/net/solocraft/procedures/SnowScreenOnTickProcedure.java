@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.util.TemporaryStatBonusManager;
 
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -65,7 +66,7 @@ public class SnowScreenOnTickProcedure {
 													? _teamEnt.level().getScoreboard().getPlayersTeam(_teamEnt instanceof Player _pl ? _pl.getGameProfile().getName() : _teamEnt.getStringUUID()).getName()
 													: "").equals(""))) {
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.PLAYER_ATTACK), entity),
-										(float) (3 + ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength
+										(float) (3 + (TemporaryStatBonusManager.effectiveStrength(entity)
 												+ (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence) / 25));
 								if (!(entity instanceof LivingEntity _livEnt22 && _livEnt22.hasEffect(SololevelingModMobEffects.FREEZE.get()))) {
 									if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())

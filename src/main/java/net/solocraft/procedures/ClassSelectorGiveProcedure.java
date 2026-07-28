@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.util.DungeonBuilderMode;
+import net.solocraft.util.StoryModeIntroManager;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.fml.common.Mod;
@@ -38,6 +39,9 @@ public class ClassSelectorGiveProcedure {
 		if (entity == null)
 			return;
 		if (DungeonBuilderMode.isActive(world))
+			return;
+		if (entity instanceof ServerPlayer player
+				&& StoryModeIntroManager.shouldSuppressClassSelection(player))
 			return;
 		if (!(entity instanceof ServerPlayer _plr0 && _plr0.level() instanceof ServerLevel && _plr0.getAdvancements().getOrStartProgress(_plr0.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:awakened"))).isDone())) {
 			if (entity instanceof ServerPlayer _player) {

@@ -126,6 +126,12 @@ public final class VesselSelectionScreen extends SystemScreen {
 	}
 
 	@Override
+	protected boolean allowsNonSystemAccess() {
+		// Vessel selection can be authorized independently of System awakening.
+		return true;
+	}
+
+	@Override
 	public void onClose() {
 		// Reconnect/tick recovery also reopens the choice if another mod closes it.
 	}

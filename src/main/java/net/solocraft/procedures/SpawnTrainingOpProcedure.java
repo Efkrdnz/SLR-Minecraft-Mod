@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.daily.DailyQuestObjectiveManager;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.player.Player;
@@ -28,6 +29,9 @@ public class SpawnTrainingOpProcedure {
 			if (world instanceof ServerLevel _level) {
 				Entity entityToSpawn = SololevelingModEntities.TRAINING_BOT.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 				if (entityToSpawn != null) {
+					entityToSpawn.getPersistentData().putUUID(
+							DailyQuestObjectiveManager.SYSTEM_TRAINING_OWNER_TAG,
+							entity.getUUID());
 					entityToSpawn.setYRot(world.getRandom().nextFloat() * 360F);
 				}
 			}

@@ -38,10 +38,15 @@ public class PortalPerTickProcedure {
 			}
 			if (!entity.level().isClientSide())
 				entity.discard();
+			// Datapack gates have no built-in breach roster. Let an expired authored
+			// gate vanish cleanly instead of borrowing Portal1's procedural mobs or
+			// its anti-repeat break memory.
+			if (entity.getType() == SololevelingModEntities.DATAPACK_GATE.get())
+				return;
 			if (world.getLevelData().getGameRules().getBoolean(SololevelingModGameRules.SOLO_DUNGEON_BREAK)) {
 				if (!GateBreakChanceProcedure.shouldBreak(world, entity))
 					return;
-				if (entity instanceof Portal1Entity) {
+				if (entity.getType() == SololevelingModEntities.PORTAL_1.get()) {
 					if (world instanceof ServerLevel _level) {
 						Entity entityToSpawn = SololevelingModEntities.GOBLIN_CLUB.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 						if (entityToSpawn != null) {

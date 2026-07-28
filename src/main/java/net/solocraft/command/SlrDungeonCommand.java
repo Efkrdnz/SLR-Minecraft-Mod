@@ -7,7 +7,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import net.solocraft.dungeon.data.DungeonDataManager;
 import net.solocraft.dungeon.data.DungeonDataTypes;
 import net.solocraft.dungeon.data.MobPoolResolver;
-import net.solocraft.dungeon.ProceduralDungeonGateHandler;
 import net.solocraft.dungeon.runtime.DungeonInstanceSavedData;
 import net.solocraft.dungeon.runtime.DungeonRuntimeGenerator;
 import net.solocraft.dungeon.runtime.DungeonEncounterRuntime;
@@ -27,7 +26,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.Level;
 
@@ -76,10 +74,6 @@ public final class SlrDungeonCommand {
 										.executes(context -> testPool(context.getSource().getPlayerOrException(),
 												ResourceLocationArgument.getId(context, "pool"),
 												IntegerArgumentType.getInteger(context, "level"))))));
-		var bindGate = Commands.literal("bindgate")
-				.then(Commands.argument("dungeon", ResourceLocationArgument.id())
-						.executes(context -> bindGate(context.getSource().getPlayerOrException(),
-								ResourceLocationArgument.getId(context, "dungeon"))));
 		var encounter = Commands.literal("encounter")
 				.then(Commands.literal("reset")
 						.then(Commands.argument("instance_uuid", StringArgumentType.word())
@@ -105,9 +99,6 @@ public final class SlrDungeonCommand {
 				.then(Commands.literal("portal").then(Commands.argument("instance_uuid", StringArgumentType.word())
 						.executes(context -> repairPortal(context.getSource().getPlayerOrException(),
 								StringArgumentType.getString(context, "instance_uuid")))))
-				.then(bindGate)
-				.then(Commands.literal("unbindgate").then(Commands.literal("confirm")
-						.executes(context -> unbindGate(context.getSource().getPlayerOrException()))))
 				.then(Commands.literal("enter").then(Commands.argument("uuid", StringArgumentType.word())
 						.executes(context -> enter(context.getSource().getPlayerOrException(),
 								StringArgumentType.getString(context, "uuid")))))
@@ -128,7 +119,6 @@ public final class SlrDungeonCommand {
 		player.sendSystemMessage(Component.literal("/slrdungeon encounter reset <instance-uuid> <encounter-key> confirm — recover a stuck wave").withStyle(ChatFormatting.GRAY));
 		player.sendSystemMessage(Component.literal("/slrdungeon portal <instance-uuid> — create or repair its return portal").withStyle(ChatFormatting.GRAY));
 		player.sendSystemMessage(Component.literal("/slrdungeon pool test <namespace:id> <dungeon-level>").withStyle(ChatFormatting.GRAY));
-		player.sendSystemMessage(Component.literal("/slrdungeon bindgate <namespace:dungeon> — bind the nearest unused procedural gate within 8 blocks").withStyle(ChatFormatting.GRAY));
 		player.sendSystemMessage(Component.literal("Generate writes blocks from a safe origin 64 blocks in front of you; use a clear builder/dungeon area.").withStyle(ChatFormatting.YELLOW));
 		return 1;
 	}
@@ -378,60 +368,6 @@ public final class SlrDungeonCommand {
 		player.sendSystemMessage(Component.literal("Pool roll: " + value.entityTypeId() + " at mob level " + value.level()
 				+ ", base XP " + xp + " via " + value.selector().key()).withStyle(ChatFormatting.GREEN));
 		return 1;
-	}
-
-	private static int bindGate(ServerPlayer player, ResourceLocation dungeon) {
-		var definition = DungeonDataManager.dungeon(dungeon);
-		if (definition.isEmpty()) {
-			player.sendSystemMessage(Component.literal("Unknown or invalid dungeon " + dungeon + ".").withStyle(ChatFormatting.RED));
-			return 0;
-		}
-		Entity gate = nearestProceduralGate(player);
-		if (gate == null) {
-			player.sendSystemMessage(Component.literal("No procedural gate was found within 8 blocks.").withStyle(ChatFormatting.RED));
-			return 0;
-		}
-		if (ProceduralDungeonGateHandler.isGenerated(gate)) {
-			player.sendSystemMessage(Component.literal("That gate was already generated and cannot be rebound safely.").withStyle(ChatFormatting.RED));
-			return 0;
-		}
-		var gateRank = ProceduralDungeonGateHandler.rankFor(gate);
-		if (!definition.get().supportsRank(gateRank)) {
-			String ranks = java.util.Arrays.stream(net.solocraft.dungeon.ProceduralDungeonRank.values())
-					.filter(definition.get().allowedRanks()::contains).map(Enum::name)
-					.collect(java.util.stream.Collectors.joining(","));
-			player.sendSystemMessage(Component.literal("Cannot bind " + dungeon + " to this " + gateRank.name()
-					+ "-rank gate. The dungeon allows ranks " + ranks + ".").withStyle(ChatFormatting.RED));
-			return 0;
-		}
-		if (!ProceduralDungeonGateHandler.bindDatapackDungeon(gate, dungeon)) {
-			player.sendSystemMessage(Component.literal("Could not bind that gate.").withStyle(ChatFormatting.RED));
-			return 0;
-		}
-		player.sendSystemMessage(Component.literal("Bound " + gateRank.name() + "-rank gate " + gate.getStringUUID()
-				+ " to " + dungeon + ". It will generate in the gate's rank-routed dungeon dimension.")
-				.withStyle(ChatFormatting.GREEN));
-		return 1;
-	}
-
-	private static int unbindGate(ServerPlayer player) {
-		Entity gate = nearestProceduralGate(player);
-		if (gate == null) {
-			player.sendSystemMessage(Component.literal("No procedural gate was found within 8 blocks.").withStyle(ChatFormatting.RED));
-			return 0;
-		}
-		if (!ProceduralDungeonGateHandler.unbindDatapackDungeon(gate)) {
-			player.sendSystemMessage(Component.literal("That gate is already generated or cannot be changed.").withStyle(ChatFormatting.RED));
-			return 0;
-		}
-		player.sendSystemMessage(Component.literal("Removed the custom dungeon binding from that gate.").withStyle(ChatFormatting.YELLOW));
-		return 1;
-	}
-
-	private static Entity nearestProceduralGate(ServerPlayer player) {
-		return player.serverLevel().getEntities(player, player.getBoundingBox().inflate(8.0D),
-				ProceduralDungeonGateHandler::isProceduralGate).stream()
-				.min(java.util.Comparator.comparingDouble(player::distanceToSqr)).orElse(null);
 	}
 
 	private static UUID parseUuid(ServerPlayer player, String value) {

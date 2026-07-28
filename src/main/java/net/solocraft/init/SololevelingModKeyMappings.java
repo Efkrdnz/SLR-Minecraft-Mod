@@ -4,7 +4,6 @@ import org.lwjgl.glfw.GLFW;
 
 import net.solocraft.network.UseSkillMessage;
 import net.solocraft.network.TripleJumpMessage;
-import net.solocraft.network.TrainingMessage;
 import net.solocraft.network.SkillCycleButtonMessage;
 import net.solocraft.network.QuestInfoMessage;
 import net.solocraft.network.DMessage;
@@ -286,19 +285,6 @@ public class SololevelingModKeyMappings {
 			isDownOld = isDown;
 		}
 	};
-	public static final KeyMapping TRAINING = new KeyMapping("key.sololeveling.training", GLFW.GLFW_KEY_K, "key.categories.sololeveling") {
-		private boolean isDownOld = false;
-
-		@Override
-		public void setDown(boolean isDown) {
-			super.setDown(isDown);
-			if (isDownOld != isDown && isDown) {
-				SololevelingMod.PACKET_HANDLER.sendToServer(new TrainingMessage(0, 0));
-				TrainingMessage.pressAction(Minecraft.getInstance().player, 0, 0);
-			}
-			isDownOld = isDown;
-		}
-	};
 	public static final KeyMapping QUEST_INFO = new KeyMapping("key.sololeveling.quest_info", GLFW.GLFW_KEY_TAB, "key.categories.sololeveling") {
 		private boolean isDownOld = false;
 
@@ -395,7 +381,6 @@ public class SololevelingModKeyMappings {
 		event.register(AB_4);
 		event.register(AB_5);
 		event.register(AB_6);
-		event.register(TRAINING);
 		event.register(QUEST_INFO);
 		event.register(AB_7);
 		event.register(AB_8);
@@ -422,7 +407,6 @@ public class SololevelingModKeyMappings {
 				AB_4.consumeClick();
 				AB_5.consumeClick();
 				AB_6.consumeClick();
-				TRAINING.consumeClick();
 				QUEST_INFO.consumeClick();
 				AB_7.consumeClick();
 				AB_8.consumeClick();

@@ -80,8 +80,10 @@ public class QuestsButtonMessage {
 			if (!(entity instanceof ServerPlayer player) || !DkcQuestManager.isVisible(player))
 				return;
 			if (DkcFloorRegistry.isDkc(player.level())) {
-				DKCPathTeleportProcedure.returnToSavedOverworld(player);
-				player.closeContainer();
+				// The tower screen owns both intra-castle travel and the explicit
+				// return action. Opening it here also lets players inspect progress
+				// without being ejected merely for clicking the quest tab.
+				OpenPathGuiProcedure.execute(world, x, y, z, player);
 				return;
 			}
 			if (DkcQuestManager.hasRadiruCastleAccess(player)) {

@@ -2,6 +2,7 @@
 package net.solocraft.entity;
 
 import net.solocraft.procedures.CommandCallProcedureProcedure;
+import net.solocraft.procedures.IsNotBerserkProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -72,7 +73,17 @@ public class ShadowSold1Entity extends TamableAnimal {
 		this.goalSelector.addGoal(2, new RandomStrollGoal(this, 0.5));
 		this.targetSelector.addGoal(3, new OwnerHurtTargetGoal(this));
 		this.goalSelector.addGoal(4, new OwnerHurtByTargetGoal(this));
-		this.goalSelector.addGoal(5, new FollowOwnerGoal(this, 1.6, (float) 10, (float) 2, false));
+		this.goalSelector.addGoal(5, new FollowOwnerGoal(this, 1.6, (float) 10, (float) 2, false) {
+			@Override
+			public boolean canUse() {
+				return super.canUse() && IsNotBerserkProcedure.execute(ShadowSold1Entity.this);
+			}
+
+			@Override
+			public boolean canContinueToUse() {
+				return super.canContinueToUse() && IsNotBerserkProcedure.execute(ShadowSold1Entity.this);
+			}
+		});
 		this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(7, new FloatGoal(this));
 		this.goalSelector.addGoal(8, new OpenDoorGoal(this, true));

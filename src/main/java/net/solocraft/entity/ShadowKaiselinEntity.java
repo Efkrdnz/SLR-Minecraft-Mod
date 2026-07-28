@@ -70,6 +70,17 @@ public class ShadowKaiselinEntity extends KaiselinEntity implements OwnableEntit
 			this.setTarget(null);
 			return null;
 		}
+		if (clearDungeon) {
+			LivingEntity current = this.getTarget();
+			// The owner-scoped coordinator owns Clear Dungeon discovery. Kaisel
+			// keeps only a visible assigned target so its straight-line flight
+			// cannot repeatedly steer it into dungeon walls.
+			if (owner != null && ShadowMonarchManager.isValidClearDungeonTarget(current, this, owner)
+					&& this.hasLineOfSight(current))
+				return current;
+			this.setTarget(null);
+			return null;
+		}
 		if (ShadowMonarchManager.COMMAND_PROTECT.equals(command)) {
 			LivingEntity threat = findOwnerThreat(owner);
 			this.setTarget(threat);
@@ -126,7 +137,8 @@ public class ShadowKaiselinEntity extends KaiselinEntity implements OwnableEntit
 	@Override
 	public void baseTick() {
 		super.baseTick();
-		if (!this.level().isClientSide() && !this.isVehicle() && this.getTarget() == null) {
+		if (!this.level().isClientSide() && !this.isVehicle() && this.getTarget() == null
+				&& ShadowMonarchManager.shouldFollowOwner(this)) {
 			Player owner = getOwnerPlayer();
 			if (owner != null && owner.isAlive()) {
 				double distance = this.distanceTo(owner);

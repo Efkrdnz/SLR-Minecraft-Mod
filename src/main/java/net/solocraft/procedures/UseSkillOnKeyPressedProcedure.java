@@ -3,7 +3,6 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.ShadowStepEntity;
 import net.solocraft.init.SololevelingModEntities;
-import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.util.CooldownManager;
 import net.solocraft.util.ClassPassiveManager;
@@ -22,6 +21,7 @@ import net.solocraft.util.UrgentQuestManager;
 import net.solocraft.util.DaggerThrowManager;
 import net.solocraft.util.RangerCombatManager;
 import net.solocraft.util.AssassinSkillManager;
+import net.solocraft.util.TankerSkillManager;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -43,7 +43,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
-import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.BlockPos;
 
 public class UseSkillOnKeyPressedProcedure {
@@ -87,6 +86,13 @@ public class UseSkillOnKeyPressedProcedure {
 			if (entity instanceof ServerPlayer ranger
 					&& RangerCombatManager.activateSkill(ranger, _selectedPower))
 				UrgentQuestManager.onSkillUsed(entity, _selectedPower);
+			return;
+		}
+		if (TankerSkillManager.isTankerSkill(_selectedPower)) {
+			if (entity instanceof ServerPlayer tanker
+					&& TankerSkillManager.activateSkill(tanker, _selectedPower))
+				UrgentQuestManager.onSkillUsed(entity,
+						TankerSkillManager.canonicalName(_selectedPower));
 			return;
 		}
 		UrgentQuestManager.onSkillUsed(entity, _selectedPower);
@@ -420,76 +426,6 @@ public class UseSkillOnKeyPressedProcedure {
 				if (entity instanceof Player _player && !_player.level().isClientSide())
 					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
 			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Tank Leap")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 300) {
-				if (!CooldownManager.isOnCooldown(entity, "Tank Leap")) {
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 300;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					TankLeapProcedure.execute(world, x, y, z, entity);
-					CooldownManager.set(entity, "mana_refresh", 60);
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A76Using Leap Strike"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Reinforcement")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 500) {
-				if (!CooldownManager.isOnCooldown(entity, "Reinforcement")) {
-					TankInvincibilityAvtivateProcedure.execute(entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 500;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					CooldownManager.set(entity, "mana_refresh", 60);
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A76Using Reinforcement"), true);
-					if (world instanceof ServerLevel _level)
-						_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.MANA_RED.get()), x, y, z, 20, 0.5, 1, 0.5, 1);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Protection Mark")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 1500) {
-				if (!CooldownManager.isOnCooldown(entity, "Protection Mark")) {
-					FlagOfProtectionSummonProcedure.execute(world, x, y, z, entity);
-					{
-						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 1500;
-						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.MP = _setval;
-							capability.syncPlayerVariables(entity);
-						});
-					}
-					if (entity instanceof Player _player && !_player.level().isClientSide())
-						_player.displayClientMessage(Component.literal("\u00A76Using Protection Mark"), true);
-				}
-			} else {
-				if (entity instanceof Player _player && !_player.level().isClientSide())
-					_player.displayClientMessage(Component.literal("You dont have enough MP"), true);
-			}
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Shield Bash")) {
-			ShieldBashProcedure.execute(world, x, y, z, entity);
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Willpower")) {
-			WillPowerGiveProcedure.execute(entity);
-		}
-		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Taunt")) {
-			TauntCastProcedure.execute(world, x, y, z, entity);
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Critical Attack")) {
 			if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("dagger")))

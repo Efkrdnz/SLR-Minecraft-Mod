@@ -8,6 +8,7 @@ import net.solocraft.entity.DemonEntity;
 import net.solocraft.entity.DemonKnightEntity;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.VesselProgressionManager;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -81,6 +82,7 @@ public class DKCKillCounterProcedure {
 			capability.dkc_cleared = Math.max(capability.dkc_cleared, floor);
 			capability.syncPlayerVariables(player);
 		});
+		VesselProgressionManager.reconcileEntitlements(player);
 		XPGainProcedure.awardBaseXp(world, player, floor * 100);
 		givePermit(level, player);
 	}

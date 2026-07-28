@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
+import net.solocraft.item.RedkeyItem;
 import net.solocraft.util.InstanceDungeonKeyAccess;
 
 import net.minecraftforge.registries.ForgeRegistries;
@@ -168,6 +169,8 @@ public class RewardCollectProcedure {
 						} else {
 							ItemStack _setstack = new ItemStack(itemm);
 							_setstack.setCount(1);
+							if (itemm == SololevelingModItems.REDKEY.get())
+								RedkeyItem.bindOrVerifyOwner(_setstack, _player);
 							ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
 						}
 					}

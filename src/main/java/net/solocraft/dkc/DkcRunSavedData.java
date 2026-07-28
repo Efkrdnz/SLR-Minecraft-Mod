@@ -146,6 +146,22 @@ public final class DkcRunSavedData extends SavedData {
 		setDirty();
 	}
 
+	/**
+	 * Resets only one character's castle access while retaining its allocated
+	 * spatial slot and already-built geometry. Reusing those structures avoids
+	 * overwriting another player's sector; per-floor encounter flags live on the
+	 * player and are cleared by the main reset.
+	 */
+	public void resetProgress(UUID playerId) {
+		RunState state = playerId == null ? null : runs.get(playerId);
+		if (state == null)
+			return;
+		state.unlockedFloors = bit(1);
+		state.armedTransitions = 0L;
+		state.anchorSynced = false;
+		setDirty();
+	}
+
 	@Override
 	@Nonnull
 	public CompoundTag save(@Nonnull CompoundTag root) {

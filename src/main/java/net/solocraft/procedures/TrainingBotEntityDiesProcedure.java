@@ -22,7 +22,7 @@ public class TrainingBotEntityDiesProcedure {
 			}
 			{
 				double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Xp
-						+ ((world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER)) / 10)
+						+ ((world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER)) / 10.0D)
 								* ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level + 5);
 				sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 					capability.Xp = _setval;
@@ -30,7 +30,7 @@ public class TrainingBotEntityDiesProcedure {
 				});
 			}
 			if (sourceentity instanceof Player _player && !_player.level().isClientSide())
-				_player.displayClientMessage(Component.literal(("Gained" + "" + new java.text.DecimalFormat("##.#").format(((world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER)) / 10)
+				_player.displayClientMessage(Component.literal(("Gained" + "" + new java.text.DecimalFormat("##.#").format(((world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER)) / 10.0D)
 						* ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level + 5)) + "" + "xp")), true);
 		}
 	}

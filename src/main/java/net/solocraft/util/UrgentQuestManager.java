@@ -13,6 +13,7 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.CriticalHitEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
@@ -114,6 +115,19 @@ public final class UrgentQuestManager {
 
 	public static boolean hasActiveQuest(ServerPlayer player) {
 		return player != null && player.getPersistentData().getBoolean(ACTIVE);
+	}
+
+	/** Clears only the selected player's urgent-quest runtime and owned ambush. */
+	public static void resetForPlayerReset(ServerPlayer player) {
+		if (player == null)
+			return;
+		UUID playerId = player.getUUID();
+		RECENT_CRITICALS.keySet().removeIf(pair ->
+				pair.attacker.equals(playerId) || pair.victim.equals(playerId));
+		WEAPON_HITS.keySet().removeIf(pair ->
+				pair.attacker.equals(playerId) || pair.victim.equals(playerId));
+		KangTaeshikAmbushManager.resetPlayerProgress(player);
+		clearActive(player);
 	}
 
 	public static boolean startKangAmbushQuest(ServerPlayer player, KangTaeshikEntity kang) {
@@ -255,7 +269,7 @@ public final class UrgentQuestManager {
 		startRandomQuest(player, dungeonId(player), tag);
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void onLivingDeath(LivingDeathEvent event) {
 		if (event == null || event.getEntity() == null || event.getSource() == null)
 			return;
@@ -311,6 +325,12 @@ public final class UrgentQuestManager {
 		ServerPlayer owner = ownerId == null ? null : level.getServer().getPlayerList().getPlayer(ownerId);
 		if (owner == null)
 			return true;
+		boolean firstCompletion = KangTaeshikAmbushManager.markAmbushCompleted(owner);
+		if (!firstCompletion) {
+			if (hasActiveQuest(owner) && KIND_KANG.equals(owner.getPersistentData().getString(KIND)))
+				clearActive(owner);
+			return true;
+		}
 		if (!SystemPlayerAccess.hasSystem(owner)) {
 			if (hasActiveQuest(owner) && KIND_KANG.equals(owner.getPersistentData().getString(KIND)))
 				fail(owner, "System Player status required");

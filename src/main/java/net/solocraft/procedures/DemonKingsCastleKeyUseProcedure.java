@@ -5,6 +5,7 @@ import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.dkc.DkcRunSavedData;
 import net.solocraft.item.RedkeyItem;
 import net.solocraft.util.DkcQuestManager;
+import net.solocraft.util.VesselProgressionManager;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -54,6 +55,7 @@ public class DemonKingsCastleKeyUseProcedure {
 					capability.dkc_started = true;
 					capability.syncPlayerVariables(player);
 				});
+				VesselProgressionManager.reconcileEntitlements(player);
 			}
 			player.displayClientMessage(Component.literal("\u00A75The castle has already accepted your blood."), true);
 			consumeKey(player, stack);
@@ -65,6 +67,7 @@ public class DemonKingsCastleKeyUseProcedure {
 			capability.dkc_cleared = Math.max(0, capability.dkc_cleared);
 			capability.syncPlayerVariables(player);
 		});
+		VesselProgressionManager.reconcileEntitlements(player);
 		player.getPersistentData().putDouble("dkc_current_floor", 0);
 		player.getPersistentData().putBoolean("dkc_floor_just_changed", true);
 		if (world instanceof Level level) {

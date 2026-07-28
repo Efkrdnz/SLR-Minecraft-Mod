@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModParticleTypes;
+import net.solocraft.util.TemporaryArmorSessionManager;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -80,6 +81,7 @@ public class ShadowARMORHelmetTickEventProcedure {
 					_living.setItemSlot(EquipmentSlot.HEAD, ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).overridehead));
 				}
 			}
+			TemporaryArmorSessionManager.finishAfterRestore(entity);
 		}
 	}
 }

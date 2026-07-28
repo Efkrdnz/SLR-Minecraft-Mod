@@ -14,6 +14,7 @@ import net.solocraft.procedures.XPGainProcedure;
 import net.solocraft.procedures.DKCDemonSpawnerProcedure;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.SystemNotifications;
+import net.solocraft.util.VesselProgressionManager;
 
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
@@ -92,6 +93,14 @@ public final class DkcRadiruManager {
 	};
 
 	private DkcRadiruManager() {
+	}
+
+	/** Cancels an unresolved Esil decision and closes its client prompt. */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null)
+			return;
+		PENDING_MERCY_CHOICES.remove(player.getUUID());
+		sendMercyChoiceState(player, false);
 	}
 
 	/** Called instead of ordinary Floor-15 auto-reward when the field wave ends. */
@@ -396,6 +405,7 @@ public final class DkcRadiruManager {
 			capability.dkc_cleared = Math.max(capability.dkc_cleared, FLOOR);
 			capability.syncPlayerVariables(player);
 		});
+		VesselProgressionManager.reconcileEntitlements(player);
 		player.getPersistentData().putInt(STATE_SCHEMA_TAG, STATE_SCHEMA);
 		player.getPersistentData().putLong(PERMIT_REISSUE_AFTER, level.getGameTime() + 200L);
 		esil.getPersistentData().putBoolean(SANCTUARY_TAG, true);
@@ -532,6 +542,7 @@ public final class DkcRadiruManager {
 			capability.dkc_cleared = Math.max(capability.dkc_cleared, FLOOR);
 			capability.syncPlayerVariables(player);
 		});
+		VesselProgressionManager.reconcileEntitlements(player);
 		player.getPersistentData().putInt(STATE_SCHEMA_TAG, STATE_SCHEMA);
 		give(player, createFloorPermit(player));
 		give(player, new ItemStack(SololevelingModItems.RUNESTONE_COLD_BLOOD.get()));

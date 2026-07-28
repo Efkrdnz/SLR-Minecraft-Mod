@@ -19,6 +19,11 @@ public class HunterOnEntityTickUpdateProcedure {
 		if (entity.getCustomName() == null || !entity.getCustomName().getString().equals(_expectedName)) {
 			entity.setCustomName(Component.literal(_expectedName));
 		}
+		if (entity instanceof HunterEntity hunter
+				&& hunter.isStoryTempleFollower()) {
+			hunter.setTarget(null);
+			return;
+		}
 		boolean legacyHandled = switch (hunterClass) {
 			case "Fighter" -> invokeLegacy("net.solocraft.procedures.RandomHunterFighterTickProcedure", new Class<?>[]{double.class, double.class, double.class, Entity.class}, x, y, z, entity);
 			case "Assassin" -> invokeLegacy("net.solocraft.procedures.RandomHunterAssassinTickProcedure", new Class<?>[]{Entity.class}, entity);

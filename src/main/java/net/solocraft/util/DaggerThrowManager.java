@@ -154,15 +154,13 @@ public final class DaggerThrowManager {
 
 	public static float physicalDamage(ServerPlayer player) {
 		double attack = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-		double agility = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.map(v -> v.Speed).orElse(0.0D);
+		double agility = TemporaryStatBonusManager.effectiveAgility(player);
 		return (float) Math.max(4.0D, attack * 1.35D + agility * 0.12D);
 	}
 
 	public static float rushDamage(ServerPlayer player) {
 		double attack = player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
-		double agility = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.map(v -> v.Speed).orElse(0.0D);
+		double agility = TemporaryStatBonusManager.effectiveAgility(player);
 		return (float) Math.max(2.0D, attack * 0.52D + agility * 0.045D);
 	}
 
@@ -245,6 +243,35 @@ public final class DaggerThrowManager {
 		owner.displayClientMessage(Component.translatable("message.sololeveling.dagger_throw.recovered", stack.getHoverName())
 				.withStyle(ChatFormatting.AQUA), false);
 		return true;
+	}
+
+	/**
+	 * Resolves a physical dagger throw before character progression is cleared.
+	 * The escrow contains a real item removed from the inventory, so deleting the
+	 * tag directly would destroy player property.
+	 */
+	public static void recoverEscrowForReset(ServerPlayer owner) {
+		if (owner == null)
+			return;
+		CompoundTag saved = escrow(owner, false);
+		if (saved == null)
+			return;
+		ItemStack stack = ItemStack.of(saved.getCompound("Item"));
+		int preferredSlot = saved.getInt("Slot");
+		String reward = saved.getString("Reward");
+		UUID token = saved.hasUUID("Token") ? saved.getUUID("Token") : null;
+		ThrownDaggerEntity active = token == null ? null : ACTIVE.remove(token);
+		if (active != null && active.isAlive())
+			active.discardAsRecovered();
+		clearEscrow(owner);
+		if (!reward.isBlank())
+			RewardManager.removeReward(owner, reward);
+		if (stack.isEmpty())
+			return;
+		if (canAccept(owner, preferredSlot))
+			restoreDirectly(owner, stack, preferredSlot);
+		else
+			owner.spawnAtLocation(stack);
 	}
 
 	public static String displayRecoveryName(String reward) {

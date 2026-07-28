@@ -25,6 +25,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
 import net.solocraft.util.CooldownManager;
 import net.solocraft.util.FrostMonarchManager;
+import net.solocraft.util.TemporaryArmorSessionManager;
 
 public class Ability4OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -92,7 +93,15 @@ public class Ability4OnKeyPressedProcedure {
 								capability.syncPlayerVariables(entity);
 							});
 						}
+						long manifestationSession =
+								TemporaryArmorSessionManager.begin(entity);
 						SololevelingMod.queueServerWork(5, () -> {
+							if (!TemporaryArmorSessionManager.canEquipShadow(
+									entity, manifestationSession)) {
+								TemporaryArmorSessionManager.abandonIfCurrent(
+										entity, manifestationSession);
+								return;
+							}
 							{
 								Entity _entity = entity;
 								if (_entity instanceof Player _player) {
@@ -129,6 +138,8 @@ public class Ability4OnKeyPressedProcedure {
 									_living.setItemSlot(EquipmentSlot.HEAD, new ItemStack(SololevelingModItems.SHADOW_ARMOR_HELMET.get()));
 								}
 							}
+							TemporaryArmorSessionManager.markEquipped(
+									entity, manifestationSession);
 							if (world instanceof ServerLevel _level)
 								_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.MANA_PURPLE.get()), x, y, z, 100, 1, 1, 1, 1);
 							if (world instanceof ServerLevel _level)
@@ -174,6 +185,7 @@ public class Ability4OnKeyPressedProcedure {
 								_living.setItemSlot(EquipmentSlot.HEAD, ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).overridehead));
 							}
 						}
+						TemporaryArmorSessionManager.finishAfterRestore(entity);
 						if (world instanceof ServerLevel _level)
 							_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.MANA_PURPLE.get()), x, y, z, 100, 1, 1, 1, 1);
 						if (world instanceof ServerLevel _level)

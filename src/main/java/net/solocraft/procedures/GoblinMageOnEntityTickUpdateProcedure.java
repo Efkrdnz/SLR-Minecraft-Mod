@@ -20,14 +20,19 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 
 public class GoblinMageOnEntityTickUpdateProcedure {
+	private static final int VOLLEY_SIZE = 3;
+	private static final int VOLLEY_SHOT_INTERVAL_TICKS = 7;
+	private static final int ATTACK_CYCLE_TICKS = 80;
+	private static final float MAGIC_DAMAGE = 4.0F;
+
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		double delay = 0;
 		if ((entity instanceof LivingEntity _livEnt ? _livEnt.getHealth() : -1) > 0.05) {
 			if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
 				entity.getPersistentData().putDouble("AL", (entity.getPersistentData().getDouble("AL") + 1));
@@ -53,6 +58,9 @@ public class GoblinMageOnEntityTickUpdateProcedure {
 				}
 			} else {
 				entity.getPersistentData().putDouble("MF", 0);
+				entity.getPersistentData().putBoolean("CanShoot", false);
+				if (entity instanceof LivingEntity _entity)
+					_entity.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 			}
 			if (entity.getPersistentData().getDouble("MF") == 5) {
 				if (entity instanceof GoblinMageEntity) {
@@ -60,41 +68,40 @@ public class GoblinMageOnEntityTickUpdateProcedure {
 				}
 			}
 			if (entity.getPersistentData().getDouble("MF") == 13) {
-				for (int index0 = 0; index0 < 4; index0++) {
-					delay = delay + 5;
-					SololevelingMod.queueServerWork((int) delay, () -> {
-						{
-							Entity _shootFrom = entity;
-							Level projectileLevel = _shootFrom.level();
-							if (!projectileLevel.isClientSide()) {
-								Projectile _entityToSpawn = new Object() {
-									public Projectile getArrow(Level level, Entity shooter, float damage, int knockback) {
-										AbstractArrow entityToSpawn = new ShamanMagicEntity(SololevelingModEntities.SHAMAN_MAGIC.get(), level);
-										entityToSpawn.setOwner(shooter);
-										entityToSpawn.setBaseDamage(damage);
-										entityToSpawn.setKnockback(knockback);
-										entityToSpawn.setSilent(true);
-										return entityToSpawn;
-									}
-								}.getArrow(projectileLevel, entity, 5, (int) 0.2);
-								_entityToSpawn.setPos(_shootFrom.getX(), _shootFrom.getEyeY() - 0.1, _shootFrom.getZ());
-								_entityToSpawn.shoot(_shootFrom.getLookAngle().x, _shootFrom.getLookAngle().y, _shootFrom.getLookAngle().z, (float) 0.25, 0);
-								projectileLevel.addFreshEntity(_entityToSpawn);
-							}
-						}
-						if (world instanceof Level _level) {
-							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, (float) 0.5);
-							} else {
-								_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, (float) 0.5, false);
-							}
-						}
-					});
+				if (entity.level() instanceof ServerLevel serverLevel) {
+					for (int shot = 1; shot <= VOLLEY_SIZE; shot++)
+						SololevelingMod.queueServerWork(serverLevel.getServer(),
+								shot * VOLLEY_SHOT_INTERVAL_TICKS, () -> fireBolt(entity));
 				}
 			}
-			if (entity.getPersistentData().getDouble("MF") == 60) {
+			if (entity.getPersistentData().getDouble("MF") >= ATTACK_CYCLE_TICKS) {
 				entity.getPersistentData().putDouble("MF", 0);
 			}
 		}
+	}
+
+	private static void fireBolt(Entity shooter) {
+		if (!(shooter instanceof Mob mob) || !shooter.isAlive() || shooter.level().isClientSide())
+			return;
+		LivingEntity target = mob.getTarget();
+		if (target == null || !target.isAlive() || target.level() != shooter.level()
+				|| !mob.getSensing().hasLineOfSight(target)
+				|| !CombatRangeHelper.withinSurfaceRange(shooter, target, 17.0D))
+			return;
+
+		Level projectileLevel = shooter.level();
+		AbstractArrow bolt = new ShamanMagicEntity(SololevelingModEntities.SHAMAN_MAGIC.get(), projectileLevel);
+		bolt.setOwner(shooter);
+		bolt.setBaseDamage(MAGIC_DAMAGE);
+		bolt.setKnockback(0);
+		bolt.setSilent(true);
+		bolt.setPos(shooter.getX(), shooter.getEyeY() - 0.1D, shooter.getZ());
+		Vec3 aim = new Vec3(target.getX(), target.getY() + target.getBbHeight() * 0.65D, target.getZ())
+				.subtract(bolt.position());
+		bolt.shoot(aim.x, aim.y, aim.z, 0.25F, 0);
+		projectileLevel.addFreshEntity(bolt);
+		projectileLevel.playSound(null, shooter.blockPosition(),
+				ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")),
+				SoundSource.NEUTRAL, 1, 0.5F);
 	}
 }

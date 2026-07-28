@@ -146,8 +146,7 @@ public final class VesselManager {
 			capability.JOB = 0.0D;
 			capability.syncPlayerVariables(player);
 		});
-		JobSkillManager.syncJobSkills(player);
-		VesselProgressionManager.sync(player);
+		VesselProgressionManager.reconcileEntitlements(player);
 	}
 
 	public static void releaseClaim(ServerPlayer player) {
@@ -249,8 +248,7 @@ public final class VesselManager {
 			capability.JOB = definition.jobId();
 			capability.syncPlayerVariables(player);
 		});
-		JobSkillManager.syncJobSkills(player);
-		MageSpellProgression.reconcileVesselInheritance(player);
+		VesselProgressionManager.reconcileEntitlements(player);
 	}
 
 	private static String normalizeIdentity(String identity) {

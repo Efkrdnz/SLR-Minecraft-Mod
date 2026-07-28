@@ -2,6 +2,8 @@
   "replace": false,
   "values": [
     "sololeveling:igris",
+    "sololeveling:blood_red_com_igris",
+    "sololeveling:ancient_samurai",
     "sololeveling:gem_golem",
     "sololeveling:beru_boss",
     "sololeveling:kasaka",
@@ -15,6 +17,9 @@
     "sololeveling:kargalgan",
     "sololeveling:ancient_golem",
     "sololeveling:skeleton_summoner",
-    "sololeveling:kaiselin"
+    "sololeveling:kaiselin",
+    "sololeveling:cerberus",
+    "sololeveling:vulcan",
+    "sololeveling:baran"
   ]
 }

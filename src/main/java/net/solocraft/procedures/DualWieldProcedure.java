@@ -37,6 +37,7 @@ import net.minecraft.commands.CommandSource;
 import java.util.List;
 import java.util.Comparator;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.TemporaryStatBonusManager;
 
 public class DualWieldProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -114,7 +115,7 @@ public class DualWieldProcedure {
 						for (Entity entityiterator : _entfound) {
 							if (!(entity == entityiterator) && !(entityiterator instanceof ExperienceOrb) && !(entityiterator instanceof IceChunkEntity) && !(entityiterator instanceof ItemEntity)) {
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
-										(float) (10 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 10));
+										(float) (10 + TemporaryStatBonusManager.effectiveStrength(entity) / 10.0D));
 							}
 						}
 					}
@@ -124,7 +125,7 @@ public class DualWieldProcedure {
 						for (Entity entityiterator : _entfound) {
 							if (!(entity == entityiterator) && !(entityiterator instanceof ExperienceOrb) && !(entityiterator instanceof IceChunkEntity) && !(entityiterator instanceof ItemEntity)) {
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
-										(float) (10 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 10));
+										(float) (10 + TemporaryStatBonusManager.effectiveStrength(entity) / 10.0D));
 							}
 						}
 					}
@@ -134,7 +135,7 @@ public class DualWieldProcedure {
 						for (Entity entityiterator : _entfound) {
 							if (!(entity == entityiterator) && !(entityiterator instanceof ExperienceOrb) && !(entityiterator instanceof IceChunkEntity) && !(entityiterator instanceof ItemEntity)) {
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
-										(float) (10 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 10));
+										(float) (10 + TemporaryStatBonusManager.effectiveStrength(entity) / 10.0D));
 							}
 						}
 					}

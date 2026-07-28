@@ -14,8 +14,7 @@ public class PortalJobChangeRightClickedOnEntityProcedure {
 		String owner = portal.getEntityData().get(PortalJobChangeEntity.DATA_person_to_enter);
 		if (!owner.isBlank() && !owner.equals(player.getStringUUID()))
 			return;
-		JobChangeQuestEntryProcedure.execute(world, player);
-		if (!portal.level().isClientSide())
+		if (JobChangeQuestEntryProcedure.execute(world, player) && !portal.level().isClientSide())
 			portal.discard();
 	}
 }

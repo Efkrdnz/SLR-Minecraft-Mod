@@ -78,6 +78,7 @@ public final class SnowRedGateArenaManager {
 	private static final String PROCEDURAL_DUNGEON_TAG = "slr_procedural_dungeon";
 	private static final String PROCEDURAL_RED_TAG = "slr_procedural_red_gate";
 	private static final String BOUNDARY_NOTICE_TAG = "slr_red_gate_boundary_notice";
+	private static final String REVEAL_READY_TIME_TAG = "slr_red_gate_reveal_ready_time";
 	private static final int FIRST_WAVE_DELAY = 100;
 	private static final int INTERMISSION_TICKS = 160;
 	private static final int BOSS_INTRO_TICKS = 200;
@@ -91,6 +92,8 @@ public final class SnowRedGateArenaManager {
 	private static final int SAFE_CLEARING_RADIUS = 11;
 	private static final int SCENERY_COUNT = 42;
 	private static final int SHARD_COUNT = 18;
+	/** Minimum time the synced red texture is visible before any entrant teleports. */
+	private static final int MIN_GATE_REVEAL_TICKS = 10;
 	/** Global horizontal-column budget shared by every arena being prepared. */
 	private static final int PREPARATION_WORK_BUDGET = 256;
 	private static final int MINIMUM_CELL_SEPARATION = ARENA_RADIUS * 2 + 64;
@@ -144,7 +147,7 @@ public final class SnowRedGateArenaManager {
 		return SNOW_DIMENSION.equals(dimension) || legacyTerritoryForDimension(dimension).isPresent();
 	}
 
-	private static boolean isArenaInstance(DungeonInstanceSavedData.Instance instance) {
+	public static boolean isArenaInstance(DungeonInstanceSavedData.Instance instance) {
 		return instance != null && (ARENA_ID.equals(instance.dungeonId())
 				|| LEGACY_ARENA_ID.equals(instance.dungeonId()))
 				&& isArenaDimension(instance.dimension());
@@ -199,6 +202,9 @@ public final class SnowRedGateArenaManager {
 			return;
 		DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(server);
 		if (instance.completed()) {
+			ServerLevel level = server.getLevel(instance.dimension());
+			if (level != null)
+				discardReturnPortals(level, instance);
 			registry.pruneCompletedEmptyInstances();
 			recordArenaClosure(server, instance);
 		} else {
@@ -300,6 +306,11 @@ public final class SnowRedGateArenaManager {
 		}
 
 		DungeonInstanceSavedData.Instance instance = created.value();
+		// Only a procedural gate that rolled red shows its return portal from the
+		// beginning. DungeonDimensionPlayerLeavesDimensionProcedure keeps that
+		// visible portal locked until this exact instance is complete. The original
+		// dedicated RedGateEntity retains its legacy boss-created exit.
+		instance.setReturnPortalDeferred(markLegacyUsed);
 		for (ServerPlayer entrant : entrants) {
 			if (!instance.addParticipant(entrant.getUUID())) {
 				registry.remove(instanceId);
@@ -666,7 +677,11 @@ public final class SnowRedGateArenaManager {
 		}
 		try {
 			int used = job.advance(level, allowance);
-			if (job.finished())
+			long revealTicks = Math.max(0L, level.getGameTime() - instance.createdGameTime());
+			boolean entrantsSawRedGate = onlineBoundParticipants(server, instance).stream()
+					.allMatch(player -> revealDelayRemaining(server, player) == 0);
+			if (job.finished() && revealTicks >= MIN_GATE_REVEAL_TICKS
+					&& entrantsSawRedGate)
 				finishPreparation(server, registry, level, instance, job);
 			return used;
 		} catch (RuntimeException exception) {
@@ -803,8 +818,10 @@ public final class SnowRedGateArenaManager {
 					entrant.getYRot(), entrant.getXRot());
 			entrant.setNoGravity(false);
 			entrant.fallDistance = 0.0F;
+			entrant.getPersistentData().remove(REVEAL_READY_TIME_TAG);
 			DungeonEncounterRuntime.restoreCompletionFor(entrant, activeInstance);
 		}
+		ensureReturnPortal(level, activeInstance);
 		if (removedStaleBinding && activeInstance.participants().isEmpty()) {
 			if (activeInstance.completed()) {
 				discardReturnPortals(level, activeInstance);
@@ -832,6 +849,8 @@ public final class SnowRedGateArenaManager {
 		entrant.getPersistentData().putBoolean(PROCEDURAL_RED_TAG, true);
 		entrant.getPersistentData().putString(TERRITORY_TAG, territory.id());
 		entrant.getPersistentData().putString(DungeonMobLevelAdapter.INSTANCE_TAG, instance.id().toString());
+		entrant.getPersistentData().putLong(REVEAL_READY_TIME_TAG,
+				sourceLevel.getServer().overworld().getGameTime() + MIN_GATE_REVEAL_TICKS);
 		UrgentQuestManager.markDungeonId(entrant, "red_gate");
 		// The player remains in the source world while the cell is prepared. Freeze
 		// gravity only for the final one-tick teleport handoff.
@@ -922,8 +941,7 @@ public final class SnowRedGateArenaManager {
 			}
 			enforceBoundary(level, instance, center.get());
 			leashEncounterMobs(level, instance, center.get());
-			if (instance.completed())
-				ensureReturnPortal(level, instance);
+			ensureReturnPortal(level, instance);
 		}
 	}
 
@@ -978,6 +996,9 @@ public final class SnowRedGateArenaManager {
 			for (DungeonInstanceSavedData.Instance stale : memberships)
 				if (stale != authoritative)
 					detachArenaParticipant(player.server, registry, stale, player.getUUID());
+			if (!player.level().dimension().equals(authoritative.dimension()))
+				player.getPersistentData().putLong(REVEAL_READY_TIME_TAG,
+						player.server.overworld().getGameTime() + MIN_GATE_REVEAL_TICKS);
 			restoreArenaBinding(player, authoritative);
 			resumeArenaParticipant(player, registry, authoritative);
 			return;
@@ -1052,12 +1073,21 @@ public final class SnowRedGateArenaManager {
 			DungeonEncounterRuntime.restoreCompletionFor(player, instance);
 			return;
 		}
-		player.setNoGravity(true);
-		SololevelingMod.queueServerWork(player.server, 1, () -> {
+		player.setNoGravity(false);
+		int revealDelay = Math.max(1, revealDelayRemaining(player.server, player));
+		SololevelingMod.queueServerWork(player.server, revealDelay, () -> {
 			if (!player.hasDisconnected() && instance.id().toString().equals(
 					player.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG)))
 				teleportEntrants(level, center, List.of(player), instance);
 		});
+	}
+
+	private static int revealDelayRemaining(MinecraftServer server, ServerPlayer player) {
+		if (server == null || player == null)
+			return 0;
+		long readyTime = player.getPersistentData().getLong(REVEAL_READY_TIME_TAG);
+		long remaining = readyTime - server.overworld().getGameTime();
+		return (int) Math.max(0L, Math.min(Integer.MAX_VALUE, remaining));
 	}
 
 	/** Death ejects the player while the sealed entrance remains until it breaks. */
@@ -1159,6 +1189,7 @@ public final class SnowRedGateArenaManager {
 		player.getPersistentData().remove(DungeonMobLevelAdapter.INSTANCE_TAG);
 		player.getPersistentData().remove("dungeon_tag");
 		player.getPersistentData().remove(BOUNDARY_NOTICE_TAG);
+		player.getPersistentData().remove(REVEAL_READY_TIME_TAG);
 		player.getPersistentData().putBoolean(PROCEDURAL_DUNGEON_TAG, false);
 		player.getPersistentData().putBoolean(PROCEDURAL_RED_TAG, false);
 		player.getPersistentData().remove(TERRITORY_TAG);
@@ -1174,6 +1205,9 @@ public final class SnowRedGateArenaManager {
 			DungeonInstanceSavedData.Instance instance) {
 		PREPARATIONS.remove(instance.id());
 		DungeonEncounterRuntime.clearInstanceHighlights(server, instance);
+		ServerLevel level = server.getLevel(instance.dimension());
+		if (level != null)
+			discardReturnPortals(level, instance);
 		discardTrackedMobs(server, instance);
 		registry.remove(instance.id());
 		// Abandonment is not a clear. Keep the already-used Overworld gate locked
@@ -1287,9 +1321,19 @@ public final class SnowRedGateArenaManager {
 	}
 
 	private static void ensureReturnPortal(ServerLevel level, DungeonInstanceSavedData.Instance instance) {
+		if (instance.returnPortalSuppressed()) {
+			discardReturnPortals(level, instance);
+			return;
+		}
+		if (!instance.completed() && instance.returnPortalDeferred()) {
+			// Dedicated legacy Red Gates still create their portal at completion.
+			discardReturnPortals(level, instance);
+			return;
+		}
 		BlockPos exit = instance.exit().orElseGet(() -> instance.playerStart().orElse(BlockPos.ZERO));
-		// Never wake an offline completed arena just to recreate a portal. The
-		// portal is restored after a bound participant has loaded the exit chunk.
+		// Never wake an offline arena just to recreate a portal. Procedural Red
+		// Gates restore their locked portal as soon as a bound participant loads
+		// the exit; deferred legacy exits follow the same rule after completion.
 		boolean participantPresent = level.players().stream().anyMatch(player ->
 				instance.participants().contains(player.getUUID())
 						&& instance.id().toString().equals(player.getPersistentData()
@@ -1307,7 +1351,8 @@ public final class SnowRedGateArenaManager {
 		Entity portal = DungeonReturnPortalSpawner.spawn(level, exit, instance.exitFacing().orElse(Direction.SOUTH),
 				instance.id(), instance.id().toString());
 		if (portal != null)
-			SololevelingMod.LOGGER.info("Opened return portal for completed Monarch red-gate arena {}", instance.id());
+			SololevelingMod.LOGGER.info("{} return portal for Monarch red-gate arena {}",
+					instance.completed() ? "Opened" : "Created locked", instance.id());
 	}
 
 	private enum PreparationPhase {

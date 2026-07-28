@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.PortalBeruEntity;
 import net.solocraft.util.MagicReadingHelper;
+import net.solocraft.util.PlayerEntryGenerationGuard;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.phys.Vec3;
@@ -37,6 +38,13 @@ public class PortalBeruPlayerCollidesWithThisEntityProcedure {
 		if (!MagicReadingHelper.isHoldingMagicReader(sourceentity)) {
 			if (net.solocraft.guild.GuildGateHelper.prepareGateEntry(world, entity, sourceentity))
 				return;
+			if (!(sourceentity instanceof ServerPlayer entryPlayer))
+				return;
+			final long entryGeneration =
+					PlayerEntryGenerationGuard.begin(entryPlayer);
+			final ResourceKey<Level> dungeonDimension = ResourceKey.create(
+					Registries.DIMENSION,
+					new ResourceLocation("sololeveling:dungeon_dimension_s"));
 			{
 				final Vec3 _center = new Vec3(x, y, z);
 				List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(500 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
@@ -76,8 +84,11 @@ public class PortalBeruPlayerCollidesWithThisEntityProcedure {
 			}
 			sourceentity.setNoGravity(true);
 			SololevelingMod.queueServerWork(10, () -> {
+				if (!PlayerEntryGenerationGuard.isCurrent(entryPlayer,
+						entryGeneration))
+					return;
 				if (sourceentity instanceof ServerPlayer _player && !_player.level().isClientSide()) {
-					ResourceKey<Level> destinationType = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_s"));
+					ResourceKey<Level> destinationType = dungeonDimension;
 					if (_player.level().dimension() == destinationType)
 						return;
 					ServerLevel nextLevel = _player.server.getLevel(destinationType);
@@ -93,6 +104,10 @@ public class PortalBeruPlayerCollidesWithThisEntityProcedure {
 				sourceentity.getPersistentData().putString("dungeon_tag", (entity.getStringUUID()));
 				net.solocraft.util.UrgentQuestManager.markDungeonId(sourceentity, "ant_island");
 				SololevelingMod.queueServerWork(5, () -> {
+					if (!PlayerEntryGenerationGuard.isCurrent(entryPlayer,
+							entryGeneration)
+							|| entryPlayer.level().dimension() != dungeonDimension)
+						return;
 					{
 						Entity _ent = sourceentity;
 						_ent.teleportTo((entity.getPersistentData().getDouble("tpx")), (entity.getPersistentData().getDouble("tpy")), (entity.getPersistentData().getDouble("tpz")));
@@ -101,6 +116,10 @@ public class PortalBeruPlayerCollidesWithThisEntityProcedure {
 					}
 					sourceentity.getPersistentData().putString("dungeon_tag", (entity.getStringUUID()));
 					SololevelingMod.queueServerWork(10, () -> {
+						if (!PlayerEntryGenerationGuard.isCurrent(entryPlayer,
+								entryGeneration)
+								|| entryPlayer.level().dimension() != dungeonDimension)
+							return;
 						if ((entity instanceof PortalBeruEntity _datEntL26 && _datEntL26.getEntityData().get(PortalBeruEntity.DATA_usedbefore)) == false) {
 							if (entity instanceof PortalBeruEntity _datEntSetL)
 								_datEntSetL.getEntityData().set(PortalBeruEntity.DATA_usedbefore, true);

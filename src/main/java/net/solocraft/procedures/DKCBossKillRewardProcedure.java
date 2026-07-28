@@ -12,14 +12,12 @@ import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.RewardManager;
 import net.solocraft.util.SystemNotifications;
+import net.solocraft.util.VesselProgressionManager;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -88,6 +86,7 @@ public class DKCBossKillRewardProcedure {
 			capability.dkc_cleared = Math.max(capability.dkc_cleared, floor);
 			capability.syncPlayerVariables(rewardPlayer);
 		});
+		VesselProgressionManager.reconcileEntitlements(player);
 		XPGainProcedure.awardBaseXp(world, player, floor * 100);
 		notify(player, 0xFF4DFF88, "BOSS SLAIN",
 				floor == DkcFloorRegistry.LAST_FLOOR
@@ -136,7 +135,6 @@ public class DKCBossKillRewardProcedure {
 				reward(level, name, "rewards set 2 Item sololeveling:spring_water_of_the_echoing_forest true");
 				reward(level, name, "rewards set 3 FullRecovery true");
 				RewardManager.appendReward(player, "ITEM:sololeveling:orb_of_avarice");
-				grantAdvancement(player, "monarchs_domain");
 			} else if (floor == 20) {
 				reward(level, name, "rewards set 1 Item sololeveling:purified_blood_of_the_demon_king true");
 				reward(level, name, "rewards set 2 Item sololeveling:demon_kings_dagger true");
@@ -149,17 +147,6 @@ public class DKCBossKillRewardProcedure {
 	private static void reward(ServerLevel level, String playerName, String arguments) {
 		level.getServer().getCommands().performPrefixedCommand(level.getServer().createCommandSourceStack(),
 				"slr " + playerName + " " + arguments);
-	}
-
-	private static void grantAdvancement(ServerPlayer player, String advancementId) {
-		Advancement advancement = player.server.getAdvancements()
-				.getAdvancement(new ResourceLocation("sololeveling", advancementId));
-		if (advancement == null)
-			return;
-		AdvancementProgress progress = player.getAdvancements().getOrStartProgress(advancement);
-		if (!progress.isDone())
-			for (String criterion : progress.getRemainingCriteria())
-				player.getAdvancements().award(advancement, criterion);
 	}
 
 	private static void notify(ServerPlayer player, int accent, String title, String under, int duration) {

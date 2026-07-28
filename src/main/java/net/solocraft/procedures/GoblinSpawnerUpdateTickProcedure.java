@@ -44,17 +44,12 @@ public class GoblinSpawnerUpdateTickProcedure {
 							}
 						}
 						if (world instanceof ServerLevel _level) {
-							Entity entityToSpawn = SololevelingModEntities.GOBLIN_CLUB.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
-							if (entityToSpawn != null) {
-								entityToSpawn.setYRot(world.getRandom().nextFloat() * 360F);
-							}
-						}
-						if (world instanceof ServerLevel _level) {
 							Entity entityToSpawn = SololevelingModEntities.GOBLIN_ARCHER.get().spawn(_level, BlockPos.containing(x, y, z), MobSpawnType.MOB_SUMMONED);
 							if (entityToSpawn != null) {
 								entityToSpawn.setYRot(world.getRandom().nextFloat() * 360F);
 							}
 						}
+						return;
 					}
 				}
 			}

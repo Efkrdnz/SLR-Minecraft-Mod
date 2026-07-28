@@ -2,6 +2,7 @@
 package net.solocraft.item;
 
 import net.solocraft.procedures.RunestoneProtectionMarkRCProcedure;
+import net.solocraft.procedures.TankerProgressionHelper;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
@@ -32,14 +33,16 @@ public class RunestoneProtectionMarkItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Protection Mark\""));
-		list.add(Component.literal("User can use \"Protection Mark\" which will deploy a flag that reduces damage taken of user and allies."));
+		TankerTooltipHelper.addRunestone(list, TankerProgressionHelper.PROTECTION_MARK,
+				"tooltip.sololeveling.tanker.runestone.protection_mark.description",
+				"S", 900, "12", 60);
 	}
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
-		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		RunestoneProtectionMarkRCProcedure.execute(entity, ar.getObject());
-		return ar;
+		ItemStack stack = entity.getItemInHand(hand);
+		if (!world.isClientSide())
+			RunestoneProtectionMarkRCProcedure.execute(entity, stack);
+		return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
 	}
 }

@@ -2,6 +2,7 @@
 package net.solocraft.item;
 
 import net.solocraft.procedures.RunestoneReinforcementRCProcedure;
+import net.solocraft.procedures.TankerProgressionHelper;
 
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.api.distmarker.Dist;
@@ -32,14 +33,16 @@ public class RunestoneReinforcementItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("Right click this rune to obtain \"Reinforcement\""));
-		list.add(Component.literal("User can use \"Reinforcement\" which amplifies the muscle of user allowing him to be invulnerable for brief moment."));
+		TankerTooltipHelper.addRunestone(list, TankerProgressionHelper.REINFORCEMENT,
+				"tooltip.sololeveling.tanker.runestone.reinforcement.description",
+				"B", 400, "6", 22);
 	}
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
-		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		RunestoneReinforcementRCProcedure.execute(entity, ar.getObject());
-		return ar;
+		ItemStack stack = entity.getItemInHand(hand);
+		if (!world.isClientSide())
+			RunestoneReinforcementRCProcedure.execute(entity, stack);
+		return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
 	}
 }

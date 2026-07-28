@@ -1,12 +1,16 @@
 package net.solocraft.util;
 
 import net.solocraft.dungeon.DungeonTheme;
+import net.solocraft.dungeon.DatapackDungeonGateHandler;
 import net.solocraft.dungeon.ProceduralDungeonRank;
+import net.solocraft.dungeon.data.DungeonDataManager;
+import net.solocraft.entity.DatapackGateEntity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.network.SololevelingModVariables;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -61,31 +65,7 @@ public class GateSpawnerUtil {
 			}
 			return;
 		}
-		if (random.nextFloat() < 0.18F) {
-			spawnProceduralGate(serverLevel, target, pos, random);
-		} else if (Math.random() < 1 / 6.0F) {
-			spawn(serverLevel, SololevelingModEntities.RANDOM_CAVE_LARGE.get(), pos);
-		} else if (Math.random() < 1 / 6.0F) {
-			spawn(serverLevel, SololevelingModEntities.PORTAL_LUSH.get(), pos);
-		} else if (Math.random() < 1 / 6.0F) {
-			spawn(serverLevel, SololevelingModEntities.PORTAL_ANCIENT_GOLEM.get(), pos);
-		} else if (Math.random() < 1 / 6.0F) {
-			spawn(serverLevel, SololevelingModEntities.PORTAL_LAB.get(), pos);
-		} else if (Math.random() < 1 / 6.0F) {
-			spawn(serverLevel, SololevelingModEntities.PORTAL_CEMETERY.get(), pos);
-		} else if (Math.random() < 1 / 10.0F) {
-			if (!SololevelingModVariables.MapVariables.get(world).RedGate) {
-				spawn(serverLevel, SololevelingModEntities.RED_GATE.get(), pos);
-			} else {
-				delayNextGate(world);
-			}
-		} else if (Math.random() < 1 / 5.0F) {
-			spawn(serverLevel, SololevelingModEntities.PORTAL_KARGALGANS_THRONE_ROOM.get(), pos);
-		} else if (Math.random() < 1 / 5.0F) {
-			spawn(serverLevel, SololevelingModEntities.PORTAL_BERU.get(), pos);
-		} else {
-			spawn(serverLevel, SololevelingModEntities.PORTAL_SEWERS.get(), pos);
-		}
+		spawnEligibleNaturalGate(serverLevel, target, pos, random);
 	}
 
 	private static double truncate(double value) {
@@ -96,17 +76,141 @@ public class GateSpawnerUtil {
 		return type.spawn(level, pos, MobSpawnType.MOB_SUMMONED);
 	}
 
-	private static void spawnProceduralGate(ServerLevel level, Entity target, BlockPos pos, RandomSource random) {
+	private static void spawnEligibleNaturalGate(ServerLevel level, Entity target, BlockPos pos,
+			RandomSource random) {
+		boolean ranked = level.getGameRules().getBoolean(
+				SololevelingModGameRules.SOLO_LEVELING_RANKED_GATES);
+		ProceduralDungeonRank unlockedRank = rankFor(target);
+		List<ResourceLocation> datapackDungeons = eligibleDatapackDungeons(ranked, unlockedRank);
+		List<NaturalGateChoice> choices = new ArrayList<>();
+		addChoice(choices, NaturalGateChoice.procedural(180, ProceduralDungeonRank.E), ranked, unlockedRank);
+		if (!datapackDungeons.isEmpty())
+			choices.add(NaturalGateChoice.datapack(100));
+		addChoice(choices, NaturalGateChoice.entity(137, ProceduralDungeonRank.C,
+				SololevelingModEntities.RANDOM_CAVE_LARGE.get()), ranked, unlockedRank);
+		addChoice(choices, NaturalGateChoice.entity(114, ProceduralDungeonRank.B,
+				SololevelingModEntities.PORTAL_LUSH.get()), ranked, unlockedRank);
+		addChoice(choices, NaturalGateChoice.entity(95, ProceduralDungeonRank.C,
+				SololevelingModEntities.PORTAL_ANCIENT_GOLEM.get()), ranked, unlockedRank);
+		addChoice(choices, NaturalGateChoice.entity(79, ProceduralDungeonRank.A,
+				SololevelingModEntities.PORTAL_LAB.get()), ranked, unlockedRank);
+		addChoice(choices, NaturalGateChoice.entity(66, ProceduralDungeonRank.B,
+				SololevelingModEntities.PORTAL_CEMETERY.get()), ranked, unlockedRank);
+		addChoice(choices, NaturalGateChoice.red(33, ProceduralDungeonRank.B), ranked, unlockedRank);
+		addChoice(choices, NaturalGateChoice.entity(59, ProceduralDungeonRank.A,
+				SololevelingModEntities.PORTAL_KARGALGANS_THRONE_ROOM.get()), ranked, unlockedRank);
+		addChoice(choices, NaturalGateChoice.entity(47, ProceduralDungeonRank.S,
+				SololevelingModEntities.PORTAL_BERU.get()), ranked, unlockedRank);
+		addChoice(choices, NaturalGateChoice.entity(190, ProceduralDungeonRank.E,
+				SololevelingModEntities.PORTAL_SEWERS.get()), ranked, unlockedRank);
+
+		int totalWeight = choices.stream().mapToInt(NaturalGateChoice::weight).sum();
+		if (totalWeight <= 0) {
+			delayNextGate(level);
+			return;
+		}
+		int roll = random.nextInt(totalWeight);
+		NaturalGateChoice selected = choices.get(choices.size() - 1);
+		for (NaturalGateChoice choice : choices) {
+			roll -= choice.weight();
+			if (roll < 0) {
+				selected = choice;
+				break;
+			}
+		}
+
+		if (selected.datapack()) {
+			spawnDatapackGate(level, pos, random, ranked, unlockedRank, datapackDungeons);
+		} else if (selected.procedural()) {
+			spawnProceduralGate(level, target, pos, random, ranked);
+		} else if (selected.red()) {
+			if (!SololevelingModVariables.MapVariables.get(level).RedGate)
+				spawn(level, SololevelingModEntities.RED_GATE.get(), pos);
+			else
+				delayNextGate(level);
+		} else {
+			spawn(level, selected.type(), pos);
+		}
+	}
+
+	private static void addChoice(List<NaturalGateChoice> choices, NaturalGateChoice choice,
+			boolean ranked, ProceduralDungeonRank unlockedRank) {
+		if (!ranked || unlockedRank.numericRank >= choice.minimumRank().numericRank)
+			choices.add(choice);
+	}
+
+	private static List<ResourceLocation> eligibleDatapackDungeons(boolean ranked,
+			ProceduralDungeonRank unlockedRank) {
+		var snapshot = DungeonDataManager.snapshot();
+		return snapshot.dungeonIds().stream()
+				.filter(id -> snapshot.dungeon(id)
+						.map(definition -> !ranked || definition.supportsRank(unlockedRank))
+						.orElse(false))
+				.toList();
+	}
+
+	private static void spawnDatapackGate(ServerLevel level, BlockPos pos, RandomSource random,
+			boolean ranked, ProceduralDungeonRank unlockedRank,
+			List<ResourceLocation> eligibleDungeons) {
+		if (eligibleDungeons.isEmpty()) {
+			delayNextGate(level);
+			return;
+		}
+		ResourceLocation dungeonId = eligibleDungeons.get(
+				Mth.nextInt(random, 0, eligibleDungeons.size() - 1));
+		var definition = DungeonDataManager.dungeon(dungeonId).orElse(null);
+		if (definition == null) {
+			delayNextGate(level);
+			return;
+		}
+		ProceduralDungeonRank rank;
+		if (ranked) {
+			if (!definition.supportsRank(unlockedRank)) {
+				delayNextGate(level);
+				return;
+			}
+			rank = unlockedRank;
+		} else {
+			List<ProceduralDungeonRank> allowedRanks = java.util.Arrays.stream(
+					ProceduralDungeonRank.values())
+					.filter(definition.allowedRanks()::contains)
+					.toList();
+			if (allowedRanks.isEmpty()) {
+				delayNextGate(level);
+				return;
+			}
+			rank = allowedRanks.get(Mth.nextInt(random, 0, allowedRanks.size() - 1));
+		}
+
+		DatapackGateEntity gate = SololevelingModEntities.DATAPACK_GATE.get().spawn(
+				level, pos, MobSpawnType.MOB_SUMMONED);
+		if (gate == null) {
+			delayNextGate(level);
+			return;
+		}
+		if (!DatapackDungeonGateHandler.bind(gate, dungeonId, rank)) {
+			gate.discard();
+			delayNextGate(level);
+		}
+	}
+
+	private static void spawnProceduralGate(ServerLevel level, Entity target, BlockPos pos,
+			RandomSource random, boolean ranked) {
 		Entity gate = spawn(level, SololevelingModEntities.PORTAL_1.get(), pos);
 		if (gate == null)
 			return;
-		ProceduralDungeonRank rank = rankFor(target);
+		ProceduralDungeonRank rank = ranked ? rankFor(target) : randomRank(random);
 		DungeonTheme theme = randomTheme(random);
 		gate.getPersistentData().putBoolean("slr_procedural_gate", true);
 		gate.getPersistentData().putBoolean("slr_procedural_red_gate", false);
 		gate.getPersistentData().putString("slr_procedural_rank", rank.name());
 		gate.getPersistentData().putString("slr_procedural_theme", theme.name());
 		gate.getPersistentData().putInt("slr_procedural_complexity", complexityFor(rank, random));
+	}
+
+	private static ProceduralDungeonRank randomRank(RandomSource random) {
+		ProceduralDungeonRank[] ranks = ProceduralDungeonRank.values();
+		return ranks[Mth.nextInt(random, 0, ranks.length - 1)];
 	}
 
 	private static ProceduralDungeonRank rankFor(Entity target) {
@@ -145,5 +249,25 @@ public class GateSpawnerUtil {
 	private static void delayNextGate(LevelAccessor world) {
 		SololevelingModVariables.MapVariables.get(world).gatetimer = world.getLevelData().getGameRules().getInt(SololevelingModGameRules.SOLO_GATE_DELAY) - 1;
 		SololevelingModVariables.MapVariables.get(world).syncData(world);
+	}
+
+	private record NaturalGateChoice(int weight, ProceduralDungeonRank minimumRank,
+			EntityType<?> type, boolean procedural, boolean red, boolean datapack) {
+		private static NaturalGateChoice procedural(int weight, ProceduralDungeonRank minimumRank) {
+			return new NaturalGateChoice(weight, minimumRank, null, true, false, false);
+		}
+
+		private static NaturalGateChoice datapack(int weight) {
+			return new NaturalGateChoice(weight, ProceduralDungeonRank.E, null, false, false, true);
+		}
+
+		private static NaturalGateChoice red(int weight, ProceduralDungeonRank minimumRank) {
+			return new NaturalGateChoice(weight, minimumRank, null, false, true, false);
+		}
+
+		private static NaturalGateChoice entity(int weight, ProceduralDungeonRank minimumRank,
+				EntityType<?> type) {
+			return new NaturalGateChoice(weight, minimumRank, type, false, false, false);
+		}
 	}
 }

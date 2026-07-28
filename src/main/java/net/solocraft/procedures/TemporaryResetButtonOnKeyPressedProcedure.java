@@ -1,10 +1,12 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.daily.DailyQuestLifecycleManager;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.server.level.ServerPlayer;
 
 public class TemporaryResetButtonOnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
@@ -284,5 +286,7 @@ public class TemporaryResetButtonOnKeyPressedProcedure {
 				capability.syncPlayerVariables(entity);
 			});
 		}
+		if (entity instanceof ServerPlayer serverPlayer)
+			DailyQuestLifecycleManager.resetQuestState(serverPlayer, true);
 	}
 }

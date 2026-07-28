@@ -51,6 +51,8 @@ public final class OrbOfAvariceManager {
 		if (event.getEntity().level().isClientSide() || event.getAmount() <= 0.0F
 				|| !isMagic(event.getSource()))
 			return;
+		if (ShadowEquipmentCombatHandler.isOrbAmplifiedTuskDamage(event.getSource()))
+			return;
 		Entity caster = resolveDamageCaster(event.getSource());
 		if (isHeldBy(caster))
 			event.setAmount(event.getAmount() * 2.0F);

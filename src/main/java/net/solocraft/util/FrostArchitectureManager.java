@@ -62,6 +62,16 @@ public final class FrostArchitectureManager {
 	private FrostArchitectureManager() {
 	}
 
+	/**
+	 * Cancels any blueprint that has not finished materializing for this player.
+	 * Blocks which were already placed remain owned by Frozen Path's normal
+	 * temporary-block restoration lifecycle.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player != null)
+			BUILD_TASKS.remove(player.getUUID());
+	}
+
 	public static void castSelection(ServerPlayer player, int rawBlueprintId) {
 		if (!validCaster(player))
 			return;

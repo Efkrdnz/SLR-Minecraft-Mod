@@ -90,6 +90,8 @@ public final class LiuZhigangCombatManager {
 	private static final String DOMAIN_MARK_STACKS = "liu_domain_mark_stacks";
 	private static final String EXECUTION_SLOW_OWNER = "liu_execution_slow_owner";
 	private static final String EXECUTION_SLOW_UNTIL = "liu_execution_slow_until";
+	private static final String OWNED_BEAM_OWNER = "liu_owned_beam_owner";
+	private static final String DOMAIN_PROJECTILE_OWNER = "liu_domain_projectile_owner";
 	private static final int EXECUTION_DELAY_TICKS = 50;
 	private static final int EXECUTION_IMPACT_TICKS = 16;
 	private static final int EXECUTION_FIRE_RED = 0xE23818;
@@ -119,6 +121,41 @@ public final class LiuZhigangCombatManager {
 	private static final Map<UUID, List<ExecutionState>> EXECUTIONS = new HashMap<>();
 
 	private LiuZhigangCombatManager() {
+	}
+
+	/**
+	 * Cancels one player's Liu runtime without releasing any stored finisher.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null || player.getServer() == null)
+			return;
+		UUID playerId = player.getUUID();
+		clearState(player);
+
+		ArrayList<Entity> ownedProjectiles = new ArrayList<>();
+		for (ServerLevel level : player.getServer().getAllLevels()) {
+			for (Entity entity : level.getAllEntities()) {
+				if (entity instanceof LivingEntity living) {
+					CompoundTag data = living.getPersistentData();
+					if (data.hasUUID(DOMAIN_MARK_OWNER)
+							&& playerId.equals(data.getUUID(DOMAIN_MARK_OWNER)))
+						clearDomainMark(living);
+					if (data.hasUUID(EXECUTION_SLOW_OWNER)
+							&& playerId.equals(data.getUUID(EXECUTION_SLOW_OWNER)))
+						releaseExecutionRestraint(player, living, true);
+				}
+				CompoundTag data = entity.getPersistentData();
+				boolean ownedBeam = entity instanceof LiuSwordBeamEntity
+						&& data.hasUUID(OWNED_BEAM_OWNER)
+						&& playerId.equals(data.getUUID(OWNED_BEAM_OWNER));
+				boolean ownedDeflection = entity instanceof Projectile
+						&& data.hasUUID(DOMAIN_PROJECTILE_OWNER)
+						&& playerId.equals(data.getUUID(DOMAIN_PROJECTILE_OWNER));
+				if (ownedBeam || ownedDeflection)
+					ownedProjectiles.add(entity);
+			}
+		}
+		ownedProjectiles.forEach(Entity::discard);
 	}
 
 	public static boolean isLiuVessel(Entity entity) {
@@ -248,8 +285,10 @@ public final class LiuZhigangCombatManager {
 				multiplier * (state.dual ? 1.1D : 1.0D)) * CHARGED_BEAM_DAMAGE_MULTIPLIER;
 		Vec3 look = player.getLookAngle().normalize();
 		Vec3 origin = player.getEyePosition().add(look.scale(1.9D)).add(0.0D, -0.22D, 0.0D);
-		LiuSwordBeamEntity.spawn(player.serverLevel(), player, origin, look, tier, state.dual,
+		LiuSwordBeamEntity beam = LiuSwordBeamEntity.spawn(player.serverLevel(), player,
+				origin, look, tier, state.dual,
 				state.primaryColor, state.secondaryColor, width, range, tier == 3 ? 5.2F : 3.35F, damage);
+		beam.getPersistentData().putUUID(OWNED_BEAM_OWNER, player.getUUID());
 		CooldownManager.set(player, BEAM_COOLDOWN, switch (tier) {
 			case 2 -> 30;
 			case 3 -> 55;
@@ -262,7 +301,7 @@ public final class LiuZhigangCombatManager {
 	public static void cancelBeamCharge(ServerPlayer player) {
 		BeamChargeState state = BEAM_CHARGES.remove(player.getUUID());
 		if (state != null)
-			removeVfx(player.serverLevel(), state.effectId);
+			removeVfx(player.getServer(), state.effectId);
 	}
 
 	public static void enhancedAttack(ServerPlayer player, boolean offhand, int comboIndex) {
@@ -314,7 +353,8 @@ public final class LiuZhigangCombatManager {
 					push(target, look, finisher ? 0.75D : 0.35D, 0.08D);
 					if (isDomainActive(player)) {
 						SololevelingMod.queueServerWork(4, () -> {
-							if (isValidTarget(player, target)) {
+							if (player.isAlive() && isCombatStance(player)
+									&& isDomainActive(player) && isValidTarget(player, target)) {
 								LiuSwordVfxEntity.spawnAttached(player.serverLevel(), target, LiuSwordVfxEntity.ARC,
 										color, color, 2.1F, 3.4F, -strikeRoll * 0.7F, 8, false);
 								dealSwordDamage(player, target, damage * 0.42F);
@@ -462,7 +502,7 @@ public final class LiuZhigangCombatManager {
 	}
 
 	public static boolean hitBySwordBeam(ServerPlayer owner, LivingEntity target, float damage, int tier) {
-		if (!dealSwordDamage(owner, target, damage))
+		if (!isLiuVessel(owner) || !dealSwordDamage(owner, target, damage))
 			return false;
 		markForDomain(owner, target, Math.max(1, tier));
 		Vec3 direction = target.position().subtract(owner.position());
@@ -581,7 +621,8 @@ public final class LiuZhigangCombatManager {
 	public static boolean registerExecutionTarget(ServerPlayer owner, UUID beamId, LivingEntity target,
 			UUID markerEffect, float damage, int primaryColor, int secondaryColor, boolean dual,
 			boolean allowCreate) {
-		if (owner == null || beamId == null || markerEffect == null || !isValidTarget(owner, target))
+		if (owner == null || !isLiuVessel(owner) || beamId == null || markerEffect == null
+				|| !isValidTarget(owner, target))
 			return false;
 		List<ExecutionState> pending = EXECUTIONS.computeIfAbsent(owner.getUUID(),
 				ignored -> new ArrayList<>());
@@ -649,6 +690,22 @@ public final class LiuZhigangCombatManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	public static void onOwnedProjectileAttack(LivingAttackEvent event) {
+		if (!(event.getSource().getDirectEntity() instanceof Projectile projectile)
+				|| !(projectile.level() instanceof ServerLevel level))
+			return;
+		CompoundTag data = projectile.getPersistentData();
+		if (!data.hasUUID(DOMAIN_PROJECTILE_OWNER))
+			return;
+		ServerPlayer owner = level.getServer().getPlayerList()
+				.getPlayer(data.getUUID(DOMAIN_PROJECTILE_OWNER));
+		if (owner != null && isLiuVessel(owner))
+			return;
+		event.setCanceled(true);
+		projectile.discard();
+	}
+
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
 	public static void onAttacked(LivingAttackEvent event) {
 		if (!(event.getEntity() instanceof ServerPlayer player) || !isLiuVessel(player)
 				|| event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY))
@@ -665,6 +722,7 @@ public final class LiuZhigangCombatManager {
 		if (direct instanceof Projectile projectile) {
 			Vec3 reflected = projectile.getDeltaMovement().scale(-1.35D).add(0.0D, 0.08D, 0.0D);
 			projectile.setOwner(player);
+			projectile.getPersistentData().putUUID(DOMAIN_PROJECTILE_OWNER, player.getUUID());
 			projectile.setDeltaMovement(reflected);
 			projectile.hurtMarked = true;
 		}
@@ -846,14 +904,16 @@ public final class LiuZhigangCombatManager {
 			int delay = (i + 1) * 3;
 			int index = i;
 			SololevelingMod.queueServerWork(delay, () -> {
-				if (!player.isAlive())
+				if (!player.isAlive() || !isLiuVessel(player))
 					return;
 				Vec3 direction = rotateYaw(player.getLookAngle().normalize(), index * 11.0D);
-				LiuSwordBeamEntity.spawn(player.serverLevel(), player, origin, direction, 0, false,
+				LiuSwordBeamEntity beam = LiuSwordBeamEntity.spawn(player.serverLevel(), player,
+						origin, direction, 0, false,
 						primaryHandColor(player), secondaryHandColor(player), manifested ? 4.8F : 3.6F,
 						manifested ? 25.0F : 19.0F, 3.5F,
 						swordSkillDamage(player, player.getMainHandItem(),
 								0.9D * (manifested ? 1.15D : 1.0D)) * DANCE_WAVE_BEAM_DAMAGE_MULTIPLIER);
+				beam.getPersistentData().putUUID(OWNED_BEAM_OWNER, player.getUUID());
 			});
 		}
 	}
@@ -892,6 +952,8 @@ public final class LiuZhigangCombatManager {
 				if (away.lengthSqr() < 0.001D)
 					away = player.getLookAngle();
 				projectile.setOwner(player);
+				projectile.getPersistentData().putUUID(DOMAIN_PROJECTILE_OWNER,
+						player.getUUID());
 				projectile.setDeltaMovement(away.normalize().scale(Math.max(1.0D, projectile.getDeltaMovement().length() * 1.15D)));
 				projectile.hurtMarked = true;
 			}
@@ -1010,12 +1072,12 @@ public final class LiuZhigangCombatManager {
 			return;
 		for (ExecutionState state : pending) {
 			for (UUID targetId : state.targets) {
-				LivingEntity target = living(player.serverLevel(), targetId);
+				LivingEntity target = living(player.getServer(), targetId);
 				if (target != null)
 					releaseExecutionRestraint(player, target, true);
 			}
 			for (UUID markerId : state.markerEffects.values())
-				removeVfx(player.serverLevel(), markerId);
+				removeVfx(player.getServer(), markerId);
 		}
 	}
 
@@ -1029,13 +1091,22 @@ public final class LiuZhigangCombatManager {
 			player.getPersistentData().remove(NEXT_STRIKE);
 			player.getPersistentData().remove(STRIKE_PRESSURE_STACKS);
 			player.getPersistentData().remove(STRIKE_PRESSURE_LAST);
+			player.getPersistentData().remove(FALL_SAFE_UNTIL);
+			player.getPersistentData().remove(COUNTER_UNTIL);
+			player.getPersistentData().remove(COUNTER_CHARGES);
+			player.getPersistentData().remove(COUNTER_SURGE_UNTIL);
 		}
 		FlashChargeState charge = FLASH_CHARGES.remove(id);
 		if (charge != null && charge.markerId != null && entity instanceof ServerPlayer player)
-			removeVfx(player.serverLevel(), charge.markerId);
-		FLASH_DASHES.remove(id);
-		DANCES.remove(id);
+			removeVfx(player.getServer(), charge.markerId);
+		boolean wasMoving = FLASH_DASHES.remove(id) != null;
+		wasMoving |= DANCES.remove(id) != null;
 		DOMAINS.remove(id);
+		if (wasMoving && entity instanceof Player player) {
+			player.setDeltaMovement(Vec3.ZERO);
+			player.hurtMarked = true;
+			player.fallDistance = 0.0F;
+		}
 	}
 
 	private static int refreshedEnhancedStrikePressure(ServerPlayer player, long now) {
@@ -1093,7 +1164,7 @@ public final class LiuZhigangCombatManager {
 	}
 
 	private static float swordSkillDamage(ServerPlayer player, double weaponPower, double abilityScale) {
-		double strength = Math.max(0.0D, variables(player).Strength);
+		double strength = Math.max(0.0D, TemporaryStatBonusManager.effectiveStrength(player));
 		// Strength supplies the damage; weapon quality only improves how efficiently Liu can express it.
 		double mastery = 1.0D + strength * 0.12D + Math.pow(strength, 1.25D) * 0.025D;
 		double weaponEfficiency = 0.82D + Mth.clamp(weaponPower, 2.0D, 30.0D) / 70.0D;
@@ -1202,10 +1273,33 @@ public final class LiuZhigangCombatManager {
 		return entity instanceof LivingEntity living ? living : null;
 	}
 
+	private static LivingEntity living(net.minecraft.server.MinecraftServer server, UUID id) {
+		if (server == null || id == null)
+			return null;
+		for (ServerLevel level : server.getAllLevels()) {
+			Entity entity = level.getEntity(id);
+			if (entity instanceof LivingEntity living)
+				return living;
+		}
+		return null;
+	}
+
 	private static void removeVfx(ServerLevel level, UUID id) {
 		Entity effect = id == null ? null : level.getEntity(id);
 		if (effect != null)
 			effect.discard();
+	}
+
+	private static void removeVfx(net.minecraft.server.MinecraftServer server, UUID id) {
+		if (server == null || id == null)
+			return;
+		for (ServerLevel level : server.getAllLevels()) {
+			Entity effect = level.getEntity(id);
+			if (effect != null) {
+				effect.discard();
+				return;
+			}
+		}
 	}
 
 	private static boolean consumeMana(ServerPlayer player, int amount) {

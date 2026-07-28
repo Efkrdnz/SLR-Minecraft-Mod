@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryArmorSessionManager;
 
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -44,6 +45,7 @@ public class GoliathArmorTickProcedure {
 		set(entity, EquipmentSlot.LEGS, capability.overridelegs);
 		set(entity, EquipmentSlot.CHEST, capability.overridetorso);
 		set(entity, EquipmentSlot.HEAD, capability.overridehead);
+		TemporaryArmorSessionManager.finishAfterRestore(entity);
 	}
 
 	private static void set(Entity entity, EquipmentSlot slot, ItemStack stack) {

@@ -1,39 +1,41 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.ShadowExperienceManager;
 import net.solocraft.util.ShadowMonarchManager;
 
+import net.minecraftforge.event.entity.living.LivingDamageEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.server.level.ServerLevel;
 
-import java.util.UUID;
-
+/**
+ * Server event bridge for contribution-based shadow experience.
+ */
 @Mod.EventBusSubscriber
 public class ShadowMonarchXpProcedure {
-	private static final String SHADOW_OWNER = "sl_shadow_owner";
+	@SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = false)
+	public static void onEntityDamaged(LivingDamageEvent event) {
+		ShadowExperienceManager.recordDamage(event);
+	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = false)
 	public static void onEntityDeath(LivingDeathEvent event) {
-		if (event == null || event.getSource() == null)
+		if (event == null || event.getEntity().level().isClientSide())
 			return;
-		Entity attacker = event.getSource().getEntity();
-		if (attacker == null)
-			return;
-		Player owner = null;
-		if (attacker instanceof TamableAnimal tame && tame.getOwner() instanceof Player tameOwner) {
-			owner = tameOwner;
-		} else if (attacker.getPersistentData().hasUUID(SHADOW_OWNER) && attacker.level() instanceof ServerLevel level) {
-			UUID ownerId = attacker.getPersistentData().getUUID(SHADOW_OWNER);
-			owner = level.getPlayerByUUID(ownerId);
-		}
-		if (owner == null)
-			return;
-		ShadowMonarchManager.grantKillXp(owner, attacker, event.getEntity());
-		ShadowMonarchManager.collectManaStoneDropsFromKill(attacker, event.getEntity());
+		ShadowExperienceManager.awardContributions(event.getEntity());
+
+		// Mana-stone pickup remains a finishing-shadow perk; XP itself is based
+		// on every shadow's damage and does not require the final blow.
+		Entity finishingShadow = ShadowExperienceManager.resolveShadow(
+				event.getSource().getEntity());
+		if (finishingShadow == null)
+			finishingShadow = ShadowExperienceManager.resolveShadow(
+					event.getSource().getDirectEntity());
+		if (finishingShadow != null)
+			ShadowMonarchManager.collectManaStoneDropsFromKill(
+					finishingShadow, event.getEntity());
 	}
 }

@@ -4,6 +4,7 @@ import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.util.ShadowMonarchManager;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.TamableAnimal;
@@ -19,6 +20,10 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 
 public class IgrisShadowOnEntityTickUpdateProcedure {
+	private static final String NAV_TARGET_TAG = "sl_igris_nav_target";
+	private static final String NEXT_REPATH_TAG = "sl_igris_next_repath";
+	private static final int REPATH_INTERVAL_TICKS = 25;
+
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
@@ -35,11 +40,23 @@ public class IgrisShadowOnEntityTickUpdateProcedure {
 				entity.getPersistentData().putBoolean("sprint", true);
 				entity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY()),
 						((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ())));
-				if (entity instanceof Mob _entity)
-					_entity.getNavigation().moveTo(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY()),
-							((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ()), 1);
+				if (!entity.level().isClientSide() && entity instanceof Mob mob && mob.getTarget() != null) {
+					LivingEntity target = mob.getTarget();
+					CompoundTag data = entity.getPersistentData();
+					long now = entity.level().getGameTime();
+					boolean targetChanged = !data.hasUUID(NAV_TARGET_TAG)
+							|| !data.getUUID(NAV_TARGET_TAG).equals(target.getUUID());
+					if (targetChanged || mob.getNavigation().isDone()
+							&& now >= data.getLong(NEXT_REPATH_TAG)) {
+						mob.getNavigation().moveTo(target, 1.0D);
+						data.putUUID(NAV_TARGET_TAG, target.getUUID());
+						data.putLong(NEXT_REPATH_TAG, now + REPATH_INTERVAL_TICKS);
+					}
+				}
 				entity.getPersistentData().putDouble("MF", (entity.getPersistentData().getDouble("MF") + 1));
 			} else {
+				entity.getPersistentData().remove(NAV_TARGET_TAG);
+				entity.getPersistentData().remove(NEXT_REPATH_TAG);
 				entity.getPersistentData().putDouble("MF", 0);
 				entity.getPersistentData().putString("state", "idle");
 			}

@@ -384,6 +384,11 @@ public class ShadowIgrisEntity extends TamableAnimal implements GeoEntity {
 				Level world = ShadowIgrisEntity.this.level();
 				return super.canUse() && IsNotBerserkProcedure.execute(entity);
 			}
+
+			@Override
+			public boolean canContinueToUse() {
+				return super.canContinueToUse() && IsNotBerserkProcedure.execute(ShadowIgrisEntity.this);
+			}
 		});
 		this.goalSelector.addGoal(17, new RandomStrollGoal(this, 0.5));
 		this.goalSelector.addGoal(18, new OwnerHurtByTargetGoal(this));

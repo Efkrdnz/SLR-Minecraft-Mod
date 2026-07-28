@@ -223,6 +223,7 @@ public class SololevelingModEntityRenderers {
 		event.registerEntityRenderer(SololevelingModEntities.PORTAL_ANCIENT_GOLEM.get(), PortalAncientGolemRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.PORTAL.get(), PortalRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.PORTAL_1.get(), Portal1Renderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.DATAPACK_GATE.get(), Portal1Renderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SPAWNER_PORTAL.get(), SpawnerPortalRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.PORTAL_12.get(), Portal12Renderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.PORTAL_SEWERS.get(), PortalSewersRenderer::new);

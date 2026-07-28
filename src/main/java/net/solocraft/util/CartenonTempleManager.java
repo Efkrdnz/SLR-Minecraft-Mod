@@ -5,6 +5,7 @@ import net.solocraft.entity.CartenonGateEntity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.CartenonAwakeningStateMessage;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.procedures.DungeonDimensionPlayerLeavesDimensionProcedure;
 
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingDamageEvent;
@@ -76,28 +77,70 @@ public final class CartenonTempleManager {
 	}
 
 	/** Called once from the common boss-credit path after a normal gate boss dies. */
-	public static void onDungeonBossDefeated(LevelAccessor world, Entity boss, Entity creditedSource,
+	public static boolean onDungeonBossDefeated(LevelAccessor world, Entity boss, Entity creditedSource,
 			String dungeonTag) {
 		if (!(world instanceof ServerLevel level) || !(creditedSource instanceof ServerPlayer killer)
 				|| boss == null || dungeonTag == null || dungeonTag.isBlank())
-			return;
-		if (!ELIGIBLE_DUNGEONS.contains(level.dimension().location().getPath()))
-			return;
+			return false;
+		return onDungeonBossDefeated(level, boss, killer, dungeonTag,
+				dungeonParticipants(killer, level, dungeonTag));
+	}
 
-		List<ServerPlayer> participants = dungeonParticipants(killer, level).stream()
-				.filter(participant -> !SystemPlayerAccess.hasSystem(participant))
-				.toList();
-		if (participants.isEmpty())
-			return;
-		CartenonProgressSavedData progressData = CartenonProgressSavedData.get(level);
-		List<ServerPlayer> invitationOwners = new ArrayList<>();
-		for (ServerPlayer participant : participants) {
-			if (!progressData.isResolved(participant.getUUID())
-					&& progressData.recordDungeonClear(participant.getUUID(), dungeonTag))
-				invitationOwners.add(participant);
+	/**
+	 * Scoped variant used by runtime dungeons. The supplied collection must be the
+	 * complete authoritative participant set; otherwise the normal return portal
+	 * remains available.
+	 */
+	public static boolean onDungeonBossDefeated(LevelAccessor world, Entity boss, Entity creditedSource,
+			String dungeonTag, Collection<ServerPlayer> suppliedParticipants) {
+		if (!(world instanceof ServerLevel level) || !(creditedSource instanceof ServerPlayer killer)
+				|| boss == null || dungeonTag == null || dungeonTag.isBlank()
+				|| suppliedParticipants == null)
+			return false;
+		if (!ELIGIBLE_DUNGEONS.contains(level.dimension().location().getPath()))
+			return false;
+		// A hidden gate is not a usable alternate exit when its destination is
+		// unavailable. Keep the normal return portal in that case.
+		if (killer.server.getLevel(CARTENON_DIMENSION) == null)
+			return false;
+
+		if (StoryModeIntroManager.isHandledStoryBoss(killer, boss))
+			return true;
+		boolean storyIntro = StoryModeIntroManager.isStoryBoss(killer, boss);
+		LinkedHashSet<ServerPlayer> uniqueParticipants = new LinkedHashSet<>();
+		if (storyIntro) {
+			uniqueParticipants.add(killer);
+		} else {
+			for (ServerPlayer participant : suppliedParticipants) {
+				if (participant == null || participant.serverLevel() != level)
+					return false;
+				uniqueParticipants.add(participant);
+			}
 		}
+		List<ServerPlayer> participants = List.copyOf(uniqueParticipants);
+		CartenonProgressSavedData progressData = CartenonProgressSavedData.get(level);
+		if (participants.isEmpty() || !participants.contains(killer))
+			return false;
+		List<ServerPlayer> invitationOwners = new ArrayList<>();
+		if (storyIntro) {
+			if (!progressData.isResolved(killer.getUUID()))
+				invitationOwners.add(killer);
+		} else {
+			for (ServerPlayer participant : participants) {
+				if (!SystemPlayerAccess.hasSystem(participant)
+						&& !progressData.isResolved(participant.getUUID())
+						&& progressData.recordDungeonClear(participant.getUUID(), dungeonTag))
+					invitationOwners.add(participant);
+			}
+		}
+		// Record eligible members' clear progress even when a shared alternate exit
+		// would strand somebody. The normal return portal remains in that case.
+		if (!storyIntro && participants.stream().anyMatch(participant ->
+				SystemPlayerAccess.hasSystem(participant)
+						|| progressData.isResolved(participant.getUUID())))
+			return false;
 		if (invitationOwners.isEmpty())
-			return;
+			return false;
 
 		int instanceId = progressData.allocateInstance();
 		for (ServerPlayer owner : invitationOwners)
@@ -107,7 +150,7 @@ public final class CartenonTempleManager {
 		if (gate == null) {
 			for (ServerPlayer owner : invitationOwners)
 				progressData.cancelGateOffer(owner.getUUID());
-			return;
+			return false;
 		}
 
 		LinkedHashSet<UUID> allowedPlayers = new LinkedHashSet<>();
@@ -120,8 +163,10 @@ public final class CartenonTempleManager {
 		if (!level.addFreshEntity(gate)) {
 			for (ServerPlayer owner : invitationOwners)
 				progressData.cancelGateOffer(owner.getUUID());
-			return;
+			return false;
 		}
+		if (storyIntro)
+			StoryModeIntroManager.onCartenonGateCreated(killer, gate, instanceId);
 
 		level.playSound(null, gatePos, SoundEvents.END_PORTAL_SPAWN, SoundSource.HOSTILE, 1.1F, 1.32F);
 		level.sendParticles(net.minecraft.core.particles.ParticleTypes.REVERSE_PORTAL,
@@ -131,6 +176,7 @@ public final class CartenonTempleManager {
 					Component.literal("HIDDEN DUNGEON").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD),
 					Component.literal("A strange gate has appeared.").withStyle(ChatFormatting.DARK_PURPLE));
 		}
+		return true;
 	}
 
 	public static void enterGate(ServerPlayer player, CartenonGateEntity gate) {
@@ -197,9 +243,18 @@ public final class CartenonTempleManager {
 			return;
 		if (player.serverLevel().dimension() != CARTENON_DIMENSION)
 			return;
+		if (!StoryModeIntroManager.canResolveAwakening(player)) {
+			player.getPersistentData().remove(AWAKENING_PENDING_TAG);
+			player.getPersistentData().remove(DECLINE_TICKS_TAG);
+			restoreProtectionState(player);
+			player.setHealth(Math.max(1.0F, player.getHealth()));
+			sendAwakeningState(player, false);
+			return;
+		}
 
 		player.getPersistentData().remove(AWAKENING_PENDING_TAG);
 		CartenonProgressSavedData.get(player.serverLevel()).resolve(player.getUUID(), accept);
+		StoryModeIntroManager.onAwakeningResolved(player, accept);
 		sendAwakeningState(player, false);
 
 		if (!accept) {
@@ -244,6 +299,9 @@ public final class CartenonTempleManager {
 		if (event.getAmount() + 0.001F < player.getHealth())
 			return;
 		event.setCanceled(true);
+		if (!StoryModeIntroManager.canTriggerAwakening(player,
+				event.getSource()))
+			return;
 		beginAwakeningChoice(player);
 	}
 
@@ -255,6 +313,11 @@ public final class CartenonTempleManager {
 				|| CartenonProgressSavedData.get(player.serverLevel()).isResolved(player.getUUID()))
 			return;
 		event.setCanceled(true);
+		if (!StoryModeIntroManager.canTriggerAwakening(player,
+				event.getSource())) {
+			player.setHealth(Math.max(1.0F, player.getHealth()));
+			return;
+		}
 		beginAwakeningChoice(player);
 	}
 
@@ -354,6 +417,8 @@ public final class CartenonTempleManager {
 		int lateralOffset = (partyIndex % 5 - 2) * 2;
 		BlockPos entry = origin.relative(Direction.SOUTH, 8)
 				.relative(Direction.SOUTH.getClockWise(), lateralOffset).above();
+		templeLevel.getChunk(entry);
+		DungeonDimensionPlayerLeavesDimensionProcedure.completeAlternateExit(player);
 		CartenonProgressSavedData.get(templeLevel).associateInstance(player.getUUID(), instanceId);
 		player.getPersistentData().putInt(INSTANCE_TAG, instanceId);
 		player.getPersistentData().remove(AWAKENING_PENDING_TAG);
@@ -364,12 +429,14 @@ public final class CartenonTempleManager {
 		player.stopRiding();
 		player.teleportTo(templeLevel, entry.getX() + 0.5D, entry.getY(), entry.getZ() + 0.5D,
 				0.0F, 0.0F);
+		StoryModeIntroManager.onPlayerEnteredTemple(player, templeLevel, instanceId);
 		SystemNotifications.showTitleUnder(player, 0xFF597EFF, 120,
 				Component.literal("HIDDEN DUNGEON").withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD),
 				Component.literal("Cartenon Temple").withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD));
 	}
 
-	private static List<ServerPlayer> dungeonParticipants(ServerPlayer killer, ServerLevel level) {
+	private static List<ServerPlayer> dungeonParticipants(ServerPlayer killer, ServerLevel level,
+			String dungeonTag) {
 		SololevelingModVariables.PlayerVariables killerVars = killer.getCapability(
 				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 				.orElse(new SololevelingModVariables.PlayerVariables());
@@ -382,7 +449,9 @@ public final class CartenonTempleManager {
 			SololevelingModVariables.PlayerVariables candidateVars = candidate.getCapability(
 					SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 					.orElse(new SololevelingModVariables.PlayerVariables());
-			if (party.equals(candidateVars.party))
+			if (party.equals(candidateVars.party)
+					&& dungeonTag.equals(candidate.getPersistentData().getString(
+							"dungeon_tag")))
 				participants.add(candidate);
 		}
 		if (!participants.contains(killer))

@@ -433,6 +433,11 @@ public class BeruShadowEntity extends TamableAnimal implements GeoEntity {
 				Level world = BeruShadowEntity.this.level();
 				return super.canUse() && IsNotBerserkProcedure.execute(entity);
 			}
+
+			@Override
+			public boolean canContinueToUse() {
+				return super.canContinueToUse() && IsNotBerserkProcedure.execute(BeruShadowEntity.this);
+			}
 		});
 		this.goalSelector.addGoal(18, new RandomStrollGoal(this, 0.5));
 		this.goalSelector.addGoal(19, new OwnerHurtByTargetGoal(this));

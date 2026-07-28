@@ -13,15 +13,19 @@ import net.solocraft.dungeon.builder.model.DungeonDraft;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import net.minecraft.SharedConstants;
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.storage.LevelResource;
@@ -35,11 +39,14 @@ import java.nio.file.StandardCopyOption;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Stream;
 
 /** Captures an authored build and packages it as a safe, save-local datapack. */
@@ -89,15 +96,10 @@ public final class DungeonDatapackExporter {
 			return ExportResult.failure("Unsafe datapack path was rejected.");
 
 		try {
-			writePack(staging, player, project, bounds, finalFolder.getFileName().toString());
+			writePack(staging, player, project, bounds);
 			moveFinishedPack(staging, finalFolder);
-			try {
-				level.getServer().getPackRepository().reload();
-			} catch (RuntimeException exception) {
-				SololevelingMod.LOGGER.warn("Exported Dungeon Builder pack, but could not refresh datapack discovery", exception);
-			}
-			return ExportResult.success(finalFolder, "Exported datapack " + finalFolder.getFileName()
-					+ ". Run /datapack list available, enable the exact file/<folder>, then run /reload.");
+			return activateExportedPack(player, finalFolder,
+					"Exported datapack " + finalFolder.getFileName() + ".");
 		} catch (Exception exception) {
 			SololevelingMod.LOGGER.error("Dungeon Builder export failed for {}:{}", project.namespace(), project.name(), exception);
 			deleteStaging(staging);
@@ -181,19 +183,14 @@ public final class DungeonDatapackExporter {
 			Files.writeString(staging.resolve("README.md"),
 					"# " + humanName(project.name()) + "\n\n"
 							+ "Exported from a versioned Dungeon Builder Studio snapshot.\n\n"
-							+ "1. Run `/datapack enable \"file/" + finalFolder.getFileName() + "\"`.\n"
-							+ "2. Run `/reload` and `/slrdungeon issues`.\n"
-							+ "3. Run `/slrdungeon generate " + project.id() + " seed 12345 confirm`.\n\n"
+							+ "The Builder automatically requests activation and a server resource reload after export. "
+							+ "Wait for the in-game ready message before opening this dungeon through a datapack gate.\n\n"
+							+ "If this folder is copied to another world or server, load it through that host's normal datapack management workflow.\n\n"
 							+ "No placeholder mobs were inserted.\n", StandardCharsets.UTF_8);
 			moveFinishedPack(staging, finalFolder);
-			try {
-				level.getServer().getPackRepository().reload();
-			} catch (RuntimeException exception) {
-				SololevelingMod.LOGGER.warn("Exported Studio preset, but could not refresh datapack discovery", exception);
-			}
-			return ExportResult.success(finalFolder, "Exported prebuilt Studio dungeon " + project.id()
-					+ " as " + finalFolder.getFileName()
-					+ ". Enable the exact file/<folder>, then run /reload and /slrdungeon issues.");
+			return activateExportedPack(player, finalFolder,
+					"Exported prebuilt Studio dungeon " + project.id() + " as "
+							+ finalFolder.getFileName() + ".");
 		} catch (Exception exception) {
 			SololevelingMod.LOGGER.error("Studio preset export failed for {}", project.id(), exception);
 			deleteStaging(staging);
@@ -283,16 +280,12 @@ public final class DungeonDatapackExporter {
 				writeModule(staging, player, module);
 			writeJson(staging.resolve("data").resolve(namespace).resolve("slr").resolve("dungeons")
 					.resolve(dungeonName + ".json"), proceduralDefinition(namespace, dungeonName, modules, minRooms, maxRooms));
-			Files.writeString(staging.resolve("README.md"), proceduralReadme(namespace, dungeonName, modules,
-					finalFolder.getFileName().toString()), StandardCharsets.UTF_8);
+			Files.writeString(staging.resolve("README.md"), proceduralReadme(namespace, dungeonName, modules),
+					StandardCharsets.UTF_8);
 			moveFinishedPack(staging, finalFolder);
-			try {
-				level.getServer().getPackRepository().reload();
-			} catch (RuntimeException exception) {
-				SololevelingMod.LOGGER.warn("Exported procedural Dungeon Builder pack, but could not refresh datapack discovery", exception);
-			}
-			return ExportResult.success(finalFolder, "Exported procedural dungeon " + namespace + ":" + dungeonName
-					+ " with " + modules.size() + " room modules. Enable it, then run /reload.");
+			return activateExportedPack(player, finalFolder,
+					"Exported procedural dungeon " + namespace + ":" + dungeonName
+							+ " with " + modules.size() + " room modules.");
 		} catch (Exception exception) {
 			SololevelingMod.LOGGER.error("Procedural Dungeon Builder export failed for {}:{}", namespace, dungeonName, exception);
 			deleteStaging(staging);
@@ -435,18 +428,13 @@ public final class DungeonDatapackExporter {
 				throw new IOException("Dungeon definition path escaped its datapack resource directory");
 			writeJson(dungeonPath, draft.mode() == DungeonDraft.Mode.FIXED
 					? fixedDefinition(draft) : proceduralDefinition(draft, modules));
-			Files.writeString(staging.resolve("README.md"), studioReadme(draft, modules,
-					finalFolder.getFileName().toString()), StandardCharsets.UTF_8);
+			Files.writeString(staging.resolve("README.md"), studioReadme(draft, modules),
+					StandardCharsets.UTF_8);
 			moveFinishedPack(staging, finalFolder);
-			try {
-				level.getServer().getPackRepository().reload();
-			} catch (RuntimeException exception) {
-				SololevelingMod.LOGGER.warn("Exported Studio pack, but could not refresh datapack discovery", exception);
-			}
-			return ExportResult.success(finalFolder, "Exported "
-					+ (draft.mode() == DungeonDraft.Mode.FIXED ? "fixed" : "procedural")
-					+ " Studio dungeon " + draft.id() + " with " + modules.size()
-					+ " captured room assets. Enable it, then run /reload.");
+			return activateExportedPack(player, finalFolder,
+					"Exported " + (draft.mode() == DungeonDraft.Mode.FIXED ? "fixed" : "procedural")
+							+ " Studio dungeon " + draft.id() + " with " + modules.size()
+							+ " captured room assets.");
 		} catch (Exception exception) {
 			SololevelingMod.LOGGER.error("Studio Dungeon Builder export failed for {}", draft.id(), exception);
 			deleteStaging(staging);
@@ -455,7 +443,7 @@ public final class DungeonDatapackExporter {
 	}
 
 	private static void writePack(Path root, ServerPlayer player, DungeonBuilderProjectData.Project project,
-			DungeonBuilderProjectData.Bounds bounds, String generatedFolderName) throws IOException {
+			DungeonBuilderProjectData.Bounds bounds) throws IOException {
 		String namespace = project.namespace();
 		String name = project.name();
 		Path dataRoot = root.resolve("data").resolve(namespace);
@@ -480,7 +468,7 @@ public final class DungeonDatapackExporter {
 		writeJson(bossPoolPath, examplePool(true));
 		writeConfiguredEntityPools(root, project);
 
-		Files.writeString(root.resolve("README.md"), readme(project, generatedFolderName), StandardCharsets.UTF_8);
+		Files.writeString(root.resolve("README.md"), readme(project), StandardCharsets.UTF_8);
 	}
 
 	private static ExportResult validateCapture(ServerPlayer player, DungeonBuilderProjectData.Project project) {
@@ -763,6 +751,74 @@ public final class DungeonDatapackExporter {
 		} catch (AtomicMoveNotSupportedException ignored) {
 			Files.move(staging, destination);
 		}
+	}
+
+	private static ExportResult activateExportedPack(ServerPlayer player, Path folder, String summary) {
+		MinecraftServer server = player.getServer();
+		String packId = "file/" + folder.getFileName();
+		if (server == null)
+			return activationStartFailure(folder, summary, packId);
+
+		try {
+			PackRepository repository = server.getPackRepository();
+			repository.reload();
+			if (!repository.isAvailable(packId)) {
+				SololevelingMod.LOGGER.error("Exported datapack folder {} was not discovered as {}", folder, packId);
+				return activationStartFailure(folder, summary, packId);
+			}
+
+			LinkedHashSet<String> selected = new LinkedHashSet<>(repository.getSelectedIds());
+			selected.add(packId);
+			List<String> selectedPackIds = List.copyOf(selected);
+			UUID playerId = player.getUUID();
+
+			// Calling reloadResources on the server thread waits for completion in 1.20.1.
+			// Begin it on Minecraft's background executor so exporting never stalls the tick loop.
+			CompletableFuture<Void> reload = CompletableFuture
+					.supplyAsync(() -> server.reloadResources(selectedPackIds), Util.backgroundExecutor())
+					.thenCompose(future -> future);
+			reload.whenComplete((unused, failure) -> {
+				Throwable cause = unwrapCompletionFailure(failure);
+				server.execute(() -> {
+					ServerPlayer onlinePlayer = server.getPlayerList().getPlayer(playerId);
+					if (cause == null) {
+						SololevelingMod.LOGGER.info("Activated exported datapack {}", packId);
+						if (onlinePlayer != null)
+							onlinePlayer.sendSystemMessage(Component.literal(
+									"Datapack " + packId + " is active and ready."));
+						return;
+					}
+
+					SololevelingMod.LOGGER.error(
+							"Automatic activation and resource reload failed for exported datapack {}", packId, cause);
+					if (onlinePlayer != null)
+						onlinePlayer.sendSystemMessage(Component.literal(
+								"Exported datapack " + packId
+										+ " could not be activated. Its files were kept, but it is not active. "
+										+ "Check latest.log for details."));
+				});
+			});
+			return ExportResult.success(folder, summary
+					+ " Automatic activation and server resource reload started; "
+					+ "you will be notified when it is ready.");
+		} catch (RuntimeException exception) {
+			SololevelingMod.LOGGER.error(
+					"Could not start automatic activation for exported datapack {} at {}", packId, folder, exception);
+			return activationStartFailure(folder, summary, packId);
+		}
+	}
+
+	private static ExportResult activationStartFailure(Path folder, String summary, String packId) {
+		return new ExportResult(false, folder, summary + " Its files were kept at " + folder
+				+ ", but automatic activation could not start for " + packId
+				+ ". The pack is not active; check latest.log for details.");
+	}
+
+	private static Throwable unwrapCompletionFailure(Throwable failure) {
+		Throwable current = failure;
+		while (current instanceof CompletionException && current.getCause() != null)
+			current = current.getCause();
+		return current;
 	}
 
 	private static JsonObject definition(DungeonBuilderProjectData.Project project,
@@ -1076,17 +1132,17 @@ public final class DungeonDatapackExporter {
 		throw new IOException("Too many exports with the same name");
 	}
 
-	private static String readme(DungeonBuilderProjectData.Project project, String generatedFolderName) {
+	private static String readme(DungeonBuilderProjectData.Project project) {
 		String definitionType = project.kind() == DungeonBuilderProjectData.ProjectKind.PRESET ? "dungeon" : "room module";
 		String rankLine = project.kind() == DungeonBuilderProjectData.ProjectKind.PRESET
 				? "- Allowed gate ranks: " + rankText(project.allowedRanks()) + ". A gate outside this list cannot be bound or entered.\n"
 				: "";
 		return "# " + humanName(project.name()) + "\n\n"
 				+ "This save-local datapack was exported by the Solo Leveling Dungeon Builder.\n\n"
-				+ "## Activate\n\n"
-				+ "1. Run `/datapack list available`.\n"
-				+ "2. Enable this folder with `/datapack enable \"file/" + generatedFolderName + "\"`.\n"
-				+ "3. Run `/reload`.\n\n"
+				+ "## Activation\n\n"
+				+ "The Builder automatically selected this pack and started a server resource reload after export. "
+				+ "Wait for the in-game ready message before using it through a datapack gate.\n\n"
+				+ "If this folder is copied to another world or server, load it through that host's normal datapack management workflow.\n\n"
 				+ "## Contents\n\n"
 				+ "- The captured `.nbt` structure is under `data/" + project.namespace() + "/structures/slr_dungeons/`.\n"
 				+ "- Capture includes blocks and block entities, but intentionally excludes free-standing entities.\n"
@@ -1098,13 +1154,13 @@ public final class DungeonDatapackExporter {
 	}
 
 	private static String proceduralReadme(String namespace, String dungeonName,
-			List<DungeonBuilderProjectData.Project> modules, String generatedFolderName) {
+			List<DungeonBuilderProjectData.Project> modules) {
 		return "# " + humanName(dungeonName) + "\n\n"
 				+ "This datapack contains a complete procedural Solo Leveling dungeon assembled from " + modules.size() + " authored room modules.\n\n"
-				+ "## Activate and test\n\n"
-				+ "1. Run `/datapack enable \"file/" + generatedFolderName + "\"`.\n"
-				+ "2. Run `/reload`.\n"
-				+ "3. Run `/slrdungeon generate " + namespace + ":" + dungeonName + " confirm`.\n\n"
+				+ "## Activation\n\n"
+				+ "The Builder automatically selected this pack and started a server resource reload after export. "
+				+ "Wait for the in-game ready message before opening it through a datapack gate.\n\n"
+				+ "If this folder is copied to another world or server, load it through that host's normal datapack management workflow.\n\n"
 				+ "Allowed gate ranks: **" + rankText(modules.get(0).allowedRanks()) + "**. Binding rejects any gate outside this list; compatible gates generate the dungeon in their normal rank dimension.\n\n"
 				+ "## Customize mobs\n\n"
 				+ "Generated `<room>_default` and `<room>_boss` pools start with a test zombie. Replace entries under `data/" + namespace + "/slr/mob_pools/` with exact registry IDs or entity-type tags. If a room references a different custom pool ID, that pool must be supplied by this or another enabled pack.\n"
@@ -1113,7 +1169,7 @@ public final class DungeonDatapackExporter {
 	}
 
 	private static String studioReadme(DungeonDraft draft,
-			List<DungeonBuilderProjectData.Project> modules, String generatedFolderName) {
+			List<DungeonBuilderProjectData.Project> modules) {
 		String ranks = rankText(draft.allowedRanks());
 		String layout = draft.mode() == DungeonDraft.Mode.FIXED
 				? "- Mode: fixed exact placement graph.\n- Placed rooms: " + draft.fixedPlacements().size() + ".\n"
@@ -1122,11 +1178,10 @@ public final class DungeonDatapackExporter {
 		return "# " + humanName(draft.id().getPath()) + "\n\n"
 				+ "Exported by Solo Leveling Dungeon Builder Studio from " + modules.size()
 				+ " versioned room snapshot(s).\n\n"
-				+ "## Activate and verify\n\n"
-				+ "1. Run `/datapack enable \"file/" + generatedFolderName + "\"`.\n"
-				+ "2. Run `/reload`.\n"
-				+ "3. Run `/slrdungeon issues`.\n"
-				+ "4. Run `/slrdungeon generate " + draft.id() + " seed 12345 confirm`.\n\n"
+				+ "## Activation\n\n"
+				+ "The Builder automatically selected this pack and started a server resource reload after export. "
+				+ "Wait for the in-game ready message before opening it through a datapack gate.\n\n"
+				+ "If this folder is copied to another world or server, load it through that host's normal datapack management workflow.\n\n"
 				+ "## Definition\n\n"
 				+ layout
 				+ "- Allowed gate ranks: " + ranks + ".\n"

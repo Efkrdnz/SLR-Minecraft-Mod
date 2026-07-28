@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModMobEffects;
 
@@ -117,7 +118,7 @@ public class KamishWrathEntitySwingsItemProcedure {
 					for (Entity entityiterator : _entfound) {
 						if (!(entity == entityiterator || entityiterator instanceof ExperienceOrb || entityiterator instanceof ItemEntity)) {
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.PLAYER_ATTACK), entity),
-									(float) (24 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 3));
+									(float) (24 + TemporaryStatBonusManager.effectiveStrength(entity) / 3.0D));
 							entityiterator.setDeltaMovement(new Vec3((6 * entity.getLookAngle().x), (4 * entity.getLookAngle().y), (6 * entity.getLookAngle().z)));
 						}
 					}
@@ -128,7 +129,7 @@ public class KamishWrathEntitySwingsItemProcedure {
 					for (Entity entityiterator : _entfound) {
 						if (!(entity == entityiterator || entityiterator instanceof ExperienceOrb || entityiterator instanceof ItemEntity)) {
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.PLAYER_ATTACK), entity),
-									(float) (24 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 3));
+									(float) (24 + TemporaryStatBonusManager.effectiveStrength(entity) / 3.0D));
 							entityiterator.setDeltaMovement(new Vec3((5 * entity.getLookAngle().x), (3 * entity.getLookAngle().y), (5 * entity.getLookAngle().z)));
 						}
 					}
@@ -139,7 +140,7 @@ public class KamishWrathEntitySwingsItemProcedure {
 					for (Entity entityiterator : _entfound) {
 						if (!(entity == entityiterator || entityiterator instanceof ExperienceOrb || entityiterator instanceof ItemEntity)) {
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.PLAYER_ATTACK), entity),
-									(float) (24 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 3));
+									(float) (24 + TemporaryStatBonusManager.effectiveStrength(entity) / 3.0D));
 							entityiterator.setDeltaMovement(new Vec3((4 * entity.getLookAngle().x), (2 * entity.getLookAngle().y), (4 * entity.getLookAngle().z)));
 						}
 					}

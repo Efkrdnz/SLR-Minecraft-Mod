@@ -27,6 +27,7 @@ import java.util.UUID;
  * same target without clearing or recoloring one another.
  */
 public final class EntityHighlightSystem {
+	public static final String SOURCE_PARTY_MEMBERS = "party:members";
 	public static final int COLOR_WAVE_NORMAL = 0x58D8FF;
 	public static final int COLOR_WAVE_ELITE = 0xFFB347;
 	public static final int COLOR_WAVE_BOSS = 0xFF304F;
@@ -34,6 +35,7 @@ public final class EntityHighlightSystem {
 	public static final int COLOR_PERCEPTION_PLAYER = 0x55B8FF;
 	public static final int COLOR_PERCEPTION_NEUTRAL = 0xF2D35E;
 
+	public static final int PRIORITY_PARTY = 80;
 	public static final int PRIORITY_PERCEPTION = 100;
 	public static final int PRIORITY_DUNGEON_NORMAL = 200;
 	public static final int PRIORITY_DUNGEON_ELITE = 250;

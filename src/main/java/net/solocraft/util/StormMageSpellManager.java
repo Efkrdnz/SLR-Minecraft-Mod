@@ -110,6 +110,25 @@ public final class StormMageSpellManager {
 	}
 
 	/**
+	 * Cancels one player's Storm state and any in-flight casts immediately.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null)
+			return;
+		UUID playerId = player.getUUID();
+		ACTIVE_NEEDLES.removeIf(cast -> playerId.equals(cast.casterId));
+		boolean wasDashing = ACTIVE_DASHES.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_SKYBREAKERS.removeIf(cast -> playerId.equals(cast.casterId));
+		ACTIVE_ECHOES.removeIf(cast -> playerId.equals(cast.casterId));
+		removeState(player, true);
+		if (wasDashing) {
+			player.setDeltaMovement(Vec3.ZERO);
+			player.hurtMarked = true;
+			player.fallDistance = 0.0F;
+		}
+	}
+
+	/**
 	 * Integration hook for temporary transformations. Baran's Spiritualization
 	 * is recognized directly; other transformations may supply the same
 	 * temporary mastery bonus through this provider.

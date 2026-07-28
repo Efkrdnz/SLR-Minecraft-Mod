@@ -4,7 +4,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7.+'
 }
 
-version = '1.0.0'
+version = '1.0.3'
 group = 'com.yourname.modid'
 archivesBaseName = 'modid'
 
@@ -73,9 +73,6 @@ repositories {
         url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
     }
     maven {
-        url = 'https://maven.kosmx.dev/'
-    }
-    maven {
         name = 'Modding Legacy Maven'
         url = 'https://maven.moddinglegacy.com/maven'
     }
@@ -89,7 +86,6 @@ dependencies {
     implementation fg.deobf('curse.maven:loquat-forge-885292:4925464')
     implementation fg.deobf('curse.maven:jade-324717:4986594')
     implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.20.1:4.4.2')
-    implementation fg.deobf('dev.kosmx.player-anim:player-animation-lib-forge:1.0.2-rc1+1.20')
     implementation fg.deobf('curse.maven:world-preview-891429:4964102')
     implementation fg.deobf('curse.maven:worldedit-225608:4586218')
     implementation fg.deobf('curse.maven:cloth-config-348521:4973441')
@@ -97,7 +93,6 @@ dependencies {
     implementation fg.deobf('curse.maven:huge-structure-blocks-474114:4803547')
 
     compileOnly fg.deobf('curse.maven:bettercombat-forge-639842:4823303')
-    runtimeOnly fg.deobf('curse.maven:bettercombat-forge-639842:4823303')
     compileOnly fg.deobf('curse.maven:cloth-config-forge-348521:4633444')
     runtimeOnly fg.deobf('curse.maven:cloth-config-forge-348521:4633444')
     compileOnly fg.deobf('curse.maven:mpp-forge-986014:5262463')
@@ -186,13 +181,102 @@ tasks.register('auditShaderDefinitions') {
     }
 }
 
+tasks.register('testVesselProgressionRules', JavaExec) {
+    group = 'verification'
+    description = 'Runs the pure order-independent vessel entitlement regression checks.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.VesselProgressionRulesRegression')
+}
+
+tasks.register('testHunterGateFixRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Hunter damage, goblin retaliation, and gate cleanup regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.HunterGateFixRegression')
+}
+
+tasks.register('testShadowCommandSafetyRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs bounded Clear Dungeon and safe Igris movement regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ShadowCommandSafetyRegression')
+}
+
+tasks.register('testShadowLevelPersistenceRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs shadow level/XP persistence regressions for owner and summon deaths.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ShadowLevelPersistenceRegression')
+}
+
+tasks.register('testShadowExperienceRulesRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs contribution, target-strength, and catch-up shadow-XP regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ShadowExperienceRulesRegression')
+}
+
+tasks.register('testPlayerResetRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs complete, player-scoped and item-safe reset regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.PlayerResetRegression')
+}
+
+tasks.register('testJobChangeOverworldRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs server-authoritative Job Change Overworld-entry regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.JobChangeOverworldRegression')
+}
+
+tasks.register('testPlayerEntryGenerationRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs reset-safe delayed dungeon-entry regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.PlayerEntryGenerationRegression')
+}
+
+tasks.register('testDailyStoryGuildRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Daily reward, Story Intro reward, and removed guild-worldgen regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.DailyStoryGuildRegression')
+}
+
+tasks.register('testTemporaryStatBonusRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs derived temporary-stat and Demon King dagger set regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.TemporaryStatBonusRegression')
+}
+
 tasks.named('check') {
-    dependsOn 'auditProcedureReferences', 'auditShaderDefinitions'
+    dependsOn 'auditProcedureReferences', 'auditShaderDefinitions',
+            'testVesselProgressionRules', 'testHunterGateFixRegression',
+            'testShadowCommandSafetyRegression',
+            'testShadowLevelPersistenceRegression',
+            'testShadowExperienceRulesRegression',
+            'testPlayerResetRegression',
+            'testJobChangeOverworldRegression',
+            'testPlayerEntryGenerationRegression',
+            'testDailyStoryGuildRegression',
+            'testTemporaryStatBonusRegression'
 }
 
 tasks.named('jar') {
     dependsOn 'auditProcedureReferences', 'auditShaderDefinitions'
-    archiveFileName = 'SLR1.0.0.jar'
+    archiveFileName = 'SLR1.0.3.jar'
 }
 
 // ForgeGradle writes the production-remapped jar to build/reobfJar/output.jar.
@@ -208,9 +292,9 @@ tasks.matching { it.name == 'reobfJar' }.configureEach {
         copy {
             from reobfuscatedJar
             into file("${buildDir}/libs")
-            rename { 'SLR1.0.0.jar' }
+            rename { 'SLR1.0.3.jar' }
         }
-        logger.lifecycle('Production jar copied to build/libs/SLR1.0.0.jar')
+        logger.lifecycle('Production jar copied to build/libs/SLR1.0.3.jar')
     }
 }
 
@@ -221,7 +305,7 @@ tasks.register('auditJarClassCompleteness') {
 
     doLast {
         def classesRoot = file("${buildDir}/classes/java/main")
-        def releaseJar = file("${buildDir}/libs/SLR1.0.0.jar")
+        def releaseJar = file("${buildDir}/libs/SLR1.0.3.jar")
         if (!releaseJar.isFile())
             throw new GradleException("Release jar was not produced: ${releaseJar}")
 

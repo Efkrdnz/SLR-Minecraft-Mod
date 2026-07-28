@@ -6,21 +6,27 @@ import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 public final class KangTaeshikAmbushManager {
 	public static final String AMBUSH_TAG = "SLRKangTaeshikAmbush";
 	public static final String OWNER_TAG = "SLRKangTaeshikTarget";
 
-	private static final String PENDING_TAG = "SLRKangTaeshikAmbushPending";
+	private static final String PENDING_UNTIL_TAG = "SLRKangTaeshikAmbushPendingUntil";
 	private static final String COOLDOWN_TAG = "SLRKangTaeshikAmbushCooldown";
+	private static final String COMPLETED_TAG = "SLRKangTaeshikAmbushCompleted";
 	private static final double AMBUSH_CHANCE = 0.10D;
 	private static final long AMBUSH_COOLDOWN = 10L * 60L * 20L;
 
@@ -30,14 +36,26 @@ public final class KangTaeshikAmbushManager {
 	public static void trySchedule(ServerPlayer player, Entity defeatedBoss) {
 		if (player == null || defeatedBoss == null || !player.isAlive() || !SystemPlayerAccess.hasSystem(player))
 			return;
-		if (!isEligibleDungeonBoss(defeatedBoss) || player.getPersistentData().getBoolean(PENDING_TAG))
+		if (hasCompletedAmbush(player) || !isEligibleDungeonBoss(defeatedBoss))
 			return;
 		long now = player.level().getGameTime();
-		if (now < player.getPersistentData().getLong(COOLDOWN_TAG) || player.getRandom().nextDouble() >= AMBUSH_CHANCE)
+		if (player.getPersistentData().getLong(PENDING_UNTIL_TAG) > now)
+			return;
+		player.getPersistentData().remove(PENDING_UNTIL_TAG);
+		if (now < player.getPersistentData().getLong(COOLDOWN_TAG)
+				|| player.getRandom().nextDouble() >= AMBUSH_CHANCE
+				|| hasLiveOwnedAmbush(player))
 			return;
 
-		player.getPersistentData().putBoolean(PENDING_TAG, true);
-		SololevelingMod.queueServerWork(25, () -> spawnAmbush(player));
+		MinecraftServer server = player.getServer();
+		if (server == null)
+			return;
+		UUID playerId = player.getUUID();
+		// The expiry outlives the 25-tick callback so another boss death cannot
+		// enqueue a duplicate on the callback's execution tick. If the callback
+		// is lost to logout/restart, game time naturally releases the marker.
+		player.getPersistentData().putLong(PENDING_UNTIL_TAG, now + 60L);
+		SololevelingMod.queueServerWork(server, 25, () -> spawnAmbush(server, playerId));
 	}
 
 	public static boolean isAmbush(KangTaeshikEntity kang) {
@@ -48,7 +66,41 @@ public final class KangTaeshikAmbushManager {
 		return isAmbush(kang) ? kang.getPersistentData().getUUID(OWNER_TAG) : null;
 	}
 
+	public static boolean markAmbushCompleted(ServerPlayer player) {
+		if (player == null)
+			return false;
+		CompoundTag persisted = persistentPlayerData(player);
+		if (persisted.getBoolean(COMPLETED_TAG))
+			return false;
+		persisted.putBoolean(COMPLETED_TAG, true);
+		return true;
+	}
+
+	/** Clears one player's ambush receipt, pending callback and loaded Kang. */
+	public static void resetPlayerProgress(ServerPlayer player) {
+		if (player == null || player.getServer() == null)
+			return;
+		player.getPersistentData().remove(PENDING_UNTIL_TAG);
+		player.getPersistentData().remove(COOLDOWN_TAG);
+		UUID playerId = player.getUUID();
+		ArrayList<KangTaeshikEntity> loadedAmbushes = new ArrayList<>();
+		for (ServerLevel level : player.getServer().getAllLevels()) {
+			for (Entity entity : level.getAllEntities()) {
+				if (entity instanceof KangTaeshikEntity kang
+						&& playerId.equals(ownerId(kang)))
+					loadedAmbushes.add(kang);
+			}
+		}
+		loadedAmbushes.forEach(Entity::discard);
+	}
+
+	private static boolean hasCompletedAmbush(ServerPlayer player) {
+		return player != null && persistentPlayerData(player).getBoolean(COMPLETED_TAG);
+	}
+
 	private static boolean isEligibleDungeonBoss(Entity boss) {
+		if (boss instanceof KangTaeshikEntity)
+			return false;
 		ResourceLocation dimension = boss.level().dimension().location();
 		if (!"sololeveling".equals(dimension.getNamespace()) || !dimension.getPath().startsWith("dungeon_dimension"))
 			return false;
@@ -57,11 +109,17 @@ public final class KangTaeshikAmbushManager {
 		return CombatRankHelper.rankOf(boss) <= 4;
 	}
 
-	private static void spawnAmbush(ServerPlayer player) {
-		player.getPersistentData().remove(PENDING_TAG);
+	private static void spawnAmbush(MinecraftServer server, UUID playerId) {
+		ServerPlayer player = server.getPlayerList().getPlayer(playerId);
+		if (player == null)
+			return;
+		if (player.getPersistentData().getLong(PENDING_UNTIL_TAG)
+				<= player.level().getGameTime())
+			return;
+		player.getPersistentData().remove(PENDING_UNTIL_TAG);
 		if (!player.isAlive() || player.isRemoved() || !(player.level() instanceof ServerLevel level) || !SystemPlayerAccess.hasSystem(player))
 			return;
-		if (UrgentQuestManager.hasActiveQuest(player))
+		if (hasCompletedAmbush(player) || UrgentQuestManager.hasActiveQuest(player) || hasLiveOwnedAmbush(player))
 			return;
 		BlockPos spawnPos = findSafeSpawn(level, player);
 		if (spawnPos == null)
@@ -90,6 +148,28 @@ public final class KangTaeshikAmbushManager {
 			kang.setDeltaMovement(leap.x * 0.85D, 0.32D, leap.z * 0.85D);
 		}
 		player.getPersistentData().putLong(COOLDOWN_TAG, level.getGameTime() + AMBUSH_COOLDOWN);
+	}
+
+	private static boolean hasLiveOwnedAmbush(ServerPlayer player) {
+		if (player.getServer() == null)
+			return false;
+		UUID playerId = player.getUUID();
+		for (ServerLevel level : player.getServer().getAllLevels()) {
+			for (Entity entity : level.getAllEntities()) {
+				if (entity instanceof KangTaeshikEntity kang && kang.isAlive()
+						&& !kang.isRemoved() && isAmbush(kang)
+						&& playerId.equals(ownerId(kang)))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	private static CompoundTag persistentPlayerData(Player player) {
+		CompoundTag root = player.getPersistentData();
+		if (!root.contains(Player.PERSISTED_NBT_TAG, Tag.TAG_COMPOUND))
+			root.put(Player.PERSISTED_NBT_TAG, new CompoundTag());
+		return root.getCompound(Player.PERSISTED_NBT_TAG);
 	}
 
 	private static BlockPos findSafeSpawn(ServerLevel level, ServerPlayer player) {

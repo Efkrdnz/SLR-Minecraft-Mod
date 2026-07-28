@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.InstanceDungeonKeyAccess;
+import net.solocraft.util.PlayerEntryGenerationGuard;
 import net.solocraft.SololevelingMod;
 
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
@@ -31,6 +32,10 @@ public class InstanceDungeonKeyLoggerOnBlockRightClickedProcedure {
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Player) {
 			if (entity instanceof ServerPlayer player && InstanceDungeonKeyAccess.canEnter(player)) {
+				final long entryGeneration = PlayerEntryGenerationGuard.begin(player);
+				final ResourceKey<Level> dungeonDimension = ResourceKey.create(
+						Registries.DIMENSION,
+						new ResourceLocation("sololeveling:dungeon_dimension_kasaka"));
 				InstanceDungeonKeyAccess.markClaimed(player);
 				{
 					int _value = 1;
@@ -96,8 +101,10 @@ public class InstanceDungeonKeyLoggerOnBlockRightClickedProcedure {
 					});
 				}
 				SololevelingMod.queueServerWork(10, () -> {
+					if (!PlayerEntryGenerationGuard.isCurrent(player, entryGeneration))
+						return;
 					if (entity instanceof ServerPlayer _player && !_player.level().isClientSide()) {
-						ResourceKey<Level> destinationType = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_kasaka"));
+						ResourceKey<Level> destinationType = dungeonDimension;
 						if (_player.level().dimension() == destinationType)
 							return;
 						ServerLevel nextLevel = _player.server.getLevel(destinationType);
@@ -111,7 +118,14 @@ public class InstanceDungeonKeyLoggerOnBlockRightClickedProcedure {
 						}
 					}
 					SololevelingMod.queueServerWork(60, () -> {
+						if (!PlayerEntryGenerationGuard.isCurrent(player,
+								entryGeneration))
+							return;
 						SololevelingMod.queueServerWork(10, () -> {
+							if (!PlayerEntryGenerationGuard.isCurrent(player,
+									entryGeneration)
+									|| player.level().dimension() != dungeonDimension)
+								return;
 							{
 								Entity _ent = entity;
 								_ent.teleportTo(((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayerx),
@@ -123,14 +137,24 @@ public class InstanceDungeonKeyLoggerOnBlockRightClickedProcedure {
 											((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).randplayerz), _ent.getYRot(), _ent.getXRot());
 							}
 							SololevelingMod.queueServerWork(10, () -> {
+								if (!PlayerEntryGenerationGuard.isCurrent(player,
+										entryGeneration)
+										|| player.level().dimension() != dungeonDimension)
+									return;
 								{
 									Entity _ent = entity;
 									if (!_ent.level().isClientSide() && _ent.getServer() != null) {
 										_ent.getServer().getCommands().performPrefixedCommand(
 												new CommandSourceStack(CommandSource.NULL, _ent.position(), _ent.getRotationVector(), _ent.level() instanceof ServerLevel ? (ServerLevel) _ent.level() : null, 4, _ent.getName().getString(),
-														_ent.getDisplayName(), _ent.level().getServer(), _ent),
+												_ent.getDisplayName(), _ent.level().getServer(), _ent),
 												"execute in sololeveling:dungeon_dimension_kasaka as @s at @s unless entity @e[type=sololeveling:portal_12,distance=..100] run spawninstance");
-										SololevelingMod.queueServerWork(30, () -> DunKasakaTeleportAndSpawnProcedure.execute(_ent.level(), _ent));
+										SololevelingMod.queueServerWork(30, () -> {
+											if (PlayerEntryGenerationGuard.isCurrent(player,
+													entryGeneration)
+													&& player.level().dimension() == dungeonDimension)
+												DunKasakaTeleportAndSpawnProcedure.execute(
+														_ent.level(), _ent);
+										});
 									}
 								}
 							});

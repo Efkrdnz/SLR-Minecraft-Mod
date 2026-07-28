@@ -67,7 +67,7 @@ public class SololevelingMod {
 		SololevelingModMenus.REGISTRY.register(bus);
 	}
 
-	private static final String PROTOCOL_VERSION = "2";
+	private static final String PROTOCOL_VERSION = "3";
 	public static final SimpleChannel PACKET_HANDLER = NetworkRegistry.newSimpleChannel(new ResourceLocation(MODID, MODID), () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
 	private static int messageID = 0;
 

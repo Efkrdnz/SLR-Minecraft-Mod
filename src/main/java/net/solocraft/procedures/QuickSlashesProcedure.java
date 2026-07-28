@@ -1,6 +1,6 @@
 package net.solocraft.procedures;
 
-import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.entity.QuickSlashesEntity;
 
@@ -63,7 +63,7 @@ public class QuickSlashesProcedure {
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.DISMANTLE.get()), (entityiterator.getX()), (entityiterator.getY()), (entityiterator.getZ()), 6, 0.5, 1, 0.5, 0);
 					entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
-							(float) (6 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength / 20));
+							(float) (6 + TemporaryStatBonusManager.effectiveStrength(entity) / 20.0D));
 					if (entity instanceof LivingEntity _entity)
 						_entity.swing(InteractionHand.MAIN_HAND, true);
 					if (world instanceof Level _level) {

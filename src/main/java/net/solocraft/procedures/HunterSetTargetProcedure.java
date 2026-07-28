@@ -38,6 +38,9 @@ public class HunterSetTargetProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		if (entity instanceof HunterEntity hunter
+				&& hunter.isStoryTempleFollower())
+			return;
 		if (world.dayTime() % 20 == 0 && entity instanceof HunterEntity) {
 			if ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == (null)) {
 				{

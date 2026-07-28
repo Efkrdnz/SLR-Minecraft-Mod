@@ -41,18 +41,25 @@ public final class DkcQuestManager {
 
 	public static Component buttonLabel(Entity entity) {
 		if (entity != null && DkcFloorRegistry.isDkc(entity.level()))
-			return Component.literal("Return to Overworld");
+			return Component.literal("Castle Tower");
 		return Component.literal(hasRadiruCastleAccess(entity) ? "Radiru Castle" : "Demon King's Castle");
 	}
 
 	public static void unlock(Entity entity) {
-		if (entity == null || isFinished(entity))
+		if (entity == null)
 			return;
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-			if (capability.dkc_unlocked <= 0) {
+			boolean changed = false;
+			if (capability.dkc_cleared < 20 && capability.dkc_unlocked <= 0) {
 				capability.dkc_unlocked = 1;
-				capability.syncPlayerVariables(entity);
+				changed = true;
 			}
+			if (capability.dailysecrettrans != 0) {
+				capability.dailysecrettrans = 0;
+				changed = true;
+			}
+			if (changed)
+				capability.syncPlayerVariables(entity);
 		});
 	}
 

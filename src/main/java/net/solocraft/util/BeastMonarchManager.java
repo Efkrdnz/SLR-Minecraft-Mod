@@ -109,6 +109,17 @@ public final class BeastMonarchManager {
 	private BeastMonarchManager() {
 	}
 
+	/**
+	 * Cancels every player-owned Beast runtime before capability data is reset.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player == null)
+			return;
+		clearPlayer(player);
+		removeWhiteFangSpeed(player);
+		PlayerAuraSystem.clearContinuous(player);
+	}
+
 	public static boolean isBeastVessel(Entity entity) {
 		if (entity == null)
 			return false;
@@ -162,7 +173,7 @@ public final class BeastMonarchManager {
 			ambush = isAmbushReady(player, target, now);
 			boolean quarryHit = Objects.equals(state.quarryId, target.getUUID());
 			savageRend = finisher && quarryHit && Integer.bitCount(state.openingMask) >= 2;
-			double strength = variables(player).Strength;
+			double strength = TemporaryStatBonusManager.effectiveStrength(player);
 			double baseDamage = 8.0D + strength / 12.0D;
 			double ratio = sovereign
 					? combo == 1 ? 0.62D : combo == 2 ? 0.68D : combo == 3 ? 0.75D : 1.05D
@@ -297,7 +308,7 @@ public final class BeastMonarchManager {
 		Vec3 direction = horizontalLook(player);
 		Vec3 start = player.position();
 		Vec3 destination = sweptDestination(player, direction, sovereign ? 12.0D : 9.0D);
-		double strength = variables(player).Strength;
+		double strength = TemporaryStatBonusManager.effectiveStrength(player);
 		float damage = (float) ((10.0D + strength / 8.0D) * (sovereign ? 1.28D : 1.0D));
 		int hits = damageAlongPath(player, start, destination, sovereign ? 1.65D : 1.35D, damage, 10);
 		player.teleportTo(destination.x, destination.y, destination.z);
@@ -337,7 +348,7 @@ public final class BeastMonarchManager {
 				? hit.getLocation().add(0.0D, 0.12D, 0.0D)
 				: player.position().add(horizontalLook(player).scale(7.0D)).add(0.0D, 0.2D, 0.0D);
 		double radius = sovereign ? 5.75D : 4.5D;
-		double strength = variables(player).Strength;
+		double strength = TemporaryStatBonusManager.effectiveStrength(player);
 		float damage = (float) ((12.0D + strength / 7.0D) * (sovereign ? 1.25D : 1.0D));
 		int hits = 0;
 		for (LivingEntity target : player.serverLevel().getEntitiesOfClass(LivingEntity.class,
@@ -387,7 +398,7 @@ public final class BeastMonarchManager {
 		player.hurtMarked = true;
 		if (target == null || !validTarget(player, target) || CombatRangeHelper.surfaceDistance(player, target) > 4.0D)
 			target = forwardTarget(player, 4.5D, 0.35D);
-		double strength = variables(player).Strength;
+		double strength = TemporaryStatBonusManager.effectiveStrength(player);
 		double perception = variables(player).perception;
 		float damage = (float) ((18.0D + strength / 5.0D + perception / 25.0D)
 				* (sovereign ? 1.3D : 1.0D));
@@ -939,7 +950,8 @@ public final class BeastMonarchManager {
 			player.serverLevel().removeBlock(pos, false);
 			SololevelingMod.queueServerWork(5, () -> {
 				JawState current = JAWS.get(player.getUUID());
-				if (current == jaw && player.level().getGameTime() < current.expiresAt
+				if (current == jaw && isBeastVessel(player)
+						&& player.level().getGameTime() < current.expiresAt
 						&& player.serverLevel().getBlockState(pos).isAir())
 					player.serverLevel().setBlock(pos, SololevelingModBlocks.BEAST_RUBBLE.get().defaultBlockState(), 3);
 				jaw.phased.remove(pos);
@@ -1095,7 +1107,7 @@ public final class BeastMonarchManager {
 			maulWhiff(player);
 			return;
 		}
-		double strength = variables(player).Strength;
+		double strength = TemporaryStatBonusManager.effectiveStrength(player);
 		double perception = variables(player).perception;
 		float damage = (float) (18.0D + strength / 6.0D + perception / 20.0D);
 		if (target instanceof Player)

@@ -3,7 +3,7 @@ package net.solocraft.dungeon;
 import java.util.Optional;
 
 public enum ProceduralDungeonRank {
-	E(1, 8, 11, 13, 17, 5, 4, 1),
+	E(1, 7, 11, 13, 17, 5, 4, 1),
 	D(2, 9, 12, 15, 19, 5, 5, 2),
 	C(3, 10, 13, 17, 21, 5, 6, 2),
 	B(4, 12, 15, 19, 23, 5, 7, 3),

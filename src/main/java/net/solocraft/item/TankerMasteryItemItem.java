@@ -1,8 +1,9 @@
 
 package net.solocraft.item;
 
-import net.solocraft.procedures.MasterylvlupTankerProcedure;
+import net.solocraft.procedures.TankerProgressionHelper;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.Rarity;
@@ -23,13 +24,35 @@ public class TankerMasteryItemItem extends Item {
 	@Override
 	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
 		super.appendHoverText(itemstack, world, list, flag);
-		list.add(Component.literal("+1 Tanker mastery level"));
+		list.add(Component.translatable("tooltip.sololeveling.tanker.mastery.grant")
+				.withStyle(ChatFormatting.GOLD));
+		list.add(Component.translatable("tooltip.sololeveling.tanker.mastery.order")
+				.withStyle(ChatFormatting.GRAY));
+		list.add(Component.translatable("tooltip.sololeveling.tanker.mastery.preserve")
+				.withStyle(ChatFormatting.DARK_GRAY));
 	}
 
 	@Override
 	public InteractionResultHolder<ItemStack> use(Level world, Player entity, InteractionHand hand) {
-		InteractionResultHolder<ItemStack> ar = super.use(world, entity, hand);
-		MasterylvlupTankerProcedure.execute(entity);
-		return ar;
+		ItemStack stack = entity.getItemInHand(hand);
+		if (!world.isClientSide()) {
+			if (!(entity instanceof net.minecraft.server.level.ServerPlayer player)
+					|| !TankerProgressionHelper.isTanker(player)) {
+				entity.displayClientMessage(Component.translatable(
+						"message.sololeveling.tanker.mastery.wrong_class"), true);
+				return InteractionResultHolder.fail(stack);
+			}
+			String granted = TankerProgressionHelper.grantNextMasterySkill(player);
+			if (granted.isEmpty()) {
+				player.displayClientMessage(Component.translatable(
+						"message.sololeveling.tanker.mastery.complete"), false);
+			} else {
+				if (!player.isCreative())
+					stack.shrink(1);
+				player.displayClientMessage(Component.translatable(
+						"message.sololeveling.tanker.skill_gained", granted), false);
+			}
+		}
+		return InteractionResultHolder.sidedSuccess(stack, world.isClientSide());
 	}
 }

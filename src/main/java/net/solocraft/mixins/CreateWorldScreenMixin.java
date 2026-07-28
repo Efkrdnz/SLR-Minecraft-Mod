@@ -27,7 +27,9 @@ public abstract class CreateWorldScreenMixin {
 		}
 
 		Tab[] expandedTabs = Arrays.copyOf(existingTabs, existingTabs.length + 1);
-		expandedTabs[existingTabs.length] = new SoloLevelingWorldCreationTab(Minecraft.getInstance().font);
+		CreateWorldScreen screen = (CreateWorldScreen) (Object) this;
+		expandedTabs[existingTabs.length] = new SoloLevelingWorldCreationTab(
+				Minecraft.getInstance().font, screen.getUiState());
 		return expandedTabs;
 	}
 }

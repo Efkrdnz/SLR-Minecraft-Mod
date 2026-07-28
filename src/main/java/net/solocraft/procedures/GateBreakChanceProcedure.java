@@ -11,7 +11,9 @@ import net.solocraft.entity.PortalLushEntity;
 import net.solocraft.entity.PortalSewersEntity;
 import net.solocraft.entity.RandomCaveLargeEntity;
 import net.solocraft.entity.RedGateEntity;
+import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.StoryModeIntroSavedData;
 
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,6 +33,11 @@ public class GateBreakChanceProcedure {
 	public static boolean shouldBreak(LevelAccessor world, Entity gate) {
 		if (!(world instanceof ServerLevel serverLevel) || gate == null)
 			return true;
+		if (serverLevel.getServer().overworld().getGameRules().getBoolean(
+				SololevelingModGameRules.SOLO_LEVELING_STORY_MODE)
+				&& StoryModeIntroSavedData.get(serverLevel)
+						.hasDungeonBreakGrace())
+			return false;
 		int gateRank = gateRank(gate);
 		int maxPlayerRank = maxPlayerRank(serverLevel);
 		if (gateRank <= maxPlayerRank)

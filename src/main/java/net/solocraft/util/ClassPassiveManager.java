@@ -38,9 +38,8 @@ import net.minecraft.world.entity.player.Player;
  *   for 6 s (Berserker burst).
  *
  * Tanker – Iron Wall
- *   Each hit RECEIVED adds 1 iron-wall stack (cap 10).
- *   Each stack reduces incoming damage by 3 % (cap 30 %).
- *   Stacks decay 10 s after the last hit received.
+ *   Delegated to TankerSkillManager so mitigation and stack generation share
+ *   the single authoritative Tanker damage path.
  *
  * Healer – Resonance
  *   Using Heal Beam or Blessing Mark adds 1 resonance stack (cap 5).
@@ -58,20 +57,39 @@ public final class ClassPassiveManager {
 
     // ── PersistentData keys ───────────────────────────────────────────────────
     private static final String F_POWER   = "sl_f_power";  // double: 0-100 fighter gauge
-    private static final String T_STACKS  = "sl_t_stacks"; // int:  tanker wall stacks
-    private static final String T_TIMER   = "sl_t_timer";  // long: ms of last hit received
+    private static final String F_BURST_UNTIL = "sl_f_burst_until";
     private static final String H_STACKS  = "sl_h_stacks"; // int:  healer resonance stacks
     private static final String R_FOCUS   = "sl_r_focus";  // double: 0-100 ranger focus
     private static final String R_LAST_DECAY = "sl_r_last_decay";
 
     // ── Timings ───────────────────────────────────────────────────────────────
-    private static final long   TANK_DECAY_MS      = 10_000L;
 
     // ── Caps ──────────────────────────────────────────────────────────────────
-    private static final int    TANK_WALL_MAX      = 10;
     private static final int    HEALER_RES_MAX     =  5;
 
     private ClassPassiveManager() {}
+
+    /** Clears one player's passive gauges, delayed burst, and owned Fighter buffs. */
+    public static void resetPlayerState(ServerPlayer player) {
+        if (player == null)
+            return;
+        CompoundTag data = player.getPersistentData();
+        long now = player.level().getGameTime();
+        long burstUntil = data.getLong(F_BURST_UNTIL);
+        if (burstUntil >= now) {
+            int expectedRemaining = (int) Math.max(0L, burstUntil - now);
+            removeOwnedFighterBuff(player, MobEffects.MOVEMENT_SPEED, expectedRemaining);
+            removeOwnedFighterBuff(player, MobEffects.DAMAGE_BOOST, expectedRemaining);
+        }
+        data.remove(F_POWER);
+        data.remove(F_BURST_UNTIL);
+        data.remove(H_STACKS);
+        data.remove(R_FOCUS);
+        data.remove(R_LAST_DECAY);
+        sync(player, 1, 0.0D);
+        sync(player, 3, 0.0D);
+        sync(player, 4, 0.0D);
+    }
 
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
@@ -100,14 +118,6 @@ public final class ClassPassiveManager {
             }
         }
 
-        // ── Defender passive (Tanker) ─────────────────────────────────────────
-        if (event.getEntity() instanceof ServerPlayer victim) {
-            if (playerClass(victim) == 4) { // Tanker
-                int stacks = processTankHit(victim);
-                if (stacks > 0)
-                    event.setAmount(event.getAmount() * (1f - Math.min(stacks * 0.03f, 0.30f)));
-            }
-        }
     }
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -119,10 +129,27 @@ public final class ClassPassiveManager {
         if (event.phase != TickEvent.Phase.END) return;
         if (!(event.player instanceof ServerPlayer sp)) return;
 
-        switch (playerClass(sp)) {
-            case 4 -> tickTank(sp);
-            case 6 -> tickRanger(sp);
+        tickOwnedFighterBurst(sp);
+        if (playerClass(sp) == 6)
+            tickRanger(sp);
+    }
+
+    private static void tickOwnedFighterBurst(ServerPlayer player) {
+        CompoundTag data = player.getPersistentData();
+        long burstUntil = data.getLong(F_BURST_UNTIL);
+        if (burstUntil <= 0L)
+            return;
+        long now = player.level().getGameTime();
+        if (burstUntil < now) {
+            data.remove(F_BURST_UNTIL);
+            return;
         }
+        if (playerClass(player) == 3)
+            return;
+        int expectedRemaining = (int) Math.max(0L, burstUntil - now);
+        removeOwnedFighterBuff(player, MobEffects.MOVEMENT_SPEED, expectedRemaining);
+        removeOwnedFighterBuff(player, MobEffects.DAMAGE_BOOST, expectedRemaining);
+        data.remove(F_BURST_UNTIL);
     }
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -142,30 +169,10 @@ public final class ClassPassiveManager {
         if (power >= 100.0) {
             // Berserker burst — reset gauge and grant effects
             d.putDouble(F_POWER, 0.0);
+            d.putLong(F_BURST_UNTIL, p.level().getGameTime() + 120L);
             sync(p, 1, 0.0);
             p.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 120, 1, false, true));
             p.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST,   120, 1, false, true));
-        }
-    }
-
-    // ── Tanker ────────────────────────────────────────────────────────────────
-
-    /** Called when the Tanker takes a hit. Returns new stack count. */
-    private static int processTankHit(ServerPlayer p) {
-        CompoundTag d  = p.getPersistentData();
-        int stacks     = Math.min(d.getInt(T_STACKS) + 1, TANK_WALL_MAX);
-        d.putInt(T_STACKS, stacks);
-        d.putLong(T_TIMER, System.currentTimeMillis());
-        sync(p, 2, stacks);
-        return stacks;
-    }
-
-    private static void tickTank(ServerPlayer p) {
-        CompoundTag d = p.getPersistentData();
-        if (d.getInt(T_STACKS) == 0) return;
-        if (System.currentTimeMillis() - d.getLong(T_TIMER) > TANK_DECAY_MS) {
-            d.putInt(T_STACKS, 0);
-            sync(p, 2, 0);
         }
     }
 
@@ -176,6 +183,8 @@ public final class ClassPassiveManager {
      * (Heal Beam or Blessing Mark).  Called from UseSkillOnKeyPressedProcedure.
      */
     public static void onHealerCast(ServerPlayer p) {
+        if (p == null || playerClass(p) != 5)
+            return;
         CompoundTag d = p.getPersistentData();
         int stacks    = Math.min(d.getInt(H_STACKS) + 1, HEALER_RES_MAX);
         d.putInt(H_STACKS, stacks);
@@ -190,7 +199,7 @@ public final class ClassPassiveManager {
     }
 
     private static void triggerResonanceBurst(ServerPlayer healer) {
-        if (!healer.isAlive()) return;
+        if (!healer.isAlive() || playerClass(healer) != 5) return;
         // Heal nearby allies
         healer.level().getEntitiesOfClass(Player.class,
                 healer.getBoundingBox().inflate(8.0),
@@ -256,6 +265,14 @@ public final class ClassPassiveManager {
     private static int playerClass(ServerPlayer p) {
         return (int) p.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
                       .orElse(new SololevelingModVariables.PlayerVariables()).Classes;
+    }
+
+    private static void removeOwnedFighterBuff(ServerPlayer player,
+            net.minecraft.world.effect.MobEffect effect, int expectedRemaining) {
+        MobEffectInstance active = player.getEffect(effect);
+        if (active != null && active.getAmplifier() == 1
+                && active.getDuration() <= expectedRemaining + 2)
+            player.removeEffect(effect);
     }
 
     private static void sync(ServerPlayer p, int type, double value) {

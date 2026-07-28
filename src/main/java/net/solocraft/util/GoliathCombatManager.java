@@ -75,6 +75,14 @@ public final class GoliathCombatManager {
 	private GoliathCombatManager() {
 	}
 
+	/**
+	 * Cancels one player's Goliath charge, capture, and pursuit runtime.
+	 */
+	public static void resetPlayerState(ServerPlayer player) {
+		if (player != null)
+			clearState(player);
+	}
+
 	public static boolean isGoliathVessel(Entity entity) {
 		if (entity == null)
 			return false;
@@ -117,7 +125,7 @@ public final class GoliathCombatManager {
 		player.getPersistentData().putInt(COMBO, combo);
 		player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
 
-		double strength = variables(player).Strength;
+		double strength = TemporaryStatBonusManager.effectiveStrength(player);
 		float damage = (float) ((12.0D + strength / 8.0D) * (combo == 1 ? 1.0D : combo == 2 ? 1.22D : 1.68D) * (manifested ? 1.55D : 1.0D))
 				* ENHANCED_STRIKE_DAMAGE_MULTIPLIER;
 		double radius = combo == 1 ? 3.3D : combo == 2 ? 4.2D : 5.6D;
@@ -180,7 +188,7 @@ public final class GoliathCombatManager {
 		List<LivingEntity> found = targets(player, new AABB(center, center).inflate(width, 2.7D, width));
 		found.removeIf(target -> horizontal(target.position().subtract(player.position())).normalize().dot(forward) < 0.42D);
 		found.sort(Comparator.comparingDouble(player::distanceToSqr));
-		double strength = variables(player).Strength;
+		double strength = TemporaryStatBonusManager.effectiveStrength(player);
 		float primary = (float) ((31.0D + strength / 3.8D) * (manifested ? 1.55D : 1.0D))
 				* POWER_SMASH_DAMAGE_MULTIPLIER;
 		for (int i = 0; i < found.size(); i++) {
@@ -214,7 +222,7 @@ public final class GoliathCombatManager {
 				target.hurtMarked = true;
 			}
 			SololevelingMod.queueServerWork(8, () -> {
-				if (player.isAlive() && isManifested(player))
+				if (player.isAlive() && isGoliathVessel(player) && isManifested(player))
 					collapseImpact(player, true, true);
 			});
 		}
@@ -552,7 +560,7 @@ public final class GoliathCombatManager {
 	}
 
 	private static float physicalDamage(ServerPlayer player, double base, double strengthDivisor) {
-		return (float) (base + variables(player).Strength / strengthDivisor);
+		return (float) (base + TemporaryStatBonusManager.effectiveStrength(player) / strengthDivisor);
 	}
 
 	private static boolean consumeMana(ServerPlayer player, int amount) {
@@ -690,9 +698,17 @@ public final class GoliathCombatManager {
 	private static void clearState(Player player) {
 		UUID id = player.getUUID();
 		CHARGES.remove(id);
-		PURSUITS.remove(id);
+		boolean wasPursuing = PURSUITS.remove(id) != null;
 		CAPTURES.remove(id);
+		player.getPersistentData().remove(NEXT_STRIKE);
+		player.getPersistentData().remove(LAST_STRIKE);
+		player.getPersistentData().remove(COMBO);
 		player.getPersistentData().remove(FALL_SAFE_UNTIL);
+		if (wasPursuing) {
+			player.setDeltaMovement(Vec3.ZERO);
+			player.hurtMarked = true;
+			player.fallDistance = 0.0F;
+		}
 	}
 
 	private record ChargeState(UUID targetId, long startedAt) {

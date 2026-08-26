@@ -70,6 +70,9 @@ public final class AddonApiSurfaceRegression {
 		styleRulesStayLoadableWithoutMinecraft();
 		contributedThemingCannotReachBuiltIns();
 		togglesCanAlwaysBeTurnedOff();
+		skillListMatchesTheModsOwnFormat();
+		SessionSurvivesAContributedClass();
+		syncNeverStripsBehaviour();
 
 		System.out.println("Addon API surface regression checks passed.");
 	}
@@ -360,6 +363,107 @@ public final class AddonApiSurfaceRegression {
 		int arm = body.indexOf("AbilityCooldowns.set(player, owner, key");
 		expect(arm > gate,
 				"The cooldown must be armed after the gate, on a real cast only");
+	}
+
+	/**
+	 * The skill list has a leading "." sentinel, and HunterSkills has to write it.
+	 *
+	 * <p>Without it everything works until {@code canonicalizeSkillList} next
+	 * rewrites the field -- it re-adds the sentinel, the first entry then reads as
+	 * ".Grave Spiritualization", and the hunter is told they never learned a skill
+	 * they are holding the runestone for. The runestone then teaches it again,
+	 * appending a duplicate.
+	 *
+	 * <p>Pinned against the canonicaliser itself rather than a literal, so the two
+	 * cannot drift apart.
+	 */
+	private static void skillListMatchesTheModsOwnFormat() throws IOException {
+		String rules = read("procedures", "ClassProgressionRules.java");
+		expect(rules.contains("output.isEmpty() ? \".\" : \".\" + String.join(\",\", output) + \",\""),
+				"canonicalizeSkillList must still produce the \".\"-prefixed format; "
+						+ "if it changed, HunterSkills must change with it");
+
+		String skills = read("api", "skill", "HunterSkills.java");
+		expect(skills.contains("new StringBuilder(\".\")"),
+				"HunterSkills.write must emit the leading \".\" sentinel, or the next "
+						+ "canonicalisation pass makes every contributed skill unreadable");
+		expect(skills.contains("while (name.startsWith(\".\"))"),
+				"HunterSkills must strip the sentinel when reading, or the first skill "
+						+ "in the list is never matched");
+
+		String defaults = read("network", "SololevelingModVariables.java");
+		expect(defaults.contains("public String Plist = \".\";"),
+				"The empty skill list is a bare \".\", which is what makes the "
+						+ "sentinel load-bearing rather than cosmetic");
+	}
+
+	/**
+	 * A live evaluation session must survive a save/reload with a contributed
+	 * class intact.
+	 *
+	 * <p>The session is written to NBT and read back constantly during the
+	 * ceremony. Bounding its class id with the legacy built-in bound turned every
+	 * contributed draw into zero, which stalled the phase machine mid-reroll --
+	 * the screen sat on a full progress bar and never reached STYLE. Masking the
+	 * remaining-class bag with the built-in mask stripped the contributed bits
+	 * out of the shuffle on the same round trip, so a contributed class only ever
+	 * reappeared on a refill.
+	 */
+	private static void SessionSurvivesAContributedClass() throws IOException {
+		String source = read("util", "HunterEvaluationManager.java");
+
+		expect(source.contains("session.classId = boundedSessionClass("),
+				"A session's class id must use the session bound, which allows "
+						+ "contributed ids; the legacy bound zeroes them");
+		expect(!source.contains("session.classId = boundedClass("),
+				"The legacy built-in bound must not be applied to a session's id");
+		expect(source.contains("boundedSessionClass(int value)")
+						&& source.contains("HunterEvaluationRules.MAX_CLASS_ID"),
+				"boundedSessionClass must bound against MAX_CLASS_ID");
+
+		int bag = source.indexOf("session.remainingClassMask = tag.getInt(");
+		expect(bag >= 0, "The session must still restore its remaining-class bag");
+		String bagLine = source.substring(bag, Math.min(source.length(), bag + 260));
+		expect(bagLine.contains("drawableClassMask()"),
+				"The restored bag must be masked with the drawable mask; the built-in "
+						+ "mask drops contributed classes out of the shuffle");
+		expect(!bagLine.contains("ALL_CLASSES_MASK"),
+				"The restored bag must not be masked with the built-in-only mask");
+	}
+
+	/**
+	 * The definition sync must not remove an ability's behaviour.
+	 *
+	 * <p>In single-player the client and the integrated server share this
+	 * registry, so the handler runs against the server too. Clearing and
+	 * re-registering with a null executor therefore stripped the executor the
+	 * datapack had just supplied -- and the ability still had its name, colour,
+	 * icon and cooldown, so it looked like it cast while doing nothing at all.
+	 *
+	 * <p>The give-away symptom is a toggle whose form activates and whose melee
+	 * claim takes the attack button while producing no effect, which is exactly
+	 * how it was reported.
+	 */
+	private static void syncNeverStripsBehaviour() throws IOException {
+		String sync = read("network", "AbilityDefinitionSyncMessage.java");
+		expect(sync.contains("HunterAbilityRegistry.replaceDataDefinitions("),
+				"The sync must replace definitions through the executor-preserving "
+						+ "path");
+		expect(!sync.contains("register(ability, (String) null)"),
+				"The sync must not re-register synced abilities with a null executor; "
+						+ "in single-player that erases the server's own behaviour");
+		expect(!sync.contains("clearDataDefinitions()"),
+				"The sync must not clear definitions itself; that is what dropped the "
+						+ "executors");
+
+		String registry = read("api", "skill", "HunterAbilityRegistry.java");
+		expect(registry.contains("public static synchronized void replaceDataDefinitions("),
+				"replaceDataDefinitions must exist");
+		int at = registry.indexOf("replaceDataDefinitions(");
+		String body = registry.substring(at, Math.min(registry.length(), at + 1400));
+		expect(body.contains("executorClassName") && body.contains("existing.executor"),
+				"replaceDataDefinitions must carry both a deferred class name and an "
+						+ "already-resolved executor across the replace");
 	}
 
 	private static String read(String... parts) throws IOException {

@@ -10,10 +10,16 @@ import net.solocraft.network.SololevelingModVariables;
 /**
  * The skills a hunter has learned.
  *
- * <p>Skills are stored as one comma-separated string of display names, which is
- * how every runestone in the mod has always taught one. This wraps that format so
- * an addon does not have to know it -- and so the format stays free to change
- * without breaking every addon that learned to append a comma.
+ * <p>Skills are stored as one comma-separated string of display names carrying a
+ * leading {@code "."} sentinel -- {@code ".Skill A,Skill B,"} -- which is how
+ * every runestone in the mod has always taught one, and what
+ * {@code ClassProgressionRules.canonicalizeSkillList} rewrites the field back to.
+ * A bare {@code "."} is the empty list, and is the field's default.
+ *
+ * <p>This wraps that format so an addon does not have to know it. Writing without
+ * the sentinel looks fine until the next canonicalisation pass puts it back, at
+ * which point the first skill reads as {@code ".Grave Spiritualization"} and the
+ * hunter is told they never learned it.
  *
  * <p>One difference from the older inline code worth knowing: membership here is
  * an exact match on a whole entry, not a substring test. A skill called
@@ -32,7 +38,7 @@ public final class HunterSkills {
 
 		List<String> skills = new ArrayList<>();
 		for (String part : variables.Plist.split(",")) {
-			String name = part.trim();
+			String name = normalise(part);
 			if (!name.isEmpty() && !skills.contains(name))
 				skills.add(name);
 		}
@@ -80,9 +86,10 @@ public final class HunterSkills {
 	}
 
 	private static void write(Entity entity, List<String> skills) {
-		// Trailing comma, matching the format every existing runestone writes, so
+		// Leading "." sentinel and a trailing comma, matching the format every
+		// existing runestone writes and canonicalizeSkillList rewrites back to, so
 		// old and new entries stay indistinguishable to the rest of the mod.
-		StringBuilder builder = new StringBuilder();
+		StringBuilder builder = new StringBuilder(".");
 		for (String skill : skills)
 			builder.append(skill).append(',');
 		String joined = builder.toString();
@@ -94,9 +101,17 @@ public final class HunterSkills {
 				});
 	}
 
-	/** Commas separate entries, so one inside a name would split it in two. */
+	/**
+	 * Commas separate entries, so one inside a name would split it in two, and
+	 * the first entry carries the list's leading {@code "."} sentinel.
+	 */
 	private static String normalise(String skill) {
-		return skill == null ? "" : skill.replace(",", "").trim();
+		if (skill == null)
+			return "";
+		String name = skill.replace(",", "").trim();
+		while (name.startsWith("."))
+			name = name.substring(1).trim();
+		return name;
 	}
 
 	private static SololevelingModVariables.PlayerVariables variablesOf(Entity entity) {

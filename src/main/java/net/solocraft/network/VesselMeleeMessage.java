@@ -12,6 +12,7 @@ import net.solocraft.network.compat.NetworkEvent;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 
 import java.util.function.Supplier;
 
@@ -51,6 +52,13 @@ public final class VesselMeleeMessage {
 			// The claim is only real if the form is genuinely active server-side.
 			if (!VesselState.isFormActive(player, message.formId))
 				return;
+			// Swing before dispatching, the way Goliath and the Beast Monarch do.
+			// The claim cancelled the vanilla attack to take the button, which also
+			// cancelled the arm animation -- so a contributed melee landed damage
+			// with the player standing perfectly still. Doing it here rather than
+			// leaving it to each addon means contributed melee looks like built-in
+			// melee by default, instead of only when an author remembered to.
+			player.swing(InteractionHand.MAIN_HAND, true);
 			NeoForge.EVENT_BUS.post(new VesselMeleeAttackEvent(player, message.formId));
 		});
 		context.setPacketHandled(true);

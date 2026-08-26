@@ -975,6 +975,7 @@ public final class HunterEvaluationScreen extends SystemScreen {
 			int previousRank, int phaseDurationTicks, int remainingTicks,
 			boolean canReroll, boolean fixedClass, int styleId,
 			boolean canRerollStyle) {
+
 		Minecraft minecraft = Minecraft.getInstance();
 		if (!open) {
 			if (minecraft.screen instanceof HunterEvaluationScreen)

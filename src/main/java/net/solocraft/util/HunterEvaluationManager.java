@@ -786,10 +786,29 @@ public final class HunterEvaluationManager {
 				.orElse(new SololevelingModVariables.PlayerVariables());
 	}
 
+	/**
+	 * Bounds the legacy {@code Classes} field, which only ever holds a built-in
+	 * number. A contributed class stores the reserved mirror there, which is not
+	 * a drawable id and correctly reads as zero.
+	 */
 	private static int boundedClass(double value) {
 		int classId = (int) Math.round(value);
 		return classId >= 1 && classId <= HunterEvaluationRules.CLASS_COUNT
 				? classId : 0;
+	}
+
+	/**
+	 * Bounds a class id held by a live session, which may be contributed.
+	 *
+	 * <p>Separate from {@link #boundedClass} because the two answer different
+	 * questions. Running a session's id through the legacy bound turned every
+	 * contributed draw into zero the first time the session was written to NBT
+	 * and read back, which stranded the ceremony mid-reroll: the phase machine
+	 * had nothing to advance and the screen sat on a full progress bar forever.
+	 */
+	private static int boundedSessionClass(int value) {
+		return value >= 1 && value <= HunterEvaluationRules.MAX_CLASS_ID
+				? value : 0;
 	}
 
 	private static int boundedRank(double value) {
@@ -848,12 +867,15 @@ public final class HunterEvaluationManager {
 			session.id = tag.getUUID("Id");
 			session.mode = Mode.fromId(tag.getInt("Mode"));
 			session.phase = Phase.fromId(tag.getInt("Phase"));
-			session.classId = boundedClass(tag.getInt("Class"));
+			session.classId = boundedSessionClass(tag.getInt("Class"));
 			session.styleId = tag.getInt("Style");
 			session.rank = boundedRank(tag.getInt("Rank"));
 			session.previousRank = boundedRank(tag.getInt("PreviousRank"));
+			// Masking with the built-in mask stripped the contributed bits out of
+			// the bag on every save, so a contributed class could only appear on a
+			// refill rather than taking its turn in the shuffle.
 			session.remainingClassMask = tag.getInt("RemainingClassMask")
-					& HunterEvaluationRules.ALL_CLASSES_MASK;
+					& HunterEvaluationRules.drawableClassMask();
 			session.fixedClass = tag.getBoolean("FixedClass");
 			session.remainingStyleMask = tag.getInt("RemainingStyleMask")
 					& ClassStyleRules.allStylesMask(session.classId);

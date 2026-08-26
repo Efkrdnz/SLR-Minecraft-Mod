@@ -87,6 +87,52 @@ public final class HunterAbilityRegistry {
 		FROM_DATA.clear();
 	}
 
+	/**
+	 * Replaces the datapack definitions while keeping any behaviour already known.
+	 *
+	 * <p>For the client sync. In single-player the client and the integrated
+	 * server share this registry, so a plain clear-and-re-register applied the
+	 * server's own sync message to the server: every executor name was replaced
+	 * with null and the ability went silent. It still had its name, colour, icon
+	 * and cooldown, so it looked like it cast -- the form toggled, the melee claim
+	 * took the attack button -- and produced no effect whatsoever.
+	 *
+	 * <p>Presentation always comes from the message, because that is what the
+	 * server is authoritative about. Behaviour is kept from what is already
+	 * registered, because a real client never had any to lose.
+	 */
+	public static synchronized void replaceDataDefinitions(
+			List<HunterAbility> definitions) {
+		Map<String, String> executorNames = new LinkedHashMap<>();
+		Map<String, AbilityExecutor> executors = new LinkedHashMap<>();
+		for (String name : FROM_DATA) {
+			Registration existing = BY_NAME.get(name);
+			if (existing == null)
+				continue;
+			if (existing.executorClassName != null)
+				executorNames.put(name, existing.executorClassName);
+			else if (existing.executor != null)
+				executors.put(name, existing.executor);
+		}
+
+		clearDataDefinitions();
+		for (HunterAbility ability : definitions == null ? List.<HunterAbility>of() : definitions) {
+			try {
+				String className = executorNames.get(ability.name());
+				AbilityExecutor executor = executors.get(ability.name());
+				if (className != null)
+					register(ability, className);
+				else if (executor != null)
+					register(ability, executor);
+				else
+					register(ability, (String) null);
+			} catch (IllegalArgumentException exception) {
+				SololevelingMod.LOGGER.warn("Ignoring synced ability {}: {}",
+						ability.id(), exception.getMessage());
+			}
+		}
+	}
+
 	/** Names contributed by the current datapack load, for syncing to clients. */
 	public static synchronized List<HunterAbility> dataDefinitions() {
 		List<HunterAbility> abilities = new ArrayList<>();

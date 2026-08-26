@@ -143,16 +143,11 @@ public final class AbilityDefinitionSyncMessage {
 		context.enqueueWork(() -> {
 			// Replace rather than merge: this is the server's complete list, and a
 			// definition removed by a reload has to disappear here too.
-			HunterAbilityRegistry.clearDataDefinitions();
-			for (HunterAbility ability : message.definitions) {
-				try {
-					// No executor: the client never runs an ability, it only draws one.
-					HunterAbilityRegistry.register(ability, (String) null);
-				} catch (IllegalArgumentException exception) {
-					SololevelingMod.LOGGER.warn("Ignoring synced ability {}: {}",
-							ability.id(), exception.getMessage());
-				}
-			}
+			// Presentation from the message, behaviour kept from whatever is already
+			// registered. A clear-and-re-register here also runs against the
+			// integrated server in single-player, which silently stripped every
+			// executor the datapack had just supplied.
+			HunterAbilityRegistry.replaceDataDefinitions(message.definitions);
 
 			// Class presentations ride the same message: both come from data packs
 			// and both are needed before the client draws anything.

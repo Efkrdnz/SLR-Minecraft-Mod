@@ -40,7 +40,7 @@ slots, and cast from the skill key, exactly like the ones the mod ships.
 | --- | --- |
 | JDK | 21 (Temurin or equivalent) |
 | IDE | IntelliJ IDEA (Community is fine) or Eclipse |
-| NeoForge MDK | for 1.21.1 — from [neoforged.net](https://neoforged.net), Downloads → MDK |
+| NeoForge MDK | [MDK-1.21.1-ModDevGradle](https://github.com/neoforgemdks/MDK-1.21.1-ModDevGradle) — the **ModDevGradle** variant |
 | **SoloCraft jar** | `SLR1.3.0-neoforge-1.21.1.jar` or newer |
 
 ### Getting the SoloCraft jar
@@ -65,9 +65,14 @@ Sodium, Iris, and BetterCombat are optional for SoloCraft and irrelevant to you.
 
 ## 2. Starting the project
 
-1. Download the **NeoForge MDK for 1.21.1** and unzip it. This gives you the
-   Gradle wrapper (`gradlew` / `gradlew.bat`) and a working skeleton — you cannot
-   easily build a NeoForge project without it.
+1. Get the **NeoForge MDK for 1.21.1** from
+   [github.com/neoforgemdks/MDK-1.21.1-ModDevGradle](https://github.com/neoforgemdks/MDK-1.21.1-ModDevGradle)
+   — either "Use this template" or download the zip — and unzip it. This gives
+   you the Gradle wrapper (`gradlew` / `gradlew.bat`) and a working skeleton;
+   you cannot easily build a NeoForge project without it.
+
+   **Take the ModDevGradle variant, not NeoGradle.** The organisation ships both,
+   and the `build.gradle` below is ModDevGradle. Mixing them will not work.
 2. Rename the folder to your addon's name.
 3. Make a `libs/` folder at the top level and **drop the SoloCraft jar in it**.
 

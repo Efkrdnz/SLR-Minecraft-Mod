@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -68,6 +69,7 @@ public abstract class SystemScreen extends Screen {
 	private boolean closed;
 	private boolean accessDenied;
 	private float reveal; // 0..1 vertical expansion factor for this frame
+	private boolean suppressNestedBackground;
 
 	protected SystemScreen(Component title) {
 		super(title);
@@ -173,7 +175,7 @@ public abstract class SystemScreen extends Screen {
 		setWidgetsVisible(state == State.OPEN);
 
 		// full-screen dim, committed before the scissor so it isn't clipped
-		this.renderBackground(guiGraphics);
+		this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
 		guiGraphics.flush();
 		ResponsiveGuiScale.push(guiGraphics, transform);
 
@@ -188,7 +190,15 @@ public abstract class SystemScreen extends Screen {
 		renderAnimatedBackground(guiGraphics, logicalMouseX, logicalMouseY);
 		renderFrame(guiGraphics);
 		renderContent(guiGraphics, logicalMouseX, logicalMouseY, partialTicks);
-		super.render(guiGraphics, logicalMouseX, logicalMouseY, partialTicks); // widgets on top
+		// Screen.render() started owning the background pass in 1.21. Keep the
+		// outer, unscaled pass above, but suppress the nested pass while vanilla
+		// renders our widgets; otherwise it blurs/covers the frame and labels.
+		this.suppressNestedBackground = true;
+		try {
+			super.render(guiGraphics, logicalMouseX, logicalMouseY, partialTicks);
+		} finally {
+			this.suppressNestedBackground = false;
+		}
 		guiGraphics.disableScissor();
 
 		// bright leading-edge seams while expanding/collapsing
@@ -208,6 +218,13 @@ public abstract class SystemScreen extends Screen {
 				SystemTooltip.render(guiGraphics, this.font, tip, mouseX, mouseY, this.width, this.height);
 			}
 		}
+	}
+
+	@Override
+	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY,
+			float partialTick) {
+		if (!this.suppressNestedBackground)
+			super.renderBackground(graphics, mouseX, mouseY, partialTick);
 	}
 
 	protected ResponsiveGuiScale.Transform responsiveTransform() {
@@ -239,8 +256,8 @@ public abstract class SystemScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-		return super.mouseScrolled(logicalMouseX(mouseX), logicalMouseY(mouseY), delta);
+	public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
+		return super.mouseScrolled(logicalMouseX(mouseX), logicalMouseY(mouseY), deltaX, deltaY);
 	}
 
 	@Override
@@ -303,13 +320,12 @@ public abstract class SystemScreen extends Screen {
 
 		int x0 = panelX, y0 = panelY, x1 = panelX + panelW, y1 = panelY + panelH;
 		Matrix4f matrix = guiGraphics.pose().last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-		buffer.vertex(matrix, x0, y1, 0).uv(0f, 1f).endVertex();
-		buffer.vertex(matrix, x1, y1, 0).uv(1f, 1f).endVertex();
-		buffer.vertex(matrix, x1, y0, 0).uv(1f, 0f).endVertex();
-		buffer.vertex(matrix, x0, y0, 0).uv(0f, 0f).endVertex();
-		Tesselator.getInstance().end();
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		buffer.addVertex(matrix, x0, y1, 0).setUv(0f, 1f);
+		buffer.addVertex(matrix, x1, y1, 0).setUv(1f, 1f);
+		buffer.addVertex(matrix, x1, y0, 0).setUv(1f, 0f);
+		buffer.addVertex(matrix, x0, y0, 0).setUv(0f, 0f);
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 
 		RenderSystem.enableCull();
 		RenderSystem.disableBlend();

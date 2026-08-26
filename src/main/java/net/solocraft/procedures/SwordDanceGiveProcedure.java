@@ -26,7 +26,7 @@ public class SwordDanceGiveProcedure {
 				CooldownManager.set(entity, "Sword Dance", 800);
 				CooldownManager.set(entity, "mana_refresh", 40);
 				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SWORD_DANCE.get(), 400, 1, false, false));
+					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SWORD_DANCE, 400, 1, false, false));
 			}
 		} else {
 			if (entity instanceof Player _player && !_player.level().isClientSide())

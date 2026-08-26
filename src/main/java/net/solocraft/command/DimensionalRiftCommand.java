@@ -3,9 +3,10 @@ package net.solocraft.command;
 import net.solocraft.SololevelingMod;
 import net.solocraft.world.dimension.rift.RiftGeometry;
 
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -15,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import java.util.Locale;
 
 /** Read-only coordinate diagnostics for the Rift implementation. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DimensionalRiftCommand {
 	private DimensionalRiftCommand() {
 	}

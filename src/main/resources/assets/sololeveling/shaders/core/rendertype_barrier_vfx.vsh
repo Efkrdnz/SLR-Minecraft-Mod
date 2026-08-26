@@ -17,12 +17,16 @@ out vec3 viewPosition;
 out vec3 viewNormal;
 out vec2 lightMap;
 
+vec3 safeNormalize(vec3 value) {
+    return value * inversesqrt(max(dot(value, value), 1.0e-8));
+}
+
 void main() {
     vec4 view = ModelViewMat * vec4(Position, 1.0);
     gl_Position = ProjMat * view;
     vertexColor = Color;
     texCoord0 = (TextureMat * vec4(UV0, 0.0, 1.0)).xy;
     viewPosition = view.xyz;
-    viewNormal = normalize(mat3(ModelViewMat) * Normal);
+    viewNormal = safeNormalize(mat3(ModelViewMat) * Normal);
     lightMap = vec2(UV2) / 256.0;
 }

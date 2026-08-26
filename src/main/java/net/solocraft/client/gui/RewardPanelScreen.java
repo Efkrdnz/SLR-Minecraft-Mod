@@ -43,11 +43,10 @@ public class RewardPanelScreen extends AbstractContainerScreen<RewardPanelMenu> 
 		return false;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/reward_panel.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/reward_panel.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
@@ -59,7 +58,7 @@ public class RewardPanelScreen extends AbstractContainerScreen<RewardPanelMenu> 
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/panel_rework_vertical2.png"), this.leftPos + -99, this.topPos + -113, 0, 0, 200, 225, 200, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/panel_rework_vertical2.png"), this.leftPos + -99, this.topPos + -113, 0, 0, 200, 225, 200, 225);
 
 		RenderSystem.disableBlend();
 	}
@@ -100,26 +99,23 @@ public class RewardPanelScreen extends AbstractContainerScreen<RewardPanelMenu> 
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_fullrecovery = new ImageButton(this.leftPos + -48, this.topPos + 24, 96, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_fullrecovery.png"), 96, 42, e -> {
+		imagebutton_fullrecovery = new LegacyAtlasImageButton(this.leftPos + -48, this.topPos + 24, 96, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_fullrecovery.png"), 96, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new RewardPanelButtonMessage(0, x, y, z));
-				RewardPanelButtonMessage.handleButtonAction(entity, 0, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_fullrecovery", imagebutton_fullrecovery);
 		this.addRenderableWidget(imagebutton_fullrecovery);
-		imagebutton_lootbox = new ImageButton(this.leftPos + -48, this.topPos + -2, 96, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_lootbox.png"), 96, 42, e -> {
+		imagebutton_lootbox = new LegacyAtlasImageButton(this.leftPos + -48, this.topPos + -2, 96, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_lootbox.png"), 96, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new RewardPanelButtonMessage(1, x, y, z));
-				RewardPanelButtonMessage.handleButtonAction(entity, 1, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_lootbox", imagebutton_lootbox);
 		this.addRenderableWidget(imagebutton_lootbox);
-		imagebutton_skillpoints10 = new ImageButton(this.leftPos + -48, this.topPos + 50, 96, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_skillpoints10.png"), 96, 42, e -> {
+		imagebutton_skillpoints10 = new LegacyAtlasImageButton(this.leftPos + -48, this.topPos + 50, 96, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_skillpoints10.png"), 96, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new RewardPanelButtonMessage(2, x, y, z));
-				RewardPanelButtonMessage.handleButtonAction(entity, 2, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_skillpoints10", imagebutton_skillpoints10);

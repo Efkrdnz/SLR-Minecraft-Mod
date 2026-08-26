@@ -11,7 +11,7 @@ import net.solocraft.dungeon.runtime.layout.DungeonLayoutPreview;
 import net.solocraft.dungeon.runtime.layout.DungeonLayoutTopology;
 import net.solocraft.dungeon.runtime.layout.DungeonRandomStreams;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -150,7 +150,7 @@ public final class DungeonRuntimeGenerator {
 		}
 
 		if (dungeon.shell().enabled() && dungeon.shell().thickness() > 0) {
-			Block block = ForgeRegistries.BLOCKS.getValue(dungeon.shell().block());
+			Block block = BuiltInRegistries.BLOCK.get(dungeon.shell().block());
 			if (block == null) {
 				registry.remove(instance.id());
 				return GenerationResult.failure(GenerationFailure.SHELL_FAILED,
@@ -190,7 +190,7 @@ public final class DungeonRuntimeGenerator {
 	public static DungeonLayoutPreview simulate(ServerLevel level, ResourceLocation dungeonId,
 			BlockPos worldMinimum, long seed, DungeonLayoutPlanner.PlanOptions options) {
 		DungeonLayoutTopology topology = options == null ? DungeonLayoutTopology.LINEAR : options.topology();
-		ResourceLocation safeId = dungeonId == null ? new ResourceLocation("minecraft", "empty") : dungeonId;
+		ResourceLocation safeId = dungeonId == null ? ResourceLocation.fromNamespaceAndPath("minecraft", "empty") : dungeonId;
 		if (level == null || dungeonId == null || worldMinimum == null)
 			return emptyPreview(safeId, seed, topology, DungeonLayoutPlanner.PlanFailure.INVALID_ARGUMENT,
 					"Level, dungeon id, and world position are required.", 0L);
@@ -496,7 +496,7 @@ public final class DungeonRuntimeGenerator {
 	private static String shellPreflightProblem(ServerLevel level, DungeonDefinition dungeon, DungeonLayoutPlan layout) {
 		if (!dungeon.shell().enabled() || dungeon.shell().thickness() <= 0)
 			return null;
-		Block block = ForgeRegistries.BLOCKS.getValue(dungeon.shell().block());
+		Block block = BuiltInRegistries.BLOCK.get(dungeon.shell().block());
 		if (block == null)
 			return "Protective shell block " + dungeon.shell().block() + " is no longer registered.";
 		DungeonShellBuilder.ShellResult preflight = DungeonShellBuilder.preflightShell(level,

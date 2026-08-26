@@ -4,8 +4,8 @@ package net.solocraft.procedures;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -38,7 +38,7 @@ public class IceSpearGiveProcedure {
 					_level.sendParticles(ParticleTypes.SNOWFLAKE, x, y, z, 5, 1, 1, 1, 0);
 				if (world instanceof Level _level) {
 					if (_level.isClientSide()) {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.glass.break")), SoundSource.NEUTRAL, 1, 1, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.glass.break")), SoundSource.NEUTRAL, 1, 1, false);
 					}
 				}
 				if (entity instanceof Player _player) {

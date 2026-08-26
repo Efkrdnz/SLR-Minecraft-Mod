@@ -541,7 +541,6 @@ public final class DatapackDungeonGateHandler {
 		entrant.getPersistentData().putBoolean(PLAYER_PROCEDURAL, true);
 		entrant.getPersistentData().putBoolean(PLAYER_PROCEDURAL_RED, false);
 		entrant.getPersistentData().remove(DungeonMobLevelAdapter.INSTANCE_TAG);
-		entrant.setNoGravity(true);
 	}
 
 	private static void dismissOwnedShadows(DatapackGateEntity gate,
@@ -555,7 +554,7 @@ public final class DatapackDungeonGateHandler {
 				.toList();
 		TagKey<net.minecraft.world.entity.EntityType<?>> shadows =
 				TagKey.create(Registries.ENTITY_TYPE,
-						new ResourceLocation("shadows"));
+						ResourceLocation.parse("shadows"));
 		for (Entity entity : nearby) {
 			if (entity.getType().is(shadows)
 					&& entity instanceof TamableAnimal tame
@@ -619,7 +618,7 @@ public final class DatapackDungeonGateHandler {
 			case S -> "dungeon_dimension_s";
 		};
 		return ResourceKey.create(Registries.DIMENSION,
-				new ResourceLocation("sololeveling", path));
+				ResourceLocation.fromNamespaceAndPath("sololeveling", path));
 	}
 
 	/**

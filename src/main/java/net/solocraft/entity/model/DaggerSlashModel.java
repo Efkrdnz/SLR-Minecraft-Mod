@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class DaggerSlashModel extends GeoModel<DaggerSlashEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(DaggerSlashEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/daggerslash.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/daggerslash.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(DaggerSlashEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/daggerslash.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/daggerslash.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(DaggerSlashEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

@@ -6,6 +6,7 @@ import net.solocraft.dungeon.builder.DungeonBuilderTool;
 import net.solocraft.dungeon.builder.DungeonBuilderRoomStore;
 import net.solocraft.dungeon.builder.DungeonBuilderStudioService;
 import net.solocraft.util.DungeonBuilderMode;
+import net.solocraft.util.ItemStackData;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -175,7 +176,7 @@ public final class DungeonBuilderWandItem extends Item {
 	private void cycleMode(ServerPlayer player, ItemStack stack) {
 		int current = modeIndex(stack);
 		int next = tool.nextMode(current);
-		stack.getOrCreateTag().putInt(MODE_TAG, next);
+		ItemStackData.update(stack, tag -> tag.putInt(MODE_TAG, next));
 		message(player, toolName() + " mode: " + display(tool.mode(next)), tool.color());
 	}
 
@@ -184,7 +185,7 @@ public final class DungeonBuilderWandItem extends Item {
 	}
 
 	private int modeIndex(ItemStack stack) {
-		return stack.hasTag() ? Math.floorMod(stack.getTag().getInt(MODE_TAG), tool.modes().size()) : 0;
+		return Math.floorMod(ItemStackData.copy(stack).getInt(MODE_TAG), tool.modes().size());
 	}
 
 	private static boolean canEdit(ServerPlayer player) {
@@ -218,16 +219,16 @@ public final class DungeonBuilderWandItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip,
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip,
 			TooltipFlag flag) {
-		super.appendHoverText(stack, level, tooltip, flag);
+		super.appendHoverText(stack, context, tooltip, flag);
 		tooltip.add(Component.translatable("tooltip.sololeveling.dungeon_builder." + tool.name().toLowerCase() + ".description")
 				.withStyle(tool.color()));
 		tooltip.add(Component.translatable("tooltip.sololeveling.dungeon_builder.mode",
 				Component.translatable("tooltip.sololeveling.dungeon_builder.mode." + mode(stack))).withStyle(ChatFormatting.WHITE));
 		tooltip.add(Component.translatable("tooltip.sololeveling.dungeon_builder.controls.primary").withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.translatable("tooltip.sololeveling.dungeon_builder.controls.cycle").withStyle(ChatFormatting.DARK_GRAY));
-		if (level != null && !DungeonBuilderMode.isActive(level))
+		if (context.level() != null && !DungeonBuilderMode.isActive(context.level()))
 			tooltip.add(Component.translatable("tooltip.sololeveling.dungeon_builder.builder_world_only").withStyle(ChatFormatting.RED));
 	}
 }

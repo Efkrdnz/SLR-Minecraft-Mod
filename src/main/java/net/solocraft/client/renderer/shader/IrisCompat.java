@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 
 import java.lang.reflect.Method;
 
-/** Optional Iris/Oculus access without a required runtime dependency. */
+/** Optional Iris access without a required runtime dependency. */
 public final class IrisCompat {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	private static volatile boolean initialized;
@@ -18,7 +18,7 @@ public final class IrisCompat {
 	private IrisCompat() {
 	}
 
-	/** True only while Iris/Oculus is actively rendering a shader pack. */
+	/** True only while Iris is actively rendering a shader pack. */
 	public static boolean isShaderPackInUse() {
 		initialize();
 		return invokeBoolean(isShaderPackInUseMethod);
@@ -59,7 +59,7 @@ public final class IrisCompat {
 				isShaderPackInUseMethod = apiClass.getMethod("isShaderPackInUse");
 				isRenderingShadowPassMethod = apiClass.getMethod("isRenderingShadowPass");
 				available = true;
-				LOGGER.info("[SoloLeveling] Iris/Oculus detected ({}); world quad shaders will use deferred compatibility when a pack is active.", className);
+				LOGGER.info("[SoloLeveling] Iris detected ({}); world quad shaders will use deferred compatibility when a pack is active.", className);
 				return;
 			} catch (ReflectiveOperationException | LinkageError ignored) {
 				irisApi = null;
@@ -68,6 +68,6 @@ public final class IrisCompat {
 			}
 		}
 		available = false;
-		LOGGER.info("[SoloLeveling] Iris/Oculus not detected; world quad shaders will use the normal render path.");
+		LOGGER.info("[SoloLeveling] Iris not detected; world quad shaders will use the normal render path.");
 	}
 }

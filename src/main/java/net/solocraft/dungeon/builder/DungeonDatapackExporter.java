@@ -10,7 +10,7 @@ import net.solocraft.dungeon.ProceduralDungeonRank;
 import net.solocraft.dungeon.builder.model.BuilderMobPool;
 import net.solocraft.dungeon.builder.model.DungeonDraft;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
@@ -135,7 +135,7 @@ public final class DungeonDatapackExporter {
 				continue;
 			ResourceLocation configured = ResourceLocation.tryParse(encounter.pool());
 			if (configured != null) {
-				if (ForgeRegistries.ENTITY_TYPES.containsKey(configured)) {
+				if (BuiltInRegistries.ENTITY_TYPE.containsKey(configured)) {
 					if (!BuilderMobPoolPreflight.resolvesSpawnable(player.serverLevel(),
 							BuilderMobPool.SelectorKind.ENTITY, configured))
 						return ExportResult.failure("Configured entity " + configured
@@ -376,7 +376,7 @@ public final class DungeonDatapackExporter {
 					continue;
 				ResourceLocation configured = ResourceLocation.tryParse(encounter.pool());
 				if (configured != null) {
-					if (ForgeRegistries.ENTITY_TYPES.containsKey(configured)) {
+					if (BuiltInRegistries.ENTITY_TYPE.containsKey(configured)) {
 						if (!BuilderMobPoolPreflight.resolvesSpawnable(player.serverLevel(),
 								BuilderMobPool.SelectorKind.ENTITY, configured))
 							return ExportResult.failure("Configured entity " + configured
@@ -511,7 +511,7 @@ public final class DungeonDatapackExporter {
 				new Vec3i(size.getX(), size.getY(), size.getZ()), false, Blocks.STRUCTURE_VOID);
 		template.setAuthor(player.getGameProfile().getName());
 		NbtIo.writeCompressed(NbtUtils.addCurrentDataVersion(template.save(new CompoundTag())),
-				structurePath.toFile());
+				structurePath);
 	}
 
 	private static String socketBlockEntityProblem(ServerLevel level,
@@ -964,7 +964,7 @@ public final class DungeonDatapackExporter {
 			DungeonBuilderProjectData.Project project) throws IOException {
 		for (DungeonBuilderProjectData.Encounter encounter : project.encounters()) {
 			ResourceLocation entityId = ResourceLocation.tryParse(encounter.pool());
-			if (entityId == null || !ForgeRegistries.ENTITY_TYPES.containsKey(entityId))
+			if (entityId == null || !BuiltInRegistries.ENTITY_TYPE.containsKey(entityId))
 				continue;
 			ResourceLocation poolId = generatedEncounterPoolId(project, encounter);
 			Path poolRoot = root.resolve("data").resolve(poolId.getNamespace())
@@ -979,14 +979,14 @@ public final class DungeonDatapackExporter {
 	private static String exportedEncounterPool(DungeonBuilderProjectData.Project project,
 			DungeonBuilderProjectData.Encounter encounter) {
 		ResourceLocation configured = ResourceLocation.tryParse(encounter.pool());
-		return configured != null && ForgeRegistries.ENTITY_TYPES.containsKey(configured)
+		return configured != null && BuiltInRegistries.ENTITY_TYPE.containsKey(configured)
 				? generatedEncounterPoolId(project, encounter).toString()
 				: encounter.pool();
 	}
 
 	private static ResourceLocation generatedEncounterPoolId(DungeonBuilderProjectData.Project project,
 			DungeonBuilderProjectData.Encounter encounter) {
-		return new ResourceLocation(project.namespace(),
+		return ResourceLocation.fromNamespaceAndPath(project.namespace(),
 				"generated/" + project.name() + "/" + encounter.id());
 	}
 

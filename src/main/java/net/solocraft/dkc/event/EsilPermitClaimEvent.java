@@ -2,8 +2,8 @@ package net.solocraft.dkc.event;
 
 import net.solocraft.entity.EsilRadiruEntity;
 
-import net.minecraftforge.eventbus.api.Cancelable;
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
+import net.neoforged.bus.api.ICancellableEvent;
 
 import net.minecraft.server.level.ServerPlayer;
 
@@ -16,8 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
  * does not mutate Esil. Leaving the decision as {@link Decision#PASS} lets
  * another interaction handler act.</p>
  */
-@Cancelable
-public final class EsilPermitClaimEvent extends Event {
+public final class EsilPermitClaimEvent extends Event implements ICancellableEvent {
 	private final EsilRadiruEntity esil;
 	private final ServerPlayer player;
 	private Decision decision = Decision.PASS;

@@ -4,9 +4,8 @@ package net.solocraft.entity;
 import net.solocraft.procedures.CurseMagicOnEntityTickUpdateProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
@@ -19,7 +18,6 @@ import net.minecraft.world.entity.ai.control.FlyingMoveControl;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Entity;
@@ -32,7 +30,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.BlockPos;
 
@@ -40,13 +37,9 @@ public class CurseMagicEntity extends PathfinderMob {
 	public static final EntityDataAccessor<Integer> DATA_life = SynchedEntityData.defineId(CurseMagicEntity.class, EntityDataSerializers.INT);
 	public static final EntityDataAccessor<String> DATA_owner = SynchedEntityData.defineId(CurseMagicEntity.class, EntityDataSerializers.STRING);
 
-	public CurseMagicEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.CURSE_MAGIC.get(), world);
-	}
-
 	public CurseMagicEntity(EntityType<CurseMagicEntity> type, Level world) {
 		super(type, world);
-		setMaxUpStep(0.6f);
+		getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6f);
 		xpReward = 0;
 		setNoAi(true);
 		setPersistenceRequired();
@@ -54,25 +47,15 @@ public class CurseMagicEntity extends PathfinderMob {
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(DATA_life, 0);
-		this.entityData.define(DATA_owner, "");
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(DATA_life, 0);
+		builder.define(DATA_owner, "");
 	}
 
 	@Override
 	protected PathNavigation createNavigation(Level world) {
 		return new FlyingPathNavigation(this, world);
-	}
-
-	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
 	}
 
 	@Override
@@ -82,12 +65,12 @@ public class CurseMagicEntity extends PathfinderMob {
 
 	@Override
 	public SoundEvent getHurtSound(DamageSource ds) {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.hurt"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.hurt"));
 	}
 
 	@Override
 	public SoundEvent getDeathSound() {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.death"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.death"));
 	}
 
 	@Override

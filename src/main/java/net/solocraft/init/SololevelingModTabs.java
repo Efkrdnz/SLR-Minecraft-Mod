@@ -2,22 +2,27 @@ package net.solocraft.init;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.registries.RegistryObject;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.Item;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+import net.solocraft.api.skill.HunterRunestoneItem;
+
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class SololevelingModTabs {
 	public static final DeferredRegister<CreativeModeTab> REGISTRY = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, SololevelingMod.MODID);
-	public static final RegistryObject<CreativeModeTab> SOLO_LEVELING_WEAPONS = REGISTRY.register("solo_leveling_weapons",
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> SOLO_LEVELING_WEAPONS = REGISTRY.register("solo_leveling_weapons",
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.solo_leveling_weapons")).icon(() -> new ItemStack(SololevelingModItems.KASAKAS_VENOM_FANGS.get())).displayItems((parameters, tabData) -> {
 				tabData.accept(SololevelingModItems.HAMMER.get());
 				tabData.accept(SololevelingModItems.WAR_AXE.get());
@@ -61,7 +66,7 @@ public class SololevelingModTabs {
 			})
 
 					.build());
-	public static final RegistryObject<CreativeModeTab> SOLO_LEVELING_MOBS = REGISTRY.register("solo_leveling_mobs",
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> SOLO_LEVELING_MOBS = REGISTRY.register("solo_leveling_mobs",
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.solo_leveling_mobs")).icon(() -> new ItemStack(SololevelingModItems.BLOOD_RED_COM_IGRIS_SPAWN_EGG.get())).displayItems((parameters, tabData) -> {
 				tabData.accept(SololevelingModItems.SUNG_JIN_WOO_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.GREEN_ORC_SPAWN_EGG.get());
@@ -108,28 +113,16 @@ public class SololevelingModTabs {
 			})
 
 					.build());
-	public static final RegistryObject<CreativeModeTab> SOLO_LEVELING_CHEAT_ITEMS = REGISTRY.register("solo_leveling_cheat_items",
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> SOLO_LEVELING_CHEAT_ITEMS = REGISTRY.register("solo_leveling_cheat_items",
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.solo_leveling_cheat_items")).icon(() -> new ItemStack(SololevelingModItems.CLASS_CHOOSER.get())).displayItems((parameters, tabData) -> {
-				tabData.accept(SololevelingModItems.LEVEL_ITEM.get());
-				tabData.accept(SololevelingModItems.COIN_ITEM.get());
-				tabData.accept(SololevelingModItems.COIN_ITEM_100.get());
 				tabData.accept(SololevelingModItems.BLUEKEY.get());
 				tabData.accept(SololevelingModItems.YELLOWKEY.get());
 				tabData.accept(SololevelingModItems.REDKEY.get());
-				tabData.accept(SololevelingModItems.SHADOW_MONARCH.get());
-				tabData.accept(SololevelingModItems.TEST_PARTICLES.get());
 				tabData.accept(SololevelingModItems.CLASS_CHOOSER.get());
 				tabData.accept(SololevelingModItems.PURIFIED_BLOOD_OF_THE_DEMON_KING.get());
 				tabData.accept(SololevelingModItems.WORLD_TREES_FRAGMENT.get());
 				tabData.accept(SololevelingModItems.SPRING_WATER_OF_THE_ECHOING_FOREST.get());
-				tabData.accept(SololevelingModItems.GIVE_BERU.get());
-				tabData.accept(SololevelingModItems.GIVE_IGRIS.get());
-				tabData.accept(SololevelingModItems.GRAND_MAGE.get());
-				tabData.accept(SololevelingModItems.GG.get());
-				tabData.accept(SololevelingModItems.ROTATION_DEVICE.get());
 				tabData.accept(SololevelingModItems.MAGIC_READER.get());
-				tabData.accept(SololevelingModItems.GIVE_KAMISH.get());
-				tabData.accept(SololevelingModItems.JOB_CHANGE_DEBUG.get());
 				tabData.accept(SololevelingModItems.KAMISH_TOOTH.get());
 				tabData.accept(SololevelingModItems.ASSASIN_STARTERPACK.get());
 				tabData.accept(SololevelingModItems.MAGE_STARTERPACK.get());
@@ -155,14 +148,12 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.MEDIUM_FATIGUE_POTION.get());
 				tabData.accept(SololevelingModItems.LARGE_FATIGUE_POTION.get());
 				tabData.accept(SololevelingModItems.HOLY_WATER_OF_LIFE.get());
-				tabData.accept(SololevelingModItems.GIVE_TUSK.get());
 				tabData.accept(SololevelingModItems.DKC_LEVEL_ITEM.get());
 				tabData.accept(SololevelingModItems.ENTRY_PERMIT.get());
-				tabData.accept(SololevelingModItems.DKC_TRAVEL.get());
 			})
 
 					.build());
-	public static final RegistryObject<CreativeModeTab> DUNGEON_BLOCKS = REGISTRY.register("dungeon_blocks",
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> DUNGEON_BLOCKS = REGISTRY.register("dungeon_blocks",
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.dungeon_blocks")).icon(() -> new ItemStack(SololevelingModBlocks.DEEPSLATE_KEYBLOCK_BLUE.get())).displayItems((parameters, tabData) -> {
 				tabData.accept(SololevelingModBlocks.GOBLIN_SPAWNER.get().asItem());
 				tabData.accept(SololevelingModBlocks.DISAPPEARING_BLOCK.get().asItem());
@@ -195,7 +186,7 @@ public class SololevelingModTabs {
 			})
 
 					.build());
-	public static final RegistryObject<CreativeModeTab> DUNGEON_PORTALS = REGISTRY.register("dungeon_portals",
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> DUNGEON_PORTALS = REGISTRY.register("dungeon_portals",
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.dungeon_portals")).icon(() -> new ItemStack(SololevelingModItems.CREATIVETABITEM.get())).displayItems((parameters, tabData) -> {
 				tabData.accept(SololevelingModItems.JOB_KEY.get());
 				tabData.accept(SololevelingModItems.INSTANCE_DUNGEON_KEY.get());
@@ -223,7 +214,7 @@ public class SololevelingModTabs {
 			})
 
 					.build());
-	public static final RegistryObject<CreativeModeTab> EXPERIMENTAL = REGISTRY.register("experimental",
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EXPERIMENTAL = REGISTRY.register("experimental",
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.experimental")).icon(() -> new ItemStack(SololevelingModItems.PURIFIED_BLOOD_OF_THE_DEMON_KING.get())).displayItems((parameters, tabData) -> {
 				tabData.accept(SololevelingModItems.KAMISH_SPAWN_EGG.get());
 				tabData.accept(SololevelingModItems.DUMMY_PORTAL_NORMAL_SPAWN_EGG.get());
@@ -233,7 +224,7 @@ public class SololevelingModTabs {
 			})
 
 					.build());
-	public static final RegistryObject<CreativeModeTab> RUNESTONES = REGISTRY.register("runestones",
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> RUNESTONES = REGISTRY.register("runestones",
 			() -> CreativeModeTab.builder().title(Component.translatable("item_group.sololeveling.runestones")).icon(() -> new ItemStack(SololevelingModItems.RUNESTONE_SHADOW_EXCHANGE.get())).displayItems((parameters, tabData) -> {
 				tabData.accept(SololevelingModItems.RUNESTONE_SHADOW_EXCHANGE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SHADOW_SPIRITUAL_BODY_MANIFESTATION.get());
@@ -277,11 +268,50 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.RUNESTONE_THUNDERHEAD.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SKYBREAKER.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_TEMPEST_INCARNATE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_HEX_BOLT.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_MALEFIC_BURST.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_CREEPING_MIASMA.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_VECTOR_OF_RUIN.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_CULLING.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_DETECTION.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SLASHDASH.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SLASH_FURY.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_CRITICALSTRIKE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SWORDOF_LIGHT.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_CROSS_STRIKE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_IRON_KNUCKLE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_BREAKER_COMBO.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_METEOR_FIST.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_TITANS_BARRAGE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_RADIANT_EXECUTION.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_MAGICAL_EYE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_CLAW_STRIKES.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_BEAST_SENSE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_PARTIAL_TRANSFORMATION.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_PREDATOR_RUSH.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_FULL_BEAST_TRANSFORMATION.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_STEALTH.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_RAPID_FIRE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_ARROW_SHOWER.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_HEALING_PULSE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_CAMOUFLAGE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_PURIFYING_WAVE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_GUARDIAN_STEP.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_SANCTUARY.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_SECOND_WIND.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_GUARDIAN_WARD.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_MANA_FONT.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_VITALITY_SURGE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_DIVINE_FAVOR.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_HEAVY_BLOW.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_IRON_BODY.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_SEISMIC_GRAPPLE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_GIGANTIFICATION.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_COLOSSUS_CHARGE.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_MOUNTAIN_BREAKER.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_SHADOW_FEINT.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_SILENT_DOMAIN.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_ZERO_PRESENCE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SLAM.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SWORD_DANCE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SWORD_BEAM.get());
@@ -297,12 +327,21 @@ public class SololevelingModTabs {
 				tabData.accept(SololevelingModItems.RUNESTONE_SHIELD_BASH.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_WILLPOWER.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_TAUNT.get());
+				tabData.accept(SololevelingModItems.RUNESTONE_MANA_QUIVER.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_SHARPSHOOTER.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_PROXIMITY_TRAP.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_HIGH_VALUE_TARGET.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_BACKSTEP.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_HAWKEYE.get());
 				tabData.accept(SololevelingModItems.RUNESTONE_HYPERFOCUS.get());
+
+				// Every contributed runestone, swept up automatically so an addon's
+				// stones sit beside the mod's own. Without this an addon would have to
+				// find this tab itself, and a player would need a command to obtain a
+				// stone the mod is perfectly willing to show them.
+				for (Item item : BuiltInRegistries.ITEM)
+					if (item instanceof HunterRunestoneItem)
+						tabData.accept(item);
 			})
 
 					.build());

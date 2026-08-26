@@ -2,11 +2,11 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModParticleTypes;
+import net.solocraft.util.ItemStackData;
 import net.solocraft.util.TemporaryArmorSessionManager;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,14 +22,14 @@ public class ShadowARMORHelmetTickEventProcedure {
 	public static void execute(LevelAccessor world, Entity entity, ItemStack itemstack) {
 		if (entity == null)
 			return;
-		if (!(EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLAST_PROTECTION, itemstack) != 0)) {
-			itemstack.enchant(Enchantments.BLAST_PROTECTION, 2);
+		if (ItemStackData.enchantmentLevel(itemstack, Enchantments.BLAST_PROTECTION) == 0) {
+			ItemStackData.enchant(itemstack, Enchantments.BLAST_PROTECTION, 2, entity.registryAccess());
 		}
-		if (!(EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BINDING_CURSE, itemstack) != 0)) {
-			itemstack.enchant(Enchantments.BINDING_CURSE, 10);
+		if (ItemStackData.enchantmentLevel(itemstack, Enchantments.BINDING_CURSE) == 0) {
+			ItemStackData.enchant(itemstack, Enchantments.BINDING_CURSE, 10, entity.registryAccess());
 		}
-		if (!(EnchantmentHelper.getItemEnchantmentLevel(Enchantments.VANISHING_CURSE, itemstack) != 0)) {
-			itemstack.enchant(Enchantments.VANISHING_CURSE, 10);
+		if (ItemStackData.enchantmentLevel(itemstack, Enchantments.VANISHING_CURSE) == 0) {
+			ItemStackData.enchant(itemstack, Enchantments.VANISHING_CURSE, 10, entity.registryAccess());
 		}
 		if (world instanceof ServerLevel _level)
 			_level.sendParticles(ParticleTypes.SQUID_INK, (entity.getX()), (entity.getY()), (entity.getZ()), 7, 0.15, 0, 0.15, 0);

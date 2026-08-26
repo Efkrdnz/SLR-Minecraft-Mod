@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.ItemStack;
 
@@ -209,7 +210,7 @@ public class GuildData {
 
     // ── NBT serialisation ─────────────────────────────────────────────────────
 
-    public CompoundTag save() {
+    public CompoundTag save(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();
         tag.putUUID("id",          id);
         tag.putString("name",      name);
@@ -247,13 +248,13 @@ public class GuildData {
         tag.put("deployments", depList);
 
         CompoundTag storageTag = new CompoundTag();
-        ContainerHelper.saveAllItems(storageTag, storageItems);
+        ContainerHelper.saveAllItems(storageTag, storageItems, registries);
         tag.put("storage", storageTag);
 
         return tag;
     }
 
-    public static GuildData load(CompoundTag tag) {
+    public static GuildData load(CompoundTag tag, HolderLookup.Provider registries) {
         GuildData g = new GuildData(
                 tag.getUUID("id"),
                 tag.getString("name"),
@@ -296,7 +297,7 @@ public class GuildData {
         g.reconcileHunterDeploymentStatus();
 
         if (tag.contains("storage", Tag.TAG_COMPOUND)) {
-            ContainerHelper.loadAllItems(tag.getCompound("storage"), g.storageItems);
+            ContainerHelper.loadAllItems(tag.getCompound("storage"), g.storageItems, registries);
         }
 
         return g;

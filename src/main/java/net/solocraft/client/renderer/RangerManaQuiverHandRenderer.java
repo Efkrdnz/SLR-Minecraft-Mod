@@ -45,12 +45,13 @@ public final class RangerManaQuiverHandRenderer {
 		boolean bow = stack.getItem() instanceof BowItem;
 		boolean activeUse = bow && player != null && player.isUsingItem()
 				&& player.getUseItem().getItem() instanceof BowItem
-				&& ItemStack.isSameItemSameTags(stack, player.getUseItem())
+				&& ItemStack.isSameItemSameComponents(stack, player.getUseItem())
 				&& isRenderedActiveHand(player, context);
 
 		float draw = 0.0F;
 		if (activeUse) {
-			float useTicks = player.getTicksUsingItem() + minecraft.getFrameTime();
+			float useTicks = player.getTicksUsingItem()
+					+ minecraft.getTimer().getGameTimeDeltaPartialTick(false);
 			float rawDraw = Mth.clamp(useTicks / 20.0F, 0.0F, 1.0F);
 			draw = Mth.clamp((rawDraw * rawDraw + rawDraw * 2.0F) / 3.0F, 0.0F, 1.0F);
 		}

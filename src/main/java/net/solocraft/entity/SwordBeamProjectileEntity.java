@@ -1,14 +1,14 @@
 package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.util.AbilityDestructionManager;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -22,19 +22,17 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.level.ServerPlayer;
 
 @OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
-public class SwordBeamProjectileEntity extends AbstractArrow implements ItemSupplier {
+public class SwordBeamProjectileEntity extends LegacyAbstractArrow implements ItemSupplier {
 	public static final ItemStack PROJECTILE_ITEM = new ItemStack(Blocks.AIR);
 	private static final EntityDataAccessor<Float> ROLL = SynchedEntityData.defineId(SwordBeamProjectileEntity.class, EntityDataSerializers.FLOAT);
 	private static final int LIFETIME = 42;
 	private double originX;
 	private double originY;
 	private double originZ;
-
-	public SwordBeamProjectileEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.SWORD_BEAM_PROJECTILE.get(), world);
-	}
 
 	public SwordBeamProjectileEntity(EntityType<? extends SwordBeamProjectileEntity> type, Level world) {
 		super(type, world);
@@ -48,14 +46,9 @@ public class SwordBeamProjectileEntity extends AbstractArrow implements ItemSupp
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(ROLL, 0.0F);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(ROLL, 0.0F);
 	}
 
 	@Override
@@ -65,7 +58,7 @@ public class SwordBeamProjectileEntity extends AbstractArrow implements ItemSupp
 	}
 
 	@Override
-	protected ItemStack getPickupItem() {
+	protected ItemStack getDefaultPickupItem() {
 		return PROJECTILE_ITEM;
 	}
 
@@ -108,6 +101,21 @@ public class SwordBeamProjectileEntity extends AbstractArrow implements ItemSupp
 	protected void onHitBlock(BlockHitResult blockHitResult) {
 		super.onHitBlock(blockHitResult);
 		if (!this.level().isClientSide()) {
+			if (this.getOwner() instanceof ServerPlayer owner) {
+				Vec3 direction = this.getDeltaMovement().lengthSqr() < 1.0E-6D
+						? owner.getLookAngle().normalize()
+						: this.getDeltaMovement().normalize();
+				Vec3 point = blockHitResult.getLocation();
+				AbilityDestructionManager.line(owner,
+						AbilityDestructionManager.Profile.RANKER_IMPACT,
+						point.subtract(direction.scale(1.0D)),
+						point.add(direction.scale(0.55D)),
+						TemporaryStatBonusManager.effectiveStrength(owner)
+								+ owner.getAttributeValue(
+										net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
+										* 10.0D,
+						false);
+			}
 			this.discard();
 		}
 	}

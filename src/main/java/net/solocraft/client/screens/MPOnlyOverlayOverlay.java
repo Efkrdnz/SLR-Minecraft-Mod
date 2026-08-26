@@ -17,11 +17,12 @@ import net.solocraft.procedures.Mana100Procedure;
 import net.solocraft.procedures.Mana0Procedure;
 import net.solocraft.procedures.MPOnlyOverlayDisplayOverlayIngameProcedure;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
@@ -32,16 +33,16 @@ import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.platform.GlStateManager;
 
-@Mod.EventBusSubscriber({Dist.CLIENT})
+@EventBusSubscriber({Dist.CLIENT})
 public class MPOnlyOverlayOverlay {
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public static void eventHandler(RenderGuiEvent.Pre event) {
 		Minecraft minecraft = Minecraft.getInstance();
-		if (minecraft.options.renderDebug) {
+		if (minecraft.getDebugOverlay().showDebugScreen()) {
 			return;
 		}
-		int w = event.getWindow().getGuiScaledWidth();
-		int h = event.getWindow().getGuiScaledHeight();
+		int w = event.getGuiGraphics().guiWidth();
+		int h = event.getGuiGraphics().guiHeight();
 		Level world = null;
 		double x = 0;
 		double y = 0;
@@ -64,37 +65,37 @@ public class MPOnlyOverlayOverlay {
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		if (visible) {
 			if (Mana0Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/bar1.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/bar1.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana10Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana10.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana10.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana20Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana20.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana20.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana30Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana30.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana30.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana40Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana40.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana40.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana50Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana50.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana50.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana60Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana60.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana60.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana70Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana70.png"), 7, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana70.png"), 7, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana80Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana80.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana80.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana90Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana90.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana90.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			if (Mana100Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/barmana100.png"), 6, 6, 0, 0, 90, 10, 90, 10);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/barmana100.png"), 6, 6, 0, 0, 90, 10, 90, 10);
 			}
 			event.getGuiGraphics().drawString(Minecraft.getInstance().font,
 

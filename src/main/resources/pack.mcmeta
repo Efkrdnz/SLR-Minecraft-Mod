@@ -1,6 +1,10 @@
 {
   "pack": {
-    "pack_format": 15,
-    "description": "Solo Craft: Reawakening by Efkrdnz (still under developement)"
+    "pack_format": 48,
+    "supported_formats": [
+      34,
+      48
+    ],
+    "description": "Solo Craft: Reawakening for NeoForge 1.21.1"
   }
 }

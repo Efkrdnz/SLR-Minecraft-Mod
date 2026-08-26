@@ -9,14 +9,16 @@ public class ShadowIgrisEntityDiesProcedure {
 	public static void execute(Entity entity) {
 		if (entity == null)
 			return;
-		if (entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) {
-			{
-				double _setval = 0;
-				(entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.IgrisSpawned = _setval;
-					capability.syncPlayerVariables((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null));
+		if (!(entity instanceof TamableAnimal tame) || !tame.isTame())
+			return;
+		Entity owner = tame.getOwner();
+		if (owner == null)
+			return;
+		owner.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.ifPresent(capability -> {
+					capability.IgrisSpawned = 0;
+					capability.syncPlayerVariables(owner);
 				});
-			}
-		}
 	}
 }

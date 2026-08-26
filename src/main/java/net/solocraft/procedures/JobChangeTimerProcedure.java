@@ -4,10 +4,14 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.JobChangeQuestManager;
 import net.solocraft.util.SystemNotifications;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -18,15 +22,15 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.LevelAccessor;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class JobChangeTimerProcedure {
 	private static final int JOB_CHANGE_ACCENT = 0xFF7A5CFF;
 	private static final int RIDDLE_DURATION = 56;
 	private static final int RESULT_DURATION = 90;
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player)
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true && event.getEntity() instanceof ServerPlayer player)
 			execute(player.level(), player.getX(), player.getY(), player.getZ(), player);
 	}
 
@@ -84,8 +88,8 @@ public class JobChangeTimerProcedure {
 	}
 
 	private static void playPanelSound(ServerPlayer player, String soundId) {
-		if (ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(soundId)) != null)
+		if (BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse(soundId)) != null)
 			player.serverLevel().playSound(null, BlockPos.containing(player.position()),
-					ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(soundId)), SoundSource.NEUTRAL, 1.0F, 1.0F);
+					BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse(soundId)), SoundSource.NEUTRAL, 1.0F, 1.0F);
 	}
 }

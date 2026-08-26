@@ -57,7 +57,7 @@ public class InstanceDungeonKeyRightclickedOnBlockProcedure {
         });
 
         // Get the target dimension
-        ResourceKey<Level> dungeonDimension = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_kasaka"));
+        ResourceKey<Level> dungeonDimension = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_kasaka"));
         ServerLevel targetWorld = player.server.getLevel(dungeonDimension);
         if (targetWorld == null) return;
 

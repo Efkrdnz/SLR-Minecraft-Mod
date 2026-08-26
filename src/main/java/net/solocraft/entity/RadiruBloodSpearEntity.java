@@ -2,12 +2,12 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.WhiteFlameMonarchManager;
+import net.solocraft.util.AbilityDestructionManager;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -36,25 +36,16 @@ public class RadiruBloodSpearEntity extends Entity {
 	private static final EntityDataAccessor<Float> DAMAGE = SynchedEntityData.defineId(RadiruBloodSpearEntity.class, EntityDataSerializers.FLOAT);
 	private final Set<UUID> struck = new HashSet<>();
 
-	public RadiruBloodSpearEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.RADIRU_BLOOD_SPEAR.get(), level);
-	}
-
 	public RadiruBloodSpearEntity(EntityType<? extends RadiruBloodSpearEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(OWNER, Optional.empty());
-		this.entityData.define(MANIFESTED, false);
-		this.entityData.define(DAMAGE, 1.0F);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(OWNER, Optional.empty());
+		builder.define(MANIFESTED, false);
+		builder.define(DAMAGE, 1.0F);
 	}
 
 	public static void launch(ServerPlayer owner, float damage, boolean manifested) {
@@ -92,7 +83,7 @@ public class RadiruBloodSpearEntity extends Entity {
 			hitEntities(level, start, travelEnd);
 			if (blockHit.getType() != HitResult.Type.MISS) {
 				this.setPos(travelEnd);
-				impact(level, travelEnd);
+				impact(level, travelEnd, true);
 				this.discard();
 				return;
 			}
@@ -101,7 +92,7 @@ public class RadiruBloodSpearEntity extends Entity {
 		this.setDeltaMovement(velocity.scale(0.995D).add(0.0D, -0.006D, 0.0D));
 		if (this.tickCount > (isManifested() ? 44 : 36)) {
 			if (this.level() instanceof ServerLevel level)
-				impact(level, this.position());
+				impact(level, this.position(), false);
 			this.discard();
 		}
 	}
@@ -118,18 +109,22 @@ public class RadiruBloodSpearEntity extends Entity {
 				continue;
 			WhiteFlameMonarchManager.dealMagic(owner, target, this.entityData.get(DAMAGE));
 			WhiteFlameMonarchManager.brand(target, owner, isManifested() ? 180 : 120, isManifested() ? 2 : 1);
-			target.setSecondsOnFire(isManifested() ? 5 : 3);
+			target.igniteForSeconds(isManifested() ? 5 : 3);
 			if (struck.size() >= (isManifested() ? 7 : 4)) {
-				impact(level, target.getBoundingBox().getCenter());
+				impact(level, target.getBoundingBox().getCenter(), false);
 				this.discard();
 				return;
 			}
 		}
 	}
 
-	private void impact(ServerLevel level, Vec3 point) {
+	private void impact(ServerLevel level, Vec3 point, boolean struckBlock) {
 		WhiteFlameVfxEntity.spawn(level, point.x, point.y + 0.05D, point.z,
 				WhiteFlameVfxEntity.SPEAR_IMPACT, isManifested() ? 3.6F : 2.5F, 1.0F, 12, 0, 0);
+		if (struckBlock && getOwner() instanceof ServerPlayer owner)
+			AbilityDestructionManager.impact(owner,
+					AbilityDestructionManager.Profile.WHITE_FLAME_SPEAR, point,
+					TemporaryStatBonusManager.effectiveIntelligence(owner), isManifested());
 	}
 
 	@Override

@@ -2,11 +2,12 @@ package net.solocraft.client.gui;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /** Weapon appraisal data shared by tooltip text and visual rendering. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class WeaponTooltipProfiles {
 	public static final int STEEL = 0;
 	public static final int FROST = 1;
@@ -112,22 +113,23 @@ public final class WeaponTooltipProfiles {
 		add("frost_blade", p("S", RELIC, "Sword", FROST, 0x8DEBFF, 0x315CA8, 6.4F, 0,
 				l("A frozen blade formed around an unmelting core.", "Wounds bloom with ice before the steel leaves them."),
 				l("Frostbite", "Strikes can burden targets with supernatural cold.")));
-		add("demon_kings_long_sword", p("S", RELIC, "Longsword", FLAME, 0xFFB13B, 0x721B28, 6.7F, 5,
+		add("demon_kings_long_sword", p("S", RELIC, "Longsword", FLAME, 0xFFB13B, 0x721B28, 6.7F, 6,
 				l("Baran's longsword, saturated with demonic lightning.", "Each swing calls the unrest of a burning storm."),
-				l("Storm of Flames", "Unleashes lightning and fire around its target.")));
+				l("Storm of Flames", "Unleashes lightning and fire around its target.",
+						"Demonic Attunement", "Draws on permanent Intelligence to strengthen the wielder while held.")));
 		add("dragon_shortsword", p("NATIONAL", NATIONAL, "Shortsword", DRAGON, 0xFFD24F, 0xC62F22, 7.0F, 6,
 				l("A National Rank weapon carved from a sovereign", "dragon's fang. Its edge yields only to greater power."),
 				l("Dragon Fang", "Scales with a wielder capable of mastering it.", "Twin Grip", "Can be wielded as part of a dagger pair.")));
 
 		add("kamish_wrath", p("UNMEASURABLE", RELIC, "Dagger", DRAGON, 0xFFB32C, 0x9D171A, 7.3F, 5,
 				l("One of two daggers forged from Kamish's sharpest", "fangs. Its mana sensitivity borders on the unnatural."),
-				l("Dragon Resonance", "Its power rises with the wielder's capabilities.")));
+				l("Mana Sensitivity", "Each held fang combines permanent Strength and Intelligence into bonus Strength.")));
 		add("kamish_wrath_2", p("UNMEASURABLE", RELIC, "Dagger", DRAGON, 0xFF7936, 0x8D1437, 7.7F, 5,
 				l("The twin fang to Kamish's Wrath, carrying the same", "savage edge through an opposing mana current."),
-				l("Dragon Resonance", "Completes the paired current of Kamish's fangs.")));
+				l("Mana Sensitivity", "Each held fang combines permanent Strength and Intelligence into bonus Strength.")));
 		add("demon_kings_dagger", p("S", RELIC, "Dagger", FLAME, 0xFFAE35, 0x731728, 8.0F, 8,
 				l("A dagger claimed from Baran, King of Demons.", "Its dormant flame answers when its twin is drawn."),
-				l("Two as One", "Dual wielding grants bonus Strength equal to the wielder's permanent Strength.")));
+				l("Two as One", "Dual wielding draws on permanent Strength to grant a scaling Strength bonus.")));
 		add("kasakas_venom_fangs", p("C", C, "Dagger", VENOM, 0x57E37D, 0x1B5B3F, 8.3F, 6,
 				l("A dagger fashioned from Kasaka's venom fang.", "Residual poison still circulates through the weapon."),
 				l("Paralyze", "Seizes targets up to C rank.", "Bleed", "The serrated fang leaves persistent wounds.")));
@@ -153,18 +155,19 @@ public final class WeaponTooltipProfiles {
 		add("mana_gun", p("A", A, "Mana Firearm", SPIRIT, 0x56DFFF, 0x284A9A, 10.4F, 0,
 				l("A precision firearm that condenses mana into rounds.", "Output scales with the intelligence of its wielder."),
 				l("Mana Chamber", "Fires without conventional ammunition.")));
-		add("storm_griamore", p("S", RELIC, "Magic Grimoire", STORM, 0xD9F4FF, 0x5352BC, 10.7F, 5,
+		add("storm_griamore", p("S", RELIC, "Magic Grimoire", STORM, 0xD9F4FF, 0x5352BC, 10.7F, 6,
 				l("A forbidden tome that commands wind and lightning.", "Each page turn draws the wielder into the storm."),
-				l("Tempest Authority", "Channels violent atmospheric magic.")));
+				l("Tempest Authority", "Draws on permanent Intelligence to strengthen the wielder while held.")));
 		add("spirit_bow", p("A", A, "Mana Bow", NATURE, 0x8DFFD0, 0x315F79, 11.0F, 2,
 				l("An elven bow believed to originate beyond this realm.", "It shapes the wielder's mana into silent arrows."),
 				l("Spirit Arrow", "Uses mana in place of physical ammunition.")));
-		add("orb_of_avarice", p("A", A, "Magic Focus", AVARICE, 0x55D8FF, 0x8E1738, 12.8F, 7,
+		add("orb_of_avarice", p("A", A, "Magic Focus", AVARICE, 0x55D8FF, 0x8E1738, 12.8F, 8,
 				l("A petrified sphere condensed from Vulcan's blood.",
 						"It devours mana and returns it as overwhelming ruin."),
 				l("Desire for Destruction", "Doubles magic damage while held.",
 						"Insatiable Price", "Mana costs are increased by 50%.",
-						"Blue-Flame Dominion", "Fire magic burns blue under its influence.")));
+						"Blue-Flame Dominion", "Fire magic burns blue under its influence.",
+						"Avaricious Insight", "Draws on permanent Intelligence to strengthen the wielder while held.")));
 
 		// Story and legacy weapons that are not always exposed in the creative tab.
 		add("igrislongsword", p("A", A, "Longsword", BLOOD, 0xE85858, 0x541B2B, 11.3F, 0,
@@ -203,7 +206,7 @@ public final class WeaponTooltipProfiles {
 	public static Profile find(ItemStack stack) {
 		if (stack.isEmpty())
 			return null;
-		ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+		ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
 		return id != null && SololevelingMod.MODID.equals(id.getNamespace()) ? PROFILES.get(id.getPath()) : null;
 	}
 

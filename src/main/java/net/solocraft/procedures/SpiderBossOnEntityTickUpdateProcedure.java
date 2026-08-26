@@ -42,7 +42,7 @@ public class SpiderBossOnEntityTickUpdateProcedure {
 										AbstractArrow entityToSpawn = new SpiderWebEntity(SololevelingModEntities.SPIDER_WEB.get(), level);
 										entityToSpawn.setOwner(shooter);
 										entityToSpawn.setBaseDamage(damage);
-										entityToSpawn.setKnockback(knockback);
+										net.solocraft.entity.LegacyProjectileCompat.setKnockback(entityToSpawn, knockback);
 										entityToSpawn.setSilent(true);
 										return entityToSpawn;
 									}

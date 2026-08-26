@@ -9,7 +9,7 @@ import net.solocraft.util.TankerSkillManager.WillpowerHitResult;
 /**
  * Dependency-free characterization checks for the centralized Tanker balance
  * formulas. All inputs are pure values so failures identify manager math rather
- * than Forge event or entity setup.
+	 * than NeoForge event or entity setup.
  */
 public final class TankerSkillManagerCombatMathRegression {
 	private static final double EPSILON = 1.0E-9D;

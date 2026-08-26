@@ -4,11 +4,10 @@ package net.solocraft.entity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.MageCombatHelper;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Level;
@@ -24,7 +23,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -38,7 +36,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.UUID;
 
 @OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
-public class ManaArrowEntity extends AbstractArrow implements ItemSupplier {
+public class ManaArrowEntity extends LegacyAbstractArrow implements ItemSupplier {
 	public static final ItemStack PROJECTILE_ITEM = new ItemStack(Blocks.AIR);
 	private static final EntityDataAccessor<Integer> RANGER_STAGE =
 			SynchedEntityData.defineId(ManaArrowEntity.class, EntityDataSerializers.INT);
@@ -48,11 +46,6 @@ public class ManaArrowEntity extends AbstractArrow implements ItemSupplier {
 	private double rangerInitialDistance;
 	private double rangerTravelled;
 	private boolean rangerGuidanceActive;
-
-	public ManaArrowEntity(PlayMessages.SpawnEntity packet, Level world) {
-		super(SololevelingModEntities.MANA_ARROW.get(), world);
-		this.pickup = Pickup.DISALLOWED;
-	}
 
 	public ManaArrowEntity(EntityType<? extends ManaArrowEntity> type, Level world) {
 		super(type, world);
@@ -70,15 +63,10 @@ public class ManaArrowEntity extends AbstractArrow implements ItemSupplier {
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(RANGER_STAGE, 0);
-		this.entityData.define(ORDINARY_RANGER_ARROW, false);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(RANGER_STAGE, 0);
+		builder.define(ORDINARY_RANGER_ARROW, false);
 	}
 
 	@Override
@@ -88,7 +76,7 @@ public class ManaArrowEntity extends AbstractArrow implements ItemSupplier {
 	}
 
 	@Override
-	protected ItemStack getPickupItem() {
+	protected ItemStack getDefaultPickupItem() {
 		return PROJECTILE_ITEM;
 	}
 
@@ -292,7 +280,7 @@ public class ManaArrowEntity extends AbstractArrow implements ItemSupplier {
 		entityarrow.setBaseDamage(damage);
 		entityarrow.setKnockback(knockback);
 		world.addFreshEntity(entityarrow);
-		world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.amethyst_block.break")), SoundSource.PLAYERS, 1, 1f / (random.nextFloat() * 0.5f + 1) + (power / 2));
+		world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.amethyst_block.break")), SoundSource.PLAYERS, 1, 1f / (random.nextFloat() * 0.5f + 1) + (power / 2));
 		return entityarrow;
 	}
 
@@ -307,7 +295,7 @@ public class ManaArrowEntity extends AbstractArrow implements ItemSupplier {
 		entityarrow.setKnockback(1);
 		entityarrow.setCritArrow(false);
 		entity.level().addFreshEntity(entityarrow);
-		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.amethyst_block.break")), SoundSource.PLAYERS, 1,
+		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.amethyst_block.break")), SoundSource.PLAYERS, 1,
 				1f / (RandomSource.create().nextFloat() * 0.5f + 1));
 		return entityarrow;
 	}

@@ -3,7 +3,7 @@ package net.solocraft.potion;
 
 import net.solocraft.procedures.ShieldBashAttackProcedure;
 
-import net.minecraftforge.client.extensions.common.IClientMobEffectExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientMobEffectExtensions;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -23,12 +23,13 @@ public class ShieldBashEffectMobEffect extends MobEffect {
 	}
 
 	@Override
-	public void applyEffectTick(LivingEntity entity, int amplifier) {
+	public boolean applyEffectTick(LivingEntity entity, int amplifier) {
 		ShieldBashAttackProcedure.execute(entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity);
+		return true;
 	}
 
 	@Override
-	public boolean isDurationEffectTick(int duration, int amplifier) {
+	public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
 		return true;
 	}
 

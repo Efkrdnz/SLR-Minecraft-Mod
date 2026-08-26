@@ -14,10 +14,11 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.DKCPathTeleportProcedure;
 import net.solocraft.util.SystemNotifications;
 
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -62,7 +63,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * The dimension is static; each player's floors are generated lazily in the
  * 5 x 4 cell grid belonging to their persistent spatial slot.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DkcFloorBuilder {
 	private static final int SLICE_WIDTH = 16;
 	private static final int TICKS_PER_SLICE = 1;
@@ -532,6 +533,50 @@ public final class DkcFloorBuilder {
 			level.setBlock(legacy, Blocks.AIR.defaultBlockState(), 3);
 	}
 
+	/**
+	 * Repairs the permit pedestal for a cleared floor without rebuilding its
+	 * authored tower. This is intentionally safe to call for existing saves: an
+	 * already-open transition remains open, while an interrupted next-floor build
+	 * keeps a pedestal available so presenting the permit can resume it.
+	 */
+	public static boolean ensurePermitPedestal(ServerPlayer player, int floor) {
+		if (player == null || player.server == null || floor <= 0
+				|| floor >= DkcFloorRegistry.LAST_FLOOR)
+			return false;
+		ServerLevel level = player.server.getLevel(DkcFloorRegistry.SHARED_DIMENSION);
+		if (level == null || player.serverLevel() != level
+				|| !DkcSpatialLayout.isPlayerInFloor(player, floor))
+			return false;
+
+		SololevelingModVariables.PlayerVariables vars = variables(player);
+		if (vars.dkc_cleared < floor)
+			return false;
+		// A peaceful post-conquest Radiru visit deliberately has no ascension
+		// pedestal; restoring one there would revive a retired Floor-16 route.
+		if (floor == RADIRU_FLOOR
+				&& vars.dkc_cleared >= DkcFloorRegistry.LAST_FLOOR
+				&& !vars.radiru_slaughtered)
+			return false;
+
+		DkcRunSavedData runs = DkcRunSavedData.get(player.server);
+		if (!runs.isGenerated(player, floor))
+			return false;
+		if (runs.isTransitionArmed(player, floor)
+				&& runs.isGenerated(player, floor + 1))
+			return true;
+
+		BlockPos pedestal = pedestalPosition(player, floor);
+		level.getChunkAt(pedestal);
+		clearLegacyPedestal(level, player, floor);
+		if (!level.getBlockState(pedestal)
+				.is(SololevelingModBlocks.DEEPSLATE_KEYBLOCK_DKC.get()))
+			level.setBlock(pedestal,
+					SololevelingModBlocks.DEEPSLATE_KEYBLOCK_DKC.get()
+							.defaultBlockState(), 3);
+		return level.getBlockState(pedestal)
+				.is(SololevelingModBlocks.DEEPSLATE_KEYBLOCK_DKC.get());
+	}
+
 	public static void tickPlayer(ServerPlayer player) {
 		int floor = DkcSpatialLayout.floor(player);
 		if (floor <= 0 || player.server == null)
@@ -554,6 +599,11 @@ public final class DkcFloorBuilder {
 		if (floor == RADIRU_FLOOR && variables(player).dkc_cleared >= DkcFloorRegistry.LAST_FLOOR
 				&& !variables(player).radiru_slaughtered)
 			return;
+		BlockPos pedestal = pedestalPosition(player, floor);
+		if (variables(player).dkc_cleared >= floor
+				&& player.serverLevel().getGameTime() % 100L == Math.floorMod(player.getId(), 100)
+				&& player.blockPosition().closerThan(pedestal, 96.0D))
+			ensurePermitPedestal(player, floor);
 		if (floor >= DkcFloorRegistry.LAST_FLOOR) {
 			tickReturnSigil(player, floor);
 			return;
@@ -795,7 +845,7 @@ public final class DkcFloorBuilder {
 			return null;
 		try {
 			markBoss(boss, player, floor, position, yOffset);
-			boss.finalizeSpawn(level, level.getCurrentDifficultyAt(position), MobSpawnType.MOB_SUMMONED, null, null);
+			boss.finalizeSpawn(level, level.getCurrentDifficultyAt(position), MobSpawnType.MOB_SUMMONED, null);
 			markBossOwnership(boss, player, floor);
 			boss.setTarget(player);
 			boss.setHealth(boss.getMaxHealth());
@@ -1331,7 +1381,7 @@ public final class DkcFloorBuilder {
 	}
 
 	private static Placement piece(String name, int x, int y, int z) {
-		return new Placement(new ResourceLocation(SololevelingMod.MODID, name), x, y, z, Rotation.NONE);
+		return new Placement(ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, name), x, y, z, Rotation.NONE);
 	}
 
 	private static BlockPos rotationOrigin(BlockPos desiredMin, Vec3i size, Rotation rotation) {

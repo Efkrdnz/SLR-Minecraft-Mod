@@ -2,10 +2,11 @@ package net.solocraft.client.renderer.shader;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -17,9 +18,9 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import java.io.IOException;
 import java.util.function.Supplier;
 
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class BeastVfxRenderTypes extends RenderStateShard {
-	private static final ResourceLocation FALLBACK = new ResourceLocation(SololevelingMod.MODID, "textures/particle/slashgood1.png");
+	private static final ResourceLocation FALLBACK = ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "textures/particle/slashgood1.png");
 	private static ShaderInstance additiveShader;
 	private static ShaderInstance surfaceShader;
 
@@ -35,10 +36,10 @@ public final class BeastVfxRenderTypes extends RenderStateShard {
 	@SubscribeEvent
 	public static void registerShaders(RegisterShadersEvent event) throws IOException {
 		event.registerShader(new ShaderInstance(event.getResourceProvider(),
-				new ResourceLocation(SololevelingMod.MODID, "rendertype_beast_vfx"),
+				ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rendertype_beast_vfx"),
 				WorldShaderVertexFormat.NEW_ENTITY), loaded -> additiveShader = loaded);
 		event.registerShader(new ShaderInstance(event.getResourceProvider(),
-				new ResourceLocation(SololevelingMod.MODID, "rendertype_beast_surface"),
+				ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rendertype_beast_surface"),
 				WorldShaderVertexFormat.NEW_ENTITY), loaded -> surfaceShader = loaded);
 	}
 

@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class FxPuddleModel extends GeoModel<FxPuddleEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(FxPuddleEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/fx_puddle.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/fx_puddle.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(FxPuddleEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/fx_puddle.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/fx_puddle.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(FxPuddleEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

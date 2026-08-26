@@ -2,27 +2,28 @@ package net.solocraft;
 
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.client.Minecraft;
 
-@Mod.EventBusSubscriber(modid = "sololeveling", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = "sololeveling", bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class DisableHungerBar {
 	@SubscribeEvent
-	public static void RenderHealthBar(RenderGuiOverlayEvent.Pre event) {
+	public static void RenderHealthBar(RenderGuiLayerEvent.Pre event) {
 		Minecraft minecraft = Minecraft.getInstance();
 		Entity entity = minecraft.player;
 		if (entity == null)
 			return;
 			
-		if (!minecraft.options.renderDebug
+		if (!minecraft.getDebugOverlay().showDebugScreen()
 				&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).CustomHUD) {
-			if (VanillaGuiOverlay.FOOD_LEVEL.type() == event.getOverlay()) {
+			if (VanillaGuiLayers.FOOD_LEVEL.equals(event.getName())) {
 				event.setCanceled(true);
 			}
 		}

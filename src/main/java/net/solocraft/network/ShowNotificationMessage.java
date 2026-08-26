@@ -3,13 +3,18 @@ package net.solocraft.network;
 import net.solocraft.client.gui.system.SystemNotificationManager;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.solocraft.network.compat.DistExecutor;
+import net.solocraft.network.compat.NetworkDirection;
+import net.solocraft.network.compat.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
 
 import java.util.function.Supplier;
 
@@ -19,7 +24,7 @@ import java.util.function.Supplier;
  * (presence flags select the layout). The client handler forwards to
  * {@link SystemNotificationManager}.
  */
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class ShowNotificationMessage {
 	private final int accentColor;
 	private final int durationTicks;
@@ -42,8 +47,10 @@ public class ShowNotificationMessage {
 	public ShowNotificationMessage(FriendlyByteBuf buffer) {
 		this.accentColor = buffer.readInt();
 		this.durationTicks = buffer.readInt();
-		this.title = buffer.readBoolean() ? buffer.readComponent() : null;
-		this.undertext = buffer.readBoolean() ? buffer.readComponent() : null;
+		this.title = buffer.readBoolean()
+				? ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.decode(buffer) : null;
+		this.undertext = buffer.readBoolean()
+				? ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.decode(buffer) : null;
 		this.negativeSound = buffer.readBoolean();
 	}
 
@@ -52,25 +59,28 @@ public class ShowNotificationMessage {
 		buffer.writeInt(message.durationTicks);
 		buffer.writeBoolean(message.title != null);
 		if (message.title != null)
-			buffer.writeComponent(message.title);
+			ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.encode(buffer, message.title);
 		buffer.writeBoolean(message.undertext != null);
 		if (message.undertext != null)
-			buffer.writeComponent(message.undertext);
+			ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC.encode(buffer, message.undertext);
 		buffer.writeBoolean(message.negativeSound);
 	}
 
 	public static void handler(ShowNotificationMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
 		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
-			if (!context.getDirection().getReceptionSide().isServer()) {
-				SystemNotificationManager.INSTANCE.push(message.accentColor, message.durationTicks, message.title, message.undertext, message.negativeSound);
-			}
-		});
+		if (context.getDirection().getReceptionSide().isClient()) {
+			context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () ->
+					SystemNotificationManager.INSTANCE.push(message.accentColor,
+							message.durationTicks, message.title, message.undertext,
+							message.negativeSound)));
+		}
 		context.setPacketHandled(true);
 	}
 
 	@SubscribeEvent
 	public static void registerMessage(FMLCommonSetupEvent event) {
-		SololevelingMod.addNetworkMessage(ShowNotificationMessage.class, ShowNotificationMessage::buffer, ShowNotificationMessage::new, ShowNotificationMessage::handler);
+		SololevelingMod.addNetworkMessage(ShowNotificationMessage.class,
+				ShowNotificationMessage::buffer, ShowNotificationMessage::new,
+				ShowNotificationMessage::handler, NetworkDirection.PLAY_TO_CLIENT);
 	}
 }

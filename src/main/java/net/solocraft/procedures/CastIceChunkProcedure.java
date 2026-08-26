@@ -60,7 +60,7 @@ public class CastIceChunkProcedure {
 								if (!(entity == entityiterator) && !(entityiterator instanceof ExperienceOrb) && !(entityiterator instanceof IceChunkEntity) && !(entityiterator instanceof ItemEntity)) {
 									entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.GENERIC), entity), 10);
 									if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-										_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE.get(), 120, 1, false, false));
+										_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE, 120, 1, false, false));
 								}
 							}
 						}
@@ -72,7 +72,7 @@ public class CastIceChunkProcedure {
 									if (!(entity == entityiterator) && !(entityiterator instanceof ExperienceOrb) && !(entityiterator instanceof IceChunkEntity) && !(entityiterator instanceof ItemEntity)) {
 										entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.GENERIC), entity), 10);
 										if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-											_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE.get(), 120, 1, false, false));
+											_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE, 120, 1, false, false));
 									}
 								}
 							}
@@ -85,7 +85,7 @@ public class CastIceChunkProcedure {
 										if (!(entity == entityiterator) && !(entityiterator instanceof ExperienceOrb) && !(entityiterator instanceof IceChunkEntity) && !(entityiterator instanceof ItemEntity)) {
 											entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.GENERIC), entity), 10);
 											if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-												_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE.get(), 120, 1, false, false));
+												_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE, 120, 1, false, false));
 										}
 									}
 								}

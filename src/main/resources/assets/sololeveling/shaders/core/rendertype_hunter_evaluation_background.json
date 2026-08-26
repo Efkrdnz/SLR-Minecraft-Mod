@@ -1,0 +1,76 @@
+{
+    "blend": {
+        "func": "add",
+        "srcrgb": "srcalpha",
+        "dstrgb": "1-srcalpha"
+    },
+    "vertex": "sololeveling:hunter_evaluation_background",
+    "fragment": "sololeveling:hunter_evaluation_background",
+    "attributes": [
+        "Position",
+        "UV0"
+    ],
+    "samplers": [],
+    "uniforms": [
+        {
+            "name": "ModelViewMat",
+            "type": "matrix4x4",
+            "count": 16,
+            "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 ]
+        },
+        {
+            "name": "ProjMat",
+            "type": "matrix4x4",
+            "count": 16,
+            "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ]
+        },
+        {
+            "name": "GameTime",
+            "type": "float",
+            "count": 1,
+            "values": [ 0.0 ]
+        },
+        {
+            "name": "MousePos",
+            "type": "float",
+            "count": 2,
+            "values": [ 0.5, 0.5 ]
+        },
+        {
+            "name": "ClassColor",
+            "type": "float",
+            "count": 3,
+            "values": [ 0.247, 0.776, 1.0 ]
+        },
+        {
+            "name": "RankIntensity",
+            "type": "float",
+            "count": 1,
+            "values": [ 0.3 ]
+        },
+        {
+            "name": "WaveStrength",
+            "type": "float",
+            "count": 1,
+            "values": [ 0.5 ]
+        },
+        {
+            "name": "Reveal",
+            "type": "float",
+            "count": 1,
+            "values": [ 0.0 ]
+        },
+        {
+            "name": "HoldCharge",
+            "type": "float",
+            "count": 1,
+            "values": [ 0.0 ]
+        },
+        {
+            "name": "ScanSweep",
+            "type": "float",
+            "count": 1,
+            "values": [ 0.0 ]
+        }
+    ]
+}

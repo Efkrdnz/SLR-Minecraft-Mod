@@ -1,5 +1,6 @@
 package net.solocraft.dungeon;
 
+import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 import net.solocraft.init.SololevelingModEntities;
 
 import net.minecraft.core.BlockPos;
@@ -8,6 +9,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LanternBlock;
@@ -20,8 +22,6 @@ public final class ProceduralDungeonGenerator {
 	private static final int EMPTY = 0;
 	private static final int FLOOR = 1;
 	private static final int WALL = 2;
-	private static final String PROCEDURAL_RANK_TAG = "slr_procedural_mob_rank";
-
 	private ProceduralDungeonGenerator() {
 	}
 
@@ -63,8 +63,9 @@ public final class ProceduralDungeonGenerator {
 		buildBedrockBacking(level, grid, bounds, baseY, offsetX, offsetZ, settings);
 		decorate(level, grid, roomCells, corridorCells, bounds, rooms, baseY, offsetX, offsetZ,
 				settings, random);
-		BlockPos portalPos = spawnInitialReturnPortal
-				? spawnReturnPortal(level, entry, baseY, offsetX, offsetZ, owner) : null;
+		BlockPos portalPos = returnPortalPosition(entry, baseY, offsetX, offsetZ);
+		if (spawnInitialReturnPortal)
+			spawnReturnPortal(level, portalPos, owner);
 		int spawned = spawnEncounters(level, rooms, boss, baseY, offsetX, offsetZ, settings,
 				owner, random, !spawnInitialReturnPortal);
 
@@ -681,16 +682,18 @@ public final class ProceduralDungeonGenerator {
 			level.setBlock(base.above(y), state, 2);
 	}
 
-	private static BlockPos spawnReturnPortal(ServerLevel level, DungeonRoom entry, int baseY,
-			int offsetX, int offsetZ, Entity owner) {
-		BlockPos pos = new BlockPos(offsetX + entry.centerX() - 2, baseY + 1,
+	private static BlockPos returnPortalPosition(DungeonRoom entry, int baseY,
+			int offsetX, int offsetZ) {
+		return new BlockPos(offsetX + entry.centerX() - 2, baseY + 1,
 				offsetZ + entry.centerZ());
+	}
+
+	private static void spawnReturnPortal(ServerLevel level, BlockPos pos, Entity owner) {
 		Entity portal = SololevelingModEntities.PORTAL_12.get().spawn(level, pos,
 				MobSpawnType.MOB_SUMMONED);
 		if (portal != null && owner != null)
 			portal.getPersistentData().putString("dungeon_tag",
 					owner.getPersistentData().getString("dungeon_tag"));
-		return pos;
 	}
 
 	private static int spawnEncounters(ServerLevel level, List<DungeonRoom> rooms,
@@ -698,7 +701,7 @@ public final class ProceduralDungeonGenerator {
 			ProceduralDungeonSettings settings, Entity owner, RandomSource random,
 			boolean deferredReturnPortal) {
 		List<MobChoice> normalTypes = normalTypes(settings.rank);
-		EntityType<?> bossType = bossType(settings.rank);
+		BossChoice bossChoice = pickBoss(bossTypes(settings.rank), random);
 		String dungeonTag = owner == null ? ""
 				: owner.getPersistentData().getString("dungeon_tag");
 		int spawned = 0;
@@ -708,10 +711,11 @@ public final class ProceduralDungeonGenerator {
 					|| room.type == DungeonRoom.Type.TREASURE
 					|| room.type == DungeonRoom.Type.BOSS || roomIndex == 1)
 				continue;
-			int packs = room.width * room.length >= 260 ? 2 : 1;
+			int packs = packsForRoom(room, settings, random);
 			for (int pack = 0; pack < packs; pack++) {
 				MobChoice core = pickMob(normalTypes, random);
-				for (int index = 0; index < settings.rank.packSize; index++) {
+				int packSize = packSizeFor(settings, random);
+				for (int index = 0; index < packSize; index++) {
 					MobChoice choice = index > 0 && random.nextFloat() < 0.28F
 							? pickMob(normalTypes, random) : core;
 					BlockPos pos = spawnPoint(level, room, baseY, offsetX, offsetZ, random);
@@ -720,20 +724,66 @@ public final class ProceduralDungeonGenerator {
 					if (spawnedEntity != null) {
 						tagDungeonMob(spawnedEntity, dungeonTag, settings.rank,
 								deferredReturnPortal);
+						LowRankDungeonBalance.applyMobBalance(spawnedEntity,
+								settings.rank);
 						DungeonMobVariantScaler.applyForRank(spawnedEntity, settings.rank, random);
 						spawned++;
 					}
 				}
 			}
 		}
-		Entity boss = bossType.spawn(level,
+		Entity boss = bossChoice.type().spawn(level,
 				new BlockPos(offsetX + bossRoom.centerX(), baseY + 1,
 						offsetZ + bossRoom.centerZ()), MobSpawnType.MOB_SUMMONED);
 		if (boss != null) {
 			tagDungeonMob(boss, dungeonTag, settings.rank, deferredReturnPortal);
+			LowRankDungeonBalance.applyMobBalance(boss, settings.rank);
+			applyBossLevel(boss, bossChoice, random);
 			spawned++;
 		}
 		return spawned;
+	}
+
+	/**
+	 * Larger rooms can hold a second encounter, but the cap stays small so layout
+	 * randomness cannot turn one generated room into an entity spike.
+	 */
+	private static int packsForRoom(DungeonRoom room,
+			ProceduralDungeonSettings settings, RandomSource random) {
+		// A/S rooms are substantially larger and appear in much longer runs. One
+		// focused encounter per room keeps their challenge in elite strength and
+		// mechanics instead of creating a server-heavy mob horde.
+		if (settings.rank == ProceduralDungeonRank.A
+				|| settings.rank == ProceduralDungeonRank.S)
+			return 1;
+		int area = room.width * room.length;
+		int largeRoomThreshold = settings.rank.minRoomSize
+				* settings.rank.minRoomSize + settings.rank.minRoomSize * 2;
+		int packs = area >= largeRoomThreshold ? 2 : 1;
+		if (settings.rank.numericRank >= ProceduralDungeonRank.C.numericRank
+				&& settings.complexity >= 8 && random.nextFloat() < 0.25F)
+			packs++;
+		return Math.min(3, packs);
+	}
+
+	/** Per-pack variance makes repeat layouts less predictable while remaining bounded. */
+	private static int packSizeFor(ProceduralDungeonSettings settings,
+			RandomSource random) {
+		boolean highRank = settings.rank == ProceduralDungeonRank.A
+				|| settings.rank == ProceduralDungeonRank.S;
+		int variance = highRank ? 1 : 1 + Math.min(2, settings.complexity / 4);
+		int size = settings.rank.packSize + random.nextInt(variance);
+		if (!highRank && settings.complexity >= 7 && random.nextFloat() < 0.35F)
+			size++;
+		int maximum = switch (settings.rank) {
+			case E -> 3;
+			case D -> 4;
+			case C -> 5;
+			case B -> 6;
+			case A -> 2;
+			case S -> 3;
+		};
+		return Mth.clamp(size, settings.rank.packSize, maximum);
 	}
 
 	private static BlockPos spawnPoint(ServerLevel level, DungeonRoom room, int baseY,
@@ -767,7 +817,9 @@ public final class ProceduralDungeonGenerator {
 			entity.getPersistentData().putString("dungeon_tag", dungeonTag);
 		if (deferredReturnPortal)
 			ProceduralDungeonCompletionHandler.markProceduralMob(entity);
-		entity.getPersistentData().putString(PROCEDURAL_RANK_TAG, rank.name());
+		entity.getPersistentData().putString(
+				LowRankDungeonBalance.PROCEDURAL_RANK_TAG, rank.name());
+		DungeonMobHealthCompatibilityGuard.stabilize(entity);
 	}
 
 	private static MobChoice pickMob(List<MobChoice> choices, RandomSource random) {
@@ -781,17 +833,45 @@ public final class ProceduralDungeonGenerator {
 		return choices.get(choices.size() - 1);
 	}
 
+	private static BossChoice pickBoss(List<BossChoice> choices,
+			RandomSource random) {
+		int total = choices.stream().mapToInt(BossChoice::weight).sum();
+		int roll = random.nextInt(Math.max(1, total));
+		for (BossChoice choice : choices) {
+			roll -= choice.weight();
+			if (roll < 0)
+				return choice;
+		}
+		return choices.get(choices.size() - 1);
+	}
+
+	/**
+	 * High-rank Kaiselin rolls receive an explicit rank-band level before combat.
+	 * The shared adapter adds durable boss stats and mirrors the legacy Level tag,
+	 * so display, extraction, XP scaling, and combat comparisons agree.
+	 */
+	private static void applyBossLevel(Entity entity, BossChoice choice,
+			RandomSource random) {
+		if (!(entity instanceof Mob mob) || choice.maximumLevel() <= 0)
+			return;
+		int level = Mth.nextInt(random, choice.minimumLevel(),
+				choice.maximumLevel());
+		mob.getPersistentData().putString(DungeonMobLevelAdapter.ROLE_TAG,
+				DungeonMobLevelAdapter.MobRole.BOSS.id());
+		DungeonMobLevelAdapter.applyGenericScaling(mob, level,
+				DungeonMobLevelAdapter.MobRole.BOSS);
+	}
+
 	private static List<MobChoice> normalTypes(ProceduralDungeonRank rank) {
 		return switch (rank) {
 			case E -> List.of(
+					mob(SololevelingModEntities.GOBLIN_CLUB.get(), 62),
+					mob(SololevelingModEntities.GOBLIN_ARCHER.get(), 38));
+			case D -> List.of(
 					mob(SololevelingModEntities.GOBLIN_CLUB.get(), 42),
 					mob(SololevelingModEntities.GOBLIN_ARCHER.get(), 30),
-					mob(SololevelingModEntities.STEEL_FANGED_LYCAN.get(), 28));
-			case D -> List.of(
-					mob(SololevelingModEntities.GOBLIN_CLUB.get(), 29),
-					mob(SololevelingModEntities.GOBLIN_ARCHER.get(), 23),
-					mob(SololevelingModEntities.GOBLIN_MAGE.get(), 22),
-					mob(SololevelingModEntities.STEEL_FANGED_LYCAN.get(), 26));
+					mob(SololevelingModEntities.GOBLIN_MAGE.get(), 18),
+					mob(SololevelingModEntities.STEEL_FANGED_LYCAN.get(), 10));
 			case C -> List.of(
 					mob(SololevelingModEntities.GREEN_ORC.get(), 29),
 					mob(SololevelingModEntities.STONE_GOLEM.get(), 24),
@@ -826,14 +906,54 @@ public final class ProceduralDungeonGenerator {
 		return new MobChoice(type, weight);
 	}
 
-	private static EntityType<?> bossType(ProceduralDungeonRank rank) {
+	/**
+	 * Boss roster per rank.
+	 *
+	 * <p>E through B used to be single-entry lists, which quietly defeated the
+	 * rank variety the gate spawner works hard to produce: a D-rank player rolls
+	 * E or D gates, but both ranks resolved to the Goblin King, so every gate
+	 * they ever cleared had the same boss. The weight of 100 on a one-item list
+	 * was rolling against nothing.
+	 *
+	 * <p>Every alternate below is already a normal spawn at its own rank, so
+	 * promoting it to boss adds variety without introducing anything the player
+	 * would not already meet there. Boss scaling is applied on top by
+	 * {@code DungeonMobLevelAdapter}, so these stay rank-appropriate.
+	 */
+	private static List<BossChoice> bossTypes(ProceduralDungeonRank rank) {
 		return switch (rank) {
-			case E, D -> SololevelingModEntities.GOBLIN_KING.get();
-			case C -> SololevelingModEntities.ANCIENT_GOLEM.get();
-			case B -> SololevelingModEntities.BARUKA.get();
-			case A -> SololevelingModEntities.FUTURISTIC_GOLEM.get();
-			case S -> SololevelingModEntities.GEM_GOLEM.get();
+			case E -> List.of(
+					boss(SololevelingModEntities.GOBLIN_KING.get(), 60),
+					boss(SololevelingModEntities.GOBLIN_ARCHER.get(), 22),
+					boss(SololevelingModEntities.GOBLIN_CLUB.get(), 18));
+			case D -> List.of(
+					boss(SololevelingModEntities.GOBLIN_KING.get(), 42),
+					boss(SololevelingModEntities.STEEL_FANGED_LYCAN.get(), 33),
+					boss(SololevelingModEntities.GOBLIN_MAGE.get(), 25));
+			case C -> List.of(
+					boss(SololevelingModEntities.ANCIENT_GOLEM.get(), 40),
+					boss(SololevelingModEntities.STONE_GOLEM.get(), 32),
+					boss(SololevelingModEntities.SKELETON_WARRIOR.get(), 28));
+			case B -> List.of(
+					boss(SololevelingModEntities.BARUKA.get(), 40),
+					boss(SololevelingModEntities.SKELETON_BRUTE.get(), 32),
+					boss(SololevelingModEntities.HIGH_ORC.get(), 28));
+			case A -> List.of(
+					boss(SololevelingModEntities.FUTURISTIC_GOLEM.get(), 70),
+					boss(SololevelingModEntities.KAISELIN.get(), 30, 75, 89));
+			case S -> List.of(
+					boss(SololevelingModEntities.GEM_GOLEM.get(), 55),
+					boss(SololevelingModEntities.KAISELIN.get(), 45, 100, 119));
 		};
+	}
+
+	private static BossChoice boss(EntityType<?> type, int weight) {
+		return boss(type, weight, 0, 0);
+	}
+
+	private static BossChoice boss(EntityType<?> type, int weight,
+			int minimumLevel, int maximumLevel) {
+		return new BossChoice(type, weight, minimumLevel, maximumLevel);
 	}
 
 	private static BlockState pickFloor(DungeonTheme theme, RandomSource random) {
@@ -877,5 +997,9 @@ public final class ProceduralDungeonGenerator {
 	}
 
 	private record MobChoice(EntityType<?> type, int weight) {
+	}
+
+	private record BossChoice(EntityType<?> type, int weight,
+			int minimumLevel, int maximumLevel) {
 	}
 }

@@ -2,11 +2,9 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -25,10 +23,6 @@ public class RulersAuthorityAuraEntity extends Entity {
     private static final EntityDataAccessor<Boolean> AUTHORITY = SynchedEntityData.defineId(RulersAuthorityAuraEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> RESISTED = SynchedEntityData.defineId(RulersAuthorityAuraEntity.class, EntityDataSerializers.BOOLEAN);
     private int missingTargetTicks;
-
-    public RulersAuthorityAuraEntity(PlayMessages.SpawnEntity packet, Level level) {
-        this(SololevelingModEntities.RULERS_AUTHORITY_AURA.get(), level);
-    }
 
     public RulersAuthorityAuraEntity(EntityType<? extends RulersAuthorityAuraEntity> type, Level level) {
         super(type, level);
@@ -49,17 +43,12 @@ public class RulersAuthorityAuraEntity extends Entity {
     }
 
     @Override
-    protected void defineSynchedData() {
-        this.entityData.define(TARGET_ID, -1);
-        this.entityData.define(TARGET_WIDTH, 0.6F);
-        this.entityData.define(TARGET_HEIGHT, 1.8F);
-        this.entityData.define(AUTHORITY, false);
-        this.entityData.define(RESISTED, false);
-    }
-
-    @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
-        return NetworkHooks.getEntitySpawningPacket(this);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(TARGET_ID, -1);
+        builder.define(TARGET_WIDTH, 0.6F);
+        builder.define(TARGET_HEIGHT, 1.8F);
+        builder.define(AUTHORITY, false);
+        builder.define(RESISTED, false);
     }
 
     public Entity getTarget() {

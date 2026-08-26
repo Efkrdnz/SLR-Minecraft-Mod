@@ -1,8 +1,8 @@
 package net.solocraft.procedures;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -28,7 +28,7 @@ public class RunestoneMonarchsDomainRightclickedProcedure {
 				_player.getInventory().clearOrCountMatchingItems(p -> _stktoremove.getItem() == p.getItem(), 1, _player.inventoryMenu.getCraftSlots());
 			}
 			if (world instanceof Level _level)
-				_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.enchantment_table.use")), SoundSource.NEUTRAL, 1, 1);
+				_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.enchantment_table.use")), SoundSource.NEUTRAL, 1, 1);
 		} else {
 			if (entity instanceof Player _player && !_player.level().isClientSide())
 				_player.displayClientMessage(Component.literal("You already have \"Monarch's Domain\""), true);
@@ -38,14 +38,14 @@ public class RunestoneMonarchsDomainRightclickedProcedure {
 	private static boolean hasMonarchsDomain(Entity entity) {
 		if (!(entity instanceof ServerPlayer player))
 			return false;
-		Advancement advancement = player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:monarchs_domain"));
+		AdvancementHolder advancement = player.server.getAdvancements().get(ResourceLocation.parse("sololeveling:monarchs_domain"));
 		return advancement != null && player.getAdvancements().getOrStartProgress(advancement).isDone();
 	}
 
 	private static void grantMonarchsDomain(Entity entity) {
 		if (!(entity instanceof ServerPlayer player))
 			return;
-		Advancement advancement = player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:monarchs_domain"));
+		AdvancementHolder advancement = player.server.getAdvancements().get(ResourceLocation.parse("sololeveling:monarchs_domain"));
 		if (advancement == null)
 			return;
 		AdvancementProgress progress = player.getAdvancements().getOrStartProgress(advancement);

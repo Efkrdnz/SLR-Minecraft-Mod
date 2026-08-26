@@ -4,12 +4,13 @@ import net.solocraft.entity.BaekYoonhoEntity;
 import net.solocraft.entity.ChaHaeInEntity;
 import net.solocraft.entity.ChoijongEntity;
 
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
+import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -22,6 +23,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -30,10 +32,10 @@ import net.minecraft.world.phys.Vec3;
 import java.util.UUID;
 
 /** Fixed profiles, retaliation, and defensive reactions for named S-rank hunters. */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class NamedHunterCombatManager {
 	private static final String PROFILE_VERSION = "slr_named_hunter_profile";
-	private static final int CURRENT_PROFILE_VERSION = 1;
+	private static final int CURRENT_PROFILE_VERSION = 2;
 	private static final String RETALIATION_TARGET = "slr_named_hunter_retaliation_target";
 	private static final String RETALIATION_UNTIL = "slr_named_hunter_retaliation_until";
 	private static final String DEFENSE_READY_AT = "slr_named_hunter_defense_ready";
@@ -69,7 +71,7 @@ public final class NamedHunterCombatManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void onNamedHunterAttacked(LivingAttackEvent event) {
+	public static void onNamedHunterAttacked(LivingIncomingDamageEvent event) {
 		if (event == null || event.isCanceled() || !isNamedHunter(event.getEntity()) || event.getEntity().level().isClientSide())
 			return;
 		LivingEntity attacker = resolveAttacker(event.getEntity(), event.getSource().getEntity(), event.getSource().getDirectEntity());
@@ -84,9 +86,11 @@ public final class NamedHunterCombatManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onNamedHunterHurt(LivingHurtEvent event) {
+	public static void onNamedHunterHurt(LivingIncomingDamageEvent event) {
 		if (event == null || event.isCanceled() || event.getAmount() <= 0 || !isNamedHunter(event.getEntity())
-				|| event.getEntity().level().isClientSide() || event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY))
+				|| event.getEntity().level().isClientSide()
+				|| event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)
+				|| SilladDamageTypes.isTrueFrost(event.getSource()))
 			return;
 		LivingEntity hunter = event.getEntity();
 		LivingEntity attacker = resolveAttacker(hunter, event.getSource().getEntity(), event.getSource().getDirectEntity());
@@ -101,25 +105,30 @@ public final class NamedHunterCombatManager {
 		double strikeThreat = event.getAmount() / Math.max(4.0D, hunter.getMaxHealth() * 0.08D);
 		double threat = Mth.clamp(Math.max(attributeThreat, strikeThreat), 0.35D, 2.5D);
 		boolean reacted = react(event, hunter, attacker, threat);
-		data.putLong(DEFENSE_READY_AT, now + (reacted ? 14L : 4L));
+		long delay = hunter instanceof ChaHaeInEntity
+				? (reacted ? 30L : 8L) : (reacted ? 14L : 4L);
+		data.putLong(DEFENSE_READY_AT, now + delay);
 	}
 
-	private static boolean react(LivingHurtEvent event, LivingEntity hunter, LivingEntity attacker, double threat) {
+	private static boolean react(LivingIncomingDamageEvent event, LivingEntity hunter, LivingEntity attacker, double threat) {
 		double roll = hunter.getRandom().nextDouble();
 		if (hunter instanceof ChoijongEntity) {
 			double dodgeChance = Mth.clamp(0.16D + threat * 0.18D, 0.22D, 0.58D);
 			return roll < dodgeChance && dodge(event, hunter, attacker, 1.0D);
 		}
 		if (hunter instanceof ChaHaeInEntity) {
-			double dodgeChance = threat >= 1.0D ? Mth.clamp(0.22D + (threat - 1.0D) * 0.14D, 0.22D, 0.43D) : 0.11D;
-			double blockChance = threat >= 1.0D ? 0.16D : 0.31D;
+			double dodgeChance = threat >= 1.0D
+					? Mth.clamp(0.12D + (threat - 1.0D) * 0.08D,
+							0.12D, 0.24D) : 0.06D;
+			double blockChance = threat >= 1.0D ? 0.10D : 0.18D;
 			if (threat >= 1.0D) {
 				if (roll < dodgeChance)
 					return dodge(event, hunter, attacker, 0.82D);
-				return roll < dodgeChance + blockChance && block(event, hunter, 0.55F);
+				return roll < dodgeChance + blockChance
+						&& block(event, hunter, 0.70F);
 			}
 			if (roll < blockChance)
-				return block(event, hunter, 0.55F);
+				return block(event, hunter, 0.70F);
 			return roll < blockChance + dodgeChance && dodge(event, hunter, attacker, 0.76D);
 		}
 
@@ -135,7 +144,7 @@ public final class NamedHunterCombatManager {
 		return roll < blockChance + dodgeChance && dodge(event, hunter, attacker, 0.62D);
 	}
 
-	private static boolean dodge(LivingHurtEvent event, LivingEntity hunter, LivingEntity attacker, double strength) {
+	private static boolean dodge(LivingIncomingDamageEvent event, LivingEntity hunter, LivingEntity attacker, double strength) {
 		event.setCanceled(true);
 		Vec3 away = hunter.position().subtract(attacker.position());
 		away = new Vec3(away.x, 0.0D, away.z);
@@ -153,7 +162,7 @@ public final class NamedHunterCombatManager {
 		return true;
 	}
 
-	private static boolean block(LivingHurtEvent event, LivingEntity hunter, float damageMultiplier) {
+	private static boolean block(LivingIncomingDamageEvent event, LivingEntity hunter, float damageMultiplier) {
 		event.setAmount(Math.max(0.5F, event.getAmount() * damageMultiplier));
 		hunter.setDeltaMovement(hunter.getDeltaMovement().multiply(0.35D, 1.0D, 0.35D));
 		particles(hunter, ParticleTypes.CRIT, 9, 0.02D);
@@ -190,20 +199,21 @@ public final class NamedHunterCombatManager {
 		if (hunter instanceof ChoijongEntity)
 			return new Profile(240.0D, 8.0D, 12.0D, 0.36D, 0.20D, 0.0D, net.minecraft.network.chat.Component.literal("Choi Jong-In"));
 		if (hunter instanceof ChaHaeInEntity)
-			return new Profile(300.0D, 22.0D, 30.0D, 0.42D, 0.35D, 0.85D, net.minecraft.network.chat.Component.literal("Cha Hae-In"));
+			return new Profile(260.0D, 16.0D, 22.0D, 0.39D, 0.25D, 0.45D, net.minecraft.network.chat.Component.literal("Cha Hae-In"));
 		if (hunter instanceof BaekYoonhoEntity)
 			return new Profile(340.0D, 34.0D, 27.0D, 0.41D, 0.55D, 1.0D, net.minecraft.network.chat.Component.literal("Baek Yoonho"));
 		return null;
 	}
 
-	private static void setBase(LivingEntity entity, Attribute attribute, double value) {
+	private static void setBase(LivingEntity entity, Holder<Attribute> attribute, double value) {
 		if (entity.getAttribute(attribute) != null)
 			entity.getAttribute(attribute).setBaseValue(value);
 	}
 
 	private static double combatPower(LivingEntity entity) {
+		AttributeInstance attack = entity.getAttribute(Attributes.ATTACK_DAMAGE);
 		return entity.getMaxHealth() * 0.08D + entity.getArmorValue() * 1.2D
-				+ entity.getAttributeValue(Attributes.ATTACK_DAMAGE) * 4.0D;
+				+ Math.max(0.0D, attack == null ? 0.0D : attack.getValue()) * 4.0D;
 	}
 
 	private static LivingEntity resolveAttacker(LivingEntity victim, Entity source, Entity directSource) {

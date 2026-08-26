@@ -34,26 +34,26 @@ public class DungeonPlaceProcedure {
 				Rand = Math.random();
 				if (Rand < 0.33) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "testroom1"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "testroom1"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(xOff - 5, yOff, zOff - 5), BlockPos.containing(xOff - 5, yOff, zOff - 5),
-									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 						}
 					}
 				} else if (Rand < 0.67) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "testroom2"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "testroom2"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(xOff - 5, yOff, zOff - 5), BlockPos.containing(xOff - 5, yOff, zOff - 5),
-									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 						}
 					}
 				} else {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "testroom3"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "testroom3"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(xOff - 5, yOff, zOff - 5), BlockPos.containing(xOff - 5, yOff, zOff - 5),
-									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 						}
 					}
 				}

@@ -2,11 +2,9 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -30,26 +28,17 @@ public class WhiteFlameVfxEntity extends Entity {
 	private static final EntityDataAccessor<Float> LENGTH = SynchedEntityData.defineId(WhiteFlameVfxEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Integer> LIFETIME = SynchedEntityData.defineId(WhiteFlameVfxEntity.class, EntityDataSerializers.INT);
 
-	public WhiteFlameVfxEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.WHITE_FLAME_VFX.get(), level);
-	}
-
 	public WhiteFlameVfxEntity(EntityType<? extends WhiteFlameVfxEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(STYLE, LIGHTNING_BREATH);
-		this.entityData.define(SCALE, 1.0F);
-		this.entityData.define(LENGTH, 1.0F);
-		this.entityData.define(LIFETIME, 12);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(STYLE, LIGHTNING_BREATH);
+		builder.define(SCALE, 1.0F);
+		builder.define(LENGTH, 1.0F);
+		builder.define(LIFETIME, 12);
 	}
 
 	public static WhiteFlameVfxEntity spawn(ServerLevel level, double x, double y, double z, int style,

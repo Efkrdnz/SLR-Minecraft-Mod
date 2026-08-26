@@ -2,13 +2,14 @@ package net.solocraft.procedures;
 
 import net.solocraft.entity.FuturisticGolemEntity;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -38,9 +39,9 @@ public class FuturisticGolemMeleeProcedure {
 				world.addParticle(ParticleTypes.EXPLOSION, (entity.getX() + 1.5 * entity.getLookAngle().x), (entity.getY() + 0.25), (entity.getZ() + 1.5 * entity.getLookAngle().z), 0, 0, 0);
 				if (world instanceof Level _level) {
 					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
+						_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
 					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
 					}
 				}
 				CooldownManager.set(entity, "golem_kick", 20);
@@ -63,7 +64,7 @@ public class FuturisticGolemMeleeProcedure {
 									if (_attacker instanceof LivingEntity _livingAttacker) {
 										_itemStack = _livingAttacker.getMainHandItem();
 									}
-									if (!_itemStack.isEmpty() && _itemStack.hasCustomHoverName()) {
+									if (!_itemStack.isEmpty() && _itemStack.has(DataComponents.CUSTOM_NAME)) {
 										_itemName = _itemStack.getDisplayName();
 									}
 									if (_attacker != null && _itemName != null) {

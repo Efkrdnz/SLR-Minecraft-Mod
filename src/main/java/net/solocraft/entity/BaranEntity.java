@@ -1,20 +1,20 @@
 
 package net.solocraft.entity;
 
+import net.solocraft.util.DemonCastleBossDamageRules;
 import net.solocraft.procedures.BaranOnTickProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
 import software.bernie.geckolib.util.GeckoLibUtil;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.GeoEntity;
 
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.monster.Monster;
@@ -22,13 +22,12 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.solocraft.entity.ai.LegacyMeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
@@ -40,12 +39,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.nbt.CompoundTag;
 
 public class BaranEntity extends Monster implements GeoEntity {
@@ -71,10 +69,6 @@ public class BaranEntity extends Monster implements GeoEntity {
 
 	// ── Constructors ──────────────────────────────────────────────────────────
 
-	public BaranEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.BARAN.get(), world);
-	}
-
 	public BaranEntity(EntityType<BaranEntity> type, Level world) {
 		super(type, world);
 		xpReward = 0;
@@ -85,12 +79,12 @@ public class BaranEntity extends Monster implements GeoEntity {
 	// ── Synced data ───────────────────────────────────────────────────────────
 
 	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(DATA_state, "idle");
-		this.entityData.define(DATA_IA, 0);
-		this.entityData.define(ANIMATION, "undefined");
-		this.entityData.define(TEXTURE, "demonkingbaran");
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(DATA_state, "idle");
+		builder.define(DATA_IA, 0);
+		builder.define(ANIMATION, "undefined");
+		builder.define(TEXTURE, "demonkingbaran");
 	}
 
 	public String getState() { return this.entityData.get(DATA_state); }
@@ -105,17 +99,12 @@ public class BaranEntity extends Monster implements GeoEntity {
 
 	// ── Network ───────────────────────────────────────────────────────────────
 
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
 	// ── Goals ─────────────────────────────────────────────────────────────────
 
 	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, false) {
+		this.goalSelector.addGoal(1, new LegacyMeleeAttackGoal(this, 1.2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
 				return 9.0; // ~3 block reach
@@ -131,9 +120,6 @@ public class BaranEntity extends Monster implements GeoEntity {
 	// ── Type / removal ────────────────────────────────────────────────────────
 
 	@Override
-	public MobType getMobType() { return MobType.UNDEFINED; }
-
-	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) { return false; }
 
 	@Override
@@ -147,12 +133,12 @@ public class BaranEntity extends Monster implements GeoEntity {
 
 	@Override
 	public SoundEvent getHurtSound(DamageSource ds) {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.hurt"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.hurt"));
 	}
 
 	@Override
 	public SoundEvent getDeathSound() {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.death"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.death"));
 	}
 
 	// ── Damage immunity ───────────────────────────────────────────────────────
@@ -236,15 +222,15 @@ public class BaranEntity extends Monster implements GeoEntity {
 		++this.deathTime;
 		if (this.deathTime == 40) {
 			this.remove(BaranEntity.RemovalReason.KILLED);
-			this.dropExperience();
+			this.dropExperience(this.getKillCredit());
 		}
 	}
 
 	// ── Dimensions ────────────────────────────────────────────────────────────
 
 	@Override
-	public EntityDimensions getDimensions(Pose pose) {
-		return super.getDimensions(pose);
+	public EntityDimensions getDefaultDimensions(Pose pose) {
+		return super.getDefaultDimensions(pose);
 	}
 
 	// ── Attributes ────────────────────────────────────────────────────────────
@@ -257,7 +243,8 @@ public class BaranEntity extends Monster implements GeoEntity {
 				.add(Attributes.MAX_HEALTH, 300)
 				.add(Attributes.ARMOR, 32)
 				.add(Attributes.ARMOR_TOUGHNESS, 4)
-				.add(Attributes.ATTACK_DAMAGE, 22)
+				.add(Attributes.ATTACK_DAMAGE,
+						DemonCastleBossDamageRules.BARAN_MELEE)
 				.add(Attributes.FOLLOW_RANGE, 40)
 				.add(Attributes.KNOCKBACK_RESISTANCE, 0.8);
 	}

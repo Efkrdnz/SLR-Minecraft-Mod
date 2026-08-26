@@ -10,17 +10,18 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /** Server-authoritative, short-lived invitations for player-created guilds. */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class GuildInvitationManager {
     private static final long INVITE_LIFETIME_MS = 120_000L;
     private static final Map<UUID, PendingInvite> PENDING = new HashMap<>();

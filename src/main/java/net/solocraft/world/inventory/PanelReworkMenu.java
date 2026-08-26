@@ -3,8 +3,8 @@ package net.solocraft.world.inventory;
 
 import net.solocraft.init.SololevelingModMenus;
 
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.IItemHandler;
 
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.Level;
@@ -13,6 +13,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.entity.player.Player;
+import net.solocraft.procedures.PanelEarlyThisGUIIsOpenedProcedure;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.network.FriendlyByteBuf;
@@ -38,6 +39,10 @@ public class PanelReworkMenu extends AbstractContainerMenu implements Supplier<M
 	public PanelReworkMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
 		super(SololevelingModMenus.PANEL_REWORK.get(), id);
 		this.entity = inv.player;
+		// This panel has no investment-size control, so it always spends one
+		// point per press. Resetting on open drains a legacy investvalue that
+		// an older build could set and this one has no way to change.
+		PanelEarlyThisGUIIsOpenedProcedure.execute(entity);
 		this.world = inv.player.level();
 		this.internal = new ItemStackHandler(0);
 		BlockPos pos = null;

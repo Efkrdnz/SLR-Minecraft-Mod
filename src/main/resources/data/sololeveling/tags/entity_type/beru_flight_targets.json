@@ -1,0 +1,16 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:allay",
+    "minecraft:bat",
+    "minecraft:blaze",
+    "minecraft:ender_dragon",
+    "minecraft:ghast",
+    "minecraft:phantom",
+    "minecraft:vex",
+    "minecraft:wither",
+    "sololeveling:dragonhead",
+    "sololeveling:kaiselin",
+    "sololeveling:kamish"
+  ]
+}

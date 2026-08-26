@@ -4,8 +4,6 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.JobChangeQuestManager;
 
-import net.minecraft.commands.CommandSource;
-import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -27,7 +25,7 @@ import net.minecraft.world.level.LevelAccessor;
 
 public class JobChangeQuestEntryProcedure {
 	private static final double PLAYER_PORTAL_ENTRY_X_OFFSET = 3.0D;
-	private static final ResourceKey<Level> IGRIS_DIMENSION = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_igris"));
+	private static final ResourceKey<Level> IGRIS_DIMENSION = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_igris"));
 
 	public static boolean execute(LevelAccessor world, Entity entity) {
 		if (!(entity instanceof ServerPlayer player) || world == null)
@@ -54,6 +52,16 @@ public class JobChangeQuestEntryProcedure {
 			return false;
 		}
 		boolean resume = JobChangeQuestManager.canResumeDungeon(player);
+		if (!resume) {
+			int retryTicks = JobChangeQuestManager.retryDelayTicks(player);
+			if (retryTicks > 0) {
+				player.displayClientMessage(Component.literal(
+						"\u00A7cYou can restart the Job Change Quest in "
+								+ ((retryTicks + 19) / 20)
+								+ " seconds."), true);
+				return false;
+			}
+		}
 		ResourceKey<Level> destinationType = IGRIS_DIMENSION;
 		ServerLevel nextLevel = player.server.getLevel(destinationType);
 		if (nextLevel == null) {
@@ -71,7 +79,7 @@ public class JobChangeQuestEntryProcedure {
 		player.teleportTo(nextLevel, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
 		player.connection.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
 		for (MobEffectInstance effect : player.getActiveEffects())
-			player.connection.send(new ClientboundUpdateMobEffectPacket(player.getId(), effect));
+			player.connection.send(new ClientboundUpdateMobEffectPacket(player.getId(), effect, false));
 		player.connection.send(new ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false));
 		SololevelingMod.queueServerWork(70, () -> {
 			if (!player.isAlive() || player.level().dimension() != IGRIS_DIMENSION) {
@@ -126,8 +134,6 @@ public class JobChangeQuestEntryProcedure {
 	}
 
 	private static void spawnIgrisDungeon(ServerPlayer player) {
-		player.getServer().getCommands().performPrefixedCommand(
-				new CommandSourceStack(CommandSource.NULL, player.position(), player.getRotationVector(), player.serverLevel(), 4, player.getName().getString(), player.getDisplayName(), player.getServer(), player),
-				"execute in sololeveling:dungeon_dimension_igris as @s at @s unless entity @e[type=sololeveling:portal_12,distance=..100] run spawnigris");
+		DunPlaceIgrisProcedure.executeForAttempt(player);
 	}
 }

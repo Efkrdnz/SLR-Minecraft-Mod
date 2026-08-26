@@ -3,8 +3,8 @@ package net.solocraft.item;
 
 import net.solocraft.procedures.IceSpearToolInHandTickProcedure;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -18,7 +18,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-public class IceSpearItem extends SwordItem {
+public class IceSpearItem extends LegacySwordItem {
 	public IceSpearItem() {
 		super(new Tier() {
 			public int getUses() {
@@ -33,8 +33,8 @@ public class IceSpearItem extends SwordItem {
 				return 14f;
 			}
 
-			public int getLevel() {
-				return 1;
+			public net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> getIncorrectBlocksForDrops() {
+				return net.minecraft.tags.BlockTags.INCORRECT_FOR_STONE_TOOL;
 			}
 
 			public int getEnchantmentValue() {
@@ -48,8 +48,8 @@ public class IceSpearItem extends SwordItem {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 	}
 
 	@Override

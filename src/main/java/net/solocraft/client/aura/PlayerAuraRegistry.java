@@ -10,9 +10,9 @@ import java.util.Map;
 /** Registry for reusable aura recipes. Add new spiritualization presets here. */
 public final class PlayerAuraRegistry {
 	private static final Map<String, PlayerAuraDefinition> DEFINITIONS = new LinkedHashMap<>();
-	private static final ResourceLocation GOLD_GLOW = new ResourceLocation("sololeveling", "textures/particle/glow_yellow.png");
-	private static final ResourceLocation BLUE_GLOW = new ResourceLocation("sololeveling", "textures/particle/mana_blue.png");
-	private static final ResourceLocation PURPLE_GLOW = new ResourceLocation("sololeveling", "textures/particle/aura_glow_purple.png");
+	private static final ResourceLocation GOLD_GLOW = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/glow_yellow.png");
+	private static final ResourceLocation BLUE_GLOW = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/mana_blue.png");
+	private static final ResourceLocation PURPLE_GLOW = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/aura_glow_purple.png");
 
 	public static final PlayerAuraDefinition GOLIATH = register(new PlayerAuraDefinition(
 			"goliath_manifestation", 0xFFF6C7, 0xC97412, GOLD_GLOW,
@@ -27,6 +27,18 @@ public final class PlayerAuraRegistry {
 			1.2F, 0, 0, 0,
 			new PlayerAuraDefinition.FluidProfile(8, 3, 2, 0.92F, 0.48F, 1.36F, 1.42F), false,
 			0xFFD149));
+
+	/**
+	 * Sung Il-Hwan's ruler spiritualization. This intentionally uses the same
+	 * full-body liquid-flame pipeline as the other ruler vessels instead of a
+	 * collection of detached orbiting primitives.
+	 */
+	public static final PlayerAuraDefinition SUNG_IL_HWAN_SPIRITUALIZATION = register(new PlayerAuraDefinition(
+			"sung_il_hwan_spiritualization", 0xFFF3B5, 0xB86B08, GOLD_GLOW,
+			PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 0.84F, 1.54F,
+			1.48F, 0, 0, 0,
+			new PlayerAuraDefinition.FluidProfile(26, 11, 8, 1.08F, 0.68F, 1.68F, 1.72F), false,
+			0xFFD35A));
 
 	public static final PlayerAuraDefinition SHADOW_MONARCH_MANIFESTATION = register(new PlayerAuraDefinition(
 			"shadow_monarch_manifestation", 0xC568FF, 0x10001F, PURPLE_GLOW,
@@ -53,6 +65,13 @@ public final class PlayerAuraRegistry {
 			1.34F, 0, 0, 0,
 			new PlayerAuraDefinition.FluidProfile(24, 10, 7, 1.12F, 0.68F, 1.58F, 1.46F,
 					PlayerAuraDefinition.FluidStyle.LIQUID_FLAME), false, 0xD8D3C5));
+
+	public static final PlayerAuraDefinition ANTARES_MANIFESTATION = register(new PlayerAuraDefinition(
+			"antares_manifestation", 0xFF3344, 0x160107, PURPLE_GLOW,
+			PlayerAuraDefinition.Facing.HORIZONTAL_CAMERA, 0.96F, 1.62F,
+			1.08F, 0, 0, 0,
+			new PlayerAuraDefinition.FluidProfile(24, 10, 7, 1.16F, 0.72F, 1.52F, 1.22F,
+					PlayerAuraDefinition.FluidStyle.LIQUID_FLAME), false, 0x3B0509));
 
 	public static final PlayerAuraDefinition RULER_BLUE = register(new PlayerAuraDefinition(
 			"ruler_blue", 0xE6FAFF, 0x168DFF, BLUE_GLOW,

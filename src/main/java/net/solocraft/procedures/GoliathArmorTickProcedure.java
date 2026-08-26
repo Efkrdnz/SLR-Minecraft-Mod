@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.ItemStackData;
 import net.solocraft.util.TemporaryArmorSessionManager;
 
 import net.minecraft.world.effect.MobEffectInstance;
@@ -10,7 +11,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.LevelAccessor;
 
@@ -20,12 +20,12 @@ public class GoliathArmorTickProcedure {
 			return;
 		if (entity.level().isClientSide())
 			return;
-		if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLAST_PROTECTION, itemstack) == 0)
-			itemstack.enchant(Enchantments.BLAST_PROTECTION, 2);
-		if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BINDING_CURSE, itemstack) == 0)
-			itemstack.enchant(Enchantments.BINDING_CURSE, 10);
-		if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.VANISHING_CURSE, itemstack) == 0)
-			itemstack.enchant(Enchantments.VANISHING_CURSE, 10);
+		if (ItemStackData.enchantmentLevel(itemstack, Enchantments.BLAST_PROTECTION) == 0)
+			ItemStackData.enchant(itemstack, Enchantments.BLAST_PROTECTION, 2, entity.registryAccess());
+		if (ItemStackData.enchantmentLevel(itemstack, Enchantments.BINDING_CURSE) == 0)
+			ItemStackData.enchant(itemstack, Enchantments.BINDING_CURSE, 10, entity.registryAccess());
+		if (ItemStackData.enchantmentLevel(itemstack, Enchantments.VANISHING_CURSE) == 0)
+			ItemStackData.enchant(itemstack, Enchantments.VANISHING_CURSE, 10, entity.registryAccess());
 		long gameTime = entity.level().getGameTime();
 		if (entity.getPersistentData().getLong("goliath_last_armor_tick") == gameTime)
 			return;

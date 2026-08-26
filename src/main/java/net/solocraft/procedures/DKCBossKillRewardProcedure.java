@@ -4,12 +4,15 @@ import net.solocraft.dkc.DkcFloorBuilder;
 import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.dkc.DkcSpatialLayout;
 import net.solocraft.dkc.DkcRadiruManager;
+import net.solocraft.dungeon.runtime.DungeonLevelHelper;
 import net.solocraft.entity.BaranEntity;
 import net.solocraft.entity.CerberusEntity;
 import net.solocraft.entity.KaiselinEntity;
 import net.solocraft.entity.VulcanEntity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.BaranVictoryRewards;
+import net.solocraft.util.AriseExtractionRules;
 import net.solocraft.util.RewardManager;
 import net.solocraft.util.SystemNotifications;
 import net.solocraft.util.VesselProgressionManager;
@@ -28,6 +31,9 @@ import java.util.UUID;
 
 /** Boss rewards, with strict dimension/owner checks and atomic floor progress. */
 public class DKCBossKillRewardProcedure {
+	private static final String KAISEL_TARGET_LEVEL_TAG =
+			"slr_dkc_kaisel_target_level";
+
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceEntity) {
 		if (!(world instanceof ServerLevel level) || entity == null || !DkcFloorRegistry.isSharedDkc(level))
 			return;
@@ -65,11 +71,18 @@ public class DKCBossKillRewardProcedure {
 		CompoundTag data = player.getPersistentData();
 		if (floor == 20) {
 			if (entity instanceof BaranEntity) {
+				// Resolve Baran's personal rewards at Baran's defeat rather than
+				// delaying them until Kaiselin also falls.
+				BaranVictoryRewards.grantIfNeeded(player);
 				data.putBoolean("dkc_floor_20_baran_defeated", true);
 				BaranSummonProcedure.discardBossAdds(level, player, floor);
 			}
-			if (exactKaiselin)
+			if (exactKaiselin) {
 				data.putBoolean("dkc_floor_20_kaiselin_defeated", true);
+				double targetLevel = DungeonLevelHelper.levelOf(entity);
+				if (targetLevel > 0.0D)
+					data.putDouble(KAISEL_TARGET_LEVEL_TAG, targetLevel);
+			}
 			boolean baranDown = data.getBoolean("dkc_floor_20_baran_defeated");
 			boolean kaiselinDown = data.getBoolean("dkc_floor_20_kaiselin_defeated");
 			if (!baranDown || !kaiselinDown)
@@ -86,6 +99,9 @@ public class DKCBossKillRewardProcedure {
 			capability.dkc_cleared = Math.max(capability.dkc_cleared, floor);
 			capability.syncPlayerVariables(rewardPlayer);
 		});
+		// The permit pedestal is progression-critical. Repair it immediately at
+		// boss completion in case its initial structure placement was interrupted.
+		DkcFloorBuilder.ensurePermitPedestal(player, floor);
 		VesselProgressionManager.reconcileEntitlements(player);
 		XPGainProcedure.awardBaseXp(world, player, floor * 100);
 		notify(player, 0xFF4DFF88, "BOSS SLAIN",
@@ -118,6 +134,11 @@ public class DKCBossKillRewardProcedure {
 		if (soul == null)
 			return;
 		soul.getPersistentData().putString("soultype", "kaisel");
+		soul.getPersistentData().putDouble(
+				AriseExtractionRules.TARGET_LEVEL_TAG,
+				data.getDouble(KAISEL_TARGET_LEVEL_TAG) > 0.0D
+						? data.getDouble(KAISEL_TARGET_LEVEL_TAG)
+						: AriseExtractionRules.defaultTargetLevel("kaisel"));
 		soul.getPersistentData().putDouble("dkc_floor_number", 20);
 		soul.getPersistentData().putString("dkc_spawned_by", player.getStringUUID());
 		data.putBoolean(KaiselinEntity.DKC_SOUL_SPAWNED, true);

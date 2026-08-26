@@ -24,7 +24,7 @@ public abstract class RangerNockedArrowMixin {
 	@Inject(method = "render",
 			at = @At(value = "INVOKE",
 					target = "Lcom/mojang/blaze3d/vertex/PoseStack;popPose()V",
-					ordinal = 1, shift = At.Shift.BEFORE))
+					ordinal = 0, shift = At.Shift.BEFORE))
 	private void sololeveling$renderNockedManaArrow(ItemStack stack, ItemDisplayContext context,
 			boolean leftHand, PoseStack poseStack, MultiBufferSource buffers,
 			int packedLight, int packedOverlay, BakedModel model, CallbackInfo callback) {

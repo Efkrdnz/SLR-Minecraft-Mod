@@ -9,13 +9,12 @@ public class IsBerserkProcedure {
 	public static boolean execute(Entity entity) {
 		if (entity == null)
 			return false;
-		if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) == null)) {
-			if (entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) {
-				if (((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).berserk == true) {
-					return true;
-				}
-			}
-		}
-		return false;
+		if (!(entity instanceof TamableAnimal tame) || !tame.isTame())
+			return false;
+		Entity owner = tame.getOwner();
+		return owner != null && owner.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(capability -> capability.berserk)
+				.orElse(false);
 	}
 }

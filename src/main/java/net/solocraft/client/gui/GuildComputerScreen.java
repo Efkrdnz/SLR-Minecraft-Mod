@@ -17,9 +17,9 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.solocraft.network.compat.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -83,6 +83,7 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
 
     // Buffs tab
     private int buffsScroll = 0;
+	private boolean suppressNestedBackground;
 
     // Tab layout
     private int[] tabXPositions;
@@ -245,23 +246,23 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
     }
 
     @Override
-    public boolean mouseScrolled(double mx, double my, double delta) {
+    public boolean mouseScrolled(double mx, double my, double deltaX, double deltaY) {
 		ResponsiveGuiScale.Transform transform = responsiveTransform();
 		mx = transform.logicalX(mx);
 		my = transform.logicalY(my);
-        if (activeTab == TAB_MANAGEMENT)  { managementScrollOffset  = Math.max(0, managementScrollOffset  - (int)(delta*6)); return true; }
-        if (activeTab == TAB_ROSTER)      { rosterScrollOffset       = Math.max(0, rosterScrollOffset       - (int)(delta*6)); return true; }
+        if (activeTab == TAB_MANAGEMENT)  { managementScrollOffset  = Math.max(0, managementScrollOffset  - (int)(deltaY*6)); return true; }
+        if (activeTab == TAB_ROSTER)      { rosterScrollOffset       = Math.max(0, rosterScrollOffset       - (int)(deltaY*6)); return true; }
         if (activeTab == TAB_TEAMS) {
             int divX = guiLeft + DIVIDER_X;
-            if (mx > divX) availableHuntersScroll = Math.max(0, availableHuntersScroll - (int)(delta*6));
+            if (mx > divX) availableHuntersScroll = Math.max(0, availableHuntersScroll - (int)(deltaY*6));
             return true;
         }
-        if (activeTab == TAB_DUNGEONS)    { deploymentsScroll        = Math.max(0, deploymentsScroll        - (int)(delta*6)); return true; }
+        if (activeTab == TAB_DUNGEONS)    { deploymentsScroll        = Math.max(0, deploymentsScroll        - (int)(deltaY*6)); return true; }
         if (activeTab == TAB_BUFFS) {
-            buffsScroll = Math.max(0, Math.min(maxBuffsScroll(), buffsScroll - (int)(delta * 8)));
+            buffsScroll = Math.max(0, Math.min(maxBuffsScroll(), buffsScroll - (int)(deltaY * 8)));
             return true;
         }
-        return super.mouseScrolled(mx, my, delta);
+        return super.mouseScrolled(mx, my, deltaX, deltaY);
     }
 
 	@Override
@@ -528,16 +529,29 @@ public class GuildComputerScreen extends AbstractContainerScreen<GuildComputerMe
 
     @Override
     public void render(GuiGraphics gg, int mouseX, int mouseY, float pt) {
-        renderBackground(gg);
+		renderTransparentBackground(gg);
 		ResponsiveGuiScale.Transform transform = responsiveTransform();
 		int logicalMouseX = transform.logicalMouseX(mouseX);
 		int logicalMouseY = transform.logicalMouseY(mouseY);
 		ResponsiveGuiScale.push(gg, transform);
-		super.render(gg, logicalMouseX, logicalMouseY, pt);
+		suppressNestedBackground = true;
+		try {
+			super.render(gg, logicalMouseX, logicalMouseY, pt);
+		} finally {
+			suppressNestedBackground = false;
+		}
 		ResponsiveGuiScale.pop(gg);
         if (activeTab == TAB_STORAGE) renderTooltip(gg, mouseX, mouseY);
 		if (activeTab == TAB_BUFFS) renderBuffTooltip(gg, logicalMouseX, logicalMouseY, mouseX, mouseY);
     }
+
+	@Override
+	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+		if (suppressNestedBackground)
+			renderBg(graphics, partialTick, mouseX, mouseY);
+		else
+			super.renderBackground(graphics, mouseX, mouseY, partialTick);
+	}
 
 	private ResponsiveGuiScale.Transform responsiveTransform() {
 		return ResponsiveGuiScale.fit(this.width, this.height, GUI_W + 8, GUI_H + 8);

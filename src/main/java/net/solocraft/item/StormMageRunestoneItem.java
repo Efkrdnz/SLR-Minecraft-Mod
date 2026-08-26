@@ -33,7 +33,7 @@ public final class StormMageRunestoneItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip,
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip,
 			TooltipFlag flag) {
 		tooltip.add(Component.literal("Unlocks " + skill)
 				.withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));

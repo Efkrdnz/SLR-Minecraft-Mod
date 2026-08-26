@@ -5,6 +5,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
@@ -18,6 +19,8 @@ import java.util.UUID;
 /** Durable, overworld-backed generation and tower-transition state for DKC runs. */
 public final class DkcRunSavedData extends SavedData {
 	private static final String DATA_NAME = "sololeveling_dkc_runs";
+	private static final SavedData.Factory<DkcRunSavedData> FACTORY =
+			new SavedData.Factory<>(DkcRunSavedData::new, DkcRunSavedData::load);
 	private static final int SCHEMA_VERSION = 3;
 	private static final int LAYOUT_VERSION = 6;
 	private static final long VALID_BITS = (1L << DkcFloorRegistry.LAST_FLOOR) - 1L;
@@ -27,8 +30,7 @@ public final class DkcRunSavedData extends SavedData {
 	public static DkcRunSavedData get(MinecraftServer server) {
 		if (server == null)
 			throw new IllegalArgumentException("A server is required.");
-		return server.overworld().getDataStorage().computeIfAbsent(
-				DkcRunSavedData::load, DkcRunSavedData::new, DATA_NAME);
+		return server.overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 	}
 
 	public RunState getOrCreate(ServerPlayer player) {
@@ -164,7 +166,7 @@ public final class DkcRunSavedData extends SavedData {
 
 	@Override
 	@Nonnull
-	public CompoundTag save(@Nonnull CompoundTag root) {
+	public CompoundTag save(@Nonnull CompoundTag root, HolderLookup.Provider registries) {
 		root.putInt("SchemaVersion", SCHEMA_VERSION);
 		root.putInt("LayoutVersion", LAYOUT_VERSION);
 		ListTag list = new ListTag();
@@ -182,7 +184,7 @@ public final class DkcRunSavedData extends SavedData {
 		return root;
 	}
 
-	private static DkcRunSavedData load(CompoundTag root) {
+	private static DkcRunSavedData load(CompoundTag root, HolderLookup.Provider registries) {
 		DkcRunSavedData data = new DkcRunSavedData();
 		boolean layoutMatches = root.getInt("LayoutVersion") == LAYOUT_VERSION;
 		boolean[] usedSlots = new boolean[DkcSpatialLayout.MAX_SLOTS];

@@ -3,7 +3,7 @@ package net.solocraft.util;
 import net.solocraft.network.ShowNotificationMessage;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.network.PacketDistributor;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;

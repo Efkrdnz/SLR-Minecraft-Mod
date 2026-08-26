@@ -3,16 +3,20 @@ package net.solocraft.network;
 import net.solocraft.SololevelingMod;
 import net.solocraft.procedures.RenderDamageNumberProcedure;
 
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.solocraft.network.compat.NetworkEvent;
+import net.solocraft.network.compat.NetworkDirection;
+import net.solocraft.network.compat.DistExecutor;
 
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.function.Supplier;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class ShowDamageNumberMessage {
 	private final double x;
 	private final double y;
@@ -46,16 +50,18 @@ public class ShowDamageNumberMessage {
 
 	public static void handler(ShowDamageNumberMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
 		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
-			if (!context.getDirection().getReceptionSide().isServer()) {
-				RenderDamageNumberProcedure.addNumber(message.x, message.y, message.z, message.amount, message.color);
-			}
-		});
+		if (context.getDirection().getReceptionSide().isClient()) {
+			context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
+					() -> () -> RenderDamageNumberProcedure.addNumber(message.x, message.y,
+							message.z, message.amount, message.color)));
+		}
 		context.setPacketHandled(true);
 	}
 
 	@SubscribeEvent
 	public static void registerMessage(FMLCommonSetupEvent event) {
-		SololevelingMod.addNetworkMessage(ShowDamageNumberMessage.class, ShowDamageNumberMessage::buffer, ShowDamageNumberMessage::new, ShowDamageNumberMessage::handler);
+		SololevelingMod.addNetworkMessage(ShowDamageNumberMessage.class,
+				ShowDamageNumberMessage::buffer, ShowDamageNumberMessage::new,
+				ShowDamageNumberMessage::handler, NetworkDirection.PLAY_TO_CLIENT);
 	}
 }

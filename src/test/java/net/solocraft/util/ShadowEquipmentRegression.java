@@ -38,7 +38,7 @@ public final class ShadowEquipmentRegression {
 		String setter = method(manager,
 				"public static boolean setEquipmentForDisplay");
 		expectTrue(setter.contains(
-				"shadow.put(EQUIPMENT, stack.save(new CompoundTag()))")
+				"shadow.put(EQUIPMENT, ItemStackData.save(stack, player.registryAccess()))")
 						&& setter.contains(
 								"player.getPersistentData().put(ROOT, root(player))"),
 				"The full ItemStack tag must be saved on the authoritative roster record");
@@ -48,7 +48,7 @@ public final class ShadowEquipmentRegression {
 		expectTrue(reader.contains(
 				"shadow.contains(EQUIPMENT, Tag.TAG_COMPOUND)")
 						&& reader.contains(
-								"ItemStack.of(shadow.getCompound(EQUIPMENT))"),
+								"ItemStackData.load(shadow.getCompound(EQUIPMENT), registries)"),
 				"Roster equipment must deserialize through ItemStack rather than an item-id flag");
 
 		String clone = method(manager,
@@ -164,23 +164,21 @@ public final class ShadowEquipmentRegression {
 						&& open.contains("summonMenu.y != y")
 						&& open.contains("summonMenu.z != z"),
 				"Customize packets must be bound to the sender's current summon menu");
-		expectTrue(open.contains(
-				"ShadowMonarchManager.isCustomizableBoss(type)")
+		expectTrue(open.contains("type.isEmpty()")
 						&& open.contains(
 								"ShadowMonarchManager.hasShadowForDisplay(serverPlayer, type)")
 						&& open.contains("NetworkHooks.openScreen"),
-				"The server must re-check supported boss type and ownership before opening");
+				"The server must re-check a non-empty owned shadow type before opening");
 
 		String menu = read("world", "inventory",
 				"ShadowCustomizationMenu.java");
 		String stillValid = method(menu,
 				"public boolean stillValid");
 		expectTrue(stillValid.contains("player == this.entity")
-						&& stillValid.contains(
-								"ShadowMonarchManager.isCustomizableBoss(this.shadowType)")
+						&& stillValid.contains("!this.shadowType.isEmpty()")
 						&& stillValid.contains(
 								"ShadowMonarchManager.hasShadowForDisplay(player, this.shadowType)"),
-				"The customization menu must close if ownership or boss eligibility disappears");
+				"The customization menu must close if its shadow type or ownership disappears");
 	}
 
 	private static void igrisLightningIsVisualOnlyAndManuallyFiltered()

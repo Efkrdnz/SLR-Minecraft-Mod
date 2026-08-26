@@ -3,10 +3,14 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.Portal12Entity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.LevelAccessor;
@@ -20,7 +24,7 @@ import net.minecraft.core.BlockPos;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class DungeonDetectionProcedure {
 	private static final TagKey<Biome> DUNGEON_S = biomeTag("duns");
 	private static final TagKey<Biome> DUNGEON_A = biomeTag("duna");
@@ -29,9 +33,9 @@ public class DungeonDetectionProcedure {
 	private static final TagKey<Biome> DUNGEON_D = biomeTag("dund");
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player.level(), event.player.getX(), event.player.getY(), event.player.getZ(), event.player);
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true) {
+			execute(event, event.getEntity().level(), event.getEntity().getX(), event.getEntity().getY(), event.getEntity().getZ(), event.getEntity());
 		}
 	}
 
@@ -66,6 +70,6 @@ public class DungeonDetectionProcedure {
 	}
 
 	private static TagKey<Biome> biomeTag(String path) {
-		return TagKey.create(Registries.BIOME, new ResourceLocation("minecraft", path));
+		return TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath("minecraft", path));
 	}
 }

@@ -1,6 +1,8 @@
 
 package net.solocraft.block;
 
+import com.mojang.serialization.MapCodec;
+
 import net.solocraft.init.SololevelingModBlockEntities;
 
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -25,6 +27,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
@@ -35,12 +38,22 @@ import java.util.List;
 import java.util.Collections;
 
 public class DungeonWallBlock extends BaseEntityBlock implements EntityBlock {
+	public static final MapCodec<DungeonWallBlock> CODEC = simpleCodec(DungeonWallBlock::new);
 	public static final IntegerProperty ANIMATION = IntegerProperty.create("animation", 0, (int) 1);
 	public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
 	public DungeonWallBlock() {
-		super(BlockBehaviour.Properties.of().sound(SoundType.GRAVEL).strength(1f, 10f).noOcclusion().isRedstoneConductor((bs, br, bp) -> false));
+		this(BlockBehaviour.Properties.of().sound(SoundType.GRAVEL).strength(1f, 10f).noOcclusion().isRedstoneConductor((bs, br, bp) -> false));
+	}
+
+	public DungeonWallBlock(BlockBehaviour.Properties properties) {
+		super(properties);
 		this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+	}
+
+	@Override
+	protected MapCodec<? extends BaseEntityBlock> codec() {
+		return CODEC;
 	}
 
 	@Override
@@ -55,8 +68,8 @@ public class DungeonWallBlock extends BaseEntityBlock implements EntityBlock {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, BlockGetter world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 	}
 
 	@Override

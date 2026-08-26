@@ -51,7 +51,7 @@ void main() {
 
     // A soft disc whose edge is pushed around by noise so it billows.
     float edge = 0.98 + (broad - 0.5) * 0.55;
-    float body = smoothstep(edge, 0.05, r);
+    float body = 1.0 - smoothstep(0.05, edge, r);
 
     // Erode the interior into drifting wisps rather than a solid blob.
     float erode = smoothstep(0.12, 0.62, broad * 0.6 + detail * 0.5 + body * 0.35);
@@ -62,7 +62,7 @@ void main() {
         discard;
     }
 
-    float core = smoothstep(0.55, 0.0, r);
+    float core = 1.0 - smoothstep(0.0, 0.55, r);
     vec3 color = vertexColor.rgb * (0.80 + core * 0.7 + detail * 0.15);
     color *= 0.96 + texture(Sampler2, lightMap).r * 0.04;
 

@@ -1,10 +1,16 @@
 package net.solocraft.util;
 
+import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -18,7 +24,7 @@ import java.util.WeakHashMap;
  * Server-authoritative cooldown storage with a clock-independent client snapshot.
  * Server values remain absolute game-time expiries in player persistent data.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class CooldownManager {
     private static final String PREFIX = "cd_";
     private static final String FULL_DURATION_PREFIX = "slr_cd_full_";
@@ -29,15 +35,12 @@ public final class CooldownManager {
     private CooldownManager() {
     }
 
-    /** Starts or replaces a cooldown. Duration is measured in ticks. */
+    /** Starts or replaces a cooldown for non-Creative players. */
     public static void set(Entity entity, String key, int durationTicks) {
         setInternal(entity, key, durationTicks, false);
     }
 
-    /**
-     * Starts a real-duration cooldown even in Creative mode. Use this for
-     * stateful abilities whose recharge timing must remain authoritative and visible.
-     */
+    /** Starts a full-duration Survival cooldown; Creative still bypasses it. */
     public static void setFullDuration(Entity entity, String key, int durationTicks) {
         setInternal(entity, key, durationTicks, true);
     }
@@ -46,8 +49,10 @@ public final class CooldownManager {
             boolean fullDuration) {
         if (entity == null || entity.level().isClientSide())
             return;
-        if (isCreativePlayer(entity) && !fullDuration)
-            durationTicks = Math.min(durationTicks, 10);
+        if (isCreativePlayer(entity)) {
+            clearStoredCooldown(entity, key);
+            return;
+        }
         long expiry = entity.level().getGameTime() + Math.max(0, durationTicks);
         entity.getPersistentData().putLong(PREFIX + key, expiry);
         if (fullDuration)
@@ -69,6 +74,10 @@ public final class CooldownManager {
     public static void discardIfRemainingExceeds(Entity entity, String key, int maximumTicks) {
         if (entity == null || entity.level().isClientSide())
             return;
+        if (isCreativePlayer(entity)) {
+            clearStoredCooldown(entity, key);
+            return;
+        }
         long now = entity.level().getGameTime();
         long expiry = entity.getPersistentData().getLong(PREFIX + key);
         if (expiry - now > maximumTicks)
@@ -95,6 +104,10 @@ public final class CooldownManager {
     public static int getRemainingTicks(Entity entity, String key) {
         if (entity == null)
             return 0;
+        if (isCreativePlayer(entity)) {
+            trimCreativeCooldown(entity, key);
+            return 0;
+        }
         if (entity.level().isClientSide())
             return getClientRemainingTicks(entity, key);
         long expiry = entity.getPersistentData().getLong(PREFIX + key);
@@ -110,15 +123,19 @@ public final class CooldownManager {
     }
 
     private static void trimCreativeCooldown(Entity entity, String key) {
-        if (entity == null || entity.level().isClientSide() || !isCreativePlayer(entity)
-                || entity.getPersistentData().getBoolean(FULL_DURATION_PREFIX + key))
+        if (entity == null || entity.level().isClientSide()
+                || !isCreativePlayer(entity))
             return;
-        long now = entity.level().getGameTime();
-        long expiry = entity.getPersistentData().getLong(PREFIX + key);
-        if (expiry > now + 10) {
-            entity.getPersistentData().putLong(PREFIX + key, now + 10);
+        clearStoredCooldown(entity, key);
+    }
+
+    private static void clearStoredCooldown(Entity entity, String key) {
+        boolean changed = entity.getPersistentData().contains(PREFIX + key)
+                || entity.getPersistentData().contains(FULL_DURATION_PREFIX + key);
+        entity.getPersistentData().remove(PREFIX + key);
+        entity.getPersistentData().remove(FULL_DURATION_PREFIX + key);
+        if (changed)
             pushSnapshot(entity);
-        }
     }
 
     private static boolean isCreativePlayer(Entity entity) {
@@ -140,6 +157,32 @@ public final class CooldownManager {
         pushSnapshot(event.getEntity());
     }
 
+    /**
+     * Entering Creative discards every persisted Solo Leveling cooldown. The
+     * three abilities that use Minecraft's native item cooldown overlay are
+     * cleared on both logical sides as well, including cooldowns inherited
+     * from Survival before the game-mode change.
+     */
+    @SubscribeEvent
+    public static void onCreativePlayerTick(PlayerTickEvent.Post event) {
+        if (false || !event.getEntity().isCreative())
+            return;
+        event.getEntity().getCooldowns().removeCooldown(
+                SololevelingModItems.DEMON_KINGS_LONG_SWORD.get());
+        event.getEntity().getCooldowns().removeCooldown(
+                SololevelingModItems.KATANA_STIER.get());
+        event.getEntity().getCooldowns().removeCooldown(
+                SololevelingModItems.MANA_GUN.get());
+        if (!event.getEntity().level().isClientSide() && hasStoredCooldowns(event.getEntity()))
+            clearAll(event.getEntity());
+    }
+
+    private static boolean hasStoredCooldowns(Entity entity) {
+        return entity.getPersistentData().getAllKeys().stream()
+                .anyMatch(key -> key.startsWith(PREFIX)
+                        || key.startsWith(FULL_DURATION_PREFIX));
+    }
+
     private static void pushSnapshot(Entity entity) {
         if (entity == null || entity.level().isClientSide() || !(entity instanceof Player player))
             return;
@@ -153,6 +196,8 @@ public final class CooldownManager {
     private static String buildSnapshot(Entity entity) {
         long now = entity.level().getGameTime();
         StringBuilder snapshot = new StringBuilder(SNAPSHOT_V2).append(now);
+        if (isCreativePlayer(entity))
+            return snapshot.toString();
         for (String nbtKey : entity.getPersistentData().getAllKeys()) {
             if (!nbtKey.startsWith(PREFIX))
                 continue;

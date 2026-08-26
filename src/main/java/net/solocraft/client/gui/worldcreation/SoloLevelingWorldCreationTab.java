@@ -1,20 +1,29 @@
 package net.solocraft.client.gui.worldcreation;
 
 import net.solocraft.init.SololevelingModGameRules;
+import net.solocraft.util.HunterRankOdds;
+import net.solocraft.util.LevelCapRules;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.tabs.GridLayoutTab;
 import net.minecraft.client.gui.layouts.GridLayout;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.GameRules;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 
 /** Per-world Solo Leveling settings backed directly by the creation UI's GameRules. */
 public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
@@ -25,14 +34,17 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 
 	private final WorldCreationUiState uiState;
 	private final CycleButton<Boolean> storyMode;
+	private final CycleButton<SololevelingModGameRules.AbilityDestructionMode> abilityDestruction;
 	private final CycleButton<ProgressionPreset> progression;
 	private final CycleButton<DifficultyPreset> difficulty;
 	private final CycleButton<Integer> xpRate;
-	private final CycleButton<Integer> jobChange;
+	private final JobChangeLevelSlider jobChange;
+	private final LevelCapSlider levelCap;
 	private final CycleButton<Integer> enemyScale;
 	private final CycleButton<Integer> bossPower;
 	private final CycleButton<Boolean> gateProgress;
 	private final CycleButton<DeathRule> deathRules;
+	private final Button awakeningOdds;
 	private boolean synchronizing;
 
 	public SoloLevelingWorldCreationTab(Font font, WorldCreationUiState uiState) {
@@ -61,6 +73,21 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 							writeBoolean(SololevelingModGameRules.SOLO_LEVELING_STORY_MODE, value);
 							notifyChanged();
 						});
+		this.abilityDestruction = CycleButton.<SololevelingModGameRules.AbilityDestructionMode>builder(
+						value -> Component.literal(value.label()))
+				.withValues(SololevelingModGameRules.AbilityDestructionMode.values())
+				.withInitialValue(SololevelingModGameRules.abilityDestructionMode(rules))
+				.withTooltip(value -> Tooltip.create(Component.literal(switch (value) {
+					case FALSE -> "Abilities cannot damage terrain. This is the safe default.";
+					case PARTIAL -> "Abilities can damage eligible terrain outside dungeons only. Red Gates and the Demon King's Castle are always protected.";
+					case TRUE -> "Abilities can damage eligible terrain. Red Gates and the Demon King's Castle are always protected.";
+				})))
+				.create(0, 0, FULL_WIDTH, CONTROL_HEIGHT,
+						Component.literal("Ability Destruction"), (button, value) -> {
+							SololevelingModGameRules.setAbilityDestructionMode(
+									this.uiState.getGameRules(), value);
+							notifyChanged();
+						});
 
 		this.xpRate = integerOption("XP Rate",
 				"Adjusts experience gained from Solo Leveling content.",
@@ -71,14 +98,26 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 					writeInteger(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER, value);
 					syncProgressionPreset();
 				});
-		this.jobChange = integerOption("Job Change",
-				"Sets the level at which the Job Change quest unlocks.",
-				List.of(40, 50, 60), value -> Component.literal("Lv. " + value),
-				closest(rules.getInt(SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL), List.of(40, 50, 60)),
+		this.jobChange = new JobChangeLevelSlider(
+				Mth.clamp(rules.getInt(
+						SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL),
+						20, 100),
 				value -> {
-					writeInteger(SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL, value);
+					writeInteger(
+							SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL,
+							value);
 					syncProgressionPreset();
 				});
+		this.jobChange.setTooltip(Tooltip.create(Component.literal(
+				"Sets the level at which the Job Change quest unlocks (20-100).")));
+		this.levelCap = new LevelCapSlider(
+				rules.getInt(SololevelingModGameRules.SOLO_LEVELING_LEVEL_CAP),
+				value -> writeInteger(
+						SololevelingModGameRules.SOLO_LEVELING_LEVEL_CAP, value));
+		this.levelCap.setTooltip(Tooltip.create(Component.literal(
+				"The peak of the progression. Reaching it ends levelling and opens "
+						+ "the return to the Cartenon Temple. Unlimited restores "
+						+ "endless levelling.")));
 		this.enemyScale = integerOption("Enemy Scale",
 				"Controls the health and damage of Solo Leveling enemies.",
 				List.of(100, 125, 150), SoloLevelingWorldCreationTab::enemyScaleLabel,
@@ -130,10 +169,21 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 				.create(0, 0, COLUMN_WIDTH, CONTROL_HEIGHT, Component.literal("Difficulty"),
 						(button, value) -> applyDifficultyPreset(value));
 
+		this.awakeningOdds = Button.builder(Component.empty(),
+						button -> openAwakeningOdds())
+				.bounds(0, 0, FULL_WIDTH, CONTROL_HEIGHT)
+				.tooltip(Tooltip.create(Component.literal(
+						"Set the chance of awakening at each Hunter rank. "
+								+ "Values are rescaled so all six total 100%.")))
+				.build();
+		updateAwakeningOddsLabel(rules);
+
 		this.layout.columnSpacing(COLUMN_GAP).rowSpacing(3);
 		GridLayout.RowHelper rows = this.layout.createRowHelper(2);
 		rows.addChild(this.storyMode, 2, rows.newCellSettings().alignHorizontallyCenter());
-		rows.addChild(text(font, FULL_WIDTH, "Settings are stored with this world.", 0xA0A0A0, true), 2);
+		rows.addChild(this.abilityDestruction, 2,
+				rows.newCellSettings().alignHorizontallyCenter());
+		rows.addChild(text(font, FULL_WIDTH, "Settings are stored with this world.", 0xFFC8D2DA, true), 2);
 		rows.addChild(heading(font, "PROGRESSION"));
 		rows.addChild(heading(font, "DIFFICULTY"));
 		rows.addChild(this.progression);
@@ -141,11 +191,33 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 		rows.addChild(this.xpRate);
 		rows.addChild(this.enemyScale);
 		rows.addChild(this.jobChange);
+		rows.addChild(this.levelCap);
 		rows.addChild(this.bossPower);
 		rows.addChild(this.gateProgress);
 		rows.addChild(this.deathRules);
-		rows.addChild(text(font, FULL_WIDTH, "Presets update the settings below; individual changes use Custom.", 0x808080, true), 2);
+		rows.addChild(this.awakeningOdds, 2, rows.newCellSettings().alignHorizontallyCenter());
+		rows.addChild(text(font, FULL_WIDTH,
+				"Individual changes switch their preset to Custom.",
+				0xFFB6C3CC, true), 2);
 		this.uiState.addListener(ignored -> resyncWidgets());
+	}
+
+	private void openAwakeningOdds() {
+		Minecraft minecraft = Minecraft.getInstance();
+		Screen parent = minecraft.screen;
+		GameRules rules = this.uiState.getGameRules();
+		minecraft.setScreen(new AwakeningOddsScreen(parent,
+				HunterRankOdds.readWeights(rules), weights -> {
+					HunterRankOdds.writeWeights(rules, weights);
+					updateAwakeningOddsLabel(rules);
+					notifyChanged();
+				}));
+	}
+
+	private void updateAwakeningOddsLabel(GameRules rules) {
+		int[] normalized = HunterRankOdds.normalized(rules);
+		this.awakeningOdds.setMessage(Component.literal(
+				"Awakening Odds...  (S " + normalized[normalized.length - 1] + "%)"));
 	}
 
 	private void applyProgressionPreset(ProgressionPreset preset) {
@@ -160,7 +232,7 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 
 	private void setProgressionChildren(int xp, int jobLevel, boolean rankedGates) {
 		this.xpRate.setValue(xp);
-		this.jobChange.setValue(jobLevel);
+		this.jobChange.setLevel(jobLevel);
 		this.gateProgress.setValue(rankedGates);
 		writeInteger(SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER, xp);
 		writeInteger(SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL, jobLevel);
@@ -265,10 +337,14 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 			normalizeOfferedValues(rules);
 			this.storyMode.setValue(rules.getBoolean(
 					SololevelingModGameRules.SOLO_LEVELING_STORY_MODE));
+			this.abilityDestruction.setValue(
+					SololevelingModGameRules.abilityDestructionMode(rules));
 			this.xpRate.setValue(rules.getInt(
 					SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER));
-			this.jobChange.setValue(rules.getInt(
+			this.jobChange.setLevel(rules.getInt(
 					SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL));
+			this.levelCap.setCap(rules.getInt(
+					SololevelingModGameRules.SOLO_LEVELING_LEVEL_CAP));
 			this.enemyScale.setValue(rules.getInt(
 					SololevelingModGameRules.SOLO_LEVELING_ENEMY_SCALE));
 			this.bossPower.setValue(rules.getInt(
@@ -277,6 +353,7 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 					SololevelingModGameRules.SOLO_LEVELING_RANKED_GATES));
 			this.deathRules.setValue(DeathRule.fromId(rules.getInt(
 					SololevelingModGameRules.SOLO_LEVELING_DEATH_RULES)));
+			updateAwakeningOddsLabel(rules);
 
 			ProgressionPreset storedProgression = ProgressionPreset.fromId(rules.getInt(
 					SololevelingModGameRules.SOLO_LEVELING_PROGRESSION_PRESET));
@@ -299,14 +376,18 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 	}
 
 	private static void normalizeOfferedValues(GameRules rules) {
+		SololevelingModGameRules.setAbilityDestructionMode(rules,
+				SololevelingModGameRules.abilityDestructionMode(rules));
 		normalize(rules, SololevelingModGameRules.SOLO_LEVELING_PROGRESSION_PRESET,
 				List.of(0, 1, 2));
 		normalize(rules, SololevelingModGameRules.SOLO_LEVELING_DIFFICULTY_PRESET,
 				List.of(0, 1, 2, 3));
 		normalize(rules, SololevelingModGameRules.SOLO_LEVELING_XP_MULTIPLIER,
 				List.of(10, 15, 20));
-		normalize(rules, SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL,
-				List.of(40, 50, 60));
+		clamp(rules, SololevelingModGameRules.SOLO_LEVELING_JOB_CHANGE_LEVEL,
+				20, 100);
+		clamp(rules, SololevelingModGameRules.SOLO_LEVELING_LEVEL_CAP,
+				LevelCapRules.UNLIMITED, LevelCapRules.MAXIMUM_LEVEL_CAP);
 		normalize(rules, SololevelingModGameRules.SOLO_LEVELING_ENEMY_SCALE,
 				List.of(100, 125, 150));
 		normalize(rules, SololevelingModGameRules.SOLO_LEVELING_BOSS_POWER,
@@ -318,6 +399,13 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 	private static void normalize(GameRules rules,
 			GameRules.Key<GameRules.IntegerValue> key, List<Integer> allowed) {
 		writeInteger(rules, key, closest(rules.getInt(key), allowed));
+	}
+
+	private static void clamp(GameRules rules,
+			GameRules.Key<GameRules.IntegerValue> key, int minimum,
+			int maximum) {
+		writeInteger(rules, key,
+				Mth.clamp(rules.getInt(key), minimum, maximum));
 	}
 
 	private static int closest(int value, List<Integer> allowed) {
@@ -347,12 +435,139 @@ public final class SoloLevelingWorldCreationTab extends GridLayoutTab {
 
 	private static StringWidget heading(Font font, String label) {
 		Component text = Component.literal(label).withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD);
-		return new StringWidget(COLUMN_WIDTH, 9, text, font).alignLeft();
+		return new CrispStringWidget(COLUMN_WIDTH, text, font, 0xFFFFFFFF, false);
 	}
 
 	private static StringWidget text(Font font, int width, String label, int color, boolean centered) {
-		StringWidget widget = new StringWidget(width, 9, Component.literal(label), font).setColor(color);
-		return centered ? widget.alignCenter() : widget.alignLeft();
+		return new CrispStringWidget(width, Component.literal(label), font, color,
+				centered);
+	}
+
+	/** Text-only rows use no drop shadow so integer GUI scaling stays crisp. */
+	private static final class CrispStringWidget extends StringWidget {
+		private final Font font;
+		private final int color;
+		private final boolean centered;
+
+		private CrispStringWidget(int width, Component message, Font font,
+				int color, boolean centered) {
+			super(width, 9, message, font);
+			this.font = font;
+			this.color = color;
+			this.centered = centered;
+		}
+
+		@Override
+		public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY,
+				float partialTick) {
+			int textWidth = this.font.width(getMessage());
+			int x = getX() + (this.centered
+					? Math.max(0, (getWidth() - textWidth) / 2) : 0);
+			int y = getY() + (getHeight() - 9) / 2;
+			graphics.drawString(this.font, getMessage(), x, y, this.color, false);
+		}
+	}
+
+	private static final class JobChangeLevelSlider extends AbstractSliderButton {
+		private static final int MINIMUM = 20;
+		private static final int MAXIMUM = 100;
+		private final IntConsumer changed;
+		private int level;
+
+		private JobChangeLevelSlider(int initial, IntConsumer changed) {
+			super(0, 0, COLUMN_WIDTH, CONTROL_HEIGHT,
+					Component.empty(), normalized(initial));
+			this.changed = changed;
+			this.level = Mth.clamp(initial, MINIMUM, MAXIMUM);
+			this.value = normalized(this.level);
+			updateMessage();
+		}
+
+		private void setLevel(int level) {
+			this.level = Mth.clamp(level, MINIMUM, MAXIMUM);
+			this.value = normalized(this.level);
+			updateMessage();
+		}
+
+		@Override
+		protected void updateMessage() {
+			setMessage(Component.literal(
+					"Job Change: Lv. " + this.level));
+		}
+
+		@Override
+		protected void applyValue() {
+			int selected = Mth.clamp((int) Math.round(
+					MINIMUM + this.value * (MAXIMUM - MINIMUM)),
+					MINIMUM, MAXIMUM);
+			this.level = selected;
+			this.value = normalized(selected);
+			updateMessage();
+			this.changed.accept(selected);
+		}
+
+		private static double normalized(int level) {
+			return (Mth.clamp(level, MINIMUM, MAXIMUM) - MINIMUM)
+					/ (double) (MAXIMUM - MINIMUM);
+		}
+	}
+
+	/**
+	 * The peak of the progression curve.
+	 *
+	 * <p>Steps of ten so the whole range is reachable by dragging and so the
+	 * left edge lands exactly on {@link LevelCapRules#UNLIMITED} -- a cap that
+	 * could only be hit by pixel-perfect aiming would be a trap. Low caps are
+	 * kept selectable on purpose: they are the only practical way to reach the
+	 * ending while testing.
+	 */
+	private static final class LevelCapSlider extends AbstractSliderButton {
+		private static final int MINIMUM = LevelCapRules.UNLIMITED;
+		private static final int MAXIMUM = LevelCapRules.MAXIMUM_LEVEL_CAP;
+		private static final int STEP = 10;
+		private final IntConsumer changed;
+		private int cap;
+
+		private LevelCapSlider(int initial, IntConsumer changed) {
+			super(0, 0, COLUMN_WIDTH, CONTROL_HEIGHT,
+					Component.empty(), normalized(initial));
+			this.changed = changed;
+			this.cap = snap(initial);
+			this.value = normalized(this.cap);
+			updateMessage();
+		}
+
+		private void setCap(int cap) {
+			this.cap = snap(cap);
+			this.value = normalized(this.cap);
+			updateMessage();
+		}
+
+		@Override
+		protected void updateMessage() {
+			setMessage(Component.literal("Level Cap: "
+					+ (this.cap == LevelCapRules.UNLIMITED
+							? "Unlimited" : "Lv. " + this.cap)));
+		}
+
+		@Override
+		protected void applyValue() {
+			int selected = snap((int) Math.round(
+					MINIMUM + this.value * (MAXIMUM - MINIMUM)));
+			this.cap = selected;
+			this.value = normalized(selected);
+			updateMessage();
+			this.changed.accept(selected);
+		}
+
+		private static int snap(int cap) {
+			int clamped = Mth.clamp(cap, MINIMUM, MAXIMUM);
+			return Math.round(clamped / (float) STEP) * STEP;
+		}
+
+		private static double normalized(int cap) {
+			return (snap(cap) - MINIMUM) / (double) (MAXIMUM - MINIMUM);
+		}
 	}
 
 	private enum ProgressionPreset {

@@ -63,7 +63,7 @@ public class BloodLustProcedure {
 						entityiterator.addEffect(new MobEffectInstance(MobEffects.DARKNESS, EFFECT_DURATION, 1, false, false));
 						if (!frightened)
 							entityiterator.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, EFFECT_DURATION, 1, false, false));
-						entityiterator.addEffect(new MobEffectInstance(SololevelingModMobEffects.SCREEN_SHAKE.get(), EFFECT_DURATION, 1, false, false));
+						entityiterator.addEffect(new MobEffectInstance(SololevelingModMobEffects.SCREEN_SHAKE, EFFECT_DURATION, 1, false, false));
 				}
 				if (world instanceof ServerLevel _level)
 					_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.MANA_BLUE.get()),

@@ -2,11 +2,9 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -42,32 +40,23 @@ public class LiuSwordVfxEntity extends Entity {
 	private static final EntityDataAccessor<Boolean> DUAL = SynchedEntityData.defineId(LiuSwordVfxEntity.class, EntityDataSerializers.BOOLEAN);
 	private static final EntityDataAccessor<Float> MOVE_SPEED = SynchedEntityData.defineId(LiuSwordVfxEntity.class, EntityDataSerializers.FLOAT);
 
-	public LiuSwordVfxEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.LIU_SWORD_VFX.get(), level);
-	}
-
 	public LiuSwordVfxEntity(EntityType<? extends LiuSwordVfxEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(STYLE, ARC);
-		this.entityData.define(PRIMARY_COLOR, 0xFFD34E);
-		this.entityData.define(SECONDARY_COLOR, 0xFFD34E);
-		this.entityData.define(SCALE, 1.0F);
-		this.entityData.define(LENGTH, 1.0F);
-		this.entityData.define(ROLL, 0.0F);
-		this.entityData.define(LIFETIME, 10);
-		this.entityData.define(TARGET_ID, -1);
-		this.entityData.define(DUAL, false);
-		this.entityData.define(MOVE_SPEED, 0.0F);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(STYLE, ARC);
+		builder.define(PRIMARY_COLOR, 0xFFD34E);
+		builder.define(SECONDARY_COLOR, 0xFFD34E);
+		builder.define(SCALE, 1.0F);
+		builder.define(LENGTH, 1.0F);
+		builder.define(ROLL, 0.0F);
+		builder.define(LIFETIME, 10);
+		builder.define(TARGET_ID, -1);
+		builder.define(DUAL, false);
+		builder.define(MOVE_SPEED, 0.0F);
 	}
 
 	public static LiuSwordVfxEntity spawn(ServerLevel level, double x, double y, double z, int style,

@@ -24,15 +24,20 @@ import net.solocraft.network.AbilitiesGUIButtonMessage;
 import net.solocraft.util.SystemPlayerAccess;
 import net.solocraft.util.DungeonBuilderMode;
 import net.solocraft.client.gui.DkcQuestProgressClientState;
+import net.solocraft.client.gui.CurseWheelClientState;
 import net.solocraft.client.gui.FrostArchitectureClientState;
 import net.solocraft.client.gui.dungeonbuilder.DungeonBuilderStudioClient;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
@@ -41,7 +46,7 @@ import net.minecraft.world.phys.Vec3;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = {Dist.CLIENT})
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, value = {Dist.CLIENT})
 public class SololevelingModKeyMappings {
 	public static final KeyMapping OPEN_PANEL = new KeyMapping("key.sololeveling.open_panel", GLFW.GLFW_KEY_N, "key.categories.sololeveling") {
 		private boolean isDownOld = false;
@@ -201,90 +206,6 @@ public class SololevelingModKeyMappings {
 			isDownOld = isDown;
 		}
 	};
-	public static final KeyMapping AB_1 = new KeyMapping("key.sololeveling.ab_1", GLFW.GLFW_KEY_1, "key.categories.sololeveling") {
-		private boolean isDownOld = false;
-
-		@Override
-		public void setDown(boolean isDown) {
-			super.setDown(isDown);
-			if (isDownOld != isDown && isDown) {
-				pressHotbarSkill(1);
-			} else if (isDownOld != isDown && !isDown) {
-				releaseHotbarSkill(1);
-			}
-			isDownOld = isDown;
-		}
-	};
-	public static final KeyMapping AB_2 = new KeyMapping("key.sololeveling.ab_2", GLFW.GLFW_KEY_2, "key.categories.sololeveling") {
-		private boolean isDownOld = false;
-
-		@Override
-		public void setDown(boolean isDown) {
-			super.setDown(isDown);
-			if (isDownOld != isDown && isDown) {
-				pressHotbarSkill(2);
-			} else if (isDownOld != isDown && !isDown) {
-				releaseHotbarSkill(2);
-			}
-			isDownOld = isDown;
-		}
-	};
-	public static final KeyMapping AB_3 = new KeyMapping("key.sololeveling.ab_3", GLFW.GLFW_KEY_3, "key.categories.sololeveling") {
-		private boolean isDownOld = false;
-
-		@Override
-		public void setDown(boolean isDown) {
-			super.setDown(isDown);
-			if (isDownOld != isDown && isDown) {
-				pressHotbarSkill(3);
-			} else if (isDownOld != isDown && !isDown) {
-				releaseHotbarSkill(3);
-			}
-			isDownOld = isDown;
-		}
-	};
-	public static final KeyMapping AB_4 = new KeyMapping("key.sololeveling.ab_4", GLFW.GLFW_KEY_4, "key.categories.sololeveling") {
-		private boolean isDownOld = false;
-
-		@Override
-		public void setDown(boolean isDown) {
-			super.setDown(isDown);
-			if (isDownOld != isDown && isDown) {
-				pressHotbarSkill(4);
-			} else if (isDownOld != isDown && !isDown) {
-				releaseHotbarSkill(4);
-			}
-			isDownOld = isDown;
-		}
-	};
-	public static final KeyMapping AB_5 = new KeyMapping("key.sololeveling.ab_5", GLFW.GLFW_KEY_5, "key.categories.sololeveling") {
-		private boolean isDownOld = false;
-
-		@Override
-		public void setDown(boolean isDown) {
-			super.setDown(isDown);
-			if (isDownOld != isDown && isDown) {
-				pressHotbarSkill(5);
-			} else if (isDownOld != isDown && !isDown) {
-				releaseHotbarSkill(5);
-			}
-			isDownOld = isDown;
-		}
-	};
-	public static final KeyMapping AB_6 = new KeyMapping("key.sololeveling.ab_6", GLFW.GLFW_KEY_6, "key.categories.sololeveling") {
-		private boolean isDownOld = false;
-
-		@Override
-		public void setDown(boolean isDown) {
-			super.setDown(isDown);
-			if (isDownOld != isDown && isDown) {
-				pressHotbarSkill(6);
-			} else if (isDownOld != isDown && !isDown) {
-				releaseHotbarSkill(6);
-			}
-			isDownOld = isDown;
-		}
-	};
 	public static final KeyMapping QUEST_INFO = new KeyMapping("key.sololeveling.quest_info", GLFW.GLFW_KEY_TAB, "key.categories.sololeveling") {
 		private boolean isDownOld = false;
 
@@ -304,34 +225,6 @@ public class SololevelingModKeyMappings {
 			isDownOld = isDown;
 		}
 	};
-	public static final KeyMapping AB_7 = new KeyMapping("key.sololeveling.ab_7", GLFW.GLFW_KEY_7, "key.categories.sololeveling") {
-		private boolean isDownOld = false;
-
-		@Override
-		public void setDown(boolean isDown) {
-			super.setDown(isDown);
-			if (isDownOld != isDown && isDown) {
-				pressHotbarSkill(7);
-			} else if (isDownOld != isDown && !isDown) {
-				releaseHotbarSkill(7);
-			}
-			isDownOld = isDown;
-		}
-	};
-	public static final KeyMapping AB_8 = new KeyMapping("key.sololeveling.ab_8", GLFW.GLFW_KEY_8, "key.categories.sololeveling") {
-		private boolean isDownOld = false;
-
-		@Override
-		public void setDown(boolean isDown) {
-			super.setDown(isDown);
-			if (isDownOld != isDown && isDown) {
-				pressHotbarSkill(8);
-			} else if (isDownOld != isDown && !isDown) {
-				releaseHotbarSkill(8);
-			}
-			isDownOld = isDown;
-		}
-	};
 	public static final KeyMapping DDD = new KeyMapping("key.sololeveling.ddd", InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_LEFT, "key.categories.misc");
 	private static long USE_SKILL_LASTPRESS = 0;
 	private static long D_LASTPRESS = 0;
@@ -340,17 +233,18 @@ public class SololevelingModKeyMappings {
 	private static long QUEST_INFO_LASTPRESS = 0;
 	private static final long[] HOTBAR_LASTPRESS = new long[8];
 
-	private static void pressHotbarSkill(int slot) {
+	public static void pressHotbarSkill(int slot) {
 		int type = 9 + slot;
 		HOTBAR_LASTPRESS[slot - 1] = System.currentTimeMillis();
 		SololevelingMod.PACKET_HANDLER.sendToServer(new UseSkillMessage(type, 0));
 		UseSkillMessage.pressAction(Minecraft.getInstance().player, type, 0);
 	}
 
-	private static void releaseHotbarSkill(int slot) {
+	public static void releaseHotbarSkill(int slot) {
 		int type = 19 + slot;
 		int dt = (int) (System.currentTimeMillis() - HOTBAR_LASTPRESS[slot - 1]);
 		FrostArchitectureClientState.releaseAndSend();
+		CurseWheelClientState.releaseAndSend();
 		SololevelingMod.PACKET_HANDLER.sendToServer(new UseSkillMessage(type, dt));
 		UseSkillMessage.pressAction(Minecraft.getInstance().player, type, dt);
 	}
@@ -375,22 +269,14 @@ public class SololevelingModKeyMappings {
 		event.register(ABILITY_3);
 		event.register(ABILITY_4);
 		event.register(TRIPLE_JUMP);
-		event.register(AB_1);
-		event.register(AB_2);
-		event.register(AB_3);
-		event.register(AB_4);
-		event.register(AB_5);
-		event.register(AB_6);
 		event.register(QUEST_INFO);
-		event.register(AB_7);
-		event.register(AB_8);
 		event.register(DDD);
 	}
 
-	@Mod.EventBusSubscriber({Dist.CLIENT})
+	@EventBusSubscriber({Dist.CLIENT})
 	public static class KeyEventListener {
 		@SubscribeEvent
-		public static void onClientTick(TickEvent.ClientTickEvent event) {
+		public static void onClientTick(ClientTickEvent.Post event) {
 			if (Minecraft.getInstance().screen == null) {
 				OPEN_PANEL.consumeClick();
 				SKILL_CYCLE_BUTTON.consumeClick();
@@ -401,15 +287,7 @@ public class SololevelingModKeyMappings {
 				ABILITY_3.consumeClick();
 				ABILITY_4.consumeClick();
 				TRIPLE_JUMP.consumeClick();
-				AB_1.consumeClick();
-				AB_2.consumeClick();
-				AB_3.consumeClick();
-				AB_4.consumeClick();
-				AB_5.consumeClick();
-				AB_6.consumeClick();
 				QUEST_INFO.consumeClick();
-				AB_7.consumeClick();
-				AB_8.consumeClick();
 			}
 		}
 	}

@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class KamishModel extends GeoModel<KamishEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(KamishEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/dragon.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/dragon.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(KamishEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/dragon.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/dragon.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(KamishEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

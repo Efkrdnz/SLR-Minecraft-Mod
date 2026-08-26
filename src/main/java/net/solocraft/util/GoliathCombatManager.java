@@ -1,21 +1,22 @@
 package net.solocraft.util;
 
 import net.solocraft.SololevelingMod;
-import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingFallEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -23,7 +24,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -33,9 +33,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -50,7 +47,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class GoliathCombatManager {
 	public static final String CAPTURE = "Capture";
 	public static final String POWER_SMASH = "Power Smash";
@@ -142,6 +139,8 @@ public final class GoliathCombatManager {
 			}
 		}
 		strikeVfx(serverPlayer.serverLevel(), center, forward, combo, radius, manifested);
+		// Repeated basic attacks must remain terrain-safe. Destruction is reserved
+		// for Goliath's named abilities so normal combat cannot ruin player footing.
 	}
 
 	public static void castCapture(Entity entity) {
@@ -203,6 +202,9 @@ public final class GoliathCombatManager {
 		player.setDeltaMovement(player.getDeltaMovement().add(forward.scale(manifested ? 0.75D : 0.45D)));
 		player.hurtMarked = true;
 		powerSmashVfx(player.serverLevel(), player.position().add(0, 1.1D, 0), forward, reach, manifested);
+		AbilityDestructionManager.fissure(player,
+				AbilityDestructionManager.Profile.GOLIATH_SMASH,
+				player.position(), forward, reach, strength, manifested);
 	}
 
 	public static void castCollapse(Entity entity) {
@@ -273,8 +275,8 @@ public final class GoliathCombatManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.START || event.player.level().isClientSide() || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Pre event) {
+		if (false || event.getEntity().level().isClientSide() || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		if (!player.isAlive() || !isGoliathVessel(player)) {
 			clearState(player);
@@ -369,7 +371,7 @@ public final class GoliathCombatManager {
 		}
 		Vec3 center = player.position().add(horizontalLook(player).scale(2.7D)).add(0, 1.0D, 0);
 		waveRing(player.serverLevel(), center, state.manifested ? 7.0D : 4.0D, state.manifested ? 32 : 18, 0.1D);
-		player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, state.manifested ? 1.4F : 0.8F, thrown ? 0.65F : 0.9F);
+		player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, state.manifested ? 1.4F : 0.8F, thrown ? 0.65F : 0.9F);
 	}
 
 	private static void tickPursuit(ServerPlayer player) {
@@ -435,6 +437,9 @@ public final class GoliathCombatManager {
 				pushAway(nearby, center, (state.manifested ? 2.1D : 1.35D) * targetResistance(nearby), 0.7D);
 		}
 		impactVfx(player.serverLevel(), center, radius, state.manifested);
+		AbilityDestructionManager.impact(player,
+				AbilityDestructionManager.Profile.GOLIATH_PURSUIT_IMPACT, center,
+				TemporaryStatBonusManager.effectiveStrength(player), state.manifested);
 	}
 
 	private static void damageDashPath(ServerPlayer player, PursuitState state) {
@@ -472,47 +477,22 @@ public final class GoliathCombatManager {
 			}
 		}
 		impactVfx(player.serverLevel(), center, radius, manifested);
-		player.level().playSound(null, player.blockPosition(), secondWave ? SoundEvents.LIGHTNING_BOLT_THUNDER : SoundEvents.GENERIC_EXPLODE,
+		AbilityDestructionManager.impact(player,
+				AbilityDestructionManager.Profile.GOLIATH_COLLAPSE, center,
+				TemporaryStatBonusManager.effectiveStrength(player),
+				manifested || secondWave);
+		player.level().playSound(null, player.blockPosition(), secondWave ? SoundEvents.LIGHTNING_BOLT_THUNDER : SoundEvents.GENERIC_EXPLODE.value(),
 				SoundSource.PLAYERS, manifested ? 1.5F : 1.0F, secondWave ? 0.55F : 0.72F);
 	}
 
 	private static void breakDashBlocks(ServerPlayer player, Vec3 motion, boolean manifested) {
-		ServerLevel level = player.serverLevel();
-		if (DkcFloorRegistry.isDkc(level))
+		if (motion.lengthSqr() < 1.0E-6D || (player.tickCount & 1) != 0)
 			return;
-		double radius = manifested ? 1.05D : 0.65D;
-		AABB swept = player.getBoundingBox().expandTowards(motion).inflate(radius, 0.05D, radius);
-		swept = new AABB(swept.minX, swept.minY + 0.16D, swept.minZ, swept.maxX, swept.maxY - 0.08D, swept.maxZ);
-		BlockPos min = BlockPos.containing(swept.minX, swept.minY, swept.minZ);
-		BlockPos max = BlockPos.containing(swept.maxX, swept.maxY, swept.maxZ);
-		int budget = manifested ? 36 : 22;
-		int broken = 0;
-		for (BlockPos cursor : BlockPos.betweenClosed(min, max)) {
-			if (broken >= budget)
-				break;
-			BlockPos pos = cursor.immutable();
-			if (!canBreakDashBlock(level, player, pos))
-				continue;
-			BlockState state = level.getBlockState(pos);
-			if (level.destroyBlock(pos, false, player)) {
-				broken++;
-				if (broken <= 6)
-					level.sendParticles(new net.minecraft.core.particles.BlockParticleOption(ParticleTypes.BLOCK, state), pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 5, 0.3D, 0.3D, 0.3D, 0.08D);
-			}
-		}
-	}
-
-	private static boolean canBreakDashBlock(ServerLevel level, ServerPlayer player, BlockPos pos) {
-		if (!level.hasChunkAt(pos) || !level.mayInteract(player, pos) || !player.mayUseItemAt(pos, Direction.UP, ItemStack.EMPTY) || level.getBlockEntity(pos) != null)
-			return false;
-		BlockState state = level.getBlockState(pos);
-		if (state.isAir() || !state.getFluidState().isEmpty() || state.is(BlockTags.WITHER_IMMUNE) || state.getDestroySpeed(level, pos) < 0.0F)
-			return false;
-		if (state.is(Blocks.NETHER_PORTAL) || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY) || state.is(Blocks.BARRIER)
-				|| state.is(Blocks.STRUCTURE_BLOCK) || state.is(Blocks.JIGSAW) || state.is(Blocks.COMMAND_BLOCK)
-				|| state.is(Blocks.CHAIN_COMMAND_BLOCK) || state.is(Blocks.REPEATING_COMMAND_BLOCK))
-			return false;
-		return ForgeHooks.canEntityDestroy(level, pos, player);
+		Vec3 start = player.position().add(0.0D, player.getBbHeight() * 0.48D, 0.0D);
+		AbilityDestructionManager.line(player,
+				AbilityDestructionManager.Profile.GOLIATH_PURSUIT_PATH, start,
+				start.add(motion), TemporaryStatBonusManager.effectiveStrength(player),
+				manifested);
 	}
 
 	private static LivingEntity crosshairTarget(ServerPlayer player, double range) {
@@ -684,7 +664,7 @@ public final class GoliathCombatManager {
 		waveRing(level, center.add(0, 0.45D, 0), radius * 0.68D, manifested ? 28 : 18, 0.18D);
 		level.sendParticles(ParticleTypes.EXPLOSION, center.x, center.y + 0.8D, center.z, manifested ? 8 : 4, radius * 0.22D, 0.7D, radius * 0.22D, 0.0D);
 		level.sendParticles(ParticleTypes.POOF, center.x, center.y + 0.4D, center.z, manifested ? 55 : 30, radius * 0.35D, 0.7D, radius * 0.35D, 0.12D);
-		level.playSound(null, BlockPos.containing(center), SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS, manifested ? 1.7F : 1.15F, manifested ? 0.52F : 0.7F);
+		level.playSound(null, BlockPos.containing(center), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS, manifested ? 1.7F : 1.15F, manifested ? 0.52F : 0.7F);
 	}
 
 	private static void waveRing(ServerLevel level, Vec3 center, double radius, int points, double yWave) {

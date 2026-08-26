@@ -2,10 +2,11 @@ package net.solocraft.procedures;
 
 import net.solocraft.entity.FireFlyEntity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -15,10 +16,10 @@ import net.minecraft.core.particles.ParticleTypes;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class FireFlyHitsSomeoneProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity, event.getSource().getEntity());
@@ -33,7 +34,7 @@ public class FireFlyHitsSomeoneProcedure {
 		if (entity == null || sourceentity == null)
 			return;
 		if (sourceentity instanceof FireFlyEntity) {
-			entity.setSecondsOnFire(5);
+			entity.igniteForSeconds(5);
 			if (!sourceentity.level().isClientSide())
 				sourceentity.discard();
 			if (world instanceof ServerLevel _level)

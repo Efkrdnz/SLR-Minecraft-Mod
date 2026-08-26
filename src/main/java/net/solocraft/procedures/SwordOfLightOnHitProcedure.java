@@ -4,11 +4,12 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -29,10 +30,10 @@ import net.minecraft.core.BlockPos;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class SwordOfLightOnHitProcedure {
     @SubscribeEvent
-    public static void onEntityAttacked(LivingAttackEvent event) {
+    public static void onEntityAttacked(LivingIncomingDamageEvent event) {
         Entity entity = event.getEntity();
         if (event != null && entity != null) {
             execute(event, entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity, event.getSource().getEntity());
@@ -47,7 +48,7 @@ public class SwordOfLightOnHitProcedure {
         if (entity == null || sourceentity == null)
             return;
         
-        if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT.get())) {
+        if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT)) {
             if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 100) {
                 
                 // Set a consistent launch force for all entities
@@ -58,11 +59,11 @@ public class SwordOfLightOnHitProcedure {
                 if (world instanceof Level _level) {
                     if (!_level.isClientSide()) {
                         _level.playSound(null, BlockPos.containing(x, y, z), 
-                            ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:dash")), 
+                            BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:dash")), 
                             SoundSource.NEUTRAL, 0.5f, 1.0f);
                     } else {
                         _level.playLocalSound(x, y, z, 
-                            ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:dash")), 
+                            BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:dash")), 
                             SoundSource.NEUTRAL, 0.5f, 1.0f, false);
                     }
                 }
@@ -78,7 +79,7 @@ public class SwordOfLightOnHitProcedure {
                 // Effects for attacker
                 if (sourceentity instanceof LivingEntity _entity) {
                     if (!_entity.level().isClientSide()) {
-                        _entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 999, 1, false, false));
+                        _entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE, 999, 1, false, false));
                         _entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 10, 5, false, false));
                         _entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 10, 5, false, false));
                     }

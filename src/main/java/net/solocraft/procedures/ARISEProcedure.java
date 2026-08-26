@@ -5,7 +5,7 @@ import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.ShadowMonarchManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -86,7 +86,7 @@ public class ARISEProcedure {
 								Entity _entityToSpawn = SololevelingModEntities.SHADOW_SOLD_1.get().create(_level);
 								_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 								if (_entityToSpawn instanceof Mob _mobToSpawn) {
-									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 								}
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
@@ -138,7 +138,7 @@ public class ARISEProcedure {
 								Entity _entityToSpawn = SololevelingModEntities.GOBLIN_CLUB_SHADOW.get().create(_level);
 								_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 								if (_entityToSpawn instanceof Mob _mobToSpawn) {
-									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 								}
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
@@ -197,7 +197,7 @@ public class ARISEProcedure {
 								Entity _entityToSpawn = SololevelingModEntities.GOBLIN_ARCHER_SHADOW.get().create(_level);
 								_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 								if (_entityToSpawn instanceof Mob _mobToSpawn) {
-									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 								}
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
@@ -249,7 +249,7 @@ public class ARISEProcedure {
 								Entity _entityToSpawn = SololevelingModEntities.GOBLIN_MAGE_SHADOW.get().create(_level);
 								_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 								if (_entityToSpawn instanceof Mob _mobToSpawn) {
-									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 								}
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
@@ -308,7 +308,7 @@ public class ARISEProcedure {
 								Entity _entityToSpawn = SololevelingModEntities.STEEL_FANG_WOLF_SHADOW.get().create(_level);
 								_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 								if (_entityToSpawn instanceof Mob _mobToSpawn) {
-									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+									_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 								}
 								if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 									_toTame.tame(_owner);
@@ -368,7 +368,7 @@ public class ARISEProcedure {
 									Entity _entityToSpawn = SololevelingModEntities.SHADOW_GREEN_ORC.get().create(_level);
 									_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 									if (_entityToSpawn instanceof Mob _mobToSpawn) {
-										_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+										_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 									}
 									if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 										_toTame.tame(_owner);
@@ -441,7 +441,7 @@ public class ARISEProcedure {
 									Entity _entityToSpawn = SololevelingModEntities.SHADOW_POLAR_BEAR.get().create(_level);
 									_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 									if (_entityToSpawn instanceof Mob _mobToSpawn) {
-										_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+										_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 									}
 									if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 										_toTame.tame(_owner);
@@ -514,7 +514,7 @@ public class ARISEProcedure {
 									Entity _entityToSpawn = SololevelingModEntities.SHADOW_HIGH_ORC.get().create(_level);
 									_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 									if (_entityToSpawn instanceof Mob _mobToSpawn) {
-										_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+										_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 									}
 									if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 										_toTame.tame(_owner);
@@ -574,7 +574,7 @@ public class ARISEProcedure {
 										Entity _entityToSpawn = SololevelingModEntities.TUSK_SHADOW.get().create(_level);
 										_entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 										if (_entityToSpawn instanceof Mob _mobToSpawn) {
-											_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+											_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 										}
 										if ((_entityToSpawn) instanceof TamableAnimal _toTame && sourceentity instanceof Player _owner)
 											_toTame.tame(_owner);
@@ -637,9 +637,9 @@ public class ARISEProcedure {
 						}
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.spawn")), SoundSource.NEUTRAL, 1, 1);
+								_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.spawn")), SoundSource.NEUTRAL, 1, 1);
 							} else {
-								_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.spawn")), SoundSource.NEUTRAL, 1, 1, false);
+								_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.spawn")), SoundSource.NEUTRAL, 1, 1, false);
 							}
 						}
 					} else {

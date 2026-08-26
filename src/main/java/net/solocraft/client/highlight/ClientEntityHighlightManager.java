@@ -4,11 +4,15 @@ import net.solocraft.network.EntityHighlightMessage;
 import net.solocraft.util.EntityHighlightSystem;
 import net.solocraft.util.SystemClientConfig;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -28,7 +32,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Client runtime state queried by the outline-rendering mixins. */
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 public final class ClientEntityHighlightManager {
 	private static final int MAX_TARGETS = 2048;
 	private static final int MAX_SOURCES_PER_TARGET = 16;
@@ -79,8 +83,8 @@ public final class ClientEntityHighlightManager {
 	}
 
 	@SubscribeEvent
-	public static void onClientTick(TickEvent.ClientTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
+	public static void onClientTick(ClientTickEvent.Post event) {
+		if (false)
 			return;
 		clientTick++;
 		if (clientTick % 20L == 0L)

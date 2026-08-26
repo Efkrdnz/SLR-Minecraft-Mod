@@ -4,8 +4,8 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.util.InstanceDungeonKeyAccess;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
@@ -94,7 +94,7 @@ public class LootboxProcedure {
 					_player.closeContainer();
 			} else {
 				if (entity instanceof Player _player) {
-					ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("loot_items"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+					ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("loot_items"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 					_setstack.setCount(1);
 					ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
 				}

@@ -32,7 +32,16 @@ import java.util.List;
 public final class DungeonTemplatePlacer {
 	private static final Mirror MIRROR = Mirror.NONE;
 	private static final BlockPos ROTATION_PIVOT = BlockPos.ZERO;
-	private static final int PLACEMENT_FLAGS = 3;
+	/**
+	 * {@code UPDATE_CLIENTS} only, deliberately without {@code UPDATE_NEIGHBORS}.
+	 *
+	 * <p>Neighbour updates make every block on a template edge read the block
+	 * beside it. When that block is in a chunk that is not loaded, the server
+	 * thread blocks inside {@code getChunkBlocking} until the chunk generates,
+	 * and a corridor's worth of placements can stall a tick for a minute. This
+	 * hung a live server generating a dungeon 200k blocks from spawn.
+	 */
+	private static final int PLACEMENT_FLAGS = 2;
 
 	private DungeonTemplatePlacer() {
 	}

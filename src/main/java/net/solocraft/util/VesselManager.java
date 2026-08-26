@@ -3,9 +3,10 @@ package net.solocraft.util;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -22,12 +23,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class VesselManager {
 	public static final String RULER = "ruler";
 	public static final String MONARCH = "monarch";
+	public static final String ANTARES_IDENTITY = "antares";
 	private static final Set<String> WORK_IN_PROGRESS = Set.of(
 			"christopher_reed", "sung_il_hwan", "go_gunhee");
+	private static final VesselDefinition ANTARES_DEFINITION =
+			new VesselDefinition(MONARCH, ANTARES_IDENTITY, 10, "Antares",
+					"Monarch of Destruction",
+					"Build Ruin and unleash the destructive authority of the King of Dragons.");
 
 	private static final List<VesselDefinition> DEFINITIONS = List.of(
 			new VesselDefinition(RULER, "ashborn", 1, "Ashborn", "Shadow Monarch", "Command the dead and an endless shadow army."),
@@ -38,7 +44,8 @@ public final class VesselManager {
 			new VesselDefinition(RULER, "go_gunhee", 8, "Go Gunhee", "Brilliant Fragment", "Dominate close combat with reinforced authority."),
 			new VesselDefinition(MONARCH, "sillad", 3, "Sillad", "Frost Monarch", "Freeze the battlefield and shatter immobilized enemies."),
 			new VesselDefinition(MONARCH, "baran", 4, "Baran", "Monarch of White Flames", "Rule demonic flame, lightning, and infernal armies."),
-			new VesselDefinition(MONARCH, "rakan", 9, "Rakan", "Monarch of Fangs", "Hunt with feral speed, claws, and bestial power."));
+			new VesselDefinition(MONARCH, "rakan", 9, "Rakan", "Monarch of Fangs", "Hunt with feral speed, claws, and bestial power."),
+			ANTARES_DEFINITION);
 
 	private VesselManager() {
 	}
@@ -120,6 +127,12 @@ public final class VesselManager {
 		return definition == null ? AssignmentResult.INVALID : assignPlayer(player, definition, enforceLimit);
 	}
 
+	/** Canonical server-side path used by the vessel-selection GUI for Antares. */
+	public static AssignmentResult assignAntaresVessel(ServerPlayer player,
+			boolean enforceLimit) {
+		return assignPlayer(player, ANTARES_DEFINITION, enforceLimit);
+	}
+
 	public static AssignmentResult assignPlayer(ServerPlayer player, VesselDefinition definition, boolean enforceLimit) {
 		if (player == null || definition == null)
 			return AssignmentResult.INVALID;
@@ -136,8 +149,10 @@ public final class VesselManager {
 	public static void resetPlayer(ServerPlayer player) {
 		if (player == null)
 			return;
+		AntaresCombatManager.resetPlayerState(player);
 		if (LiuManifestationManager.isActive(player))
 			LiuManifestationManager.restore(player);
+		TemporaryArmorSessionManager.endForVesselChange(player);
 		VesselClaimSavedData.get(player.serverLevel()).release(player.getUUID());
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			revokeAutomaticAuthority(capability);
@@ -168,8 +183,30 @@ public final class VesselManager {
 		return DEFINITIONS;
 	}
 
+	public static VesselDefinition antaresDefinition() {
+		return ANTARES_DEFINITION;
+	}
+
+	public static boolean isAntares(VesselDefinition definition) {
+		return definition != null
+				&& ANTARES_IDENTITY.equals(definition.identity())
+				&& MONARCH.equals(definition.type());
+	}
+
 	public static boolean isWorkInProgress(VesselDefinition definition) {
 		return definition != null && WORK_IN_PROGRESS.contains(definition.identity());
+	}
+
+	public static boolean isDeveloperPreview(VesselDefinition definition) {
+		return definition != null
+				&& "sung_il_hwan".equals(definition.identity());
+	}
+
+	public static boolean isSelectableFor(ServerPlayer player,
+			VesselDefinition definition) {
+		return !isWorkInProgress(definition)
+				|| isDeveloperPreview(definition)
+						&& DeveloperModeManager.isEnabled(player);
 	}
 
 	public static VesselDefinition definition(String type, String identity) {
@@ -232,8 +269,10 @@ public final class VesselManager {
 	}
 
 	private static void applyDefinition(ServerPlayer player, VesselDefinition definition) {
+		AntaresCombatManager.resetPlayerState(player);
 		if (LiuManifestationManager.isActive(player))
 			LiuManifestationManager.restore(player);
+		TemporaryArmorSessionManager.endForVesselChange(player);
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			if (RULER.equals(definition.type())) {
 				if (!hasAbility(capability.abilities, "telekinesis")) {

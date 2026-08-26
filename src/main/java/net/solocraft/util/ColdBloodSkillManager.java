@@ -5,12 +5,16 @@ import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.StealthBossDetectionHelper;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -33,7 +37,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class ColdBloodSkillManager {
 	public static final String SKILL = "Cold Blood";
 
@@ -41,7 +45,7 @@ public final class ColdBloodSkillManager {
 	private static final String STACKS = "sl_cold_blood_stacks";
 	private static final String NEXT_FX = "sl_cold_blood_next_fx";
 	private static final TagKey<EntityType<?>> SOLO_BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("soloboss"));
+			ResourceLocation.parse("soloboss"));
 
 	private static final int MP_COST = 800;
 	private static final int COOLDOWN_TICKS = 35 * 20;
@@ -90,8 +94,8 @@ public final class ColdBloodSkillManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		CompoundTag data = player.getPersistentData();
 		if (data.getLong(ACTIVE_UNTIL) <= 0L)
@@ -110,7 +114,7 @@ public final class ColdBloodSkillManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOW)
-	public static void onLivingHurt(LivingHurtEvent event) {
+	public static void onLivingHurt(LivingIncomingDamageEvent event) {
 		if (event.getAmount() <= 0.0F || event.getEntity().level().isClientSide())
 			return;
 		ServerPlayer attacker = owningPlayer(event.getSource().getEntity());

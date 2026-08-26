@@ -12,7 +12,10 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -24,10 +27,10 @@ import java.util.UUID;
  * Owns the optional alternate-exit choice for dungeons entered through a
  * Procedural Gate.
  *
- * <p>Normal gate dungeons create their return portal at the defeated boss.
- * Procedural Red Gates alone keep a visible, locked entry portal. If Cartenon
- * replaces either exit after completion, this helper keeps that choice durable
- * across chunk unloads.</p>
+ * <p>Normal gate dungeons reveal their entrance-side return portal only after
+ * the boss is defeated. Procedural Red Gates alone keep that portal visible
+ * and locked from the beginning. If Cartenon replaces either exit after
+ * completion, this helper keeps that choice durable across chunk unloads.</p>
  */
 public final class ProceduralDungeonCompletionHandler {
 	public static final String PROCEDURAL_DUNGEON_TAG = "slr_procedural_dungeon";
@@ -76,6 +79,107 @@ public final class ProceduralDungeonCompletionHandler {
 			return;
 		ProceduralGateRunSavedData.get(player.server).recordLegacyRun(
 				dungeonTag, dungeonDimension, player.serverLevel().getGameTime());
+	}
+
+	public static void recordUnscopedReturnAnchor(ServerLevel level,
+			String dungeonTag, BlockPos returnAnchor) {
+		if (level == null || returnAnchor == null)
+			return;
+		ProceduralGateRunSavedData.get(level.getServer()).recordReturnAnchor(
+				dungeonTag, level.dimension(), returnAnchor,
+				level.getGameTime());
+	}
+
+	@Nullable
+	public static BlockPos unscopedReturnAnchor(ServerLevel level,
+			String dungeonTag) {
+		if (level == null)
+			return null;
+		return ProceduralGateRunSavedData.get(level.getServer()).run(dungeonTag)
+				.filter(run -> run.dimension().equals(level.dimension()))
+				.map(ProceduralGateRunSavedData.RunView::returnAnchor)
+				.orElse(null);
+	}
+
+	/**
+	 * Resolves a clear portal footprint near the authored return marker. The
+	 * participant fallback exists only for active saves made before anchors were
+	 * persisted; it deliberately never uses the defeated boss's position.
+	 */
+	public static BlockPos resolveUnscopedReturnPosition(ServerLevel level,
+			String dungeonTag) {
+		if (level == null)
+			return null;
+		BlockPos desired = unscopedReturnAnchor(level, dungeonTag);
+		if (desired == null) {
+			desired = level.players().stream()
+					.filter(player -> dungeonTag != null && dungeonTag.equals(
+							player.getPersistentData().getString(
+									DungeonMobLevelAdapter.LEGACY_DUNGEON_TAG)))
+					.map(Entity::blockPosition)
+					.findFirst()
+					.orElseGet(() -> level.getSharedSpawnPos().above());
+		}
+		return safeReturnPortalPosition(level, desired);
+	}
+
+	/**
+	 * Finds room for the portal without overlapping a player or a wall. Completion
+	 * is a rare bounded operation, so the authored anchor chunk is loaded
+	 * synchronously instead of making the player walk back toward the entrance to
+	 * trigger the retry path.
+	 */
+	public static BlockPos safeReturnPortalPosition(ServerLevel level,
+			BlockPos desired) {
+		if (level == null || desired == null)
+			return null;
+		if (!loadReturnPortalChunk(level, desired))
+			return desired.immutable();
+		int[] verticalOffsets = {0, 1, -1, 2, -2};
+		for (int radius = 0; radius <= 6; radius++) {
+			for (int dx = -radius; dx <= radius; dx++) {
+				for (int dz = -radius; dz <= radius; dz++) {
+					if (Math.max(Math.abs(dx), Math.abs(dz)) != radius)
+						continue;
+					for (int dy : verticalOffsets) {
+						BlockPos candidate = desired.offset(dx, dy, dz);
+						if (isSafeReturnPortalPosition(level, candidate))
+							return candidate.immutable();
+					}
+				}
+			}
+		}
+		return desired.immutable();
+	}
+
+	/** Loads exactly the entrance-side chunk needed for a completion portal. */
+	public static boolean loadReturnPortalChunk(ServerLevel level,
+			BlockPos position) {
+		if (level == null || position == null)
+			return false;
+		level.getChunkAt(position);
+		return level.hasChunkAt(position);
+	}
+
+	private static boolean isSafeReturnPortalPosition(ServerLevel level,
+			BlockPos position) {
+		if (!level.hasChunkAt(position))
+			return false;
+		BlockPos floorPos = position.below();
+		BlockState floor = level.getBlockState(floorPos);
+		if (!floor.isFaceSturdy(level, floorPos, Direction.UP)
+				|| !floor.getFluidState().isEmpty())
+			return false;
+		AABB footprint = new AABB(position.getX() - 0.10D, position.getY(),
+				position.getZ() - 0.10D, position.getX() + 1.10D,
+				position.getY() + 3.60D, position.getZ() + 1.10D);
+		if (!level.noCollision(null, footprint))
+			return false;
+		return level.getEntitiesOfClass(LivingEntity.class,
+				footprint.inflate(0.35D),
+				entity -> entity.isAlive()
+						&& entity.getType() != SololevelingModEntities.PORTAL_12.get())
+				.isEmpty();
 	}
 
 	/**
@@ -146,20 +250,22 @@ public final class ProceduralDungeonCompletionHandler {
 					dungeonTag, level.dimension(), level.getGameTime());
 	}
 
-	/** Retries durable built-in boss-location exits while an entrant is present. */
+	/** Retries durable built-in entrance-side exits while an entrant is present. */
 	public static void ensureUnscopedReturnPortals(MinecraftServer server) {
 		if (server == null)
 			return;
 		for (ProceduralGateRunSavedData.ReturnRequest request :
 				ProceduralGateRunSavedData.get(server).returnRequests()) {
 			ServerLevel level = server.getLevel(request.dimension());
-			if (level == null || !level.hasChunkAt(request.exit()))
+			if (level == null)
 				continue;
 			boolean entrantPresent = level.players().stream().anyMatch(player ->
 					request.dungeonTag().equals(player.getPersistentData().getString(
 							DungeonMobLevelAdapter.LEGACY_DUNGEON_TAG))
 							&& player.getPersistentData().getBoolean(PROCEDURAL_DUNGEON_TAG));
-			if (!entrantPresent || reconcileReturnPortal(
+			if (!entrantPresent
+					|| !loadReturnPortalChunk(level, request.exit())
+					|| reconcileReturnPortal(
 					level, null, request.dungeonTag(), request.exit()))
 				continue;
 			spawnUnscopedReturnPortal(level, request.exit(), request.dungeonTag());
@@ -172,7 +278,8 @@ public final class ProceduralDungeonCompletionHandler {
 	 */
 	public static boolean spawnUnscopedReturnPortal(ServerLevel level, BlockPos position,
 			String dungeonTag) {
-		if (level == null || position == null)
+		if (level == null || position == null
+				|| !loadReturnPortalChunk(level, position))
 			return false;
 		discardMatchingReturnPortals(level, null, dungeonTag);
 		discardReturnPortalsAt(level, position);
@@ -183,7 +290,8 @@ public final class ProceduralDungeonCompletionHandler {
 	public static boolean spawnScopedReturnPortal(ServerLevel level, BlockPos position,
 			@Nullable Direction facing, DungeonInstanceSavedData.Instance instance,
 			String dungeonTag) {
-		if (level == null || position == null || instance == null)
+		if (level == null || position == null || instance == null
+				|| !loadReturnPortalChunk(level, position))
 			return false;
 		discardMatchingReturnPortals(level, instance.id(), dungeonTag);
 		discardReturnPortalsAt(level, position);
@@ -315,6 +423,9 @@ public final class ProceduralDungeonCompletionHandler {
 		ProceduralGateRunSavedData.RunView unscopedRun = ProceduralGateRunSavedData
 				.get(level.getServer()).run(dungeonTag).orElse(null);
 		if (unscopedRun != null) {
+			if (unscopedRun.decision()
+					== ProceduralGateRunSavedData.ExitDecision.UNDECIDED)
+				return true;
 			if (unscopedRun.decision() == ProceduralGateRunSavedData.ExitDecision.CARTENON)
 				return true;
 			if (unscopedRun.decision() == ProceduralGateRunSavedData.ExitDecision.RETURN_PORTAL

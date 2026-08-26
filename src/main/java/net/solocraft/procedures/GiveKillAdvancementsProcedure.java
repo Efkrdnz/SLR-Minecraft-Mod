@@ -2,12 +2,13 @@ package net.solocraft.procedures;
 
 import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.core.registries.BuiltInRegistries;
 
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,10 +26,10 @@ import java.util.Set;
  * action-bar narration. Boss completion feedback is owned by the relevant
  * dungeon flow and is delivered through the System popup when available.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class GiveKillAdvancementsProcedure {
 	private static final TagKey<EntityType<?>> SOLO_BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("sololeveling", "soloboss"));
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "soloboss"));
 	private static final Map<String, String> BOSS_TO_ADVANCEMENT = new HashMap<>();
 	private static final double PROXIMITY_RANGE = 50.0D;
 
@@ -56,7 +57,7 @@ public final class GiveKillAdvancementsProcedure {
 		if (boss.getPersistentData().getBoolean(DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG)
 				|| !boss.getType().is(SOLO_BOSS_TAG))
 			return;
-		ResourceLocation entityId = ForgeRegistries.ENTITY_TYPES.getKey(boss.getType());
+		ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(boss.getType());
 		String advancementId = entityId == null ? null : BOSS_TO_ADVANCEMENT.get(entityId.toString());
 		if (advancementId == null)
 			return;
@@ -67,8 +68,8 @@ public final class GiveKillAdvancementsProcedure {
 		Level level = boss.level();
 		if (level.getServer() == null)
 			return;
-		Advancement advancement = level.getServer().getAdvancements()
-				.getAdvancement(new ResourceLocation(advancementId));
+		AdvancementHolder advancement = level.getServer().getAdvancements()
+				.get(ResourceLocation.parse(advancementId));
 		if (advancement == null)
 			return;
 		for (ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
@@ -78,10 +79,10 @@ public final class GiveKillAdvancementsProcedure {
 		}
 	}
 
-	private static void giveAdvancementToPlayer(ServerPlayer player, Advancement advancement) {
+	private static void giveAdvancementToPlayer(ServerPlayer player, AdvancementHolder advancement) {
 		if (player.getAdvancements().getOrStartProgress(advancement).isDone())
 			return;
-		for (String criterionName : advancement.getCriteria().keySet())
+		for (String criterionName : advancement.value().criteria().keySet())
 			player.getAdvancements().award(advancement, criterionName);
 	}
 
@@ -99,10 +100,10 @@ public final class GiveKillAdvancementsProcedure {
 
 	public static void debugListSoloBosses(Level level) {
 		System.out.println("[SoloLeveling] Entities in soloboss tag:");
-		for (EntityType<?> entityType : ForgeRegistries.ENTITY_TYPES.getValues()) {
+		for (EntityType<?> entityType : BuiltInRegistries.ENTITY_TYPE.stream().toList()) {
 			if (!entityType.is(SOLO_BOSS_TAG))
 				continue;
-			ResourceLocation location = ForgeRegistries.ENTITY_TYPES.getKey(entityType);
+			ResourceLocation location = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
 			String advancementId = location == null ? null : BOSS_TO_ADVANCEMENT.get(location.toString());
 			System.out.println("  - " + location + " -> "
 					+ (advancementId == null ? "NO ADVANCEMENT" : advancementId));

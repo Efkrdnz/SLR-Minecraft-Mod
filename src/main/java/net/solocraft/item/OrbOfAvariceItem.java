@@ -17,8 +17,8 @@ public class OrbOfAvariceItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-		super.appendHoverText(stack, level, tooltip, flag);
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+		super.appendHoverText(stack, context, tooltip, flag);
 		tooltip.add(Component.literal("A-RANK MAGIC ITEM")
 				.withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD));
 		tooltip.add(Component.literal("Desire for Destruction")
@@ -29,6 +29,8 @@ public class OrbOfAvariceItem extends Item {
 				.withStyle(ChatFormatting.GOLD));
 		tooltip.add(Component.literal("Fire magic burns blue under its influence.")
 				.withStyle(ChatFormatting.AQUA));
+		tooltip.add(Component.literal("Its avaricious insight draws on permanent Intelligence while held.")
+				.withStyle(ChatFormatting.LIGHT_PURPLE));
 		tooltip.add(Component.empty());
 		tooltip.add(Component.literal("A sphere of petrified blood taken from Vulcan.")
 				.withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));

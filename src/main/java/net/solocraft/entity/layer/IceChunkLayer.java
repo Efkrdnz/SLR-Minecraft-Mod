@@ -15,7 +15,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 public class IceChunkLayer extends GeoRenderLayer<IceChunkEntity> {
-	private static final ResourceLocation LAYER = new ResourceLocation("sololeveling", "textures/entities/icechunktext.png");
+	private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/icechunktext.png");
 
 	public IceChunkLayer(GeoRenderer<IceChunkEntity> entityRenderer) {
 		super(entityRenderer);
@@ -24,6 +24,6 @@ public class IceChunkLayer extends GeoRenderLayer<IceChunkEntity> {
 	@Override
 	public void render(PoseStack poseStack, IceChunkEntity animatable, BakedGeoModel bakedModel, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
 		RenderType glowRenderType = RenderType.eyes(LAYER);
-		getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, glowRenderType, bufferSource.getBuffer(glowRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+		getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, glowRenderType, bufferSource.getBuffer(glowRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
 	}
 }

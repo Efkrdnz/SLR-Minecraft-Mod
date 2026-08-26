@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class GemGolemModel extends GeoModel<GemGolemEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(GemGolemEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/gemgolem.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/gemgolem.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(GemGolemEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/gemgolem.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/gemgolem.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(GemGolemEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

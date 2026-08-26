@@ -2,13 +2,13 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.DkcQuestManager;
-import net.solocraft.util.RewardManager;
 import net.solocraft.util.SystemNotifications;
 import net.solocraft.util.daily.DailyQuestObjectiveManager;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class DailyQuestHelper {
 	public static final double NORMAL_MINING_TARGET = DailyQuestObjectiveManager.NORMAL_MINING_TARGET;
 	public static final double SECRET_MINING_TARGET = DailyQuestObjectiveManager.SECRET_MINING_TARGET;
@@ -24,15 +24,11 @@ public class DailyQuestHelper {
 	public static final double SECRET_THREAT_TARGET = DailyQuestObjectiveManager.SECRET_THREAT_TARGET;
 	public static final double NORMAL_RUN_TARGET = DailyQuestObjectiveManager.NORMAL_DISTANCE_TARGET;
 	public static final double SECRET_RUN_TARGET = DailyQuestObjectiveManager.SECRET_DISTANCE_TARGET;
-	private static final String SECRET_SKILL_POINTS_REWARD = "SP20";
-	private static final String SECRET_DKC_KEY_REWARD = "ITEM:sololeveling:redkey";
 
 	@SubscribeEvent
 	public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-		if (event.getEntity() instanceof ServerPlayer player) {
+		if (event.getEntity() instanceof ServerPlayer player)
 			clearSecretQuestIfDkcUnlocked(player);
-			recoverQueuedSecretRewards(player);
-		}
 	}
 
 	public static boolean isSecretQuest(Entity entity) {
@@ -90,35 +86,6 @@ public class DailyQuestHelper {
 			capability.dailysecrettrans = 0;
 			capability.syncPlayerVariables(entity);
 		});
-	}
-
-	private static void recoverQueuedSecretRewards(ServerPlayer player) {
-		SololevelingModVariables.PlayerVariables vars = vars(player);
-		if (vars.dailysecrettrans != 0 || vars.dkc_started || !DkcQuestManager.isUnlocked(player))
-			return;
-
-		java.util.List<String> pending = RewardManager.allRewards(player);
-		if (!pending.contains(SECRET_DKC_KEY_REWARD))
-			return;
-
-		boolean recoveredSkillPoints = claimPendingReward(player, SECRET_SKILL_POINTS_REWARD);
-		boolean recoveredKey = claimPendingReward(player, SECRET_DKC_KEY_REWARD);
-		if (!recoveredKey)
-			return;
-
-		String detail = recoveredSkillPoints
-				? "Demon King's Castle Key and 20 Skill Points delivered."
-				: "Demon King's Castle Key delivered.";
-		player.displayClientMessage(Component.literal(detail).withStyle(ChatFormatting.LIGHT_PURPLE), false);
-		SystemNotifications.showTitleUnder(player, 0xFFFF3D8D, 100,
-				Component.literal("SECRET REWARDS RECOVERED").withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
-				Component.literal(detail).withStyle(ChatFormatting.LIGHT_PURPLE));
-	}
-
-	private static boolean claimPendingReward(Entity entity, String reward) {
-		java.util.List<String> pending = RewardManager.allRewards(entity);
-		int slot = pending.indexOf(reward);
-		return slot >= 0 && RewardManager.claimReward(entity, slot + 1);
 	}
 
 	public static void checkSecretTransition(Entity entity, double previousValue, double newValue, double normalTarget) {

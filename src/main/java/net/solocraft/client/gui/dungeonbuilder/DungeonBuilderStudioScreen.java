@@ -1642,13 +1642,13 @@ public final class DungeonBuilderStudioScreen extends SystemScreen {
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+	public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
 		if (activeDialog == Dialog.DUNGEON_CATALOG) {
 			int logicalX = (int) Math.round(logicalMouseX(mouseX));
 			int logicalY = (int) Math.round(logicalMouseY(mouseY));
 			Rect dialog = dialogRect();
 			if (dungeonCatalogListRect(dialog).contains(logicalX, logicalY))
-				catalogScroll = clamp(catalogScroll - (int) Math.round(delta * 28.0D),
+				catalogScroll = clamp(catalogScroll - (int) Math.round(deltaY * 28.0D),
 						0, maxCatalogScroll(dialog));
 			return true;
 		}
@@ -1658,26 +1658,26 @@ public final class DungeonBuilderStudioScreen extends SystemScreen {
 		int logicalY = (int) Math.round(logicalMouseY(mouseY));
 		WorkspaceLayout layout = workspaceLayout();
 		if (layout.left().contains(logicalX, logicalY)) {
-			leftScroll[activeTab.ordinal()] = clamp(leftScroll[activeTab.ordinal()] - (int) Math.round(delta * 18.0D),
+			leftScroll[activeTab.ordinal()] = clamp(leftScroll[activeTab.ordinal()] - (int) Math.round(deltaY * 18.0D),
 					0, maxLeftScroll(layout.left()));
 			return true;
 		}
 		Rect inspector = compact ? layout.main() : layout.inspector();
 		if ((!compact || compactPane == CompactPane.INSPECTOR) && inspector.contains(logicalX, logicalY)) {
 			inspectorScroll[activeTab.ordinal()] = clamp(inspectorScroll[activeTab.ordinal()]
-					- (int) Math.round(delta * 14.0D), 0, 360);
+					- (int) Math.round(deltaY * 14.0D), 0, 360);
 			return true;
 		}
 		if ((!compact || compactPane == CompactPane.CANVAS) && layout.main().contains(logicalX, logicalY)) {
 			if (activeTab == Tab.POOLS) {
 				centerScroll[activeTab.ordinal()] = clamp(centerScroll[activeTab.ordinal()]
-						- (int) Math.round(delta * 18.0D), 0, maxCenterScroll(layout.main()));
+						- (int) Math.round(deltaY * 18.0D), 0, maxCenterScroll(layout.main()));
 			} else {
-				canvasZoom = clamp(canvasZoom + delta * 0.12D, 0.5D, 4.0D);
+				canvasZoom = clamp(canvasZoom + deltaY * 0.12D, 0.5D, 4.0D);
 			}
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, delta);
+		return super.mouseScrolled(mouseX, mouseY, deltaX, deltaY);
 	}
 
 	@Override

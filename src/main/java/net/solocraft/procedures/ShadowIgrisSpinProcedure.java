@@ -1,10 +1,11 @@
 package net.solocraft.procedures;
 
 import net.solocraft.entity.IgrisShadowEntity;
+import net.solocraft.util.ShadowIgrisCombatBalance;
 import net.solocraft.util.ShadowEquipmentCombatHandler;
 import net.solocraft.util.ShadowMonarchManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -52,7 +53,8 @@ public class ShadowIgrisSpinProcedure {
 									&& ShadowMonarchManager.canShadowDamage(entity, living)) {
 								if (!living.level().isClientSide())
 									living.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 0, false, false));
-								living.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 10);
+								living.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity),
+										ShadowIgrisCombatBalance.abilityDamage(entity, 10.0D));
 								if (world instanceof ServerLevel _level)
 									_level.sendParticles(ParticleTypes.SWEEP_ATTACK, living.getX(), living.getY() + entity.getBbHeight() / 2, living.getZ(), 3, 0.1, 0.1, 0.1, 0);
 							}
@@ -63,9 +65,9 @@ public class ShadowIgrisSpinProcedure {
 				if (entity.getPersistentData().getDouble("MF") == 37) {
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
-							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 1, (float) 0.5);
+							_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 1, (float) 0.5);
 						} else {
-							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 1, (float) 0.5, false);
+							_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 1, (float) 0.5, false);
 						}
 					}
 					{
@@ -74,7 +76,8 @@ public class ShadowIgrisSpinProcedure {
 						for (Entity entityiterator : _entfound) {
 							if (entityiterator instanceof LivingEntity living && living.onGround()
 									&& ShadowMonarchManager.canShadowDamage(entity, living)) {
-								living.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 13.5F);
+								living.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity),
+										ShadowIgrisCombatBalance.abilityDamage(entity, 13.5D));
 								if (world instanceof ServerLevel _level)
 									_level.sendParticles(ParticleTypes.EXPLOSION, living.getX(), living.getY() + entity.getBbHeight() / 2, living.getZ(), 1, 0.1, 0.1, 0.1, 0);
 							}

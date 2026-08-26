@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "sololeveling:grand_mage"
+    },
+    "title": {
+      "translate": "advancements.scorching_mage.title"
+    },
+    "description": {
+      "translate": "advancements.scorching_mage.descr"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "scorching_mage": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 25
+  },
+  "parent": "sololeveling:system/vessel"
+}

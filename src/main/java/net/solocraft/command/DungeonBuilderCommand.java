@@ -10,10 +10,11 @@ import net.solocraft.dungeon.ProceduralDungeonRank;
 import net.solocraft.item.DungeonBuilderWandItem;
 import net.solocraft.util.DungeonBuilderMode;
 
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
@@ -23,7 +24,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 /** Recovery and automation commands for the otherwise tool-first builder workflow. */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class DungeonBuilderCommand {
 	private DungeonBuilderCommand() {
 	}
@@ -311,7 +312,7 @@ public final class DungeonBuilderCommand {
 		player.sendSystemMessage(Component.literal(message).withStyle(success ? ChatFormatting.GREEN : ChatFormatting.RED));
 		if (success) {
 			var configuredId = net.minecraft.resources.ResourceLocation.tryParse(pool);
-			if (configuredId != null && ForgeRegistries.ENTITY_TYPES.containsKey(configuredId))
+			if (configuredId != null && BuiltInRegistries.ENTITY_TYPE.containsKey(configuredId))
 				player.sendSystemMessage(Component.literal("Recognized mob " + pool
 						+ ". Export will automatically create the required one-mob pool.")
 						.withStyle(ChatFormatting.AQUA));

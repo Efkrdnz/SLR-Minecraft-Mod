@@ -21,6 +21,8 @@ public class CommandCallProcedureProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
 		if (entity == null)
 			return;
+		if (ShadowMonarchManager.handleUnavailableShadowOwner(entity))
+			return;
 		double hei = 0;
 		if (ShadowMonarchManager.isShadowEntity(entity)) {
 			UUID ownerId = ShadowMonarchManager.getShadowOwnerUUID(entity);
@@ -35,7 +37,7 @@ public class CommandCallProcedureProcedure {
 				entity.discard();
 		}
 		hei = entity.getBbHeight();
-		if (entity instanceof LivingEntity _livEnt15 && _livEnt15.hasEffect(SololevelingModMobEffects.DOMAIN_BOOST.get())) {
+		if (entity instanceof LivingEntity _livEnt15 && _livEnt15.hasEffect(SololevelingModMobEffects.DOMAIN_BOOST)) {
 			if (world instanceof ServerLevel _level)
 				_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.MANA_PURPLE.get()), (entity.getX()), (entity.getY() + hei / 2), (entity.getZ()), 2, (entity.getBbWidth() * 0.5), (hei / 2), (entity.getBbWidth() * 0.5), 0.05);
 		} else {

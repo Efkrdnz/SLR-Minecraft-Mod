@@ -2,11 +2,12 @@
 package net.solocraft.item;
 
 import net.solocraft.client.model.Modelchoicloak;
+import net.solocraft.init.SololevelingModArmorMaterials;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -32,52 +33,12 @@ import java.util.Collections;
 
 public abstract class ChoiCloakItem extends ArmorItem {
 	public ChoiCloakItem(ArmorItem.Type type, Item.Properties properties) {
-		super(new ArmorMaterial() {
-			@Override
-			public int getDurabilityForType(ArmorItem.Type type) {
-				return new int[]{13, 15, 16, 11}[type.getSlot().getIndex()] * 100;
-			}
-
-			@Override
-			public int getDefenseForType(ArmorItem.Type type) {
-				return new int[]{0, 0, 10, 0}[type.getSlot().getIndex()];
-			}
-
-			@Override
-			public int getEnchantmentValue() {
-				return 9;
-			}
-
-			@Override
-			public SoundEvent getEquipSound() {
-				return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("item.armor.equip_leather"));
-			}
-
-			@Override
-			public Ingredient getRepairIngredient() {
-				return Ingredient.of();
-			}
-
-			@Override
-			public String getName() {
-				return "choi_cloak";
-			}
-
-			@Override
-			public float getToughness() {
-				return 0f;
-			}
-
-			@Override
-			public float getKnockbackResistance() {
-				return 0f;
-			}
-		}, type, properties);
+		super(SololevelingModArmorMaterials.CHOI_CLOAK, type, properties);
 	}
 
 	public static class Chestplate extends ChoiCloakItem {
 		public Chestplate() {
-			super(ArmorItem.Type.CHESTPLATE, new Item.Properties().fireResistant());
+			super(ArmorItem.Type.CHESTPLATE, new Item.Properties().fireResistant().durability(1600));
 		}
 
 		@Override
@@ -99,15 +60,10 @@ public abstract class ChoiCloakItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 			list.add(Component.literal("A Cloak worn by the Mage type S rank Hunter Choi Jong-In"));
 			list.add(Component.literal("This cloak boosts players fire damage."));
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/entities/choicloakye.png";
 		}
 
 		@Override

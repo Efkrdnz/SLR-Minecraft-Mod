@@ -2,10 +2,11 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.JobSkillManager;
+import net.solocraft.util.VesselProgressionManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -24,6 +25,12 @@ public class RunestoneShadowExchangeRightclickedProcedure {
 			return;
 		if (world instanceof Level level && level.isClientSide())
 			return;
+		if (!VesselProgressionManager.isShadowMonarch(entity)) {
+			if (entity instanceof Player player)
+				player.displayClientMessage(net.minecraft.network.chat.Component.literal(
+						"Only the Shadow Monarch can learn this skill."), true);
+			return;
+		}
 		if (DoesHaveExchangeProcedure.execute(entity)) {
 			if (entity instanceof Player player && !player.level().isClientSide())
 				player.displayClientMessage(
@@ -31,10 +38,9 @@ public class RunestoneShadowExchangeRightclickedProcedure {
 								"You already have \"Shadow Exchange\""), true);
 			return;
 		}
-
 		if (entity instanceof ServerPlayer player) {
-			Advancement advancement = player.server.getAdvancements().getAdvancement(
-					new ResourceLocation("sololeveling:shadow_exchange"));
+			AdvancementHolder advancement = player.server.getAdvancements().get(
+					ResourceLocation.parse("sololeveling:shadow_exchange"));
 			if (advancement != null) {
 				AdvancementProgress progress =
 						player.getAdvancements().getOrStartProgress(advancement);
@@ -50,8 +56,8 @@ public class RunestoneShadowExchangeRightclickedProcedure {
 		}
 		if (world instanceof Level level)
 			level.playSound(null, BlockPos.containing(x, y, z),
-					ForgeRegistries.SOUND_EVENTS.getValue(
-							new ResourceLocation("block.enchantment_table.use")),
+					BuiltInRegistries.SOUND_EVENT.get(
+							ResourceLocation.parse("block.enchantment_table.use")),
 					SoundSource.NEUTRAL, 1, 1);
 		JobSkillManager.markRunestoneSkill(
 				entity, JobSkillManager.RUNESTONE_SHADOW_EXCHANGE_TAG);

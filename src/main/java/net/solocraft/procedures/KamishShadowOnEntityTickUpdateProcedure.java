@@ -7,7 +7,7 @@ import net.solocraft.entity.DragonBreatheEntity;
 import net.solocraft.SololevelingMod;
 import net.solocraft.util.ShadowMonarchManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -40,11 +40,13 @@ public class KamishShadowOnEntityTickUpdateProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		if (ShadowMonarchManager.handleUnavailableShadowOwner(entity))
+			return;
 		double Chain = 0;
 		double ChainWait = 0;
 		double hei = 0;
 		if (!world.isClientSide()) {
-			if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+			if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 				if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).isAlive())) {
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles(ParticleTypes.SMOKE, (entity.getX()), (entity.getY()), (entity.getZ()), 15, 0.05, 0.05, 0.05, 1);
@@ -54,7 +56,7 @@ public class KamishShadowOnEntityTickUpdateProcedure {
 					}
 				}
 			}
-			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 				if (!entity.level().isClientSide()) {
 					ShadowMonarchManager.dropStoredShadowInventory(entity);
 					entity.discard();
@@ -95,7 +97,7 @@ public class KamishShadowOnEntityTickUpdateProcedure {
 										AbstractArrow entityToSpawn = new DragonBreatheEntity(SololevelingModEntities.DRAGON_BREATHE.get(), level);
 										entityToSpawn.setOwner(shooter);
 										entityToSpawn.setBaseDamage(damage);
-										entityToSpawn.setKnockback(knockback);
+										net.solocraft.entity.LegacyProjectileCompat.setKnockback(entityToSpawn, knockback);
 										entityToSpawn.setSilent(true);
 										return entityToSpawn;
 									}
@@ -120,9 +122,9 @@ public class KamishShadowOnEntityTickUpdateProcedure {
 			if (entity.getPersistentData().getDouble("IA") == 312) {
 				if (world instanceof Level _level) {
 					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 1, 1);
+						_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 1, 1);
 					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 1, 1, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 1, 1, false);
 					}
 				}
 				if (world instanceof ServerLevel _level)
@@ -135,13 +137,17 @@ public class KamishShadowOnEntityTickUpdateProcedure {
 					final Vec3 _center = new Vec3(x, y, z);
 					List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(24 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 					for (Entity entityiterator : _entfound) {
-						if (!(entity == entityiterator) && !((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) == entityiterator)
-								&& !((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) == (entityiterator instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null))) {
-							if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 5, false, false));
-							if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20, 5, false, false));
-							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.INDIRECT_MAGIC), entity), 25);
+						if (entityiterator instanceof LivingEntity living
+								&& ShadowMonarchManager.canShadowDamage(
+										entity, living)
+								&& !living.level().isClientSide()) {
+							living.addEffect(new MobEffectInstance(
+									MobEffects.MOVEMENT_SLOWDOWN, 20, 5,
+									false, false));
+							living.addEffect(new MobEffectInstance(
+									MobEffects.BLINDNESS, 20, 5,
+									false, false));
+							living.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.INDIRECT_MAGIC), entity), 25);
 						}
 					}
 				}

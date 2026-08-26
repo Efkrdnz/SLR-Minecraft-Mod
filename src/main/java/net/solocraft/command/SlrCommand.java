@@ -57,14 +57,19 @@ import net.solocraft.guild.GuildSavedData;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.VesselManager;
+import net.solocraft.util.DeveloperModeManager;
+import net.solocraft.util.SilladBossSpawnManager;
 import net.solocraft.util.CartenonTempleGenerator;
 import net.solocraft.util.DkcStructurePreviewBuilder;
 import net.solocraft.util.FrostMonarchCastleGenerator;
+import net.solocraft.util.JobChangeQuestManager;
+import net.solocraft.util.daily.DailyQuestLifecycleManager;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.common.util.FakePlayerFactory;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -74,6 +79,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -101,7 +107,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class SlrCommand {
 	private static final String RECOVERY_COOLDOWN_TAG = "slr_recovery_command_cooldown";
 	private static final long RECOVERY_COOLDOWN_TICKS = 200L;
@@ -118,6 +124,11 @@ public class SlrCommand {
 							.then(Commands.literal("status").executes(SlrCommand::showDkcStatus))
 							.then(Commands.literal("unstuck").executes(SlrCommand::unstuckDkc))
 							.then(Commands.literal("leave").executes(SlrCommand::escapeDungeon)))
+					.then(Commands.literal("boss")
+							.requires(SlrCommand::isDeveloperSource)
+							.then(Commands.literal("spawn")
+									.then(Commands.literal("sillad")
+											.executes(SlrCommand::spawnSillad))))
 					.then(Commands.argument("name", EntityArgument.players())
 							.requires(s -> s.hasPermission(3))
 							.then(Commands.literal("player").then(Commands.argument("player", BoolArgumentType.bool()).executes(arguments -> {
@@ -134,7 +145,7 @@ public class SlrCommand {
 
 					SLRPlayerProcedure.execute(arguments);
 					return 0;
-				}))).then(Commands.literal("level").then(Commands.argument("amount", DoubleArgumentType.doubleArg(0, 500)).executes(arguments -> {
+				}))).then(Commands.literal("level").then(Commands.argument("amount", IntegerArgumentType.integer(0, 500)).executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
 					double x = arguments.getSource().getPosition().x();
 					double y = arguments.getSource().getPosition().y();
@@ -273,7 +284,8 @@ public class SlrCommand {
 						.then(Commands.literal("monarch")
 								.then(Commands.literal("sillad").executes(arguments -> VesselManager.assign(arguments, "monarch", "sillad")))
 								.then(Commands.literal("baran").executes(arguments -> VesselManager.assign(arguments, "monarch", "baran")))
-								.then(Commands.literal("rakan").executes(arguments -> VesselManager.assign(arguments, "monarch", "rakan")))))
+								.then(Commands.literal("rakan").executes(arguments -> VesselManager.assign(arguments, "monarch", "rakan")))
+								.then(Commands.literal("antares").executes(arguments -> VesselManager.assign(arguments, "monarch", "antares")))))
 					.then(Commands.literal("dkc")
 							.then(Commands.argument("floor", IntegerArgumentType.integer(1, 20))
 									.executes(SlrCommand::setDkcFloor))
@@ -321,7 +333,9 @@ public class SlrCommand {
 
 					SLRFinishDailyProcedure.execute(arguments);
 					return 0;
-				}))).then(Commands.literal("shop").then(Commands.literal("set").then(Commands.argument("amount", DoubleArgumentType.doubleArg(1, 6)).then(Commands.argument("item", ItemArgument.item(event.getBuildContext())).executes(arguments -> {
+				})).then(Commands.literal("TriggerDaily").executes(SlrCommand::triggerDaily))
+							.then(Commands.literal("TriggerJobchange").executes(SlrCommand::triggerJobChange)))
+					.then(Commands.literal("shop").then(Commands.literal("set").then(Commands.argument("amount", DoubleArgumentType.doubleArg(1, 6)).then(Commands.argument("item", ItemArgument.item(event.getBuildContext())).executes(arguments -> {
 					Level world = arguments.getSource().getUnsidedLevel();
 					double x = arguments.getSource().getPosition().x();
 					double y = arguments.getSource().getPosition().y();
@@ -637,12 +651,30 @@ public class SlrCommand {
 					return 0;
 				})))))))
 				.then(Commands.literal("shadows")
-					.then(Commands.literal("add").then(Commands.argument("shadow", StringArgumentType.word()).executes(arguments -> {
+					.then(Commands.literal("add").then(Commands.argument("shadow", StringArgumentType.word())
+							.suggests((context, builder) -> SharedSuggestionProvider.suggest(
+									ShadowMonarchManager.shadowCommandTargets().stream()
+											.filter(value -> !"all".equals(value)).toList(), builder)).executes(arguments -> {
 						return modifyShadowSoldiers(arguments, 1);
 					})))
-					.then(Commands.literal("remove").then(Commands.argument("shadow", StringArgumentType.word()).executes(arguments -> {
+					.then(Commands.literal("remove").then(Commands.argument("shadow", StringArgumentType.word())
+							.suggests((context, builder) -> SharedSuggestionProvider.suggest(
+									ShadowMonarchManager.shadowCommandTargets().stream()
+											.filter(value -> !"all".equals(value)).toList(), builder)).executes(arguments -> {
 						return modifyShadowSoldiers(arguments, -1);
-					}))))
+					})))
+					.then(Commands.literal("level")
+						.then(Commands.argument("shadow", StringArgumentType.word())
+							.suggests((context, builder) -> SharedSuggestionProvider.suggest(
+									ShadowMonarchManager.shadowCommandTargets(), builder))
+							.then(Commands.literal("add")
+								.then(Commands.argument("levels", IntegerArgumentType.integer(
+										1, ShadowMonarchManager.MAX_ADMIN_SHADOW_LEVEL))
+									.executes(arguments -> modifyShadowLevels(arguments, true))))
+							.then(Commands.literal("set")
+								.then(Commands.argument("level", IntegerArgumentType.integer(
+										1, ShadowMonarchManager.MAX_ADMIN_SHADOW_LEVEL))
+									.executes(arguments -> modifyShadowLevels(arguments, false)))))))
 				// ── Guild commands ────────────────────────────────────────────
 				.then(Commands.literal("guild")
 					.then(Commands.literal("list").executes(arguments -> {
@@ -848,6 +880,26 @@ public class SlrCommand {
 			));
 	}
 
+	private static boolean isDeveloperSource(CommandSourceStack source) {
+		return source.getEntity() instanceof ServerPlayer player
+				&& DeveloperModeManager.isEnabled(player);
+	}
+
+	private static int spawnSillad(CommandContext<CommandSourceStack> arguments)
+			throws CommandSyntaxException {
+		ServerPlayer player = arguments.getSource().getPlayerOrException();
+		var sillad = SilladBossSpawnManager.spawnForDeveloper(player);
+		if (sillad == null) {
+			arguments.getSource().sendFailure(Component.literal(
+					"Unable to spawn Sillad at a safe nearby position."));
+			return 0;
+		}
+		arguments.getSource().sendSuccess(() -> Component.literal(
+				"Spawned Sillad for developer testing.")
+				.withStyle(ChatFormatting.AQUA), false);
+		return 1;
+	}
+
 	private static int showRecoveryHelp(CommandContext<CommandSourceStack> arguments) {
 		arguments.getSource().sendSuccess(() -> Component.translatable("commands.slr.recovery.help")
 				.withStyle(ChatFormatting.AQUA), false);
@@ -959,6 +1011,37 @@ public class SlrCommand {
 		}
 	}
 
+	private static int triggerDaily(CommandContext<CommandSourceStack> arguments)
+			throws CommandSyntaxException {
+		int changed = 0;
+		for (ServerPlayer target : EntityArgument.getPlayers(arguments, "name")) {
+			DailyQuestLifecycleManager.startQuestNow(target);
+			changed++;
+		}
+		final int count = changed;
+		arguments.getSource().sendSuccess(() -> Component.literal(
+				"Started a fresh Daily Quest for " + count + " player(s).").withStyle(ChatFormatting.GREEN), true);
+		return count;
+	}
+
+	private static int triggerJobChange(CommandContext<CommandSourceStack> arguments)
+			throws CommandSyntaxException {
+		int changed = 0;
+		for (ServerPlayer target : EntityArgument.getPlayers(arguments, "name")) {
+			if (JobChangeQuestManager.forceTriggerQuest(target))
+				changed++;
+		}
+		if (changed == 0) {
+			arguments.getSource().sendFailure(Component.literal(
+					"Job Change can be triggered only for targets in the overworld."));
+			return 0;
+		}
+		final int count = changed;
+		arguments.getSource().sendSuccess(() -> Component.literal(
+				"Reset and unlocked Job Change for " + count + " player(s).").withStyle(ChatFormatting.GREEN), true);
+		return count;
+	}
+
 	private static int setDkcFloor(CommandContext<CommandSourceStack> arguments) throws CommandSyntaxException {
 		int floor = IntegerArgumentType.getInteger(arguments, "floor");
 		int changed = 0;
@@ -976,6 +1059,13 @@ public class SlrCommand {
 		String shadow = StringArgumentType.getString(arguments, "shadow");
 		int changed = 0;
 		for (var target : EntityArgument.getPlayers(arguments, "name")) {
+			if (amount > 0 && !ShadowMonarchManager.isShadowAvailableFor(
+					target, shadow)) {
+				arguments.getSource().sendFailure(Component.literal(
+						"Iron is available only while the target player's developer preview is enabled.")
+						.withStyle(ChatFormatting.RED));
+				continue;
+			}
 			if (ShadowMonarchManager.modifyShadowAmount(target, shadow, amount)) {
 				changed++;
 				final var tf = target;
@@ -987,6 +1077,47 @@ public class SlrCommand {
 			}
 		}
 		return changed;
+	}
+
+	private static int modifyShadowLevels(
+			CommandContext<CommandSourceStack> arguments, boolean additive)
+			throws CommandSyntaxException {
+		String shadow = StringArgumentType.getString(arguments, "shadow");
+		int value = IntegerArgumentType.getInteger(arguments,
+				additive ? "levels" : "level");
+		int changedPlayers = 0;
+		for (var target : EntityArgument.getPlayers(arguments, "name")) {
+			ShadowMonarchManager.ShadowLevelCommandResult result =
+					ShadowMonarchManager.modifyShadowLevels(target, shadow,
+							value, additive);
+			if (!result.knownTarget()) {
+				arguments.getSource().sendFailure(Component.literal(
+						"Unknown shadow type: " + shadow)
+						.withStyle(ChatFormatting.RED));
+				continue;
+			}
+			if (result.changed() <= 0) {
+				arguments.getSource().sendFailure(Component.literal(
+						target.getName().getString()
+								+ " owns no matching shadows.")
+						.withStyle(ChatFormatting.RED));
+				continue;
+			}
+			changedPlayers++;
+			String levelText = result.lowestLevel() == result.highestLevel()
+					? "Lv." + result.highestLevel()
+					: "Lv." + result.lowestLevel() + "-"
+							+ result.highestLevel();
+			arguments.getSource().sendSuccess(() -> Component.literal(
+					(additive ? "Added " + value + " level(s) to "
+							: "Set the level of ")
+							+ result.changed() + " " + shadow
+							+ " shadow(s) for "
+							+ target.getName().getString() + " (" + levelText
+							+ ").")
+					.withStyle(ChatFormatting.GREEN), true);
+		}
+		return changedPlayers;
 	}
 
 	private static final Map<String, List<String>> STRUCTURE_SETS = Map.ofEntries(
@@ -1038,12 +1169,12 @@ public class SlrCommand {
 		int placed = 0;
 		int xOffset = 0;
 		for (String structureName : structureNames) {
-			StructureTemplate template = level.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", structureName));
+			StructureTemplate template = level.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", structureName));
 			if (template == null || template.getSize().getX() <= 0 || template.getSize().getZ() <= 0) {
 				continue;
 			}
 			BlockPos placeAt = origin.offset(xOffset, 0, 0);
-			template.placeInWorld(level, placeAt, placeAt, new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), level.random, 3);
+			template.placeInWorld(level, placeAt, placeAt, new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), level.random, 2);
 			xOffset += Math.max(8, template.getSize().getX()) + 6;
 			placed++;
 		}

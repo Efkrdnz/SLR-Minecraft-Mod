@@ -2,12 +2,10 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -39,25 +37,16 @@ public class CrossStrikeEntity extends Entity {
 	private boolean firstHit;
 	private boolean secondHit;
 
-	public CrossStrikeEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.CROSS_STRIKE.get(), world);
-	}
-
 	public CrossStrikeEntity(EntityType<? extends CrossStrikeEntity> type, Level world) {
 		super(type, world);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(OWNER_UUID, Optional.empty());
-		this.entityData.define(YAW, 0.0F);
-		this.entityData.define(SCALE, 1.0F);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(OWNER_UUID, Optional.empty());
+		builder.define(YAW, 0.0F);
+		builder.define(SCALE, 1.0F);
 	}
 
 	public static void spawn(LevelAccessor world, LivingEntity owner, float damage, float scale) {
@@ -143,7 +132,7 @@ public class CrossStrikeEntity extends Entity {
 		float scale = this.getScale();
 		AABB hitBox = this.getBoundingBox().inflate(3.55D * scale, 1.55D * scale, 3.55D * scale);
 		List<LivingEntity> targets = this.level().getEntitiesOfClass(LivingEntity.class, hitBox, target -> target.isAlive() && target != livingOwner);
-		DamageSource source = new DamageSource(this.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:fighter"))),
+		DamageSource source = new DamageSource(this.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:fighter"))),
 				livingOwner);
 		Vec3 carry = livingOwner.getLookAngle().multiply(0.32D, 0.0D, 0.32D).add(0.0D, 0.035D, 0.0D);
 		for (LivingEntity target : targets) {

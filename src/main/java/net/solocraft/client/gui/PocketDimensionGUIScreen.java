@@ -36,11 +36,10 @@ public class PocketDimensionGUIScreen extends AbstractContainerScreen<PocketDime
 		return false;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/pocket_dimension_gui.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/pocket_dimension_gui.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}

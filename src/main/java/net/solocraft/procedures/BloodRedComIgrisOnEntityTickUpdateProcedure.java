@@ -99,7 +99,7 @@ public class BloodRedComIgrisOnEntityTickUpdateProcedure {
 
         // ── Shadow discard (unchanged) ────────────────────────────────────────
         if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false)
-                && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+                && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
             if (!((entity instanceof TamableAnimal _tamEnt2 ? (Entity) _tamEnt2.getOwner() : null) == null)) {
                 if (((entity instanceof TamableAnimal _tamEnt3 ? (Entity) _tamEnt3.getOwner() : null)
                         .getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)

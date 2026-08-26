@@ -14,9 +14,10 @@ import net.solocraft.dungeon.runtime.DungeonReturnPortalSpawner;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.Commands;
@@ -33,7 +34,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** Operator-facing runtime, diagnostics, and addon testing commands. */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class SlrDungeonCommand {
 	private SlrDungeonCommand() {
 	}

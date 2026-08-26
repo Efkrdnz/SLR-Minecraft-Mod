@@ -13,6 +13,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.Level;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -75,9 +77,13 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	private final List<SummonEntry> bossEntries = new ArrayList<>();
 	private final List<SummonButton> summonButtons = new ArrayList<>();
 	private final List<CustomizeButton> customizeButtons = new ArrayList<>();
+	private final List<GrandMarshalButton> grandMarshalButtons =
+			new ArrayList<>();
 
 	private ControlButton formationModeButton;
 	private ControlButton saveFormationButton;
+	private ControlButton healBossShadowsButton;
+	private ControlButton healAllShadowsButton;
 	private ControlButton dismissButton;
 	private EditBox formationNameBox;
 	private int normalScroll;
@@ -87,6 +93,9 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	private long animStart;
 	private boolean closed;
 	private float reveal;
+	private boolean suppressNestedBackground;
+	private int shownBossHealingCost = Integer.MIN_VALUE;
+	private int shownAllHealingCost = Integer.MIN_VALUE;
 
 	public ShadowSummonGUIScreen(ShadowSummonGUIMenu container, Inventory inventory, Component text) {
 		super(container, inventory, text);
@@ -117,7 +126,7 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		ResponsiveGuiScale.Transform transform = responsiveTransform();
 		int logicalMouseX = transform.logicalMouseX(mouseX);
 		int logicalMouseY = transform.logicalMouseY(mouseY);
-		this.renderBackground(guiGraphics);
+		this.renderTransparentBackground(guiGraphics);
 		layoutSummonButtons();
 		guiGraphics.flush();
 		ResponsiveGuiScale.push(guiGraphics, transform);
@@ -128,7 +137,12 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		int sx0 = leftPos - 3;
 		int sx1 = leftPos + imageWidth + 3;
 		ResponsiveGuiScale.enableScissor(guiGraphics, transform, sx0, top, sx1, bottom);
-		super.render(guiGraphics, logicalMouseX, logicalMouseY, partialTicks);
+		suppressNestedBackground = true;
+		try {
+			super.render(guiGraphics, logicalMouseX, logicalMouseY, partialTicks);
+		} finally {
+			suppressNestedBackground = false;
+		}
 		guiGraphics.disableScissor();
 		if (reveal < 1.0f) {
 			guiGraphics.fill(sx0, top, sx1, top + 1, ACCENT);
@@ -139,6 +153,15 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		ResponsiveGuiScale.pop(guiGraphics);
 		if (state == State.OPEN)
 			this.renderTooltip(guiGraphics, mouseX, mouseY);
+	}
+
+	@Override
+	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY,
+			float partialTick) {
+		if (suppressNestedBackground)
+			renderBg(graphics, partialTick, mouseX, mouseY);
+		else
+			super.renderBackground(graphics, mouseX, mouseY, partialTick);
 	}
 
 	private ResponsiveGuiScale.Transform responsiveTransform() {
@@ -157,6 +180,7 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	public void containerTick() {
 		super.containerTick();
 		layoutSummonButtons();
+		updateHealingButtons();
 	}
 
 	@Override
@@ -179,24 +203,24 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+	public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
 		if (state != State.OPEN)
 			return true;
 		double logicalMouseX = logicalMouseX(mouseX);
 		double logicalMouseY = logicalMouseY(mouseY);
 		if (isOverBox(logicalMouseX, logicalMouseY, leftPos + NORMAL_X, topPos + NORMAL_Y, NORMAL_W, NORMAL_H)) {
 			int max = maxScroll(visibleEntries(normalEntries).size(), visibleNormalRows(), true);
-			normalScroll = clamp(normalScroll - (int) Math.signum(delta), 0, max);
+			normalScroll = clamp(normalScroll - (int) Math.signum(deltaY), 0, max);
 			layoutSummonButtons();
 			return true;
 		}
 		if (isOverBox(logicalMouseX, logicalMouseY, leftPos + BOSS_X, topPos + BOSS_Y, BOSS_W, BOSS_H)) {
 			int max = maxScroll(visibleEntries(bossEntries).size(), visibleBossRows(), false);
-			bossScroll = clamp(bossScroll - (int) Math.signum(delta), 0, max);
+			bossScroll = clamp(bossScroll - (int) Math.signum(deltaY), 0, max);
 			layoutSummonButtons();
 			return true;
 		}
-		return super.mouseScrolled(logicalMouseX, logicalMouseY, delta);
+		return super.mouseScrolled(logicalMouseX, logicalMouseY, deltaX, deltaY);
 	}
 
 	@Override
@@ -259,12 +283,17 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		bossEntries.clear();
 		summonButtons.clear();
 		customizeButtons.clear();
+		grandMarshalButtons.clear();
+		shownBossHealingCost = Integer.MIN_VALUE;
+		shownAllHealingCost = Integer.MIN_VALUE;
 		addEntries();
 		for (SummonEntry entry : normalEntries)
 			addSummonButton(entry, false);
 		for (SummonEntry entry : bossEntries) {
 			addSummonButton(entry, true);
 			addCustomizeButton(entry);
+			if (ShadowMonarchManager.isGrandMarshalType(entry.type))
+				addGrandMarshalButton(entry);
 		}
 
 		formationModeButton = new ControlButton(this.leftPos + 18, this.topPos + 226, 104, 20, Component.literal("Formation: OFF"), b -> toggleFormationMode());
@@ -284,9 +313,22 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		guistate.put("button:button_save_formation", saveFormationButton);
 		this.addRenderableWidget(saveFormationButton);
 
+		healBossShadowsButton = new ControlButton(this.leftPos + 72,
+				this.topPos + 258, 150, 20, Component.literal("Heal Bosses"),
+				b -> healShadows(true));
+		guistate.put("button:button_heal_boss_shadows", healBossShadowsButton);
+		this.addRenderableWidget(healBossShadowsButton);
+
+		healAllShadowsButton = new ControlButton(this.leftPos + 228,
+				this.topPos + 258, 150, 20, Component.literal("Heal All"),
+				b -> healShadows(false));
+		guistate.put("button:button_heal_all_shadows", healAllShadowsButton);
+		this.addRenderableWidget(healAllShadowsButton);
+
 		dismissButton = new ControlButton(this.leftPos + 386, this.topPos + 258, 96, 20, Component.literal("Dismiss"), b -> openDismiss());
 		guistate.put("button:button_shadow_dismiss", dismissButton);
 		this.addRenderableWidget(dismissButton);
+		updateHealingButtons();
 		layoutSummonButtons();
 	}
 
@@ -346,6 +388,7 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		bossEntries.add(new SummonEntry(9, "Kamish", "kamish"));
 		bossEntries.add(new SummonEntry(11, "Tusk", "tusk"));
 		bossEntries.add(new SummonEntry(12, "Kaisel", "kaisel"));
+		bossEntries.add(new SummonEntry(13, "Iron", "iron"));
 	}
 
 	private void addSummonButton(SummonEntry entry, boolean boss) {
@@ -366,6 +409,16 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		this.addRenderableWidget(button);
 	}
 
+	private void addGrandMarshalButton(SummonEntry entry) {
+		GrandMarshalButton button = new GrandMarshalButton(0, 0,
+				BOSS_W - 12, BOSS_CUSTOMIZE_H, entry,
+				b -> appointGrandMarshal(entry));
+		button.visible = false;
+		grandMarshalButtons.add(button);
+		guistate.put("button:shadow_grand_marshal_" + entry.id, button);
+		this.addRenderableWidget(button);
+	}
+
 	private void layoutSummonButtons() {
 		List<SummonEntry> visibleNormals = visibleEntries(normalEntries);
 		List<SummonEntry> visibleBosses = visibleEntries(bossEntries);
@@ -376,6 +429,10 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			button.active = false;
 		}
 		for (CustomizeButton button : customizeButtons) {
+			button.visible = false;
+			button.active = false;
+		}
+		for (GrandMarshalButton button : grandMarshalButtons) {
 			button.visible = false;
 			button.active = false;
 		}
@@ -416,12 +473,36 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			button.visible = true;
 			button.active = true;
 			CustomizeButton customize = customizeButtonFor(entries.get(i));
-			if (customize != null && menu.isCustomizable(entries.get(i).id)) {
-				customize.setPosition(leftPos + BOSS_X + 6,
-						rowY + BOSS_SUMMON_H + BOSS_CONTROL_GAP);
+			GrandMarshalButton grandMarshal =
+					grandMarshalButtonFor(entries.get(i));
+			int controlY = rowY + BOSS_SUMMON_H + BOSS_CONTROL_GAP;
+			int controlWidth = BOSS_W - 12;
+			boolean customizable = menu.isCustomizable(entries.get(i).id);
+			if (customize != null && customizable) {
+				int splitWidth = grandMarshal == null ? controlWidth
+						: (controlWidth - 3) / 2;
+				customize.setWidth(splitWidth);
+				customize.setPosition(leftPos + BOSS_X + 6, controlY);
 				customize.setClip(leftPos + BOSS_X, topPos + BOSS_Y, BOSS_W, BOSS_H);
 				customize.visible = true;
 				customize.active = true;
+				if (grandMarshal != null) {
+					grandMarshal.setWidth(controlWidth - splitWidth - 3);
+					grandMarshal.setPosition(
+							leftPos + BOSS_X + 6 + splitWidth + 3,
+							controlY);
+				}
+			} else if (grandMarshal != null) {
+				grandMarshal.setWidth(controlWidth);
+				grandMarshal.setPosition(leftPos + BOSS_X + 6, controlY);
+			}
+			if (grandMarshal != null) {
+				grandMarshal.setClip(leftPos + BOSS_X, topPos + BOSS_Y,
+						BOSS_W, BOSS_H);
+				grandMarshal.visible = true;
+				grandMarshal.active = menu.isGrandMarshalEligible(
+						entries.get(i).id)
+						&& !menu.isGrandMarshalActive(entries.get(i).id);
 			}
 		}
 	}
@@ -442,10 +523,18 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		return null;
 	}
 
+	private GrandMarshalButton grandMarshalButtonFor(SummonEntry entry) {
+		for (GrandMarshalButton button : grandMarshalButtons) {
+			if (button.entry == entry)
+				return button;
+		}
+		return null;
+	}
+
 	private List<SummonEntry> visibleEntries(List<SummonEntry> entries) {
 		List<SummonEntry> visible = new ArrayList<>();
 		for (SummonEntry entry : entries) {
-			if (ShadowMonarchManager.hasShadowForDisplay(entity, entry.type))
+			if (menu.hasShadow(entry.id))
 				visible.add(entry);
 		}
 		visible.sort((first, second) -> {
@@ -474,7 +563,7 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	}
 
 	private void summon(SummonEntry entry) {
-		if (!ShadowMonarchManager.hasShadowForDisplay(entity, entry.type))
+		if (!menu.hasShadow(entry.id))
 			return;
 		String payload = hasShiftDown() ? "all" : "";
 		SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowSummonGUIButtonMessage(entry.id, x, y, z, payload));
@@ -485,6 +574,14 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			return;
 		SololevelingMod.PACKET_HANDLER.sendToServer(
 				new ShadowSummonGUIButtonMessage(200 + entry.id, x, y, z));
+	}
+
+	private void appointGrandMarshal(SummonEntry entry) {
+		if (!menu.isGrandMarshalEligible(entry.id)
+				|| menu.isGrandMarshalActive(entry.id))
+			return;
+		SololevelingMod.PACKET_HANDLER.sendToServer(
+				new ShadowSummonGUIButtonMessage(300 + entry.id, x, y, z));
 	}
 
 	private void toggleFormationMode() {
@@ -507,6 +604,43 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 	private void openDismiss() {
 		SololevelingMod.PACKET_HANDLER.sendToServer(new ShadowSummonGUIButtonMessage(101, x, y, z));
 		ShadowSummonGUIButtonMessage.handleButtonAction(entity, 101, x, y, z);
+	}
+
+	private void healShadows(boolean bossesOnly) {
+		int cost = bossesOnly ? menu.bossHealingManaCost()
+				: menu.allHealingManaCost();
+		if (cost <= 0)
+			return;
+		int buttonId = bossesOnly
+				? ShadowSummonGUIButtonMessage.HEAL_BOSS_SHADOWS_BUTTON_ID
+				: ShadowSummonGUIButtonMessage.HEAL_ALL_SHADOWS_BUTTON_ID;
+		SololevelingMod.PACKET_HANDLER.sendToServer(
+				new ShadowSummonGUIButtonMessage(buttonId, x, y, z));
+	}
+
+	private void updateHealingButtons() {
+		if (healBossShadowsButton == null || healAllShadowsButton == null)
+			return;
+		int bossCost = menu.bossHealingManaCost();
+		int allCost = menu.allHealingManaCost();
+		healBossShadowsButton.active = bossCost > 0;
+		healAllShadowsButton.active = allCost > 0;
+		if (bossCost != shownBossHealingCost) {
+			shownBossHealingCost = bossCost;
+			healBossShadowsButton.setTooltip(Tooltip.create(Component.literal(
+					bossCost > 0
+							? "Fully restore all summoned boss shadows. Mana cost: "
+									+ bossCost + " MP (1 MP per 4 health)."
+							: "No summoned boss shadows need healing. Mana cost: 0 MP.")));
+		}
+		if (allCost != shownAllHealingCost) {
+			shownAllHealingCost = allCost;
+			healAllShadowsButton.setTooltip(Tooltip.create(Component.literal(
+					allCost > 0
+							? "Fully restore every summoned shadow. Mana cost: "
+									+ allCost + " MP (1 MP per 4 health)."
+							: "No summoned shadows need healing. Mana cost: 0 MP.")));
+		}
 	}
 
 	private void renderFrame(GuiGraphics g) {
@@ -571,13 +705,12 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 		AbstractUniform mouse = shader.safeGetUniform("MousePos");
 		mouse.set(localX, localY);
 		Matrix4f matrix = g.pose().last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-		buffer.vertex(matrix, leftPos, topPos + imageHeight, 0).uv(0f, 1f).endVertex();
-		buffer.vertex(matrix, leftPos + imageWidth, topPos + imageHeight, 0).uv(1f, 1f).endVertex();
-		buffer.vertex(matrix, leftPos + imageWidth, topPos, 0).uv(1f, 0f).endVertex();
-		buffer.vertex(matrix, leftPos, topPos, 0).uv(0f, 0f).endVertex();
-		Tesselator.getInstance().end();
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		buffer.addVertex(matrix, leftPos, topPos + imageHeight, 0).setUv(0f, 1f);
+		buffer.addVertex(matrix, leftPos + imageWidth, topPos + imageHeight, 0).setUv(1f, 1f);
+		buffer.addVertex(matrix, leftPos + imageWidth, topPos, 0).setUv(1f, 0f);
+		buffer.addVertex(matrix, leftPos, topPos, 0).setUv(0f, 0f);
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 		RenderSystem.enableCull();
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 	}
@@ -673,7 +806,7 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			outline(g, getX(), getY(), width, height, border);
 			Font font = Minecraft.getInstance().font;
 			Player player = Minecraft.getInstance().player;
-			String count = player == null ? "0/0" : ShadowMonarchManager.shadowCountText(player, entry.type);
+			String count = player == null ? "0/0" : menu.shadowCountText(entry.id);
 			int countWidth = font.width(count);
 			String fittedName = trimToWidth(font, entry.name, Math.max(12, width - countWidth - 20));
 			g.drawString(font, fittedName, getX() + 7, getY() + 4, TEXT_MAIN, false);
@@ -693,7 +826,11 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			int level = menu.shadowLevel(entry.id);
 			String levelText = "Lv." + level;
 			String rankContext;
-			if (menu.isMaxRank(entry.id)) {
+			if (menu.isGrandMarshalActive(entry.id)) {
+				rankContext = rankName + "  |  ASSIGNED";
+			} else if (menu.isGrandMarshalEligible(entry.id)) {
+				rankContext = rankName + "  |  READY";
+			} else if (menu.isMaxRank(entry.id)) {
 				rankContext = rankName + "  |  MAX";
 			} else {
 				String next = ShadowMonarchManager.rankDisplayName(menu.nextRank(entry.id));
@@ -713,16 +850,24 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 			int xp = menu.rankXp(entry.id);
 			int needed = Math.max(1, menu.rankXpNeeded(entry.id));
 			boolean maxRank = menu.isMaxRank(entry.id);
-			int fill = maxRank ? barW : (int) Math.round(barW
+			boolean promotionReady = menu.isGrandMarshalEligible(entry.id);
+			int fill = maxRank || promotionReady ? barW : (int) Math.round(barW
 					* Math.min(1.0D, xp / (double) needed));
 			g.fill(barX, barY, barX + barW, barY + 4, 0xCC080510);
 			if (fill > 0)
 				g.fill(barX, barY, barX + fill, barY + 4,
-						maxRank ? 0xFFFFC84A : ACCENT);
-			outline(g, barX, barY, barW, 4, maxRank ? 0xFFFFC84A : ACCENT_DIM);
+						maxRank || promotionReady ? 0xFFFFC84A : ACCENT);
+			outline(g, barX, barY, barW, 4,
+					maxRank || promotionReady ? 0xFFFFC84A : ACCENT_DIM);
 
 			String xpText;
-			if (maxRank)
+			if (menu.isGrandMarshalActive(entry.id))
+				xpText = "SIGNATURE: "
+						+ ShadowMonarchManager.grandMarshalSignatureName(
+								entry.type);
+			else if (promotionReady)
+				xpText = "GRAND MARSHAL PROMOTION READY";
+			else if (maxRank)
 				xpText = "MAX RANK";
 			else if (menu.isAtLevelCap(entry.id))
 				xpText = "LEVEL CAP  |  " + xp + " / " + needed + " XP";
@@ -781,10 +926,77 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 					hovered ? 0x994A1D68 : equipped ? 0x553A2910 : 0x55102338);
 			outline(g, getX(), getY(), width, height, border);
 			Font font = Minecraft.getInstance().font;
-			String label = equipped ? "CUSTOMIZE  |  EQUIPPED" : "CUSTOMIZE";
+			String label = equipped
+					? (width < 130 ? "GEAR | EQUIPPED"
+							: "CUSTOMIZE  |  EQUIPPED")
+					: "CUSTOMIZE";
 			g.drawCenteredString(font, label, getX() + width / 2,
 					getY() + (height - 8) / 2,
 					hovered ? 0xFFFFFFFF : equipped ? 0xFFFFD77A : TEXT_MAIN);
+			g.disableScissor();
+		}
+	}
+
+	private class GrandMarshalButton extends Button {
+		private final SummonEntry entry;
+		private int clipX;
+		private int clipY;
+		private int clipW;
+		private int clipH;
+
+		GrandMarshalButton(int x, int y, int w, int h, SummonEntry entry,
+				OnPress onPress) {
+			super(x, y, w, h, Component.literal("GRAND MARSHAL"), onPress,
+					DEFAULT_NARRATION);
+			this.entry = entry;
+		}
+
+		void setClip(int x, int y, int w, int h) {
+			this.clipX = x;
+			this.clipY = y;
+			this.clipW = w;
+			this.clipH = h;
+		}
+
+		@Override
+		protected void renderWidget(GuiGraphics g, int mouseX, int mouseY,
+				float partialTicks) {
+			if (!visible)
+				return;
+			ResponsiveGuiScale.Transform transform = ResponsiveGuiScale.fit(
+					Minecraft.getInstance().getWindow().getGuiScaledWidth(),
+					Minecraft.getInstance().getWindow().getGuiScaledHeight(),
+					PANEL_W + 8, PANEL_H + 8);
+			ResponsiveGuiScale.enableScissor(g, transform, clipX, clipY,
+					clipX + clipW, clipY + clipH);
+			boolean assigned = menu.isGrandMarshalActive(entry.id);
+			boolean eligible = menu.isGrandMarshalEligible(entry.id);
+			boolean hovered = this.isHoveredOrFocused() && active;
+			int border = assigned ? 0xFFFFC84A
+					: eligible ? ACCENT : 0xFF5B526D;
+			g.fill(getX(), getY(), getX() + width, getY() + height,
+					assigned ? 0x665C430A
+							: hovered ? 0x994A1D68 : 0x55102338);
+			outline(g, getX(), getY(), width, height,
+					hovered ? 0xFFFFFFFF : border);
+			String label;
+			if (assigned) {
+				label = width < 130 ? "GM | ASSIGNED"
+						: "GRAND MARSHAL | ASSIGNED";
+			} else if (eligible) {
+				label = width < 130 ? "PROMOTE GM"
+						: "PROMOTE TO GRAND MARSHAL";
+			} else {
+				int required = ShadowMonarchManager.grandMarshalRequiredLevel(
+						entry.type);
+				label = width < 130 ? "GM AT LV." + required
+						: "MARSHAL + LV." + required + " REQUIRED";
+			}
+			Font font = Minecraft.getInstance().font;
+			g.drawCenteredString(font, label, getX() + width / 2,
+					getY() + (height - 8) / 2,
+					assigned ? 0xFFFFD77A
+							: eligible ? TEXT_MAIN : 0xFF827A91);
 			g.disableScissor();
 		}
 	}
@@ -796,12 +1008,16 @@ public class ShadowSummonGUIScreen extends AbstractContainerScreen<ShadowSummonG
 
 		@Override
 		protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTicks) {
-			boolean hovered = this.isHoveredOrFocused();
-			int border = hovered ? 0xFFFFFFFF : ACCENT_BLUE;
-			g.fill(getX(), getY(), getX() + width, getY() + height, hovered ? 0x8843C8FF : 0x55102338);
+			boolean hovered = active && this.isHoveredOrFocused();
+			int border = !active ? 0xFF575E72
+					: hovered ? 0xFFFFFFFF : ACCENT_BLUE;
+			g.fill(getX(), getY(), getX() + width, getY() + height,
+					!active ? 0x44202028 : hovered ? 0x8843C8FF : 0x55102338);
 			outline(g, getX(), getY(), width, height, border);
 			Font font = Minecraft.getInstance().font;
-			g.drawCenteredString(font, getMessage(), getX() + width / 2, getY() + (height - 8) / 2, hovered ? 0xFFFFFFFF : TEXT_MAIN);
+			g.drawCenteredString(font, getMessage(), getX() + width / 2,
+					getY() + (height - 8) / 2,
+					!active ? 0xFF73798A : hovered ? 0xFFFFFFFF : TEXT_MAIN);
 		}
 	}
 }

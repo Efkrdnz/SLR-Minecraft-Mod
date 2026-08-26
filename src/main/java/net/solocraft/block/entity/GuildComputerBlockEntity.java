@@ -14,6 +14,7 @@ import net.solocraft.world.inventory.GuildComputerMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -305,7 +306,7 @@ public class GuildComputerBlockEntity extends BlockEntity implements MenuProvide
     private ItemStack moveIntoGuildStorage(ItemStack stack, GuildData guild) {
         for (int i = 0; i < guild.storageItems.size(); i++) {
             ItemStack target = guild.storageItems.get(i);
-            if (target.isEmpty() || !ItemStack.isSameItemSameTags(target, stack)) continue;
+            if (target.isEmpty() || !ItemStack.isSameItemSameComponents(target, stack)) continue;
             int move = Math.min(stack.getCount(), target.getMaxStackSize() - target.getCount());
             if (move <= 0) continue;
             target.grow(move);
@@ -325,16 +326,16 @@ public class GuildComputerBlockEntity extends BlockEntity implements MenuProvide
     // ── NBT persistence ───────────────────────────────────────────────────────
 
     @Override
-    public void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
-        ContainerHelper.saveAllItems(tag, items);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        ContainerHelper.saveAllItems(tag, items, registries);
         if (boundGuildId != null) tag.putUUID("boundGuildId", boundGuildId);
     }
 
     @Override
-    public void load(CompoundTag tag) {
-        super.load(tag);
-        ContainerHelper.loadAllItems(tag, items);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        ContainerHelper.loadAllItems(tag, items, registries);
         if (tag.hasUUID("boundGuildId")) boundGuildId = tag.getUUID("boundGuildId");
     }
 }

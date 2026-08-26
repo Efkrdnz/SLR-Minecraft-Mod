@@ -80,9 +80,9 @@ void main() {
         alpha = ring * (0.62 + broad * 0.48) + glyph * radial * (0.25 + stageN * 0.26);
     } else if (kind < 4.0) {
         float side = 1.0 - smoothstep(0.24 + stageN * 0.06, 0.56, abs(p.x) + (detail - 0.5) * 0.16);
-        float rise = smoothstep(-1.0, -0.58, p.y) * smoothstep(1.0, 0.42, p.y);
+        float rise = smoothstep(-1.0, -0.58, p.y) * (1.0 - smoothstep(0.42, 1.0, p.y));
         float tongues = pow(max(0.0, sin(p.x * (13.0 + stage * 2.0) + detail * 4.0 + time * 0.62)), 8.0);
-        core = side * smoothstep(0.48, -0.16, p.y);
+        core = side * (1.0 - smoothstep(-0.16, 0.48, p.y));
         alpha = side * rise * (0.24 + broad * 0.72) + tongues * rise * (0.18 + stageN * 0.20);
     } else if (kind < 5.0) {
         vec2 stretched = vec2(p.x * 1.22, p.y * 0.70);

@@ -3,10 +3,11 @@ package net.solocraft.client.renderer.shader;
 import net.solocraft.SololevelingMod;
 import net.solocraft.client.renderer.TankerVfxRenderer;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -25,15 +26,15 @@ import org.slf4j.Logger;
  * The two depth-tested submissions used by every Tanker visual. Both descriptors
  * share one vertex/fragment program and the same white material texture.
  */
-@Mod.EventBusSubscriber(
+@EventBusSubscriber(
 		modid = SololevelingMod.MODID,
-		bus = Mod.EventBusSubscriber.Bus.MOD,
+		bus = EventBusSubscriber.Bus.MOD,
 		value = Dist.CLIENT
 )
 public final class TankerVfxRenderTypes extends RenderStateShard {
 	private static final Logger LOGGER = LogUtils.getLogger();
 	public static final ResourceLocation MATERIAL_TEXTURE =
-			new ResourceLocation("minecraft", "textures/misc/white.png");
+			ResourceLocation.fromNamespaceAndPath("minecraft", "textures/misc/white.png");
 
 	private static ShaderInstance surfaceShader;
 	private static ShaderInstance emissiveShader;
@@ -57,7 +58,7 @@ public final class TankerVfxRenderTypes extends RenderStateShard {
 
 		try {
 			event.registerShader(new ShaderInstance(event.getResourceProvider(),
-					new ResourceLocation(SololevelingMod.MODID,
+					ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID,
 							"rendertype_tanker_vfx_surface"),
 					WorldShaderVertexFormat.NEW_ENTITY), loaded -> surfaceShader = loaded);
 		} catch (IOException exception) {
@@ -66,7 +67,7 @@ public final class TankerVfxRenderTypes extends RenderStateShard {
 		}
 		try {
 			event.registerShader(new ShaderInstance(event.getResourceProvider(),
-					new ResourceLocation(SololevelingMod.MODID,
+					ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID,
 							"rendertype_tanker_vfx_emissive"),
 					WorldShaderVertexFormat.NEW_ENTITY), loaded -> emissiveShader = loaded);
 		} catch (IOException exception) {

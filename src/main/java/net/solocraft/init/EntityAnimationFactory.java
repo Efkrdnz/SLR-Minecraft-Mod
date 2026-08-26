@@ -97,14 +97,15 @@ import net.solocraft.entity.AfterImageEntity;
 import net.solocraft.entity.AfterImage2Entity;
 import net.solocraft.entity.AfterImage1Entity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class EntityAnimationFactory {
 	@SubscribeEvent
-	public static void onEntityTick(LivingEvent.LivingTickEvent event) {
+	public static void onEntityTick(EntityTickEvent.Post event) {
 		if (event != null && event.getEntity() != null) {
 			if (event.getEntity() instanceof IgrisEntity syncable) {
 				String animation = syncable.getSyncedAnimation();

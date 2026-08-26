@@ -20,6 +20,18 @@ public final class TankerProgressionRules {
 	public static final String WILLPOWER = "Willpower";
 	public static final String PROTECTION_MARK = "Protection Mark";
 
+	public static final String HEAVY_BLOW = "Heavy Blow";
+	public static final String IRON_BODY = "Iron Body";
+	public static final String SEISMIC_GRAPPLE = "Seismic Grapple";
+	public static final String GIGANTIFICATION = "Gigantification";
+	public static final String COLOSSUS_CHARGE = "Colossus Charge";
+	public static final String MOUNTAIN_BREAKER = "Mountain Breaker";
+
+	/** Tanker style keys, mirroring {@code net.solocraft.util.ClassStyleRules}. */
+	public static final String GUARD = "guard";
+	public static final String MASS = "mass";
+
+	/** Sentinel, and the tree a styleless Tanker keeps. */
 	public static final List<String> MASTERY_ORDER = List.of(
 			SHIELD_BASH,
 			TAUNT,
@@ -27,6 +39,26 @@ public final class TankerProgressionRules {
 			REINFORCEMENT,
 			WILLPOWER,
 			PROTECTION_MARK);
+
+	/** Juggernaut. Shares nothing with Sentinel: shields versus body mass. */
+	public static final List<String> MASS_ORDER = List.of(
+			HEAVY_BLOW,
+			IRON_BODY,
+			SEISMIC_GRAPPLE,
+			GIGANTIFICATION,
+			COLOSSUS_CHARGE,
+			MOUNTAIN_BREAKER);
+
+	/** The tree for a style key, falling back to Sentinel for no style. */
+	public static List<String> masteryOrder(String styleKey) {
+		return styleKey != null && MASS.equalsIgnoreCase(styleKey.trim())
+				? MASS_ORDER : MASTERY_ORDER;
+	}
+
+	public static List<String> entitlementsForRank(String styleKey, int rawRank) {
+		List<String> order = masteryOrder(styleKey);
+		return order.subList(0, Math.max(1, Math.min(order.size(), rawRank)));
+	}
 
 	private TankerProgressionRules() {
 	}

@@ -1,21 +1,16 @@
 package net.solocraft.block.entity;
 
 import software.bernie.geckolib.util.GeckoLibUtil;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.GeoBlockEntity;
 
 import net.solocraft.init.SololevelingModBlockEntities;
 
-import net.minecraftforge.items.wrapper.SidedInvWrapper;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.capabilities.Capability;
 
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,17 +25,22 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 
-import javax.annotation.Nullable;
 
 import java.util.stream.IntStream;
+import java.util.UUID;
 
 public class HunterRankEvaluatorTileEntity extends RandomizableContainerBlockEntity implements GeoBlockEntity, WorldlyContainer {
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	private NonNullList<ItemStack> stacks = NonNullList.<ItemStack>withSize(9, ItemStack.EMPTY);
-	private final LazyOptional<? extends IItemHandler>[] handlers = SidedInvWrapper.create(this, Direction.values());
+	private UUID publicPulseSession;
+	private int publicPulseColor = 0x3FC6FF;
+	private float publicPulseIntensity;
+	private int publicPulsePhase;
+	private long publicPulseUntil;
 
 	public HunterRankEvaluatorTileEntity(BlockPos pos, BlockState state) {
 		super(SololevelingModBlockEntities.HUNTER_RANK_EVALUATOR.get(), pos, state);
@@ -81,19 +81,67 @@ public class HunterRankEvaluatorTileEntity extends RandomizableContainerBlockEnt
 	}
 
 	@Override
-	public void load(CompoundTag compound) {
-		super.load(compound);
+	protected void loadAdditional(CompoundTag compound, HolderLookup.Provider registries) {
+		super.loadAdditional(compound, registries);
 		if (!this.tryLoadLootTable(compound))
 			this.stacks = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-		ContainerHelper.loadAllItems(compound, this.stacks);
+		ContainerHelper.loadAllItems(compound, this.stacks, registries);
+		this.publicPulseSession = compound.hasUUID("EvaluationPulseSession")
+				? compound.getUUID("EvaluationPulseSession") : null;
+		this.publicPulseColor = compound.getInt("EvaluationPulseColor");
+		this.publicPulseIntensity = compound.getFloat("EvaluationPulseIntensity");
+		this.publicPulsePhase = compound.getInt("EvaluationPulsePhase");
+		this.publicPulseUntil = compound.getLong("EvaluationPulseUntil");
 	}
 
 	@Override
-	public void saveAdditional(CompoundTag compound) {
-		super.saveAdditional(compound);
+	protected void saveAdditional(CompoundTag compound, HolderLookup.Provider registries) {
+		super.saveAdditional(compound, registries);
 		if (!this.trySaveLootTable(compound)) {
-			ContainerHelper.saveAllItems(compound, this.stacks);
+			ContainerHelper.saveAllItems(compound, this.stacks, registries);
 		}
+		if (this.publicPulseSession != null)
+			compound.putUUID("EvaluationPulseSession", this.publicPulseSession);
+		compound.putInt("EvaluationPulseColor", this.publicPulseColor);
+		compound.putFloat("EvaluationPulseIntensity",
+				this.publicPulseIntensity);
+		compound.putInt("EvaluationPulsePhase", this.publicPulsePhase);
+		compound.putLong("EvaluationPulseUntil", this.publicPulseUntil);
+	}
+
+	public void setPublicPulse(UUID sessionId, int color, float intensity,
+			int phase, long until) {
+		this.publicPulseSession = sessionId;
+		this.publicPulseColor = color & 0xFFFFFF;
+		this.publicPulseIntensity = Math.max(0.0F,
+				Math.min(1.0F, intensity));
+		this.publicPulsePhase = Math.max(0, phase);
+		this.publicPulseUntil = Math.max(0L, until);
+		setChanged();
+		if (this.level != null && !this.level.isClientSide())
+			this.level.sendBlockUpdated(this.worldPosition, getBlockState(),
+					getBlockState(), 3);
+	}
+
+	public boolean isPublicPulseOwner(UUID sessionId, long gameTime) {
+		return sessionId != null && sessionId.equals(this.publicPulseSession)
+				&& gameTime <= this.publicPulseUntil;
+	}
+
+	public int getPublicPulseColor() {
+		return this.publicPulseColor;
+	}
+
+	public float getPublicPulseIntensity() {
+		return this.publicPulseIntensity;
+	}
+
+	public int getPublicPulsePhase() {
+		return this.publicPulsePhase;
+	}
+
+	public long getPublicPulseUntil() {
+		return this.publicPulseUntil;
 	}
 
 	@Override
@@ -102,8 +150,8 @@ public class HunterRankEvaluatorTileEntity extends RandomizableContainerBlockEnt
 	}
 
 	@Override
-	public CompoundTag getUpdateTag() {
-		return this.saveWithFullMetadata();
+	public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+		return this.saveWithFullMetadata(registries);
 	}
 
 	@Override
@@ -160,26 +208,12 @@ public class HunterRankEvaluatorTileEntity extends RandomizableContainerBlockEnt
 	}
 
 	@Override
-	public boolean canPlaceItemThroughFace(int index, ItemStack stack, @Nullable Direction direction) {
+	public boolean canPlaceItemThroughFace(int index, ItemStack stack, Direction direction) {
 		return this.canPlaceItem(index, stack);
 	}
 
 	@Override
 	public boolean canTakeItemThroughFace(int index, ItemStack stack, Direction direction) {
 		return true;
-	}
-
-	@Override
-	public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction facing) {
-		if (!this.remove && facing != null && capability == ForgeCapabilities.ITEM_HANDLER)
-			return handlers[facing.ordinal()].cast();
-		return super.getCapability(capability, facing);
-	}
-
-	@Override
-	public void setRemoved() {
-		super.setRemoved();
-		for (LazyOptional<? extends IItemHandler> handler : handlers)
-			handler.invalidate();
 	}
 }

@@ -3,11 +3,12 @@ package net.solocraft.procedures;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModItems;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.ICancellableEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -28,10 +29,10 @@ import net.minecraft.commands.arguments.EntityAnchorArgument;
 import javax.annotation.Nullable;
 import net.solocraft.util.CooldownManager;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class MythicDaggerToolInHandTickProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity, event.getSource().getEntity());
@@ -42,10 +43,10 @@ public class MythicDaggerToolInHandTickProcedure {
 		execute(null, world, x, y, z, entity, sourceentity);
 	}
 
-	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
+	private static void execute(@Nullable ICancellableEvent event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
-		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get()) && !CooldownManager.isOnCooldown(entity, "counter")
+		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE) && !CooldownManager.isOnCooldown(entity, "counter")
 				&& (entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.MYTHIC_DAGGER.get()) {
 			if (world instanceof ServerLevel _level)
 				_level.sendParticles(ParticleTypes.DRAGON_BREATH, x, y, z, 5, 2, 2, 2, 0.2);
@@ -55,7 +56,7 @@ public class MythicDaggerToolInHandTickProcedure {
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 20, 1));
 			CooldownManager.set(entity, "counter", 260);
-			if (event != null && event.isCancelable()) {
+			if (event != null) {
 				event.setCanceled(true);
 			}
 			{
@@ -68,9 +69,9 @@ public class MythicDaggerToolInHandTickProcedure {
 			entity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3((sourceentity.getX()), (sourceentity.getY() + 1.6), (sourceentity.getZ())));
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.enderman.teleport")), SoundSource.NEUTRAL, 2, 1);
+					_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.NEUTRAL, 2, 1);
 				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.enderman.teleport")), SoundSource.NEUTRAL, 2, 1, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")), SoundSource.NEUTRAL, 2, 1, false);
 				}
 			}
 		}

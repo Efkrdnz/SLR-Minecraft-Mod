@@ -1,118 +1,105 @@
 plugins {
+    id 'java-library'
     id 'eclipse'
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
-    id 'org.spongepowered.mixin' version '0.7.+'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.143'
 }
 
-version = '1.0.3'
-group = 'com.yourname.modid'
-archivesBaseName = 'modid'
+version = project.mod_version
+group = project.mod_group_id
+def releaseJarName = "SLR${version}-neoforge-${minecraft_version}.jar"
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+base {
+    archivesName = 'sololeveling'
+}
 
-minecraft {
-    mappings channel: 'official', version: '1.20.1'
+// Minecraft 1.21.1 and NeoForge use Java 21.
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+sourceSets.main.resources {
+    srcDir 'src/generated/resources'
+    exclude '**/*.bbmodel'
+    exclude 'src/generated/**/.cache'
+}
 
-    copyIdeResources = true
+neoForge {
+    version = project.neo_version
+    validateAccessTransformers = true
+
+    parchment {
+        minecraftVersion = project.parchment_minecraft_version
+        mappingsVersion = project.parchment_mappings_version
+    }
 
     runs {
-        all {
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            property 'net.minecraftforge.gradle.GradleStart.srg.srg-mcp', "${projectDir}/build/createSrgToMcp/output.srg"
-        }
-
         client {
-            workingDirectory project.file('run')
-
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
-            jvmArgs '-Xms512M',
-                    '-Xmx2G',
-                    '-XX:ActiveProcessorCount=8',
-                    '-XX:CICompilerCount=2',
-                    '-XX:ReservedCodeCacheSize=128M'
-
-            mods {
-                main {
-                    source sourceSets.main
-                }
-            }
+            client()
+            gameDirectory = project.file('run')
+            jvmArguments.addAll '-Xms512M', '-Xmx4G', '-XX:ActiveProcessorCount=8'
         }
 
         server {
-            workingDirectory project.file('run')
+            server()
+            gameDirectory = project.file('run-server')
+            programArgument '--nogui'
+            jvmArguments.addAll '-Xms512M', '-Xmx4G', '-XX:ActiveProcessorCount=8'
+        }
 
-            property 'forge.logging.markers', 'REGISTRIES'
-            property 'forge.logging.console.level', 'debug'
-            jvmArgs '-Xms512M',
-                    '-Xmx2G',
-                    '-XX:ActiveProcessorCount=8',
-                    '-XX:CICompilerCount=2',
-                    '-XX:ReservedCodeCacheSize=128M'
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
 
-            mods {
-                main {
-                    source sourceSets.main
-                }
-            }
+    mods {
+        sololeveling {
+            sourceSet sourceSets.main
         }
     }
 }
 
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
+
 repositories {
+    mavenCentral()
     maven {
-        url = 'https://cursemaven.com'
+        name = 'GeckoLib'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
         content {
-            includeGroup 'curse.maven'
+            includeGroupByRegex 'software\\.bernie.*'
+            includeGroup 'com.eliotlash.mclib'
         }
     }
     maven {
-        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
     }
     maven {
-        name = 'Modding Legacy Maven'
-        url = 'https://maven.moddinglegacy.com/maven'
+        name = 'KosmX'
+        url = 'https://maven.kosmx.dev/'
     }
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.20.1-47.2.0'
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+    compileOnly 'maven.modrinth:better-combat:2.4.0+1.21.1-neoforge'
 
-    implementation fg.deobf('curse.maven:kiwi-303657:5039878')
-    implementation fg.deobf('curse.maven:loquat-forge-885292:4925464')
-    implementation fg.deobf('curse.maven:jade-324717:4986594')
-    implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.20.1:4.4.2')
-    implementation fg.deobf('curse.maven:world-preview-891429:4964102')
-    implementation fg.deobf('curse.maven:worldedit-225608:4586218')
-    implementation fg.deobf('curse.maven:cloth-config-348521:4973441')
-    implementation fg.deobf('com.legacy:structure-gel:1.20.1-2.16.0.7')
-    implementation fg.deobf('curse.maven:huge-structure-blocks-474114:4803547')
-
-    compileOnly fg.deobf('curse.maven:bettercombat-forge-639842:4823303')
-    compileOnly fg.deobf('curse.maven:cloth-config-forge-348521:4633444')
-    runtimeOnly fg.deobf('curse.maven:cloth-config-forge-348521:4633444')
-    compileOnly fg.deobf('curse.maven:mpp-forge-986014:5262463')
-    runtimeOnly fg.deobf('curse.maven:mpp-forge-986014:5262463')
-}
-
-mixin {
-    add sourceSets.main, 'mixins.sololeveling.refmap.json'
-
-    config 'mixins.sololeveling.json'
-
-    debug.verbose = true
-    debug.export = true
-    dumpTargetOnFailure = true
-
-    quiet
+    // Optional renderer stack used by the compatibility run configuration.
+    // Latest stable 1.21.1 pair verified with an active shader pack. Sodium
+    // 0.8 remains metadata-compatible when installed without Iris, but Iris's
+    // current 1.21.1 beta targets a different Sodium 0.8 API layout.
+    localRuntime 'maven.modrinth:sodium:mc1.21.1-0.6.13-neoforge'
+    localRuntime 'maven.modrinth:iris:1.8.12+1.21.1-neoforge'
 }
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+    options.compilerArgs.addAll(['-Xmaxerrs', '5000', '-Xmaxwarns', '500'])
     // This project generates many anonymous/nested classes. A full javac pass
     // prevents stale incremental output from producing an incomplete release jar.
     options.incremental = false
@@ -158,17 +145,110 @@ tasks.register('auditProcedureReferences') {
 
 tasks.register('auditShaderDefinitions') {
     group = 'verification'
-    description = 'Fails the build when a shader JSON uniform has the wrong number of default values.'
+    description = 'Checks shader definitions and GLSL sources for cross-platform OpenGL compatibility.'
 
     doLast {
         def failures = []
+        def shaderSourceRoot = file('src/main/resources/assets/sololeveling/shaders')
+        def shaderSourceFiles = fileTree(shaderSourceRoot) {
+            include '**/*.vsh', '**/*.fsh'
+        }
+        def shaderSourcePaths = shaderSourceFiles.collect {
+            shaderSourceRoot.toPath().relativize(it.toPath())
+                    .iterator().collect { component -> component.toString() }.join('/')
+        } as Set
+
+        shaderSourceFiles.each { shaderFile ->
+            def relativePath = project.relativePath(shaderFile).replace('\\', '/')
+            def source = shaderFile.getText('UTF-8').replace('\uFEFF', '')
+            def firstSourceLine = source.readLines().find { !it.trim().isEmpty() }?.trim()
+            if (firstSourceLine != '#version 150') {
+                failures << "${relativePath}: must use '#version 150' for the Minecraft 1.21.1 OpenGL compatibility baseline"
+            }
+
+            // Ignore comments when checking syntax so explanatory text cannot
+            // trigger a false positive.
+            def code = source
+                    .replaceAll('(?s)/\\*.*?\\*/', '')
+                    .replaceAll('(?m)//.*$', '')
+
+            def smoothstepMatcher = (code =~ /smoothstep\s*\(\s*([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)\s*,\s*([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)/)
+            while (smoothstepMatcher.find()) {
+                def edge0 = new BigDecimal(smoothstepMatcher.group(1))
+                def edge1 = new BigDecimal(smoothstepMatcher.group(2))
+                if (edge0 >= edge1) {
+                    def line = code.substring(0, smoothstepMatcher.start()).count('\n') + 1
+                    failures << "${relativePath}:${line}: smoothstep edge0 must be lower than edge1; use 1.0 - smoothstep(low, high, value) for an inverse ramp"
+                }
+            }
+
+            [
+                    /layout\s*\(/,
+                    /\bimage(?:Load|Store)\s*\(/,
+                    /\batomicCounter/,
+                    /\bmemoryBarrier/,
+                    /\bbuffer\b/
+            ].each { unsupportedPattern ->
+                if ((code =~ unsupportedPattern).find()) {
+                    failures << "${relativePath}: uses GLSL functionality newer than the OpenGL 3.2 / GLSL 150 compatibility target"
+                }
+            }
+        }
+
         fileTree('src/main/resources/assets/sololeveling/shaders') {
             include '**/*.json'
         }.each { shaderFile ->
             def definition = new groovy.json.JsonSlurper().parse(shaderFile)
-            (definition.uniforms ?: []).each { uniform ->
+
+            // Every sampler and uniform entry must carry a "name" key. A
+            // generated definition once had its "name" keys clobbered, which
+            // produced a black main menu because shader loading threw during
+            // RegisterShadersEvent and took the whole client render setup down.
+            (definition.samplers ?: []).eachWithIndex { sampler, index ->
+                if (!(sampler.name instanceof String) || sampler.name.isEmpty()) {
+                    failures << "${project.relativePath(shaderFile)}: samplers[${index}] is missing a string \"name\""
+                }
+            }
+            (definition.uniforms ?: []).eachWithIndex { uniform, index ->
+                if (!(uniform.name instanceof String) || uniform.name.isEmpty()) {
+                    failures << "${project.relativePath(shaderFile)}: uniforms[${index}] is missing a string \"name\""
+                }
                 if (uniform.count != null && uniform.values != null && uniform.values.size() != uniform.count as int) {
                     failures << "${project.relativePath(shaderFile)}: ${uniform.name} expects ${uniform.count} values but has ${uniform.values.size()}"
+                }
+            }
+
+            // A declared sampler that the fragment shader never reads is
+            // stripped by the GLSL compiler, and Minecraft then logs that it
+            // cannot find it. Declaring one the shader does not use is a bug.
+            def fragment = definition.fragment
+            if (fragment instanceof String && fragment.startsWith('sololeveling:')) {
+                def fragmentPath = fragment.substring('sololeveling:'.length())
+                def fragmentFile = new File(shaderFile.parentFile, "${fragmentPath}.fsh")
+                if (fragmentFile.isFile()) {
+                    def fragmentSource = fragmentFile.getText('UTF-8')
+                            .replaceAll('(?s)/\\*.*?\\*/', '')
+                            .replaceAll('(?m)//.*$', '')
+                    (definition.samplers ?: []).each { sampler ->
+                        if (sampler.name instanceof String
+                                && !(fragmentSource =~ /texture\s*\(\s*${sampler.name}\b/).find()) {
+                            failures << "${project.relativePath(shaderFile)}: declares sampler ${sampler.name} that ${fragmentPath}.fsh never samples"
+                        }
+                    }
+                }
+            }
+
+            [vertex: 'vsh', fragment: 'fsh'].each { stage, extension ->
+                def resource = definition[stage]
+                if (resource instanceof String && resource.startsWith('sololeveling:')) {
+                    def resourcePath = resource.substring('sololeveling:'.length())
+                    def definitionDirectory = shaderSourceRoot.toPath()
+                            .relativize(shaderFile.parentFile.toPath())
+                            .iterator().collect { component -> component.toString() }.join('/')
+                    def expectedPath = "${definitionDirectory}/${resourcePath}.${extension}".toString()
+                    if (!shaderSourcePaths.contains(expectedPath)) {
+                        failures << "${project.relativePath(shaderFile)}: ${stage} source does not exist with exact casing: ${expectedPath}"
+                    }
                 }
             }
         }
@@ -177,7 +257,7 @@ tasks.register('auditShaderDefinitions') {
             throw new GradleException("Invalid shader definitions:\n - " + failures.join('\n - '))
         }
 
-        logger.lifecycle('Shader definition audit passed.')
+        logger.lifecycle("Shader portability audit passed: ${shaderSourceFiles.size()} GLSL sources checked.")
     }
 }
 
@@ -187,6 +267,38 @@ tasks.register('testVesselProgressionRules', JavaExec) {
     dependsOn 'testClasses'
     classpath = sourceSets.test.runtimeClasspath
     mainClass.set('net.solocraft.util.VesselProgressionRulesRegression')
+}
+
+tasks.register('testBaranRewardRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs exclusive Baran dagger and Shadow Exchange runestone reward regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.BaranRewardRegression')
+}
+
+tasks.register('testDemonCastleBossDamageRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs bounded Vulcan and Baran outgoing-damage regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.DemonCastleBossDamageRegression')
+}
+
+tasks.register('testCreativeTabCurationRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs curated Cheat Items tab and legacy registry-compatibility regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.CreativeTabCurationRegression')
+}
+
+tasks.register('testCreativeCooldownBypassRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs global Creative ability/item cooldown bypass and version metadata regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.CreativeCooldownBypassRegression')
 }
 
 tasks.register('testHunterGateFixRegression', JavaExec) {
@@ -219,6 +331,14 @@ tasks.register('testShadowExperienceRulesRegression', JavaExec) {
     dependsOn 'testClasses'
     classpath = sourceSets.test.runtimeClasspath
     mainClass.set('net.solocraft.util.ShadowExperienceRulesRegression')
+}
+
+tasks.register('testShadowIgrisBalanceRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs rank-aware Shadow Igris damage and Ant King duel regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ShadowIgrisBalanceRegression')
 }
 
 tasks.register('testPlayerResetRegression', JavaExec) {
@@ -261,51 +381,399 @@ tasks.register('testTemporaryStatBonusRegression', JavaExec) {
     mainClass.set('net.solocraft.util.TemporaryStatBonusRegression')
 }
 
+tasks.register('testRangerAriseUnlockRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Mana Quiver runestone and equipped Arise boss-extraction regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.RangerAriseUnlockRegression')
+}
+
+tasks.register('testRangerManaQuiverReleaseRegression', JavaExec) {
+    group = 'verification'
+    description = 'Guards Mana Quiver draw/release without physical arrows on Minecraft 1.21.1.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.RangerManaQuiverReleaseRegression')
+}
+
+tasks.register('testDamageNumberRegression', JavaExec) {
+    group = 'verification'
+    description = 'Guards the final-damage, client-bound, shader-compatible damage-number pipeline.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.DamageNumberRegression')
+}
+
+tasks.register('testSystemRewardRegression', JavaExec) {
+    group = 'verification'
+    description = 'Guards indirect boss credit, queued System rewards, and server-authoritative claims.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.SystemRewardRegression')
+}
+
+tasks.register('testWeaponDurabilityRegression', JavaExec) {
+    group = 'verification'
+    description = 'Guards the 1.21 durability bridge for all legacy generated weapons.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.WeaponDurabilityRegression')
+}
+
+tasks.register('testRiftSpawnAndProceduralDensityRegression', JavaExec) {
+    group = 'verification'
+    description = 'Guards no natural Dimensional Rift spawns and bounded A/S procedural-gate density.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.RiftSpawnAndProceduralDensityRegression')
+}
+
+tasks.register('testLevelRewardFireVfxRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs per-level stat-point and reused Fire Mage explosion-VFX regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.LevelRewardFireVfxRegression')
+}
+
+tasks.register('testGrandMarshalFeatureRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs manual Grand Marshal, admin shadow-level, GUI, and borrowed-ability regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.GrandMarshalFeatureRegression')
+}
+
+tasks.register('testDungeonBugfixRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs dungeon exit, recovery, knight, shadow-credit, and goblin-health regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.DungeonBugfixRegression')
+}
+
+tasks.register('testJobChangeRetryAndSliderRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Job Change attempt, anti-farming, death-retry, and world-creation slider regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.JobChangeRetryAndSliderRegression')
+}
+
+tasks.register('testSungIlHwanVesselRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Sung Il-Hwan vessel, staged spiritualization, Fear, execution, and presentation regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.SungIlHwanVesselRegression')
+}
+
+tasks.register('testSungIlHwanSkillUiRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Sung Il-Hwan ruler-gold, equipment-order, tooltip, and reused-icon regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.SungIlHwanSkillUiRegression')
+}
+
+tasks.register('testDeveloperModeRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs hidden chat, persisted developer-preview, and WIP-gating regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.DeveloperModeRegression')
+}
+
+tasks.register('testHunterEvaluationRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs evaluator ceremony odds, shuffle, authority, migration, reward, and presentation regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.HunterEvaluationRegression')
+}
+
+tasks.register('testBeruShadowAiRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Shadow Beru ground/flight selection, stuck recovery, and animation regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.BeruShadowAiRegression')
+}
+
+tasks.register('testTuskShadowAiRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Shadow Tusk ranged movement, spell scaling, recovery, and animation regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.TuskShadowAiRegression')
+}
+
+tasks.register('testShadowIronAiRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Shadow Iron tank balance, Taunt, guardian rescue, roster, animation, and asset regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ShadowIronAiRegression')
+}
+
+tasks.register('testShadowHealingRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs shadow army healing cost, authority, synchronization, and Manage GUI regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ShadowHealingRegression')
+}
+
+tasks.register('testAntaresVesselRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Antares progression, combat balance, VFX portability, and icon regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.AntaresVesselRegression')
+}
+
+tasks.register('testSilladBossRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Sillad boss phase, Frostbite, developer spawn, biped, and placeholder-art regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.SilladBossRegression')
+}
+
+tasks.register('testAbilityDestructionRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs ability destruction gamerule, world-creation UI, safety-budget, and ability-wiring regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.AbilityDestructionRegression')
+}
+
+tasks.register('testProceduralGateUrgentQuestRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs procedural gate variety, low-rank density, and feasible urgent-quest regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ProceduralGateUrgentQuestRegression')
+}
+
+tasks.register('testShadowEquipmentRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs shadow equipment persistence, restoration, and compatibility regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ShadowEquipmentRegression')
+}
+
+tasks.register('testTankerProgressionRules', JavaExec) {
+    group = 'verification'
+    description = 'Runs pure Tanker entitlement and canonical-alias regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.procedures.TankerProgressionRulesRegression')
+}
+
+tasks.register('testClassProgressionRulesRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs deterministic Assassin/Fighter/Healer entitlement and mana-band regressions.'
+    dependsOn 'testClasses'
+    // ClassProgressionRules is dependency-free, but ManaRules references
+    // Minecraft entity types, so the ModDev runtime is needed to load it.
+    classpath = sourceSets.test.output + sourceSets.main.runtimeClasspath
+    mainClass.set('net.solocraft.procedures.ClassProgressionRulesRegression')
+}
+
+tasks.register('testTankerSkillManagerRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs the consolidated Tanker progression, combat-math, bounds, and cleanup regressions.'
+    dependsOn 'testClasses'
+    // The manager's pure methods live on a class that also references Minecraft
+    // and NeoForge event types, so include the ModDev runtime in addition to the
+    // compiled test output when the JVM loads that class.
+    classpath = sourceSets.test.output + sourceSets.main.runtimeClasspath
+    mainClass.set('net.solocraft.util.TankerSkillManagerRegression')
+}
+
+tasks.register('testGuiRenderPipelineRegression', JavaExec) {
+    group = 'verification'
+    description = 'Guards the 1.21 single-background GUI pipeline and Iris-safe System notification text.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.GuiRenderPipelineRegression')
+}
+
+tasks.register('testClasslessAbilityAccessRegression', JavaExec) {
+    group = 'verification'
+    description = 'Guards classless runestone, job-skill, Ranger, and Tanker ability access.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ClasslessAbilityAccessRegression')
+}
+
+tasks.register('testClassStyleEvaluationRegression', JavaExec) {
+    group = 'verification'
+    description = 'Guards Mage style shuffle, evaluator authority, persistence, migration, and UI wiring.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ClassStyleEvaluationRegression')
+}
+
+tasks.named('test', Test) {
+    // The regression suite uses dependency-free Java entry points instead of
+    // a JUnit/TestNG engine; the JavaExec tasks below are the executable tests.
+    failOnNoDiscoveredTests = false
+}
+
+tasks.register('testAbilityIconRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs the combat HUD ability icon coverage and asset-existence regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.AbilityIconRegression')
+}
+
+tasks.register('testNaturalGateAndRewardRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs dry gate placement, dungeon exit fallback, and reward-consumption regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.NaturalGateAndRewardRegression')
+}
+
+tasks.register('testAddonApiSurfaceRegression', JavaExec) {
+    group = 'verification'
+    description = 'Checks the addon-facing API stays a facade over the mod systems it exposes.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.AddonApiSurfaceRegression')
+}
+
+tasks.register('testHunterClassRegistryRegression', JavaExec) {
+    group = 'verification'
+    description = 'Checks the hunter class registry still matches the legacy Classes numbering.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.HunterClassRegistryRegression')
+}
+
+tasks.register('testSkillPointEconomyRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs skill-point payout, boss-tier band, and stat conversion regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.SkillPointEconomyRegression')
+}
+
+tasks.register('testCurseMageRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Curse Mage roster, cooldown matrix, and retired-name collision regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.CurseMageRegression')
+}
+
+tasks.register('testAriseMassExtractionRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs mass-Arise affordability and partial-batch feedback regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.AriseMassExtractionRegression')
+}
+
+tasks.register('testFrostChillRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Sillad ambient-chill pressure, warmth counterplay and overlay regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.FrostChillRegression')
+}
+
+tasks.register('testTrueMonarchRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs Black Heart reward, mana cost-basis and unlimited-storage regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.TrueMonarchRegression')
+}
+
+tasks.register('testLevelCapEndgameRegression', JavaExec) {
+    group = 'verification'
+    description = 'Runs level cap, XP curve and Cartenon return arc wiring regressions.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.LevelCapEndgameRegression')
+}
+
 tasks.named('check') {
     dependsOn 'auditProcedureReferences', 'auditShaderDefinitions',
-            'testVesselProgressionRules', 'testHunterGateFixRegression',
+            'testVesselProgressionRules', 'testBaranRewardRegression',
+            'testDemonCastleBossDamageRegression',
+            'testCreativeTabCurationRegression',
+            'testCreativeCooldownBypassRegression',
+            'testHunterGateFixRegression',
             'testShadowCommandSafetyRegression',
             'testShadowLevelPersistenceRegression',
             'testShadowExperienceRulesRegression',
+            'testShadowIgrisBalanceRegression',
             'testPlayerResetRegression',
             'testJobChangeOverworldRegression',
             'testPlayerEntryGenerationRegression',
             'testDailyStoryGuildRegression',
-            'testTemporaryStatBonusRegression'
+            'testTemporaryStatBonusRegression',
+            'testRangerAriseUnlockRegression',
+            'testRangerManaQuiverReleaseRegression',
+			'testDamageNumberRegression',
+			'testAbilityIconRegression',
+			'testNaturalGateAndRewardRegression',
+			'testSkillPointEconomyRegression',
+			'testHunterClassRegistryRegression',
+			'testAddonApiSurfaceRegression',
+			'testCurseMageRegression',
+			'testAriseMassExtractionRegression',
+			'testFrostChillRegression',
+			'testTrueMonarchRegression',
+			'testLevelCapEndgameRegression',
+			'testSystemRewardRegression',
+			'testWeaponDurabilityRegression',
+			'testRiftSpawnAndProceduralDensityRegression',
+            'testLevelRewardFireVfxRegression',
+            'testGrandMarshalFeatureRegression',
+            'testDungeonBugfixRegression',
+            'testJobChangeRetryAndSliderRegression',
+            'testSungIlHwanVesselRegression',
+            'testSungIlHwanSkillUiRegression',
+            'testDeveloperModeRegression',
+            'testHunterEvaluationRegression',
+            'testBeruShadowAiRegression',
+            'testTuskShadowAiRegression',
+            'testShadowIronAiRegression',
+            'testShadowHealingRegression',
+            'testAntaresVesselRegression',
+            'testSilladBossRegression',
+            'testAbilityDestructionRegression',
+            'testProceduralGateUrgentQuestRegression',
+            'testShadowEquipmentRegression',
+            'testTankerProgressionRules',
+            'testClassProgressionRulesRegression',
+            'testTankerSkillManagerRegression',
+            'testGuiRenderPipelineRegression',
+            'testClasslessAbilityAccessRegression',
+            'testClassStyleEvaluationRegression'
 }
 
 tasks.named('jar') {
     dependsOn 'auditProcedureReferences', 'auditShaderDefinitions'
-    archiveFileName = 'SLR1.0.3.jar'
-}
-
-// ForgeGradle writes the production-remapped jar to build/reobfJar/output.jar.
-// Copy it over the development-mapped jar so build/libs always contains the
-// artifact that can be installed in a normal Forge/CurseForge instance.
-tasks.matching { it.name == 'reobfJar' }.configureEach {
-    doLast {
-        def reobfuscatedJar = file("${buildDir}/reobfJar/output.jar")
-        if (!reobfuscatedJar.isFile()) {
-            throw new GradleException("Reobfuscated jar was not produced: ${reobfuscatedJar}")
-        }
-
-        copy {
-            from reobfuscatedJar
-            into file("${buildDir}/libs")
-            rename { 'SLR1.0.3.jar' }
-        }
-        logger.lifecycle('Production jar copied to build/libs/SLR1.0.3.jar')
-    }
+    archiveFileName = releaseJarName
 }
 
 tasks.register('auditJarClassCompleteness') {
     group = 'verification'
-    description = 'Fails when any compiled class, including nested classes, is absent from the reobfuscated release jar.'
-    dependsOn 'reobfJar'
+    description = 'Fails when any compiled class, including nested classes, is absent from the NeoForge release jar.'
+    dependsOn 'jar'
 
     doLast {
         def classesRoot = file("${buildDir}/classes/java/main")
-        def releaseJar = file("${buildDir}/libs/SLR1.0.3.jar")
+        def releaseJar = file("${buildDir}/libs/${releaseJarName}")
         if (!releaseJar.isFile())
             throw new GradleException("Release jar was not produced: ${releaseJar}")
 

@@ -3,37 +3,33 @@ package net.solocraft.command;
 
 import net.solocraft.procedures.SoloDungeonStuckProcedureProcedure;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.common.util.FakePlayerFactory;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.core.Direction;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class SoloDungeonStuckCommand {
 	@SubscribeEvent
 	public static void registerCommand(RegisterCommandsEvent event) {
 		event.getDispatcher().register(Commands.literal("solodungeonstuck")
 
 				.executes(arguments -> {
-					Level world = arguments.getSource().getUnsidedLevel();
-					double x = arguments.getSource().getPosition().x();
-					double y = arguments.getSource().getPosition().y();
-					double z = arguments.getSource().getPosition().z();
-					Entity entity = arguments.getSource().getEntity();
-					if (entity == null && world instanceof ServerLevel _servLevel)
-						entity = FakePlayerFactory.getMinecraft(_servLevel);
-					Direction direction = Direction.DOWN;
-					if (entity != null)
-						direction = entity.getDirection();
-
-					SoloDungeonStuckProcedureProcedure.execute(entity);
-					return 0;
+					boolean escaped = SoloDungeonStuckProcedureProcedure.execute(
+							arguments.getSource().getPlayerOrException());
+					if (!escaped) {
+						arguments.getSource().sendFailure(Component.literal(
+								"No active dungeon recovery point was found."));
+						return 0;
+					}
+					arguments.getSource().sendSuccess(() -> Component.literal(
+							"Returned safely from the dungeon.")
+							.withStyle(ChatFormatting.YELLOW), false);
+					return 1;
 				}));
 	}
 }

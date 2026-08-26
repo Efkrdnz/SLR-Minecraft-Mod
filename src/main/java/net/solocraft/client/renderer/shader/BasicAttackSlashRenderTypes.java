@@ -3,10 +3,11 @@ package net.solocraft.client.renderer.shader;
 import net.solocraft.SololevelingMod;
 import net.solocraft.entity.BasicAttackSlashEntity;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -18,7 +19,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 
 import java.io.IOException;
 
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class BasicAttackSlashRenderTypes extends RenderStateShard {
 	private static ShaderInstance fistShader;
 	private static ShaderInstance swordShader;
@@ -31,10 +32,10 @@ public class BasicAttackSlashRenderTypes extends RenderStateShard {
 
 	@SubscribeEvent
 	public static void registerShaders(RegisterShadersEvent event) throws IOException {
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_fist"), WorldShaderVertexFormat.NEW_ENTITY), shader -> fistShader = shader);
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_sword"), WorldShaderVertexFormat.NEW_ENTITY), shader -> swordShader = shader);
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_dagger"), WorldShaderVertexFormat.NEW_ENTITY), shader -> daggerShader = shader);
-		event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_basic_slash_dual_dagger"), WorldShaderVertexFormat.NEW_ENTITY), shader -> dualDaggerShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rendertype_basic_slash_fist"), WorldShaderVertexFormat.NEW_ENTITY), shader -> fistShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rendertype_basic_slash_sword"), WorldShaderVertexFormat.NEW_ENTITY), shader -> swordShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rendertype_basic_slash_dagger"), WorldShaderVertexFormat.NEW_ENTITY), shader -> daggerShader = shader);
+		event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rendertype_basic_slash_dual_dagger"), WorldShaderVertexFormat.NEW_ENTITY), shader -> dualDaggerShader = shader);
 	}
 
 	public static RenderType slash(int style, ResourceLocation texture) {

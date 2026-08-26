@@ -200,6 +200,8 @@ public class EquippedAbilitiesScreen extends SystemContainerScreen<EquippedAbili
 	}
 
 	private void sendButton(int buttonId) {
+		if (buttonId >= 0 && buttonId <= 7 || buttonId >= 16 && buttonId <= 23)
+			SkillScreenCursorRestore.preserveForSkillList();
 		SololevelingMod.PACKET_HANDLER.sendToServer(new EquippedAbilitiesButtonMessage(buttonId, x, y, z));
 	}
 }

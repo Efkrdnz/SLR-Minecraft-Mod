@@ -11,6 +11,37 @@ public final class TankerProgressionRulesRegression {
 		canonicalAliasesAreExactAndTokenSafe();
 		rankEntitlementsAreDeterministic();
 		masteryAlwaysFindsTheFirstMissingSkill();
+		styleTreesAreDistinctAndComplete();
+	}
+
+	/**
+	 * Sentinel and Juggernaut share nothing: one is shields and threat, the
+	 * other is body mass. A styleless Tanker keeps the Sentinel tree exactly.
+	 */
+	private static void styleTreesAreDistinctAndComplete() {
+		expectEquals(TankerProgressionRules.MASTERY_ORDER,
+				TankerProgressionRules.masteryOrder(TankerProgressionRules.GUARD),
+				"Sentinel tree must equal the shipped mastery order");
+		expectEquals(TankerProgressionRules.MASTERY_ORDER,
+				TankerProgressionRules.masteryOrder(null),
+				"A styleless Tanker must keep the Sentinel tree");
+		expectEquals(List.of("Heavy Blow", "Iron Body", "Seismic Grapple",
+						"Gigantification", "Colossus Charge", "Mountain Breaker"),
+				TankerProgressionRules.masteryOrder(TankerProgressionRules.MASS),
+				"Juggernaut tree");
+
+		List<String> shared = new java.util.ArrayList<>(
+				TankerProgressionRules.MASTERY_ORDER);
+		shared.retainAll(TankerProgressionRules.MASS_ORDER);
+		expectEquals(List.of(), shared,
+				"Tanker styles must not share any ability");
+
+		expectEquals(1, TankerProgressionRules.entitlementsForRank(
+						TankerProgressionRules.MASS, 1).size(),
+				"E rank must receive exactly one Juggernaut ability");
+		expectEquals(6, TankerProgressionRules.entitlementsForRank(
+						TankerProgressionRules.MASS, 6).size(),
+				"S rank must receive the full Juggernaut tree");
 	}
 
 	private static void canonicalAliasesAreExactAndTokenSafe() {

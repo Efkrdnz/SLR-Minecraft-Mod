@@ -4,10 +4,9 @@ package net.solocraft.entity;
 import net.solocraft.procedures.ManaBulletWhileProjectileFlyingTickProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.solocraft.network.compat.NetworkHooks;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Level;
@@ -18,15 +17,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.util.RandomSource;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 
 @OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
-public class ManaBulletEntity extends AbstractArrow implements ItemSupplier {
+public class ManaBulletEntity extends LegacyAbstractArrow implements ItemSupplier {
 	public static final ItemStack PROJECTILE_ITEM = new ItemStack(Blocks.AIR);
-
-	public ManaBulletEntity(PlayMessages.SpawnEntity packet, Level world) {
-		super(SololevelingModEntities.MANA_BULLET.get(), world);
-	}
 
 	public ManaBulletEntity(EntityType<? extends ManaBulletEntity> type, Level world) {
 		super(type, world);
@@ -41,18 +35,13 @@ public class ManaBulletEntity extends AbstractArrow implements ItemSupplier {
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
 	@OnlyIn(Dist.CLIENT)
 	public ItemStack getItem() {
 		return PROJECTILE_ITEM;
 	}
 
 	@Override
-	protected ItemStack getPickupItem() {
+	protected ItemStack getDefaultPickupItem() {
 		return PROJECTILE_ITEM;
 	}
 

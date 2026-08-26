@@ -3,8 +3,8 @@ package net.solocraft.item;
 
 import net.solocraft.procedures.KamishWrathHasItemGlowingEffectProcedure;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.Level;
@@ -14,37 +14,29 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 
 import java.util.List;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.ImmutableMultimap;
-
 public class KamishWrathItem extends Item {
 	public KamishWrathItem() {
-		super(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC));
+		super(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).attributes(ItemAttributeModifiers.builder()
+				.add(Attributes.ATTACK_DAMAGE,
+						new AttributeModifier(Item.BASE_ATTACK_DAMAGE_ID, 12.0D, AttributeModifier.Operation.ADD_VALUE),
+						EquipmentSlotGroup.MAINHAND)
+				.add(Attributes.ATTACK_SPEED,
+						new AttributeModifier(Item.BASE_ATTACK_SPEED_ID, -2.4D, AttributeModifier.Operation.ADD_VALUE),
+						EquipmentSlotGroup.MAINHAND)
+				.build()));
 	}
 
 	@Override
 	public float getDestroySpeed(ItemStack par1ItemStack, BlockState par2Block) {
 		return 1.9f;
-	}
-
-	@Override
-	public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot equipmentSlot) {
-		if (equipmentSlot == EquipmentSlot.MAINHAND) {
-			ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-			builder.putAll(super.getDefaultAttributeModifiers(equipmentSlot));
-			builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Item modifier", 12d, AttributeModifier.Operation.ADDITION));
-			builder.put(Attributes.ATTACK_SPEED, new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Item modifier", -2.4, AttributeModifier.Operation.ADDITION));
-			return builder.build();
-		}
-		return super.getDefaultAttributeModifiers(equipmentSlot);
 	}
 
 	@Override
@@ -55,12 +47,12 @@ public class KamishWrathItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("\u00A76LEVEL OF DIFFICULTY: ??"));
 		list.add(Component.literal("\u00A76TYPE: DAGGER"));
 		list.add(Component.literal("\u00A76ATTACK: UNSTABLE"));
 		list.add(Component.literal("\u00A76THE MOST POWERFUL DAGGER FORGED BY A MASTER CRAFTSMAN USING THE SHARPEST FANG OF A DRAGON. ITS SHARPNESS IS SECOND TO NONE, AND ITS MANA SENSITIVITY IS EXCEPTIONAL."));
-		list.add(Component.literal("\u00A76THIS WEAPON WILL BECOME MORE POWERFUL DEPENDING ON THE USERS CAPABILITIES."));
+		list.add(Component.literal("\u00A76PASSIVE \"MANA SENSITIVITY\": EACH HELD FANG COMBINES THE WIELDER'S PERMANENT STRENGTH AND INTELLIGENCE INTO A SCALING STRENGTH BONUS."));
 	}
 }

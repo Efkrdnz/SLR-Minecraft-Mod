@@ -2,11 +2,16 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,12 +21,12 @@ import net.minecraft.world.entity.Entity;
 import javax.annotation.Nullable;
 import net.solocraft.util.CooldownManager;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class ManaRegenProcedure {
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player);
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true) {
+			execute(event, event.getEntity());
 		}
 	}
 
@@ -55,7 +60,8 @@ public class ManaRegenProcedure {
 		}
 		if (capability.MP < capability.Mana && !suppressRegen
 				&& !CooldownManager.isOnCooldown(entity, "mana_refresh")) {
-			capability.MP += capability.manaregen + (capability.Intelligence / 20) * 2;
+			capability.MP += capability.manaregen
+					+ (TemporaryStatBonusManager.effectiveIntelligence(entity) / 20) * 2;
 		}
 		if (capability.MP > capability.Mana)
 			capability.MP = capability.Mana;

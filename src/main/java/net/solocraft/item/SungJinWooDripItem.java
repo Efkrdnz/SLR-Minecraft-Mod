@@ -3,10 +3,11 @@ package net.solocraft.item;
 
 import net.solocraft.client.model.Modeljinwoolegs1;
 import net.solocraft.client.model.Modeljinwoochest1;
+import net.solocraft.init.SololevelingModArmorMaterials;
 
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -32,47 +33,7 @@ import java.util.Collections;
 
 public abstract class SungJinWooDripItem extends ArmorItem {
 	public SungJinWooDripItem(ArmorItem.Type type, Item.Properties properties) {
-		super(new ArmorMaterial() {
-			@Override
-			public int getDurabilityForType(ArmorItem.Type type) {
-				return new int[]{13, 15, 16, 11}[type.getSlot().getIndex()] * 0;
-			}
-
-			@Override
-			public int getDefenseForType(ArmorItem.Type type) {
-				return new int[]{3, 6, 7, 3}[type.getSlot().getIndex()];
-			}
-
-			@Override
-			public int getEnchantmentValue() {
-				return 9;
-			}
-
-			@Override
-			public SoundEvent getEquipSound() {
-				return SoundEvents.EMPTY;
-			}
-
-			@Override
-			public Ingredient getRepairIngredient() {
-				return Ingredient.of();
-			}
-
-			@Override
-			public String getName() {
-				return "sung_jin_woo_drip";
-			}
-
-			@Override
-			public float getToughness() {
-				return 0.5f;
-			}
-
-			@Override
-			public float getKnockbackResistance() {
-				return 0f;
-			}
-		}, type, properties);
+		super(SololevelingModArmorMaterials.SUNG_JIN_WOO_DRIP, type, properties);
 	}
 
 	public static class Chestplate extends SungJinWooDripItem {
@@ -99,13 +60,8 @@ public abstract class SungJinWooDripItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/entities/jinwoo1text.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override
@@ -139,13 +95,8 @@ public abstract class SungJinWooDripItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/entities/jinwoo1text.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override

@@ -4,6 +4,7 @@ import net.solocraft.entity.HunterEntity;
 import net.solocraft.util.ArcaneMageSpellManager;
 import net.solocraft.util.BarrierMageSpellManager;
 import net.solocraft.util.FireMageSpellManager;
+import net.solocraft.util.CurseMageSpellManager;
 import net.solocraft.util.StormMageSpellManager;
 
 import net.minecraft.world.phys.Vec3;
@@ -61,13 +62,31 @@ public class RandomHunterMageTickProcedure {
 						rand = Mth.nextInt(RandomSource.create(), 1, 100);
 						String specialization = entity.getPersistentData().getString("sl_hunter_mage_specialization");
 						if (specialization.isBlank()) {
-							specialization = switch (entity.level().getRandom().nextInt(4)) {
+							specialization = switch (entity.level().getRandom().nextInt(5)) {
 								case 1 -> "barrier";
 								case 2 -> "arcane";
 								case 3 -> "storm";
+								case 4 -> "curse";
 								default -> "fire";
 							};
 							entity.getPersistentData().putString("sl_hunter_mage_specialization", specialization);
+						}
+						if ("curse".equals(specialization)) {
+							// Generated Curse hunters lean on the direct delivery and
+							// widen out as their stage rises.
+							String curseSpell = stage <= 1 ? CurseMageSpellManager.HEX_BOLT
+									: stage == 2 ? (rand <= 70 ? CurseMageSpellManager.HEX_BOLT
+											: CurseMageSpellManager.MALEFIC_BURST)
+									: stage == 3 ? (rand <= 50 ? CurseMageSpellManager.HEX_BOLT
+											: rand <= 82 ? CurseMageSpellManager.MALEFIC_BURST
+											: CurseMageSpellManager.CREEPING_MIASMA)
+									: (rand <= 38 ? CurseMageSpellManager.HEX_BOLT
+											: rand <= 66 ? CurseMageSpellManager.MALEFIC_BURST
+											: rand <= 86 ? CurseMageSpellManager.CREEPING_MIASMA
+											: CurseMageSpellManager.CULLING);
+							if (!CurseMageSpellManager.castNpc(entity, curseSpell))
+								CurseMageSpellManager.castNpc(entity, CurseMageSpellManager.HEX_BOLT);
+							return;
 						}
 						if ("storm".equals(specialization)) {
 							String stormSpell;

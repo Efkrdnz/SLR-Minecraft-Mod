@@ -1,0 +1,26 @@
+{
+  "display": {
+    "icon": {
+      "id": "sololeveling:mana_crystal_a"
+    },
+    "title": {
+      "translate": "advancements.skeleton_summoner_adv.title"
+    },
+    "description": {
+      "translate": "advancements.skeleton_summoner_adv.descr"
+    },
+    "frame": "challenge",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "skeleton_summoner_adv": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 50
+  },
+  "parent": "sololeveling:explore_dun_rank_b"
+}

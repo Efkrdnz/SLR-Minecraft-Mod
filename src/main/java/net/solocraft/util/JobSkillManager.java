@@ -1,6 +1,7 @@
 package net.solocraft.util;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.api.CastSource;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.Ability1OnKeyPressedProcedure;
 import net.solocraft.procedures.Ability1OnKeyReleasedProcedure;
@@ -15,9 +16,13 @@ import net.solocraft.procedures.GoliathManifestationProcedure;
 import net.solocraft.procedures.ShadowCommandOpenProcedure;
 import net.solocraft.procedures.SkillSlotHelper;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.ChatFormatting;
@@ -32,14 +37,17 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class JobSkillManager {
+	public static final int RULER_SKILL_COLOR = 0xFFD34E;
 	public static final String ARISE = "Arise";
 	public static final String SHADOW_SUMMON = "Shadow Summon";
 	public static final String DISMISS_SHADOWS = "Dismiss Shadows";
 	public static final String SHADOW_COMMAND = "Shadow Command";
 	public static final String SHADOW_EXCHANGE = "Shadow Exchange";
 	public static final String SHADOW_MANIFESTATION = "Shadow Manifestation";
+	public static final String GRAND_MARSHAL_AUTHORITY =
+			"Grand Marshal Authority";
 	public static final String RUNESTONE_SHADOW_EXCHANGE_TAG =
 			"slr_runestone_skill_shadow_exchange";
 	public static final String RUNESTONE_SHADOW_MANIFESTATION_TAG =
@@ -71,11 +79,25 @@ public class JobSkillManager {
 	public static final String LIU_GOLDEN_DRAGON_DANCE = LiuZhigangCombatManager.GOLDEN_DRAGON_DANCE;
 	public static final String LIU_SOVEREIGN_SWORD_DOMAIN = LiuZhigangCombatManager.SOVEREIGN_SWORD_DOMAIN;
 	public static final String LIU_MANIFESTATION = LiuZhigangCombatManager.DRAGON_SWORD_MANIFESTATION;
+	public static final String SUNG_PREDATORS_PRESENCE =
+			SungIlHwanCombatManager.SKILL_PREDATORS_PRESENCE;
+	public static final String SUNG_ASSASSIN_STANCE =
+			SungIlHwanCombatManager.SKILL_ASSASSIN_STANCE;
+	public static final String SUNG_SPATIAL_EXECUTION =
+			SungIlHwanCombatManager.SKILL_SPATIAL_EXECUTION;
+	public static final String SUNG_SPIRITUALIZATION =
+			SungIlHwanCombatManager.SKILL_SPIRITUALIZATION;
 	public static final String BEAST_CLAW_RIFT = BeastMonarchManager.CLAW_RIFT;
 	public static final String BEAST_RUBBLE_JAW = BeastMonarchManager.RUBBLE_JAW;
 	public static final String BEAST_KINGS_MAUL = BeastMonarchManager.KINGS_MAUL;
 	public static final String BEAST_RECONSTITUTION = BeastMonarchManager.FERAL_RECONSTITUTION;
 	public static final String BEAST_WHITE_FANG = BeastMonarchManager.WHITE_FANG_SOVEREIGN;
+	public static final String ANTARES_DESTRUCTION_CLAW = AntaresCombatManager.DESTRUCTION_CLAW;
+	public static final String ANTARES_BREATH = AntaresCombatManager.BREATH_OF_DESTRUCTION;
+	public static final String ANTARES_DESCENT = AntaresCombatManager.MONARCHS_DESCENT;
+	public static final String ANTARES_ROAR = AntaresCombatManager.SOVEREIGN_ROAR;
+	public static final String ANTARES_EXTINCTION = AntaresCombatManager.EXTINCTION;
+	public static final String ANTARES_MANIFESTATION = AntaresCombatManager.MONARCH_MANIFESTATION;
 
 	private static final String LAST_SYNCED_JOB = "sololeveling:last_synced_job_skills";
 	private static final String RETIRED_KINGS_VERDICT = "King's Verdict";
@@ -85,15 +107,22 @@ public class JobSkillManager {
 	private static final List<String> LIU_SKILLS = List.of(
 			LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE,
 			LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION);
+	private static final List<String> SUNG_SKILLS = List.of(
+			SUNG_PREDATORS_PRESENCE, SUNG_ASSASSIN_STANCE,
+			SUNG_SPATIAL_EXECUTION, SUNG_SPIRITUALIZATION);
 	private static final List<String> FROST_SKILLS = List.of(
 			ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH,
 			FROZEN_ARCHITECTURE, FROST_COUNTER, ABSOLUTE_ZERO, FROST_SPIRITUALIZATION);
 	private static final List<String> BEAST_SKILLS = List.of(
 			BEAST_CLAW_RIFT, BEAST_RUBBLE_JAW, BEAST_KINGS_MAUL,
 			BEAST_RECONSTITUTION, BEAST_WHITE_FANG);
+	private static final List<String> ANTARES_SKILLS = List.of(
+			ANTARES_DESTRUCTION_CLAW, ANTARES_BREATH, ANTARES_DESCENT,
+			ANTARES_ROAR, ANTARES_EXTINCTION, ANTARES_MANIFESTATION);
 
 	private static final List<String> ALL_JOB_SKILLS = List.of(
-			ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION,
+			ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND,
+			SHADOW_EXCHANGE, SHADOW_MANIFESTATION, GRAND_MARSHAL_AUTHORITY,
 			FIRE_CHARGE, METEOR_RAIN, FIREFLIES,
 			"Ice Ball", "Ice Chunk", "Snow Screen", "Stillness Decree", "Pale Causeway",
 			"Winter Remembers", "Whiteout Procession",
@@ -101,26 +130,37 @@ public class JobSkillManager {
 			ABSOLUTE_ZERO, FROST_SPIRITUALIZATION,
 			THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION,
 			LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE, LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION,
+			SUNG_PREDATORS_PRESENCE, SUNG_ASSASSIN_STANCE,
+			SUNG_SPATIAL_EXECUTION, SUNG_SPIRITUALIZATION,
 			MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST,
 			LIGHTNING_BREATH, HELLSTORM_DOMINION, RETIRED_KINGS_VERDICT, RADIRU_BLOOD_SPEAR,
 			DOPPELGANGER, HELLS_ARMY, WHITE_FLAME_SPIRITUALIZATION,
 			BEAST_CLAW_RIFT, BEAST_RUBBLE_JAW, BEAST_KINGS_MAUL,
-			BEAST_RECONSTITUTION, BEAST_WHITE_FANG);
+			BEAST_RECONSTITUTION, BEAST_WHITE_FANG,
+			ANTARES_DESTRUCTION_CLAW, ANTARES_BREATH, ANTARES_DESCENT,
+			ANTARES_ROAR, ANTARES_EXTINCTION, ANTARES_MANIFESTATION);
 
 	private JobSkillManager() {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide())
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || event.getEntity().level().isClientSide())
 			return;
-		if (event.player.tickCount % 40 != 0)
+		if (event.getEntity().tickCount % 40 != 0)
 			return;
-		syncJobSkills(event.player);
+		syncJobSkills(event.getEntity());
 	}
 
 	public static boolean isJobSkill(String skill) {
 		return ALL_JOB_SKILLS.contains(skill);
+	}
+
+	/** Returns whether this concrete player has learned a job/vessel ability. */
+	public static boolean hasLearnedSkill(Entity entity, String skill) {
+		if (entity == null || skill == null || skill.isBlank())
+			return false;
+		return parseSkillList(variables(entity).Plist).contains(skill);
 	}
 
 	public static void markRunestoneSkill(Entity entity, String tag) {
@@ -143,6 +183,10 @@ public class JobSkillManager {
 		return LIU_SKILLS.contains(skill);
 	}
 
+	public static boolean isSungSkill(String skill) {
+		return SUNG_SKILLS.contains(skill);
+	}
+
 	public static boolean isFrostSkill(String skill) {
 		return FROST_SKILLS.contains(skill);
 	}
@@ -151,27 +195,44 @@ public class JobSkillManager {
 		return BEAST_SKILLS.contains(skill);
 	}
 
+	public static boolean isAntaresSkill(String skill) {
+		return ANTARES_SKILLS.contains(skill);
+	}
+
 	public static int skillColor(String skill) {
-		if (List.of(ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION).contains(skill))
+		if (List.of(ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND,
+				SHADOW_EXCHANGE, SHADOW_MANIFESTATION,
+				GRAND_MARSHAL_AUTHORITY).contains(skill))
 			return 0xB965FF;
 		if (List.of(FIRE_CHARGE, METEOR_RAIN, FIREFLIES).contains(skill))
 			return 0xFF5A32;
 		if (isFrostSkill(skill))
 			return 0x6FE8FF;
-		if (List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION).contains(skill))
-			return 0xFFD35A;
-		if (isLiuSkill(skill))
-			return 0xFFD34E;
+		if (List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE,
+				THOMAS_MANIFESTATION).contains(skill)
+				|| isLiuSkill(skill) || isSungSkill(skill))
+			return RULER_SKILL_COLOR;
 		if (isWhiteFlameSkill(skill))
 			return 0xFFFFFF;
 		if (isBeastSkill(skill))
 			return 0xFF8A24;
+		if (isAntaresSkill(skill))
+			return 0xE3313E;
 		if (List.of(MONARCH_BEAM, LIGHTNING_STORM, STORM_BURST).contains(skill))
 			return 0xFFE38A;
 		return 0xFFFFFF;
 	}
 
 	public static List<Component> tooltip(Entity entity, String skill) {
+		if (GRAND_MARSHAL_AUTHORITY.equals(skill)
+				&& !DeveloperModeManager.isEnabled(entity))
+			return List.of(
+					Component.literal(GRAND_MARSHAL_AUTHORITY)
+							.withStyle(ChatFormatting.GOLD,
+									ChatFormatting.BOLD),
+					Component.literal("WIP (Work in progress)")
+							.withStyle(ChatFormatting.RED,
+									ChatFormatting.BOLD));
 		if (RangerCombatManager.isRangerSkill(skill))
 			return RangerCombatManager.tooltip(entity, skill);
 		if (FireMageSpellManager.isFireSkill(skill))
@@ -182,14 +243,45 @@ public class JobSkillManager {
 			return ArcaneMageSpellManager.tooltip(entity, skill);
 		if (StormMageSpellManager.isStormSkill(skill))
 			return StormMageSpellManager.tooltip(entity, skill);
+		if (CurseMageSpellManager.isCurseSkill(skill))
+			return CurseMageSpellManager.tooltip(entity, skill);
 		if (isFrostSkill(skill))
 			return frostTooltip(entity, skill);
 		if (isWhiteFlameSkill(skill))
 			return whiteFlameTooltip(entity, skill);
 		if (isLiuSkill(skill))
 			return liuTooltip(entity, skill);
+		if (isSungSkill(skill))
+			return sungTooltip(entity, skill);
 		if (isBeastSkill(skill))
 			return beastTooltip(entity, skill);
+		if (isAntaresSkill(skill))
+			return antaresTooltip(entity, skill);
+		if (GRAND_MARSHAL_AUTHORITY.equals(skill))
+			return List.of(
+					Component.literal(GRAND_MARSHAL_AUTHORITY)
+							.withStyle(ChatFormatting.GOLD,
+									ChatFormatting.BOLD),
+					Component.literal(
+							"Borrow the signature art of your appointed Grand Marshal.")
+							.withStyle(ChatFormatting.GRAY),
+					Component.literal(
+							"The commander must be summoned and alive.")
+							.withStyle(ChatFormatting.LIGHT_PURPLE),
+					Component.literal(
+							"Each signature spends mana; all commanders share one recharge.")
+							.withStyle(ChatFormatting.YELLOW));
+		if (ARISE.equals(skill))
+			return List.of(
+					Component.literal(ARISE).withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.BOLD),
+					Component.literal("Extract every eligible shadow within 18 blocks.").withStyle(ChatFormatting.GRAY),
+					Component.literal("Includes Igris, Beru, and Kaisel. Sneak-cast to scan.").withStyle(ChatFormatting.LIGHT_PURPLE),
+					Component.literal("500 MP per successful extraction | 2.6s cooldown").withStyle(ChatFormatting.YELLOW));
+		// Ordinary Hunter abilities describe themselves through the shared
+		// registry. Without this they fell through to the placeholder below,
+		// which printed the skill name twice and nothing else.
+		if (SkillDescriptionRegistry.has(skill))
+			return SkillDescriptionRegistry.tooltip(entity, skill);
 		if (!List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION).contains(skill))
 			return List.of(Component.literal(ShadowMonarchManager.displaySkillName(entity, skill)), Component.literal(skill));
 		boolean manifested = GoliathCombatManager.isManifested(entity);
@@ -303,6 +395,16 @@ public class JobSkillManager {
 		return lines;
 	}
 
+	private static List<Component> sungTooltip(Entity entity, String skill) {
+		ArrayList<Component> lines = new ArrayList<>();
+		lines.add(Component.literal(skill).withStyle(
+				ChatFormatting.GOLD, ChatFormatting.BOLD));
+		Component description = SungIlHwanCombatManager.tooltip(entity, skill);
+		if (!description.getString().isBlank())
+			lines.add(description.copy().withStyle(ChatFormatting.GRAY));
+		return lines;
+	}
+
 	private static List<Component> beastTooltip(Entity entity, String skill) {
 		boolean sovereign = BeastMonarchManager.isWhiteFangSovereign(entity);
 		ArrayList<Component> lines = new ArrayList<>();
@@ -350,6 +452,64 @@ public class JobSkillManager {
 				lines.add(Component.literal("Enhances every Beast skill, adds a fourth claw beat, and increases movement speed.")
 						.withStyle(ChatFormatting.GOLD));
 				lines.add(Component.literal("600 base MP | 20s duration | Press again to end early").withStyle(ChatFormatting.YELLOW));
+			}
+			default -> {
+			}
+		}
+		return lines;
+	}
+
+	private static List<Component> antaresTooltip(Entity entity, String skill) {
+		ArrayList<Component> lines = new ArrayList<>();
+		lines.add(Component.literal(skill).withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD));
+		switch (skill) {
+			case ANTARES_DESTRUCTION_CLAW -> {
+				lines.add(Component.literal("Carve a destructive cone and gain Ruin when it hits.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Sneak-cast at 3 Ruin to spend it on a wider, crushing finisher.")
+						.withStyle(ChatFormatting.RED));
+				lines.add(Component.literal("140 base MP | 3.6s cooldown | 3 Ruin max")
+						.withStyle(ChatFormatting.YELLOW));
+			}
+			case ANTARES_BREATH -> {
+				lines.add(Component.literal("Channel a terrain-piercing destruction-fire beam through enemies.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Successful pulses ignite targets and grant one Ruin per cast.")
+						.withStyle(ChatFormatting.RED));
+				lines.add(Component.literal("144m range (176m manifested) | 320 base MP | 8s cooldown")
+						.withStyle(ChatFormatting.YELLOW));
+			}
+			case ANTARES_DESCENT -> {
+				lines.add(Component.literal("Launch into a controllable dragon rush, then rupture on landing.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Airborne downward casts begin as dives; successful impacts grant Ruin.")
+						.withStyle(ChatFormatting.RED));
+				lines.add(Component.literal("280 base MP | 9s cooldown")
+						.withStyle(ChatFormatting.YELLOW));
+			}
+			case ANTARES_ROAR -> {
+				lines.add(Component.literal("Release a dragon pressure wave that damages and Overawes enemies.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Repels hostile projectiles; bosses receive reduced control.")
+						.withStyle(ChatFormatting.RED));
+				lines.add(Component.literal("420 base MP | 14s cooldown")
+						.withStyle(ChatFormatting.YELLOW));
+			}
+			case ANTARES_EXTINCTION -> {
+				lines.add(Component.literal("Lock a terrain-piercing destruction lane, then fire three catastrophic pulses.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Requires and consumes all 3 Ruin. Aim locks during the wind-up.")
+						.withStyle(ChatFormatting.RED));
+				lines.add(Component.literal("288m range (352m manifested) | 900 base MP | 30s cooldown | Costs 3 Ruin")
+						.withStyle(ChatFormatting.YELLOW));
+			}
+			case ANTARES_MANIFESTATION -> {
+				lines.add(Component.literal("Toggle Antares's draconic spiritual body and destruction aura.")
+						.withStyle(ChatFormatting.GRAY));
+				lines.add(Component.literal("Enhances every art, prevents Ruin decay, and resists fire and explosions.")
+						.withStyle(ChatFormatting.RED));
+				lines.add(Component.literal("800 base MP to awaken | 16 MP per second | Recast to release")
+						.withStyle(ChatFormatting.YELLOW));
 			}
 			default -> {
 			}
@@ -418,22 +578,36 @@ public class JobSkillManager {
 	}
 
 	public static boolean cast(LevelAccessor world, double x, double y, double z, Entity entity, String skill) {
+		return cast(world, x, y, z, entity, skill, CastSource.MANUAL);
+	}
+
+	/**
+	 * @param source how the cast reached us. A presentation hint for the skill
+	 *               being cast; it grants no authority and skips no validation.
+	 */
+	public static boolean cast(LevelAccessor world, double x, double y, double z, Entity entity, String skill, CastSource source) {
 		if (entity == null || skill == null || !isJobSkill(skill))
 			return false;
+		// Every vessel active funnels through here, which makes it the one place
+		// the Cartenon lockout has to hold.
+		if (CartenonSuppression.blockVesselSkill(entity))
+			return true;
 		syncJobSkills(entity);
 		SololevelingModVariables.PlayerVariables vars = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
-		if (!skillsForEntityJob(entity, (int) vars.JOB).contains(skill)) {
+		if (!parseSkillList(vars.Plist).contains(skill)) {
 			if (entity instanceof Player player && !player.level().isClientSide())
-				player.displayClientMessage(Component.literal("This job skill does not belong to your current job."), true);
+				player.displayClientMessage(Component.literal("You have not learned this skill."), true);
 			return true;
 		}
 		switch (skill) {
-			case ARISE -> AriseSkillProcedure.execute(world, x, y, z, entity);
+			case ARISE -> AriseSkillProcedure.execute(world, x, y, z, entity,
+					source == null ? CastSource.MANUAL : source);
 			case SHADOW_SUMMON -> runOldJobAbility(entity, () -> Ability1OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case DISMISS_SHADOWS -> Ability3ResetProcedure.execute(world, x, y, z, entity);
 			case SHADOW_COMMAND -> ShadowCommandOpenProcedure.execute(world, x, y, z, entity);
 			case SHADOW_EXCHANGE -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case SHADOW_MANIFESTATION -> runOldJobAbility(entity, () -> Ability4OnKeyPressedProcedure.execute(world, x, y, z, entity));
+			case GRAND_MARSHAL_AUTHORITY -> GrandMarshalAbilityManager.cast(entity);
 			case THOMAS_CAPTURE -> GoliathCombatManager.castCapture(entity);
 			case THOMAS_POWER_SMASH -> GoliathCombatManager.castPowerSmash(entity);
 			case THOMAS_COLLAPSE -> GoliathCombatManager.castCollapse(entity);
@@ -442,11 +616,20 @@ public class JobSkillManager {
 			case LIU_GOLDEN_DRAGON_DANCE -> LiuZhigangCombatManager.castGoldenDragonDance(entity);
 			case LIU_SOVEREIGN_SWORD_DOMAIN -> LiuZhigangCombatManager.castSovereignSwordDomain(entity);
 			case LIU_MANIFESTATION -> LiuZhigangCombatManager.toggleDragonSwordManifestation(entity);
+			case SUNG_PREDATORS_PRESENCE, SUNG_ASSASSIN_STANCE,
+					SUNG_SPATIAL_EXECUTION, SUNG_SPIRITUALIZATION ->
+					SungIlHwanCombatManager.press(entity, skill);
 			case BEAST_CLAW_RIFT -> BeastMonarchManager.castClawRift(entity);
 			case BEAST_RUBBLE_JAW -> BeastMonarchManager.castRubbleJaw(entity);
 			case BEAST_KINGS_MAUL -> BeastMonarchManager.castKingsMaul(entity);
 			case BEAST_RECONSTITUTION -> BeastMonarchManager.castFeralReconstitution(entity);
 			case BEAST_WHITE_FANG -> BeastMonarchManager.castWhiteFangSovereign(entity);
+			case ANTARES_DESTRUCTION_CLAW -> AntaresCombatManager.castDestructionClaw(entity);
+			case ANTARES_BREATH -> AntaresCombatManager.castBreathOfDestruction(entity);
+			case ANTARES_DESCENT -> AntaresCombatManager.castMonarchsDescent(entity);
+			case ANTARES_ROAR -> AntaresCombatManager.castSovereignRoar(entity);
+			case ANTARES_EXTINCTION -> AntaresCombatManager.castExtinction(entity);
+			case ANTARES_MANIFESTATION -> AntaresCombatManager.toggleManifestation(entity);
 			case FIRE_CHARGE -> castFireCharge(world, x, y, z, entity);
 			case METEOR_RAIN -> runOldJobAbility(entity, () -> Ability2OnKeyPressedProcedure.execute(world, x, y, z, entity));
 			case FIREFLIES -> runOldJobAbility(entity, () -> Ability3OnKeyPressedProcedure.execute(world, x, y, z, entity));
@@ -481,17 +664,32 @@ public class JobSkillManager {
 			FrostMonarchManager.releaseFrozenPath(entity);
 			return true;
 		}
+		if (isSungSkill(skill)) {
+			SungIlHwanCombatManager.release(entity, skill, pressedMs);
+			return true;
+		}
 		return false;
 	}
 
 	public static String cooldownKey(String skill) {
 		return switch (skill) {
+			case ARISE -> "arise";
+			case GRAND_MARSHAL_AUTHORITY ->
+					GrandMarshalAbilityManager.COOLDOWN_KEY;
 			case FIRE_CHARGE, MONARCH_BEAM -> "job_1";
 			case METEOR_RAIN, LIGHTNING_STORM -> "job_2";
 			case FIREFLIES, STORM_BURST -> "job_3";
 			case SHADOW_MANIFESTATION, THOMAS_MANIFESTATION -> "job_4";
+			case ANTARES_DESTRUCTION_CLAW -> AntaresCombatManager.CLAW_COOLDOWN;
+			case ANTARES_BREATH -> AntaresCombatManager.BREATH_COOLDOWN;
+			case ANTARES_DESCENT -> AntaresCombatManager.DESCENT_COOLDOWN;
+			case ANTARES_ROAR -> AntaresCombatManager.ROAR_COOLDOWN;
+			case ANTARES_EXTINCTION -> AntaresCombatManager.EXTINCTION_COOLDOWN;
+			case ANTARES_MANIFESTATION -> AntaresCombatManager.MANIFESTATION_COOLDOWN;
 			case THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE,
 					LIU_HEAVENLY_COUNTER, LIU_GOLDEN_DRAGON_DANCE, LIU_SOVEREIGN_SWORD_DOMAIN, LIU_MANIFESTATION,
+					SUNG_PREDATORS_PRESENCE, SUNG_ASSASSIN_STANCE,
+					SUNG_SPATIAL_EXECUTION, SUNG_SPIRITUALIZATION,
 					ICE_SPEAR, FLASH_FREEZE, FROZEN_PATH, FROZEN_ARCHITECTURE, FROST_COUNTER,
 					ABSOLUTE_ZERO, BEAST_CLAW_RIFT, BEAST_RUBBLE_JAW, BEAST_KINGS_MAUL,
 					BEAST_RECONSTITUTION, BEAST_WHITE_FANG -> skill;
@@ -549,31 +747,45 @@ public class JobSkillManager {
 
 	private static List<String> skillsForJob(int job) {
 		return switch (job) {
-			case 1 -> List.of(ARISE, SHADOW_SUMMON, DISMISS_SHADOWS, SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION);
+			case 1 -> List.of(ARISE, SHADOW_SUMMON, DISMISS_SHADOWS,
+					SHADOW_COMMAND, SHADOW_EXCHANGE, SHADOW_MANIFESTATION,
+					GRAND_MARSHAL_AUTHORITY);
 			case 2 -> List.of(FIRE_CHARGE, METEOR_RAIN, FIREFLIES);
 			case 3 -> FROST_SKILLS;
 			case 4 -> List.of(LIGHTNING_BREATH, HELLSTORM_DOMINION,
 					RADIRU_BLOOD_SPEAR, DOPPELGANGER, HELLS_ARMY, WHITE_FLAME_SPIRITUALIZATION);
 			case 5 -> List.of(THOMAS_CAPTURE, THOMAS_POWER_SMASH, THOMAS_COLLAPSE, THOMAS_MANIFESTATION);
 			case 6 -> LIU_SKILLS;
+			case 7 -> SUNG_SKILLS;
 			case 9 -> BEAST_SKILLS;
+			case 10 -> ANTARES_SKILLS;
 			default -> List.of();
 		};
 	}
 
 	private static List<String> skillsForEntityJob(Entity entity, int job) {
+		if (job == 7
+				&& !DeveloperModeManager.isEnabled(entity))
+			return List.of();
 		ArrayList<String> skills = new ArrayList<>(VesselProgressionManager.unlockedSkills(entity, job));
 		SololevelingModVariables.PlayerVariables vars = entity.getCapability(
 				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 				.orElse(new SololevelingModVariables.PlayerVariables());
-		if (vars.ShadowExchange
+		if (VesselProgressionManager.isShadowMonarch(entity) && vars.ShadowExchange
 				&& hasRunestoneSkill(entity, RUNESTONE_SHADOW_EXCHANGE_TAG)
 				&& !skills.contains(SHADOW_EXCHANGE))
 			skills.add(SHADOW_EXCHANGE);
-		if (vars.ShadowBody
+		if (VesselProgressionManager.isShadowMonarch(entity) && vars.ShadowBody
 				&& hasRunestoneSkill(entity, RUNESTONE_SHADOW_MANIFESTATION_TAG)
 				&& !skills.contains(SHADOW_MANIFESTATION))
 			skills.add(SHADOW_MANIFESTATION);
+		boolean grandMarshalGranted = entity.level().isClientSide()
+				? parseSkillList(vars.Plist).contains(
+						GRAND_MARSHAL_AUTHORITY)
+				: ShadowMonarchManager.hasAssignedGrandMarshal(entity);
+		if (grandMarshalGranted
+				&& !skills.contains(GRAND_MARSHAL_AUTHORITY))
+			skills.add(GRAND_MARSHAL_AUTHORITY);
 		return List.copyOf(skills);
 	}
 
@@ -619,6 +831,8 @@ public class JobSkillManager {
 		String cleaned = cleanSkill(skill);
 		if (cleaned.isEmpty())
 			return false;
+		// Vessel abilities belong to the current vessel. They must not survive a
+		// vessel change in the skill list or an equipped slot.
 		if (ALL_JOB_SKILLS.contains(cleaned))
 			return !granted.contains(cleaned);
 		return ShadowMonarchManager.isFormationSkill(cleaned) && !keepFormations;
@@ -635,6 +849,11 @@ public class JobSkillManager {
 		if (skill.startsWith("."))
 			skill = skill.substring(1);
 		return skill;
+	}
+
+	private static SololevelingModVariables.PlayerVariables variables(Entity entity) {
+		return entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables());
 	}
 
 	private static String writeSkillList(List<String> skills) {

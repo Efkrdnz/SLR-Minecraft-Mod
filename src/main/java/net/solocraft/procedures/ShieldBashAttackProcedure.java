@@ -3,7 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -47,8 +47,8 @@ public class ShieldBashAttackProcedure {
 					entity.setDeltaMovement(new Vec3(0, 0, 0));
 					entityiterator.setDeltaMovement(new Vec3(0, 0, 0));
 					if (entity instanceof LivingEntity _entity)
-						_entity.removeEffect(SololevelingModMobEffects.SHIELD_BASH_EFFECT.get());
-					entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:tanker"))), entity), 2);
+						_entity.removeEffect(SololevelingModMobEffects.SHIELD_BASH_EFFECT);
+					entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:tanker"))), entity), 2);
 					if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 4, false, false));
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
@@ -58,9 +58,9 @@ public class ShieldBashAttackProcedure {
 					SololevelingMod.queueServerWork(3, () -> {
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
+								_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
 							} else {
-								_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
+								_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
 							}
 						}
 						entityiterator.setDeltaMovement(new Vec3((entity.getLookAngle().x * 2), (entity.getLookAngle().y), (entity.getLookAngle().z * 2)));

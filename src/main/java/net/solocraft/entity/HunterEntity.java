@@ -8,9 +8,8 @@ import net.solocraft.procedures.HunterOnInitialEntitySpawnProcedure;
 import net.solocraft.procedures.HunterOnEntityTickUpdateProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
@@ -28,14 +27,13 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.solocraft.entity.ai.LegacyMeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.FollowOwnerGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.SpawnGroupData;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
@@ -53,7 +51,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
 
@@ -77,13 +74,9 @@ public class HunterEntity extends TamableAnimal {
 	public static final EntityDataAccessor<String> DATA_Allies = SynchedEntityData.defineId(HunterEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> DATA_Enemies = SynchedEntityData.defineId(HunterEntity.class, EntityDataSerializers.STRING);
 
-	public HunterEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.HUNTER.get(), world);
-	}
-
 	public HunterEntity(EntityType<HunterEntity> type, Level world) {
 		super(type, world);
-		setMaxUpStep(0.6f);
+		getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6f);
 		xpReward = 4;
 		setNoAi(false);
 		setCustomName(Component.literal("Hunter"));
@@ -92,27 +85,22 @@ public class HunterEntity extends TamableAnimal {
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(DATA_Rank, "");
-		this.entityData.define(DATA_HunterClass, "");
-		this.entityData.define(DATA_TopIn, 0);
-		this.entityData.define(DATA_TopOut, 0);
-		this.entityData.define(DATA_Bottom, 0);
-		this.entityData.define(DATA_Foot, 0);
-		this.entityData.define(DATA_Eyes, 0);
-		this.entityData.define(DATA_EyeBs, 0);
-		this.entityData.define(DATA_Hair, 0);
-		this.entityData.define(DATA_Mouth, 0);
-		this.entityData.define(DATA_IA, 0);
-		this.entityData.define(DATA_backoff, 0);
-		this.entityData.define(DATA_Allies, "");
-		this.entityData.define(DATA_Enemies, "");
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(DATA_Rank, "");
+		builder.define(DATA_HunterClass, "");
+		builder.define(DATA_TopIn, 0);
+		builder.define(DATA_TopOut, 0);
+		builder.define(DATA_Bottom, 0);
+		builder.define(DATA_Foot, 0);
+		builder.define(DATA_Eyes, 0);
+		builder.define(DATA_EyeBs, 0);
+		builder.define(DATA_Hair, 0);
+		builder.define(DATA_Mouth, 0);
+		builder.define(DATA_IA, 0);
+		builder.define(DATA_backoff, 0);
+		builder.define(DATA_Allies, "");
+		builder.define(DATA_Enemies, "");
 	}
 
 	@Override
@@ -137,7 +125,7 @@ public class HunterEntity extends TamableAnimal {
 								&& super.canContinueToUse();
 					}
 				});
-		this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.2, false) {
+		this.goalSelector.addGoal(3, new LegacyMeleeAttackGoal(this, 1.2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
 				double reach = this.mob.getBbWidth() * 0.5D + entity.getBbWidth() * 0.5D + 1.25D;
@@ -155,7 +143,7 @@ public class HunterEntity extends TamableAnimal {
 			}
 
 		});
-		this.goalSelector.addGoal(4, new FollowOwnerGoal(this, 1, (float) 10, (float) 2, false) {
+		this.goalSelector.addGoal(4, new FollowOwnerGoal(this, 1, (float) 10, (float) 2) {
 			@Override
 			public boolean canUse() {
 				double x = HunterEntity.this.getX();
@@ -200,33 +188,28 @@ public class HunterEntity extends TamableAnimal {
 	}
 
 	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
-	}
-
-	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
 	}
 
 	@Override
-	public double getMyRidingOffset() {
-		return -0.35D;
+	public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
+		return super.getVehicleAttachmentPoint(vehicle).add(0.0D, 0.35D, 0.0D);
 	}
 
 	@Override
 	public SoundEvent getHurtSound(DamageSource ds) {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.hurt"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.hurt"));
 	}
 
 	@Override
 	public SoundEvent getDeathSound() {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.death"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.death"));
 	}
 
 	@Override
-	public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData livingdata, @Nullable CompoundTag tag) {
-		SpawnGroupData retval = super.finalizeSpawn(world, difficulty, reason, livingdata, tag);
+	public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData livingdata) {
+		SpawnGroupData retval = super.finalizeSpawn(world, difficulty, reason, livingdata);
 		HunterOnInitialEntitySpawnProcedure.execute(this);
 		return retval;
 	}
@@ -295,9 +278,9 @@ public class HunterEntity extends TamableAnimal {
 		} else {
 			if (this.isTame()) {
 				if (this.isOwnedBy(sourceentity)) {
-					if (item.isEdible() && this.isFood(itemstack) && this.getHealth() < this.getMaxHealth()) {
+					if (item.getFoodProperties(itemstack, this) != null && this.isFood(itemstack) && this.getHealth() < this.getMaxHealth()) {
 						this.usePlayerItem(sourceentity, hand, itemstack);
-						this.heal((float) item.getFoodProperties().getNutrition());
+						this.heal((float) item.getFoodProperties(itemstack, this).nutrition());
 						retval = InteractionResult.sidedSuccess(this.level().isClientSide());
 					} else if (this.isFood(itemstack) && this.getHealth() < this.getMaxHealth()) {
 						this.usePlayerItem(sourceentity, hand, itemstack);
@@ -309,7 +292,7 @@ public class HunterEntity extends TamableAnimal {
 				}
 			} else if (this.isFood(itemstack)) {
 				this.usePlayerItem(sourceentity, hand, itemstack);
-				if (this.random.nextInt(3) == 0 && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, sourceentity)) {
+				if (this.random.nextInt(3) == 0 && !net.neoforged.neoforge.event.EventHooks.onAnimalTame(this, sourceentity)) {
 					this.tame(sourceentity);
 					this.level().broadcastEntityEvent(this, (byte) 7);
 				} else {
@@ -344,7 +327,7 @@ public class HunterEntity extends TamableAnimal {
 	@Override
 	public AgeableMob getBreedOffspring(ServerLevel serverWorld, AgeableMob ageable) {
 		HunterEntity retval = SololevelingModEntities.HUNTER.get().create(serverWorld);
-		retval.finalizeSpawn(serverWorld, serverWorld.getCurrentDifficultyAt(retval.blockPosition()), MobSpawnType.BREEDING, null, null);
+		retval.finalizeSpawn(serverWorld, serverWorld.getCurrentDifficultyAt(retval.blockPosition()), MobSpawnType.BREEDING, null);
 		return retval;
 	}
 

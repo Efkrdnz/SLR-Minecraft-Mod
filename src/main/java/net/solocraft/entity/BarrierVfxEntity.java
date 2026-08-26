@@ -3,12 +3,11 @@ package net.solocraft.entity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.BarrierMageSpellManager;
 import net.solocraft.util.MageCombatHelper;
+import net.solocraft.util.SilladBossRules;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -41,6 +40,7 @@ public class BarrierVfxEntity extends Entity {
 	public static final int ABSOLUTE_BASTION = 8;
 	public static final int IMPACT = 9;
 	public static final int RETURN_SHARD = 10;
+	public static final int SILLAD_ICE_PRISON = 11;
 
 	private static final EntityDataAccessor<Integer> STYLE = SynchedEntityData.defineId(BarrierVfxEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> STAGE = SynchedEntityData.defineId(BarrierVfxEntity.class, EntityDataSerializers.INT);
@@ -58,44 +58,35 @@ public class BarrierVfxEntity extends Entity {
 	private static final EntityDataAccessor<Float> MAX_INTEGRITY = SynchedEntityData.defineId(BarrierVfxEntity.class, EntityDataSerializers.FLOAT);
 	private static final EntityDataAccessor<Float> RESONANCE = SynchedEntityData.defineId(BarrierVfxEntity.class, EntityDataSerializers.FLOAT);
 
-	public BarrierVfxEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.BARRIER_VFX.get(), level);
-	}
-
 	public BarrierVfxEntity(EntityType<? extends BarrierVfxEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(STYLE, FRACTURE_BOLT);
-		this.entityData.define(STAGE, 1);
-		this.entityData.define(SCALE, 1.0F);
-		this.entityData.define(LENGTH, 1.0F);
-		this.entityData.define(LIFETIME, 20);
-		this.entityData.define(PRIMARY_COLOR, BarrierMageSpellManager.NORMAL_PRIMARY);
-		this.entityData.define(SECONDARY_COLOR, BarrierMageSpellManager.NORMAL_SECONDARY);
-		this.entityData.define(SEED, 0);
-		this.entityData.define(ORB_AMPLIFIED, false);
-		this.entityData.define(ACTIVE, false);
-		this.entityData.define(OWNER, Optional.empty());
-		this.entityData.define(TARGET, Optional.empty());
-		this.entityData.define(INTEGRITY, 0.0F);
-		this.entityData.define(MAX_INTEGRITY, 0.0F);
-		this.entityData.define(RESONANCE, 0.0F);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(STYLE, FRACTURE_BOLT);
+		builder.define(STAGE, 1);
+		builder.define(SCALE, 1.0F);
+		builder.define(LENGTH, 1.0F);
+		builder.define(LIFETIME, 20);
+		builder.define(PRIMARY_COLOR, BarrierMageSpellManager.NORMAL_PRIMARY);
+		builder.define(SECONDARY_COLOR, BarrierMageSpellManager.NORMAL_SECONDARY);
+		builder.define(SEED, 0);
+		builder.define(ORB_AMPLIFIED, false);
+		builder.define(ACTIVE, false);
+		builder.define(OWNER, Optional.empty());
+		builder.define(TARGET, Optional.empty());
+		builder.define(INTEGRITY, 0.0F);
+		builder.define(MAX_INTEGRITY, 0.0F);
+		builder.define(RESONANCE, 0.0F);
 	}
 
 	public static BarrierVfxEntity spawn(ServerLevel level, Vec3 position, int style, int stage,
 			float scale, float length, int lifetime, float yaw, float pitch, Entity owner,
 			Entity target, boolean orbAmplified, float integrity, boolean active) {
 		BarrierVfxEntity effect = new BarrierVfxEntity(SololevelingModEntities.BARRIER_VFX.get(), level);
-		effect.entityData.set(STYLE, Mth.clamp(style, FRACTURE_BOLT, RETURN_SHARD));
+		effect.entityData.set(STYLE, Mth.clamp(style, FRACTURE_BOLT, SILLAD_ICE_PRISON));
 		effect.entityData.set(STAGE, Mth.clamp(stage, 1, 5));
 		effect.entityData.set(SCALE, Math.max(0.04F, scale));
 		effect.entityData.set(LENGTH, Math.max(0.04F, length));
@@ -142,7 +133,8 @@ public class BarrierVfxEntity extends Entity {
 		Entity linked = null;
 		if (getStyle() == MIRROR_WARD)
 			linked = getOwnerEntity(serverLevel);
-		else if (getStyle() == FRACTURE_MARK || getStyle() == SEALING_PRISM)
+		else if (getStyle() == FRACTURE_MARK || getStyle() == SEALING_PRISM
+				|| getStyle() == SILLAD_ICE_PRISON)
 			linked = getTargetEntity(serverLevel);
 		if (linked == null)
 			return;
@@ -221,7 +213,9 @@ public class BarrierVfxEntity extends Entity {
 	public float absorbDamage(float amount) {
 		if (!isActive() || amount <= 0.0F || getIntegrity() <= 0.0F)
 			return 0.0F;
-		float blocked = Math.min(amount, getIntegrity());
+		float accepted = getStyle() == SILLAD_ICE_PRISON
+				? Math.min(amount, SilladBossRules.PRISON_HIT_CAP) : amount;
+		float blocked = Math.min(accepted, getIntegrity());
 		setIntegrity(getIntegrity() - blocked);
 		setResonance(Math.min(getMaxIntegrity() * 1.5F, getResonance() + blocked * 0.35F));
 		if (getIntegrity() <= 0.001F)
@@ -366,7 +360,8 @@ public class BarrierVfxEntity extends Entity {
 	}
 
 	public boolean isGameplayConstruct() {
-		return isBlockingConstruct() || getStyle() == SEALING_PRISM || getStyle() == MIRROR_WARD;
+		return isBlockingConstruct() || getStyle() == SEALING_PRISM || getStyle() == MIRROR_WARD
+				|| getStyle() == SILLAD_ICE_PRISON;
 	}
 
 	@Override
@@ -379,7 +374,7 @@ public class BarrierVfxEntity extends Entity {
 		return switch (getStyle()) {
 			case PRISM_RAMPART, SHARD_PLATE -> EntityDimensions.scalable(
 					Math.max(0.25F, getScale() * 2.0F), Math.max(0.25F, getLength()));
-			case SEALING_PRISM -> EntityDimensions.scalable(
+			case SEALING_PRISM, SILLAD_ICE_PRISON -> EntityDimensions.scalable(
 					Math.max(0.25F, getScale() * 2.15F), Math.max(0.25F, getLength()));
 			case MIRROR_WARD -> EntityDimensions.scalable(
 					Math.max(0.25F, getScale() * 1.8F), Math.max(0.25F, getLength()));
@@ -423,8 +418,13 @@ public class BarrierVfxEntity extends Entity {
 	}
 
 	@Override
+	public boolean shouldBeSaved() {
+		return getStyle() != SILLAD_ICE_PRISON && super.shouldBeSaved();
+	}
+
+	@Override
 	protected void readAdditionalSaveData(CompoundTag tag) {
-		entityData.set(STYLE, Mth.clamp(tag.getInt("Style"), FRACTURE_BOLT, RETURN_SHARD));
+		entityData.set(STYLE, Mth.clamp(tag.getInt("Style"), FRACTURE_BOLT, SILLAD_ICE_PRISON));
 		entityData.set(STAGE, Mth.clamp(tag.getInt("Stage"), 1, 5));
 		entityData.set(SCALE, Math.max(0.04F, tag.getFloat("Scale")));
 		entityData.set(LENGTH, Math.max(0.04F, tag.getFloat("Length")));

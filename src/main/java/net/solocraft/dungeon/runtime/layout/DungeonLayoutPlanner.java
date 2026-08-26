@@ -201,7 +201,7 @@ public final class DungeonLayoutPlanner {
 	public static PlanResult plan(ServerLevel level, DungeonDataSnapshot snapshot,
 			DungeonDefinition dungeon, BlockPos minimum, long seed, PlanOptions options) {
 		if (snapshot == null)
-			return invalidResult(dungeon == null ? new ResourceLocation("minecraft", "empty") : dungeon.id(),
+			return invalidResult(dungeon == null ? ResourceLocation.fromNamespaceAndPath("minecraft", "empty") : dungeon.id(),
 					0L, seed,
 					options == null ? DungeonLayoutTopology.LINEAR : options.topology(),
 					PlanFailure.INVALID_ARGUMENT, "Dungeon data snapshot is required.");
@@ -214,7 +214,7 @@ public final class DungeonLayoutPlanner {
 			DungeonDefinition dungeon, BlockPos minimum, long seed, PlanOptions options,
 			RoomTemplateResolver resolver) {
 		if (level == null || catalog == null || dungeon == null || minimum == null || resolver == null)
-			return invalidResult(dungeon == null ? new ResourceLocation("minecraft", "empty") : dungeon.id(),
+			return invalidResult(dungeon == null ? ResourceLocation.fromNamespaceAndPath("minecraft", "empty") : dungeon.id(),
 					catalog == null ? 0L : catalog.revision(), seed,
 					options == null ? DungeonLayoutTopology.LINEAR : options.topology(),
 					PlanFailure.INVALID_ARGUMENT, "Level, room catalog, dungeon, origin, and template resolver are required.");
@@ -263,7 +263,7 @@ public final class DungeonLayoutPlanner {
 			BlockPos minimum, long seed, FixedLayoutSpec spec) {
 		if (snapshot == null) {
 			ResourceLocation layoutId = spec == null || spec.layoutId() == null
-					? new ResourceLocation("minecraft", "empty") : spec.layoutId();
+					? ResourceLocation.fromNamespaceAndPath("minecraft", "empty") : spec.layoutId();
 			return invalidResult(layoutId, 0L, seed, DungeonLayoutTopology.FIXED,
 					PlanFailure.INVALID_ARGUMENT, "Dungeon data snapshot is required.");
 		}
@@ -275,7 +275,7 @@ public final class DungeonLayoutPlanner {
 	public static PlanResult planFixed(ServerLevel level, long revision,
 			BlockPos minimum, long seed, FixedLayoutSpec spec, RoomTemplateResolver resolver) {
 		ResourceLocation layoutId = spec == null || spec.layoutId() == null
-				? new ResourceLocation("minecraft", "empty") : spec.layoutId();
+				? ResourceLocation.fromNamespaceAndPath("minecraft", "empty") : spec.layoutId();
 		if (level == null || minimum == null || spec == null || spec.layoutId() == null || resolver == null)
 			return invalidResult(layoutId, revision, seed, DungeonLayoutTopology.FIXED,
 					PlanFailure.INVALID_ARGUMENT, "Level, origin, fixed layout spec, and template resolver are required.");

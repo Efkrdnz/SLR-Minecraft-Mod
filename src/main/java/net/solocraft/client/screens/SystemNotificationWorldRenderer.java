@@ -2,13 +2,15 @@ package net.solocraft.client.screens;
 
 import net.solocraft.client.gui.system.SystemNotificationManager;
 import net.solocraft.client.gui.system.SystemNotificationManager.Notification;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.client.renderer.shader.IrisCompat;
 import net.solocraft.client.renderer.shader.SystemBackgroundRenderTypes;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -25,6 +27,7 @@ import net.minecraft.world.phys.Vec3;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
@@ -47,7 +50,7 @@ import java.util.List;
  * {@link #UP_AMT} up (blocks from the eye), {@link #TILT} degrees, and
  * {@link #WORLD_SCALE} (design-pixels → blocks). Always drawn on top (depth off).
  */
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 public class SystemNotificationWorldRenderer {
 	private static final int ACCENT = 0xFF3FC6FF;
 	private static final int LIGHT = LightTexture.FULL_BRIGHT;
@@ -70,7 +73,8 @@ public class SystemNotificationWorldRenderer {
 
 	@SubscribeEvent
 	public static void onRenderLevel(RenderLevelStageEvent event) {
-		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES)
+		if (!DeferredWorldShaderRenderer.isRenderStage(event,
+				RenderLevelStageEvent.Stage.AFTER_ENTITIES))
 			return;
 		Minecraft mc = Minecraft.getInstance();
 		if (mc.player == null || mc.options.hideGui)
@@ -81,54 +85,64 @@ public class SystemNotificationWorldRenderer {
 		Font font = mc.font;
 		Camera cam = event.getCamera();
 		long now = System.currentTimeMillis();
+		if (!DeferredWorldShaderRenderer.beginWorldPass(event))
+			return;
 
-		PoseStack ps = event.getPoseStack();
+		PoseStack ps = DeferredWorldShaderRenderer.worldPoseStack(event);
 		MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
 
-		RenderSystem.enableBlend();
-		RenderSystem.defaultBlendFunc();
-		RenderSystem.disableCull();
-		RenderSystem.disableDepthTest();
+		try {
+			RenderSystem.enableBlend();
+			RenderSystem.defaultBlendFunc();
+			RenderSystem.disableCull();
+			RenderSystem.disableDepthTest();
 
-		float notificationScale = net.solocraft.util.SystemClientConfig.getNotificationScale();
-		float s = WORLD_SCALE * notificationScale;
-		float stackCenter = 0f;
-		float previousHalfHeight = 0f;
-		float stackGap = STACK_GAP_WORLD * notificationScale;
+			float notificationScale = net.solocraft.util.SystemClientConfig.getNotificationScale();
+			float s = WORLD_SCALE * notificationScale;
+			float stackCenter = 0f;
+			float previousHalfHeight = 0f;
+			float stackGap = STACK_GAP_WORLD * notificationScale;
 
-		for (int idx = 0; idx < list.size(); idx++) {
-			Notification n = list.get(list.size() - 1 - idx); // newest lowest
-			int[] size = measure(font, n);
-			float currentHalfHeight = size[1] * s * 0.5f;
-			if (idx > 0)
-				stackCenter += previousHalfHeight + stackGap + currentHalfHeight;
-			float horizontal;
-			if (net.solocraft.util.SystemClientConfig.isDynamicNotificationsEnabled()) {
-				float panelHalfWidth = size[0] * s * 0.5F;
-				horizontal = Math.max(0.48F, panelHalfWidth + 0.20F);
-			} else {
-				horizontal = LEFT_AMT
-						+ net.solocraft.util.SystemClientConfig.getNotificationHorizontalOffset();
+			for (int idx = 0; idx < list.size(); idx++) {
+				Notification n = list.get(list.size() - 1 - idx); // newest lowest
+				int[] size = measure(font, n);
+				float currentHalfHeight = size[1] * s * 0.5f;
+				if (idx > 0)
+					stackCenter += previousHalfHeight + stackGap + currentHalfHeight;
+				float horizontal;
+				if (net.solocraft.util.SystemClientConfig.isDynamicNotificationsEnabled()) {
+					float panelHalfWidth = size[0] * s * 0.5F;
+					horizontal = Math.max(0.48F, panelHalfWidth + 0.20F);
+				} else {
+					horizontal = LEFT_AMT
+							+ net.solocraft.util.SystemClientConfig.getNotificationHorizontalOffset();
+				}
+				Vec3 offset = cameraScreenOffset(cam, stackCenter, horizontal);
+
+				ps.pushPose();
+				ps.translate(offset.x, offset.y, offset.z);
+				ps.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
+				ps.mulPose(Axis.YP.rotationDegrees(PANEL_TILT));
+				// Match vanilla name-tag orientation: X stays readable while Y is
+				// inverted for GUI-style coordinates in the world billboard.
+				ps.scale(s, -s, s);
+				renderPanel(ps, font, buffer, n, now, size);
+				ps.popPose();
+
+				previousHalfHeight = currentHalfHeight;
 			}
-			Vec3 offset = cameraScreenOffset(cam, stackCenter, horizontal);
-
-			ps.pushPose();
-			ps.translate(offset.x, offset.y, offset.z);
-			ps.mulPose(mc.getEntityRenderDispatcher().cameraOrientation());
-			ps.mulPose(Axis.YP.rotationDegrees(PANEL_TILT));
-			ps.scale(-s, -s, s);
-			renderPanel(ps, font, buffer, n, now, size);
-			ps.popPose();
-
-			previousHalfHeight = currentHalfHeight;
+		} finally {
+			try {
+				buffer.endBatch();
+			} finally {
+				RenderSystem.enableDepthTest();
+				RenderSystem.enableCull();
+				RenderSystem.disableBlend();
+				RenderSystem.defaultBlendFunc();
+				RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+				DeferredWorldShaderRenderer.endWorldPass();
+			}
 		}
-
-		buffer.endBatch();
-		RenderSystem.enableDepthTest();
-		RenderSystem.enableCull();
-		RenderSystem.disableBlend();
-		RenderSystem.defaultBlendFunc();
-		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 	}
 
 	private static Vec3 cameraScreenOffset(Camera cam, float stackOffset, float horizontal) {
@@ -187,7 +201,8 @@ public class SystemNotificationWorldRenderer {
 		ps.translate(0, cy, 0.1f);
 		ps.scale(TITLE_SCALE, TITLE_SCALE, 1f);
 		int tw = font.width(title);
-		font.drawInBatch(title, -tw / 2f, -4f, 0xFFFFFFFF, false, ps.last().pose(), buffer, Font.DisplayMode.SEE_THROUGH, 0, LIGHT);
+		drawReadable(font, title, -tw / 2f, -4f, 0xFFFFFFFF,
+				ps.last().pose(), buffer);
 		ps.popPose();
 	}
 
@@ -201,10 +216,28 @@ public class SystemNotificationWorldRenderer {
 		float y = -totalH / 2f;
 		for (FormattedCharSequence line : lines) {
 			int uw = font.width(line);
-			font.drawInBatch(line, -uw / 2f, y, 0xFFE8F6FF, false, ps.last().pose(), buffer, Font.DisplayMode.SEE_THROUGH, 0, LIGHT);
+			drawReadable(font, line, -uw / 2f, y, 0xFFE8F6FF,
+					ps.last().pose(), buffer);
 			y += FH + LINE_GAP;
 		}
 		ps.popPose();
+	}
+
+	private static void drawReadable(Font font, Component text, float x, float y,
+			int color, Matrix4f matrix, MultiBufferSource buffer) {
+		font.drawInBatch(text, x, y, (color & 0x00FFFFFF) | 0x40000000,
+				false, matrix, buffer, Font.DisplayMode.SEE_THROUGH, 0, LIGHT);
+		font.drawInBatch(text, x, y, color, false, matrix, buffer,
+				Font.DisplayMode.NORMAL, 0, LIGHT);
+	}
+
+	private static void drawReadable(Font font, FormattedCharSequence text,
+			float x, float y, int color, Matrix4f matrix,
+			MultiBufferSource buffer) {
+		font.drawInBatch(text, x, y, (color & 0x00FFFFFF) | 0x40000000,
+				false, matrix, buffer, Font.DisplayMode.SEE_THROUGH, 0, LIGHT);
+		font.drawInBatch(text, x, y, color, false, matrix, buffer,
+				Font.DisplayMode.NORMAL, 0, LIGHT);
 	}
 
 	private static int[] measure(Font font, Notification n) {
@@ -267,13 +300,12 @@ public class SystemNotificationWorldRenderer {
 		RenderSystem.setShader(SystemBackgroundRenderTypes::get);
 		shader.safeGetUniform("MousePos").set(0.5f, 0.35f);
 		shader.safeGetUniform("MouseGlitch").set(0.0f);
-		BufferBuilder buf = Tesselator.getInstance().getBuilder();
-		buf.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-		buf.vertex(m, -hw, hh, 0).uv(0f, 1f).endVertex();
-		buf.vertex(m, hw, hh, 0).uv(1f, 1f).endVertex();
-		buf.vertex(m, hw, -hh, 0).uv(1f, 0f).endVertex();
-		buf.vertex(m, -hw, -hh, 0).uv(0f, 0f).endVertex();
-		Tesselator.getInstance().end();
+		BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		buf.addVertex(m, -hw, hh, 0).setUv(0f, 1f);
+		buf.addVertex(m, hw, hh, 0).setUv(1f, 1f);
+		buf.addVertex(m, hw, -hh, 0).setUv(1f, 0f);
+		buf.addVertex(m, -hw, -hh, 0).setUv(0f, 0f);
+		BufferUploader.drawWithShader(buf.buildOrThrow());
 	}
 
 	private static void drawRect(Matrix4f m, float x0, float y0, float x1, float y1, int argb) {
@@ -283,12 +315,11 @@ public class SystemNotificationWorldRenderer {
 		float b = (argb & 0xFF) / 255f;
 		RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
-		BufferBuilder buf = Tesselator.getInstance().getBuilder();
-		buf.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-		buf.vertex(m, x0, y1, 0).color(r, g, b, a).endVertex();
-		buf.vertex(m, x1, y1, 0).color(r, g, b, a).endVertex();
-		buf.vertex(m, x1, y0, 0).color(r, g, b, a).endVertex();
-		buf.vertex(m, x0, y0, 0).color(r, g, b, a).endVertex();
-		Tesselator.getInstance().end();
+		BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+		buf.addVertex(m, x0, y1, 0).setColor(r, g, b, a);
+		buf.addVertex(m, x1, y1, 0).setColor(r, g, b, a);
+		buf.addVertex(m, x1, y0, 0).setColor(r, g, b, a);
+		buf.addVertex(m, x0, y0, 0).setColor(r, g, b, a);
+		BufferUploader.drawWithShader(buf.buildOrThrow());
 	}
 }

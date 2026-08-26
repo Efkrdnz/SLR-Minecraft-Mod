@@ -41,7 +41,7 @@ public class ConsecutiveSlashesOnEffectActiveTickProcedure {
 			}
 		} else {
 			if (entity instanceof LivingEntity _entity)
-				_entity.removeEffect(SololevelingModMobEffects.CONSECUTIVE_SLASHES.get());
+				_entity.removeEffect(SololevelingModMobEffects.CONSECUTIVE_SLASHES);
 			CooldownManager.set(entity, "mana_refresh", 60);
 		}
 		if (world instanceof ServerLevel _level)
@@ -56,9 +56,9 @@ public class ConsecutiveSlashesOnEffectActiveTickProcedure {
 			for (Entity entityiterator : _entfound) {
 				if (!(entity == entityiterator)) {
 					{
-						DamageSource _damageSource = new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity);
+						DamageSource _damageSource = new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"))), entity);
 						if (_damageSource != null) {
-							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
+							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"))), entity),
 									(float) (TemporaryStatBonusManager.effectiveStrength(entity) / 50.0D + 2.0D));
 						}
 					}

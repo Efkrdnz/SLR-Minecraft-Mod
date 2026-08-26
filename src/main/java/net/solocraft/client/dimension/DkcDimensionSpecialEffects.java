@@ -13,13 +13,12 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.dkc.DkcSpatialLayout;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -48,7 +47,7 @@ import org.joml.Vector3f;
  * hundred vertices and one vanilla moon-texture quad per frame.</p>
  */
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
 public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 	private static final float SKY_RADIUS = 128.0F;
 	private static final float SKY_TOP = 92.0F;
@@ -62,7 +61,7 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 	 */
 	private static final float BLOOD_MOON_HALF_SIZE = 128.0F;
 	private static final ResourceLocation VANILLA_MOON_TEXTURE =
-			new ResourceLocation("minecraft", "textures/environment/moon_phases.png");
+			ResourceLocation.fromNamespaceAndPath("minecraft", "textures/environment/moon_phases.png");
 
 	private static final int[] FOG_COLORS = {
 			0,
@@ -108,38 +107,29 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 
 	@Override
 	public boolean renderClouds(ClientLevel level, int ticks, float partialTick, PoseStack poseStack,
-			double camX, double camY, double camZ, Matrix4f projectionMatrix) {
+			double camX, double camY, double camZ, Matrix4f modelViewMatrix,
+			Matrix4f projectionMatrix) {
 		// The custom horizon already contains restrained smoke/storm layers.
 		return true;
 	}
 
 	@Override
-	public boolean renderSky(ClientLevel level, int ticks, float partialTick, PoseStack poseStack, Camera camera,
+	public boolean renderSky(ClientLevel level, int ticks, float partialTick,
+			Matrix4f modelViewMatrix, Camera camera,
 			Matrix4f projectionMatrix, boolean isFoggy, Runnable setupFog) {
 		if (!isSharedDkc(level) || camera.getFluidInCamera() != FogType.NONE)
 			return false;
 
-		// Own the sky pass so vanilla cannot draw its fixed-time white moon. The
-		// geometry is emitted from AFTER_SKY below; that stage remains reliable
-		// when Oculus/Embeddium wrap or replace the normal sky callback.
+		// Draw inside NeoForge's dimension-effects callback. Iris marks this exact
+		// section as CUSTOM_SKY, so the geometry is routed through the active pack
+		// instead of being submitted after Iris has left its sky phase.
 		setupFog.run();
+		renderSkyLayer(modelViewMatrix, camera, ticks, partialTick);
 		return true;
 	}
 
-	@SubscribeEvent
-	public static void onRenderLevelStage(RenderLevelStageEvent event) {
-		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY)
-			return;
-		Minecraft minecraft = Minecraft.getInstance();
-		ClientLevel level = minecraft.level;
-		Camera camera = event.getCamera();
-		if (!isSharedDkc(level) || camera.getFluidInCamera() != FogType.NONE)
-			return;
-
-		renderSkyLayer(event.getPoseStack(), camera, event.getRenderTick(), event.getPartialTick());
-	}
-
-	private static void renderSkyLayer(PoseStack poseStack, Camera camera, int ticks, float partialTick) {
+	private static void renderSkyLayer(Matrix4f matrix, Camera camera, int ticks,
+			float partialTick) {
 		Profile profile = profileAt(camera.getBlockPosition());
 		RenderSystem.disableDepthTest();
 		RenderSystem.depthMask(false);
@@ -149,21 +139,23 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
-		Matrix4f matrix = poseStack.last().pose();
-		renderVault(matrix, profile);
-		renderVanillaBloodMoon(matrix, profile);
-		float time = ticks + partialTick;
-		switch (profile.family()) {
-			case EMBER -> renderEmberSky(matrix, profile, time);
-			case FURNACE -> renderFurnaceSky(matrix, profile, time);
-			case TEMPEST -> renderTempestSky(matrix, profile, time);
+		try {
+			renderVault(matrix, profile);
+			renderVanillaBloodMoon(matrix, profile);
+			float time = ticks + partialTick;
+			switch (profile.family()) {
+				case EMBER -> renderEmberSky(matrix, profile, time);
+				case FURNACE -> renderFurnaceSky(matrix, profile, time);
+				case TEMPEST -> renderTempestSky(matrix, profile, time);
+			}
+		} finally {
+			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+			RenderSystem.defaultBlendFunc();
+			RenderSystem.disableBlend();
+			RenderSystem.enableCull();
+			RenderSystem.depthMask(true);
+			RenderSystem.enableDepthTest();
 		}
-
-		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-		RenderSystem.disableBlend();
-		RenderSystem.enableCull();
-		RenderSystem.depthMask(true);
-		RenderSystem.enableDepthTest();
 	}
 
 	@Override
@@ -212,9 +204,7 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 	}
 
 	@SubscribeEvent
-	public static void onClientTick(TickEvent.ClientTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
+	public static void onClientTick(ClientTickEvent.Post event) {
 		Minecraft minecraft = Minecraft.getInstance();
 		ClientLevel level = minecraft.level;
 		if (minecraft.player == null || !isSharedDkc(level)) {
@@ -321,8 +311,8 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 		int top = profile.zenithColor();
 		int horizon = profile.horizonColor();
 		int bottom = scaleColor(profile.fogColor(), 0.30F);
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(
+				VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
 		vertex(buffer, matrix, -SKY_RADIUS, SKY_TOP, -SKY_RADIUS, top, 1.0F);
 		vertex(buffer, matrix, -SKY_RADIUS, SKY_TOP, SKY_RADIUS, top, 1.0F);
@@ -336,7 +326,7 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 		vertex(buffer, matrix, -SKY_RADIUS, SKY_BOTTOM, -SKY_RADIUS, bottom, 1.0F);
 		vertex(buffer, matrix, SKY_RADIUS, SKY_BOTTOM, -SKY_RADIUS, bottom, 1.0F);
 		vertex(buffer, matrix, SKY_RADIUS, SKY_BOTTOM, SKY_RADIUS, bottom, 1.0F);
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void vaultSide(BufferBuilder buffer, Matrix4f matrix, float x0, float z0, float x1, float z1,
@@ -380,21 +370,21 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 
 	private static void renderRibbon(Matrix4f matrix, float phase, float z, float startX, float baseY,
 			float height, int color, float alpha) {
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(
+				VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 		for (int i = 0; i <= 16; i++) {
 			float x = startX + i * 12.0F;
 			float wave = Mth.sin(phase + i * 0.58F) * 5.0F + Mth.sin(phase * 0.71F + i * 0.23F) * 2.4F;
 			vertex(buffer, matrix, x, baseY + wave, z, color, 0.0F);
 			vertex(buffer, matrix, x, baseY + wave + height, z, color, alpha);
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void renderSkySparks(Matrix4f matrix, Profile profile, float time, int count) {
 		float alpha = profile.family() == SkyFamily.FURNACE ? 0.38F : 0.52F;
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(
+				VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 		for (int i = 0; i < count; i++) {
 			int hash = i * 73428767 ^ profile.floor() * 912931;
 			float x = -104.0F + Math.floorMod(hash, 209);
@@ -407,14 +397,14 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 			vertex(buffer, matrix, x + size, y + drift + size, z, profile.accentColor(), alpha);
 			vertex(buffer, matrix, x - size, y + drift + size, z, profile.accentColor(), alpha);
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void renderLightning(Matrix4f matrix, int floor, float alpha) {
 		float x = -63.0F + (floor - 16) * 25.0F;
 		float y = 77.0F;
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(
+				VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 		for (int i = 0; i < 6; i++) {
 			float nextX = x + (i % 2 == 0 ? 7.0F : -4.0F);
 			float nextY = y - 17.0F;
@@ -422,7 +412,7 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 			x = nextX;
 			y = nextY;
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void lightningSegment(BufferBuilder buffer, Matrix4f matrix, float x0, float y0,
@@ -475,13 +465,13 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 		float lowerZ = centerZ - size * verticalZ;
 		float upperY = centerY + size * verticalY;
 		float upperZ = centerZ + size * verticalZ;
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-		buffer.vertex(matrix, -size, lowerY, lowerZ).uv(0.0F, 0.5F).endVertex();
-		buffer.vertex(matrix, size, lowerY, lowerZ).uv(0.25F, 0.5F).endVertex();
-		buffer.vertex(matrix, size, upperY, upperZ).uv(0.25F, 0.0F).endVertex();
-		buffer.vertex(matrix, -size, upperY, upperZ).uv(0.0F, 0.0F).endVertex();
-		BufferUploader.drawWithShader(buffer.end());
+		BufferBuilder buffer = Tesselator.getInstance().begin(
+				VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		buffer.addVertex(matrix, -size, lowerY, lowerZ).setUv(0.0F, 0.5F);
+		buffer.addVertex(matrix, size, lowerY, lowerZ).setUv(0.25F, 0.5F);
+		buffer.addVertex(matrix, size, upperY, upperZ).setUv(0.25F, 0.0F);
+		buffer.addVertex(matrix, -size, upperY, upperZ).setUv(0.0F, 0.0F);
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 
 		RenderSystem.defaultBlendFunc();
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -494,8 +484,8 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 		float centerX = baseX + localX;
 		float centerY = baseY + localY * verticalY;
 		float centerZ = baseZ + localY * verticalZ;
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(
+				VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
 		vertex(buffer, matrix, centerX, centerY, centerZ, color, centerAlpha);
 		for (int i = 0; i <= 40; i++) {
 			float angle = (float) (Math.PI * 2.0D * i / 40.0D);
@@ -504,7 +494,7 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 			vertex(buffer, matrix, centerX + horizontal, centerY + vertical * verticalY,
 					centerZ + vertical * verticalZ, color, edgeAlpha);
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void vertex(BufferBuilder buffer, Matrix4f matrix, float x, float y, float z,
@@ -515,7 +505,7 @@ public final class DkcDimensionSpecialEffects extends DimensionSpecialEffects {
 
 	private static void vertex(BufferBuilder buffer, Matrix4f matrix, float x, float y, float z,
 			float red, float green, float blue, float alpha) {
-		buffer.vertex(matrix, x, y, z).color(red, green, blue, alpha).endVertex();
+		buffer.addVertex(matrix, x, y, z).setColor(red, green, blue, alpha);
 	}
 
 	private static Vec3 colorVector(int rgb) {

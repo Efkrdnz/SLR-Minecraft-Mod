@@ -36,10 +36,11 @@ import net.solocraft.entity.AncientSamuraiEntity;
 import net.solocraft.entity.AncientGolemEntity;
 import net.solocraft.util.NamedHunterCombatManager;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.LivingEntity;
@@ -54,7 +55,7 @@ import net.minecraft.core.BlockPos;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class EntityLoadedLevelPresetProcedure {
 	public static final String LEVEL_STAT_MULTIPLIER_TAG = "SLRLevelStatMultiplier";
 	private static final double LUSH_CAVE_LEVEL_SCALING = 0.8D;
@@ -79,15 +80,15 @@ public class EntityLoadedLevelPresetProcedure {
 		double baseAttackDamage = getBaseAttributeValue(entity, net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE);
 		if (entity.getPersistentData().getDouble("Level") == 0) {
 			if (!(entity instanceof HunterEntity)) {
-				if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("dund")))) {
+				if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, ResourceLocation.parse("dund")))) {
 					rank_addition = 0;
-				} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("dunc")))) {
+				} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, ResourceLocation.parse("dunc")))) {
 					rank_addition = 10;
-				} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("dunb")))) {
+				} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, ResourceLocation.parse("dunb")))) {
 					rank_addition = 20;
-				} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("duna")))) {
+				} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, ResourceLocation.parse("duna")))) {
 					rank_addition = 30;
-				} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, new ResourceLocation("duns")))) {
+				} else if (world.getBiome(BlockPos.containing(x, y, z)).is(TagKey.create(Registries.BIOME, ResourceLocation.parse("duns")))) {
 					rank_addition = 40;
 				} else {
 					rank_addition = 0;
@@ -408,7 +409,8 @@ public class EntityLoadedLevelPresetProcedure {
 		}
 	}
 
-	private static double getBaseAttributeValue(Entity entity, net.minecraft.world.entity.ai.attributes.Attribute attribute) {
+	private static double getBaseAttributeValue(Entity entity,
+			net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute) {
 		if (!(entity instanceof LivingEntity living) || living.getAttribute(attribute) == null)
 			return 0;
 		return living.getAttribute(attribute).getBaseValue();

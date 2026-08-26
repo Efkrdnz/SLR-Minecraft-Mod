@@ -2,11 +2,9 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -32,10 +30,6 @@ public class DKCTowerAuraEntity extends Entity {
 	private static final EntityDataAccessor<Boolean> CROWN_LIGHTNING = SynchedEntityData.defineId(DKCTowerAuraEntity.class, EntityDataSerializers.BOOLEAN);
 	private static final double RENDER_DISTANCE_SQR = 512.0D * 512.0D;
 
-	public DKCTowerAuraEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.DKC_TOWER_AURA.get(), level);
-	}
-
 	public DKCTowerAuraEntity(EntityType<? extends DKCTowerAuraEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
@@ -43,11 +37,11 @@ public class DKCTowerAuraEntity extends Entity {
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(RADIUS, 32.0F);
-		this.entityData.define(HEIGHT, 320.0F);
-		this.entityData.define(INTENSITY, 1.0F);
-		this.entityData.define(CROWN_LIGHTNING, true);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(RADIUS, 32.0F);
+		builder.define(HEIGHT, 320.0F);
+		builder.define(INTENSITY, 1.0F);
+		builder.define(CROWN_LIGHTNING, true);
 	}
 
 	@Override
@@ -91,11 +85,6 @@ public class DKCTowerAuraEntity extends Entity {
 		tag.putFloat("Height", this.getAuraHeight());
 		tag.putFloat("Intensity", this.getIntensity());
 		tag.putBoolean("CrownLightning", this.hasCrownLightning());
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
 	}
 
 	@Override

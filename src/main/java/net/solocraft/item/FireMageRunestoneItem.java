@@ -33,7 +33,7 @@ public class FireMageRunestoneItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
 		tooltip.add(Component.literal("Unlocks " + skill).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 		tooltip.add(Component.literal(description).withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.literal("Evolves through five output stages with Rank and Intelligence.")

@@ -33,7 +33,7 @@ public class BearTrapPlayerCollidesWithThisEntityProcedure {
 					if (world instanceof Level _level && !_level.isClientSide()) {
 						_level.explode((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null),
 								new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.PLAYER_EXPLOSION), entity, (entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null)),
-								null, x, y, z, 4, true, Level.ExplosionInteraction.MOB);
+								null, x, y, z, 4, false, Level.ExplosionInteraction.NONE);
 					}
 					if (!entity.level().isClientSide())
 						entity.discard();

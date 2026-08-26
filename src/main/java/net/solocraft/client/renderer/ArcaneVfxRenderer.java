@@ -17,7 +17,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
 public class ArcaneVfxRenderer extends EntityRenderer<ArcaneVfxEntity> {
-	private static final ResourceLocation FALLBACK = new ResourceLocation("sololeveling",
+	private static final ResourceLocation FALLBACK = ResourceLocation.fromNamespaceAndPath("sololeveling",
 			"textures/particle/glow_yellow.png");
 
 	public ArcaneVfxRenderer(EntityRendererProvider.Context context) {
@@ -414,11 +414,11 @@ public class ArcaneVfxRenderer extends EntityRenderer<ArcaneVfxEntity> {
 	private static void vertex(VertexConsumer out, PoseStack.Pose pose, float x, float y, float z,
 			float u, float v, float kind, int color, int alpha, int stage,
 			float nx, float ny, float nz) {
-		out.vertex(pose.pose(), x, y, z)
-				.color((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
-				.uv(kind + 0.001F + u * 0.998F, stage + 0.001F + v * 0.998F)
-				.overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240)
-				.normal(pose.normal(), nx, ny, nz).endVertex();
+		out.addVertex(pose, x, y, z)
+				.setColor((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
+				.setUv(kind + 0.001F + u * 0.998F, stage + 0.001F + v * 0.998F)
+				.setOverlay(OverlayTexture.NO_OVERLAY).setLight(240)
+				.setNormal(pose, nx, ny, nz);
 	}
 
 	private static int lighten(int color, float amount) {

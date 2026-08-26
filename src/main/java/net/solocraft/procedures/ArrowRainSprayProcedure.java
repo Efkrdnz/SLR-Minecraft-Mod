@@ -3,8 +3,9 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.DivineArrowEntity;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -242,11 +243,12 @@ public class ArrowRainSprayProcedure {
 						AbstractArrow entityToSpawn = new DivineArrowEntity(SololevelingModEntities.DIVINE_ARROW.get(), level);
 						entityToSpawn.setOwner(shooter);
 						entityToSpawn.setBaseDamage(damage);
-						entityToSpawn.setKnockback(knockback);
+						net.solocraft.entity.LegacyProjectileCompat.setKnockback(entityToSpawn, knockback);
 						entityToSpawn.setSilent(true);
 						return entityToSpawn;
 					}
-				}.getArrow(projectileLevel, entity, (float) (3 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 15), 1);
+				}.getArrow(projectileLevel, entity,
+						(float) (3 + TemporaryStatBonusManager.effectiveIntelligence(entity) / 15), 1);
 				_entityToSpawn
 						.setPos((((Entity) world
 								.getEntitiesOfClass(LivingEntity.class,
@@ -346,7 +348,7 @@ public class ArrowRainSprayProcedure {
 				_player.displayClientMessage(Component.literal(("Targetting: " + found_entity_name)), true);
 			if (world instanceof Level _level) {
 				if (_level.isClientSide()) {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 2, 2, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 2, 2, false);
 				}
 			}
 		}

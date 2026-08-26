@@ -3,9 +3,10 @@ package net.solocraft.item;
 
 import net.solocraft.procedures.DemonKingsCastleKeyUseProcedure;
 import net.solocraft.util.DkcQuestManager;
+import net.solocraft.util.ItemStackData;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.UseAnim;
@@ -37,14 +38,15 @@ public class RedkeyItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("A key carved from a dying throne's shadow.").withStyle(ChatFormatting.DARK_PURPLE));
 		list.add(Component.literal("Consumed when it opens the Demon King's Castle.").withStyle(ChatFormatting.DARK_RED));
 		list.add(Component.literal("Afterward, return through the System's DKC path.").withStyle(ChatFormatting.DARK_PURPLE));
 		list.add(Component.literal("The castle remembers every hand that opens it.").withStyle(ChatFormatting.GRAY));
-		if (itemstack.hasTag() && itemstack.getTag().hasUUID(OWNER_UUID_TAG)) {
-			list.add(Component.literal("Bound to: " + itemstack.getTag().getString(OWNER_NAME_TAG)).withStyle(ChatFormatting.DARK_GRAY));
+		var data = ItemStackData.copy(itemstack);
+		if (data.hasUUID(OWNER_UUID_TAG)) {
+			list.add(Component.literal("Bound to: " + data.getString(OWNER_NAME_TAG)).withStyle(ChatFormatting.DARK_GRAY));
 		}
 	}
 
@@ -78,17 +80,21 @@ public class RedkeyItem extends Item {
 	public static boolean bindOrVerifyOwner(ItemStack stack, Player player) {
 		if (stack.isEmpty() || !(stack.getItem() instanceof RedkeyItem))
 			return true;
-		if (!stack.getOrCreateTag().hasUUID(OWNER_UUID_TAG)) {
-			stack.getOrCreateTag().putUUID(OWNER_UUID_TAG, player.getUUID());
-			stack.getOrCreateTag().putString(OWNER_NAME_TAG, player.getName().getString());
+		var data = ItemStackData.copy(stack);
+		if (!data.hasUUID(OWNER_UUID_TAG)) {
+			ItemStackData.update(stack, tag -> {
+				tag.putUUID(OWNER_UUID_TAG, player.getUUID());
+				tag.putString(OWNER_NAME_TAG, player.getName().getString());
+			});
 			return true;
 		}
-		return stack.getOrCreateTag().getUUID(OWNER_UUID_TAG).equals(player.getUUID());
+		return data.getUUID(OWNER_UUID_TAG).equals(player.getUUID());
 	}
 
 	public static String getOwnerName(ItemStack stack) {
-		if (stack.hasTag() && stack.getTag().contains(OWNER_NAME_TAG)) {
-			return stack.getTag().getString(OWNER_NAME_TAG);
+		var data = ItemStackData.copy(stack);
+		if (data.contains(OWNER_NAME_TAG)) {
+			return data.getString(OWNER_NAME_TAG);
 		}
 		return "another hunter";
 	}

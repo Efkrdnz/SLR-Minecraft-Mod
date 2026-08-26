@@ -2,9 +2,13 @@ package net.solocraft.util;
 
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
@@ -15,10 +19,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Automatic class awakening system.
+ * Evaluation reminder system.
  *
- * If a player reaches level {@value #AWAKEN_LEVEL} without selecting a class
- * through the formal evaluation, their two dominant stats determine their class:
+ * Class assignment is owned by the Hunter Evaluator. This manager retains its
+ * old class tables for save and test compatibility, but normal leveling now
+ * only reminds unclassified players to visit an evaluator:
  *
  *   Speed + Perception  →  Assassin  (1)
  *   Strength + Intel    →  Mage      (2)
@@ -29,14 +34,9 @@ import net.minecraft.server.level.ServerPlayer;
  *
  * Each class is scored as the sum of its two key stats; the highest scorer wins.
  *
- * At level {@value #WARN_LEVEL} the player receives an early warning so they can
- * consciously invest stats in the class direction they want.
- *
- * On awakening the player receives two starter skills for their class.
- * Higher-tier skills are still gated behind the formal evaluation (HunterRank),
- * so there is a meaningful incentive to evaluate rather than just self-awaken.
+ * Story Mode remains free to assign its scripted class directly.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class StatAwakeningManager {
 
     private StatAwakeningManager() {}
@@ -45,7 +45,7 @@ public final class StatAwakeningManager {
 
     /** Level at which the early-warning message fires. */
     private static final int  WARN_LEVEL   = 18;
-    /** Level at which the actual awakening fires. */
+    /** Level at which the stronger evaluation reminder fires. */
     private static final int  AWAKEN_LEVEL = 20;
     /** Minimum combined stat score required; prevents awakening on fresh characters. */
     private static final double MIN_SCORE  = 5.0;
@@ -54,13 +54,14 @@ public final class StatAwakeningManager {
 
     private static final String KEY_WARNED   = "sl_awaken_warned";
     private static final String KEY_AWAKENED = "sl_awakened";
+    private static final String KEY_EVALUATION_REMINDER =
+            "sl_evaluation_reminder";
 
     // ── Tick handler ──────────────────────────────────────────────────────────
 
-    @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        if (!(event.player instanceof ServerPlayer sp)) return;
+	@SubscribeEvent
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (!(event.getEntity() instanceof ServerPlayer sp)) return;
 
         // Only check every 100 ticks (~5 s) to keep overhead minimal
         if (sp.tickCount % 100 != 0) return;
@@ -82,28 +83,29 @@ public final class StatAwakeningManager {
 
         int level = (int) cap.Level;
 
-        // ── Early warning at level 18 ─────────────────────────────────────────
+        // ── Early reminder at level 18 ────────────────────────────────────────
         if (level >= WARN_LEVEL && !data.getBoolean(KEY_WARNED)) {
             data.putBoolean(KEY_WARNED, true);
-            int hint = computeClass(cap); // current leading class
-            String hintName = hint > 0 ? CLASS_NAMES[hint - 1] : "Unknown";
             sp.displayClientMessage(Component.literal(
-                "§6§l⚠ Awakening Approaches ⚠\n" +
-                "§eYour strength suggests a §b" + hintName + " §eawakening at level " +
-                AWAKEN_LEVEL + ".\n§7Tip: Invest stats to steer your destiny — " +
-                "or seek formal Evaluation for greater power."), false);
+                "§6§l⚠ Hunter Evaluation Available ⚠\n" +
+                "§eVisit a Hunter Evaluator to discover your rank and class.\n" +
+                "§7Rank is measured automatically; class results may be rerolled."),
+                false);
             SystemNotifications.showTitleUnder(sp, 0xFFFFB83D, 110,
-                Component.literal("AWAKENING APPROACHES").withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
-                Component.literal("Your stats suggest " + hintName + ".\nReach Lv " + AWAKEN_LEVEL + " to awaken.").withStyle(ChatFormatting.GRAY));
+                Component.literal("EVALUATION AVAILABLE")
+                        .withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+                Component.literal("Place your hand on an Evaluator crystal.")
+                        .withStyle(ChatFormatting.GRAY));
         }
 
-        // ── Awakening at level 20 ─────────────────────────────────────────────
-        if (level >= AWAKEN_LEVEL) {
-            int cls = computeClass(cap);
-            if (cls == 0) return; // stats too low / tied — wait
-
-            triggerAwakening(sp, cls);
-            data.putBoolean(KEY_AWAKENED, true);
+        // Class assignment no longer happens automatically at level 20.
+        if (level >= AWAKEN_LEVEL
+                && !data.getBoolean(KEY_EVALUATION_REMINDER)) {
+            data.putBoolean(KEY_EVALUATION_REMINDER, true);
+            sp.displayClientMessage(Component.literal(
+                    "§bThe Hunter Association is waiting to evaluate you. " +
+                    "Right-click an Evaluator crystal when you are ready."),
+                    false);
         }
     }
 
@@ -162,9 +164,11 @@ public final class StatAwakeningManager {
 			boolean barrier = MageSpellProgression.isBarrierMage(sp);
 			boolean arcane = MageSpellProgression.isArcaneMage(sp);
 			boolean storm = MageSpellProgression.isStormMage(sp);
-			color = barrier ? "aqua" : arcane ? "light_purple" : storm ? "yellow" : "red";
+			boolean curse = MageSpellProgression.isCurseMage(sp);
+			color = barrier ? "aqua" : arcane ? "light_purple" : storm ? "yellow"
+					: curse ? "dark_purple" : "red";
 			accent = barrier ? 0xFF5CE8FF : arcane ? 0xFF8A5CFF
-					: storm ? 0xFFFFD45A : 0xFFFF5A2A;
+					: storm ? 0xFFFFD45A : curse ? 0xFFA05CFF : 0xFFFF5A2A;
 		}
 
         SystemNotifications.showTitleUnder(sp, accent, 140,
@@ -204,7 +208,7 @@ public final class StatAwakeningManager {
     // ── Starter skill grants ──────────────────────────────────────────────────
 
     /**
-     * Adds two base skills for the awakened class.  These are the same skills
+     * Adds the base skills for the awakened class. These are the same skills
      * a low-rank Evaluation would grant; higher-tier skills remain locked behind
      * HunterRank progression, so formal evaluation retains its value.
      *
@@ -244,7 +248,7 @@ public final class StatAwakeningManager {
 
     /**
      * Title subtitle colours per class (Minecraft JSON colour names or hex).
-     * Matches the colours used in EvaluationTimerProcedure.
+     * Matches the colours used by Hunter Evaluation.
      */
     private static final String[] CLASS_COLORS = {
         "#009DFF",  // Assassin — blue
@@ -256,8 +260,8 @@ public final class StatAwakeningManager {
     };
 
     /**
-     * Two starter skills per class, indexed by (classId - 1).
-     * These are the most fundamental skills — always available regardless of rank.
+     * Starter skills per class, indexed by (classId - 1).
+     * These are the fundamental skills that do not require a runestone.
      */
     private static final int[] CLASS_ACCENTS = {
         0xFF009DFF,  // Assassin

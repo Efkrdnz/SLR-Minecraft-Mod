@@ -2,11 +2,9 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -40,31 +38,22 @@ public class BeastVfxEntity extends Entity {
 	private static final EntityDataAccessor<Integer> TARGET_ID = SynchedEntityData.defineId(BeastVfxEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> VARIANT = SynchedEntityData.defineId(BeastVfxEntity.class, EntityDataSerializers.INT);
 
-	public BeastVfxEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.BEAST_VFX.get(), level);
-	}
-
 	public BeastVfxEntity(EntityType<? extends BeastVfxEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(STYLE, CLAW);
-		this.entityData.define(PRIMARY_COLOR, 0xE51D29);
-		this.entityData.define(SECONDARY_COLOR, 0x2A0000);
-		this.entityData.define(SCALE, 1.0F);
-		this.entityData.define(LENGTH, 1.0F);
-		this.entityData.define(ROLL, 0.0F);
-		this.entityData.define(LIFETIME, 10);
-		this.entityData.define(TARGET_ID, -1);
-		this.entityData.define(VARIANT, 0);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(STYLE, CLAW);
+		builder.define(PRIMARY_COLOR, 0xE51D29);
+		builder.define(SECONDARY_COLOR, 0x2A0000);
+		builder.define(SCALE, 1.0F);
+		builder.define(LENGTH, 1.0F);
+		builder.define(ROLL, 0.0F);
+		builder.define(LIFETIME, 10);
+		builder.define(TARGET_ID, -1);
+		builder.define(VARIANT, 0);
 	}
 
 	public static BeastVfxEntity spawn(ServerLevel level, Vec3 origin, Vec3 direction, int style,

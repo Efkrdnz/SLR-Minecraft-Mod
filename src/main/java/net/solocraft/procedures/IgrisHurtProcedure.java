@@ -5,10 +5,11 @@ import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.entity.IgrisShadowEntity;
 import net.solocraft.entity.BloodRedComIgrisEntity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.ICancellableEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -20,10 +21,10 @@ import net.minecraft.core.particles.SimpleParticleType;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class IgrisHurtProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity, event.getSource().getEntity());
@@ -34,7 +35,7 @@ public class IgrisHurtProcedure {
 		execute(null, world, x, y, z, entity, sourceentity);
 	}
 
-	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
+	private static void execute(@Nullable ICancellableEvent event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
 		double invulnerable = 0;
@@ -64,7 +65,7 @@ public class IgrisHurtProcedure {
 					entity.setDeltaMovement(new Vec3(randX, 0.1, randZ));
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GLOW_AURA_RED.get()), x, y, z, 4, 0.5, 1.5, 0.5, 0);
-					if (event != null && event.isCancelable()) {
+					if (event != null) {
 						event.setCanceled(true);
 					}
 				}
@@ -77,7 +78,7 @@ public class IgrisHurtProcedure {
 							_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GLOW_AURA_RED.get()), origin.x, origin.y, origin.z, 4, 0.5, 1.5, 0.5, 0);
 							_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GLOW_AURA_RED.get()), entity.getX(), entity.getY(), entity.getZ(), 4, 0.5, 1.5, 0.5, 0);
 						}
-						if (event != null && event.isCancelable()) {
+						if (event != null) {
 							event.setCanceled(true);
 						}
 					}

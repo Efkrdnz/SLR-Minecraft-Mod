@@ -2,42 +2,39 @@
 package net.solocraft.entity;
 
 import software.bernie.geckolib.util.GeckoLibUtil;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.GeoEntity;
 
 import net.solocraft.procedures.IsBerserkProcedure;
 import net.solocraft.procedures.CommandCallProcedureProcedure;
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.entity.ai.ShadowCommandTargetGoal;
+import net.solocraft.entity.ai.ShadowFollowOwnerGoal;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
-import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.solocraft.entity.ai.LegacyMeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
@@ -55,7 +52,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.nbt.CompoundTag;
 
 import java.util.List;
@@ -70,10 +66,6 @@ public class SteelFangWolfShadowEntity extends TamableAnimal implements GeoEntit
 	private long lastSwing;
 	public String animationprocedure = "empty";
 
-	public SteelFangWolfShadowEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.STEEL_FANG_WOLF_SHADOW.get(), world);
-	}
-
 	public SteelFangWolfShadowEntity(EntityType<SteelFangWolfShadowEntity> type, Level world) {
 		super(type, world);
 		xpReward = 0;
@@ -82,11 +74,11 @@ public class SteelFangWolfShadowEntity extends TamableAnimal implements GeoEntit
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(SHOOT, false);
-		this.entityData.define(ANIMATION, "undefined");
-		this.entityData.define(TEXTURE, "lycanshadow");
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(SHOOT, false);
+		builder.define(ANIMATION, "undefined");
+		builder.define(TEXTURE, "lycanshadow");
 	}
 
 	public void setTexture(String texture) {
@@ -98,14 +90,10 @@ public class SteelFangWolfShadowEntity extends TamableAnimal implements GeoEntit
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 2, false) {
+		this.targetSelector.addGoal(0, new ShadowCommandTargetGoal(this));
+		this.goalSelector.addGoal(1, new LegacyMeleeAttackGoal(this, 2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
 				return 6.25;
@@ -511,18 +499,11 @@ public class SteelFangWolfShadowEntity extends TamableAnimal implements GeoEntit
 				return super.canContinueToUse() && IsBerserkProcedure.execute(entity);
 			}
 		});
-		this.targetSelector.addGoal(22, new OwnerHurtTargetGoal(this));
-		this.goalSelector.addGoal(23, new FollowParentGoal(this, 1.6));
+		this.goalSelector.addGoal(2, new ShadowFollowOwnerGoal(this));
 		this.goalSelector.addGoal(24, new RandomStrollGoal(this, 0.5));
-		this.goalSelector.addGoal(25, new OwnerHurtByTargetGoal(this));
 		this.goalSelector.addGoal(26, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(27, new FloatGoal(this));
 		this.goalSelector.addGoal(28, new OpenDoorGoal(this, true));
-	}
-
-	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
 	}
 
 	@Override
@@ -532,12 +513,12 @@ public class SteelFangWolfShadowEntity extends TamableAnimal implements GeoEntit
 
 	@Override
 	public SoundEvent getHurtSound(DamageSource ds) {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.hurt"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.hurt"));
 	}
 
 	@Override
 	public SoundEvent getDeathSound() {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither_skeleton.death"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither_skeleton.death"));
 	}
 
 	@Override
@@ -565,9 +546,9 @@ public class SteelFangWolfShadowEntity extends TamableAnimal implements GeoEntit
 		} else {
 			if (this.isTame()) {
 				if (this.isOwnedBy(sourceentity)) {
-					if (item.isEdible() && this.isFood(itemstack) && this.getHealth() < this.getMaxHealth()) {
+					if (item.getFoodProperties(itemstack, this) != null && this.isFood(itemstack) && this.getHealth() < this.getMaxHealth()) {
 						this.usePlayerItem(sourceentity, hand, itemstack);
-						this.heal((float) item.getFoodProperties().getNutrition());
+						this.heal((float) item.getFoodProperties(itemstack, this).nutrition());
 						retval = InteractionResult.sidedSuccess(this.level().isClientSide());
 					} else if (this.isFood(itemstack) && this.getHealth() < this.getMaxHealth()) {
 						this.usePlayerItem(sourceentity, hand, itemstack);
@@ -579,7 +560,7 @@ public class SteelFangWolfShadowEntity extends TamableAnimal implements GeoEntit
 				}
 			} else if (this.isFood(itemstack)) {
 				this.usePlayerItem(sourceentity, hand, itemstack);
-				if (this.random.nextInt(3) == 0 && !net.minecraftforge.event.ForgeEventFactory.onAnimalTame(this, sourceentity)) {
+				if (this.random.nextInt(3) == 0 && !net.neoforged.neoforge.event.EventHooks.onAnimalTame(this, sourceentity)) {
 					this.tame(sourceentity);
 					this.level().broadcastEntityEvent(this, (byte) 7);
 				} else {
@@ -604,14 +585,14 @@ public class SteelFangWolfShadowEntity extends TamableAnimal implements GeoEntit
 	}
 
 	@Override
-	public EntityDimensions getDimensions(Pose p_33597_) {
-		return super.getDimensions(p_33597_).scale((float) 2);
+	public EntityDimensions getDefaultDimensions(Pose p_33597_) {
+		return super.getDefaultDimensions(p_33597_).scale((float) 2);
 	}
 
 	@Override
 	public AgeableMob getBreedOffspring(ServerLevel serverWorld, AgeableMob ageable) {
 		SteelFangWolfShadowEntity retval = SololevelingModEntities.STEEL_FANG_WOLF_SHADOW.get().create(serverWorld);
-		retval.finalizeSpawn(serverWorld, serverWorld.getCurrentDifficultyAt(retval.blockPosition()), MobSpawnType.BREEDING, null, null);
+		retval.finalizeSpawn(serverWorld, serverWorld.getCurrentDifficultyAt(retval.blockPosition()), MobSpawnType.BREEDING, null);
 		return retval;
 	}
 
@@ -690,7 +671,7 @@ public class SteelFangWolfShadowEntity extends TamableAnimal implements GeoEntit
 		++this.deathTime;
 		if (this.deathTime == 20) {
 			this.remove(SteelFangWolfShadowEntity.RemovalReason.KILLED);
-			this.dropExperience();
+			this.dropExperience(this.getKillCredit());
 		}
 	}
 

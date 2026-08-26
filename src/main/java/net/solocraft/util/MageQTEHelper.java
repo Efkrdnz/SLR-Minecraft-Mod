@@ -50,7 +50,10 @@ public final class MageQTEHelper {
 			ArcaneMageSpellManager.CONVERGENCE,
 			StormMageSpellManager.THUNDERHEAD,
 			StormMageSpellManager.SKYBREAKER,
-			StormMageSpellManager.TEMPEST_INCARNATE
+			StormMageSpellManager.TEMPEST_INCARNATE,
+			CurseMageSpellManager.MALEFIC_BURST,
+			CurseMageSpellManager.CREEPING_MIASMA,
+			CurseMageSpellManager.CULLING
     );
 
     // ── Pure functions ────────────────────────────────────────────────────────

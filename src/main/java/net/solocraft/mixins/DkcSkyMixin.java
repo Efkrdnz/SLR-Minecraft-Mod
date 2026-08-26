@@ -17,7 +17,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = LevelRenderer.class, priority = 1200)
 public abstract class DkcSkyMixin {
 	@Inject(method = "renderSky", at = @At("HEAD"), cancellable = true)
-	private void sololeveling$suppressVanillaDkcSky(PoseStack poseStack, Matrix4f projectionMatrix,
+	private void sololeveling$suppressVanillaDkcSky(Matrix4f modelViewMatrix,
+			Matrix4f projectionMatrix,
 			float partialTick, Camera camera, boolean isFoggy, Runnable setupFog, CallbackInfo callback) {
 		ClientLevel level = Minecraft.getInstance().level;
 		if (DkcFloorRegistry.isSharedDkc(level)) {
@@ -27,7 +28,8 @@ public abstract class DkcSkyMixin {
 	}
 
 	@Inject(method = "renderClouds", at = @At("HEAD"), cancellable = true)
-	private void sololeveling$suppressVanillaDkcClouds(PoseStack poseStack, Matrix4f projectionMatrix,
+	private void sololeveling$suppressVanillaDkcClouds(PoseStack poseStack,
+			Matrix4f modelViewMatrix, Matrix4f projectionMatrix,
 			float partialTick, double cameraX, double cameraY, double cameraZ, CallbackInfo callback) {
 		if (DkcFloorRegistry.isSharedDkc(Minecraft.getInstance().level))
 			callback.cancel();

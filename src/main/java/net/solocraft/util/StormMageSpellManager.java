@@ -4,19 +4,24 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.network.StormStateMessage;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -58,7 +63,7 @@ import java.util.UUID;
  * tickets. Conductive marks, Lightning Rod, Voltage, Thunderhead, and Tempest
  * are private to each caster.</p>
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class StormMageSpellManager {
 	public static final String STATIC_NEEDLE = "Static Needle";
 	public static final String SLIPSTREAM = "Slipstream";
@@ -91,8 +96,9 @@ public final class StormMageSpellManager {
 			EntityHighlightSystem.PRIORITY_PERCEPTION + 70;
 	private static final double[] COST_MULTIPLIER =
 			{0.0D, 1.0D, 1.10D, 1.20D, 1.30D, 1.40D, 1.50D};
-	private static final UUID TEMPEST_SPEED_MODIFIER =
-			UUID.fromString("f457662b-592a-47ac-bbdb-b1c524af9ac2");
+	private static final ResourceLocation TEMPEST_SPEED_MODIFIER =
+			ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID,
+					"attribute/storm_mage_tempest_speed");
 	private static final int CONDUCTIVE_DURATION = 120;
 	private static final int ROD_DURATION = 240;
 	private static final int TEMPEST_DURATION = 200;
@@ -364,7 +370,7 @@ public final class StormMageSpellManager {
 			default -> 0.0D;
 		};
 		double intelligence = Math.max(0.0D, MageCombatHelper.intelligence(caster));
-		double maximumMana = 1000.0D + intelligence * 100.0D;
+		double maximumMana = ManaRules.maximumManaFor(intelligence);
 		double qte = isQteSkill(skill)
 				? MageQTEHelper.getManaCostMultiplier(
 						result == null ? QTEResult.MISS : result, intelligence)
@@ -485,7 +491,7 @@ public final class StormMageSpellManager {
 		double range = 24.0D + stage * 5.0D;
 		ACTIVE_NEEDLES.add(new NeedleCast(level, caster, stage, damage, overcharged,
 				caster.getEyePosition().add(direction.scale(0.55D)), direction, range));
-		play(level, caster.position(), SoundEvents.TRIDENT_THROW, 0.65F, 1.85F);
+		play(level, caster.position(), SoundEvents.TRIDENT_THROW.value(), 0.65F, 1.85F);
 		return true;
 	}
 
@@ -499,7 +505,7 @@ public final class StormMageSpellManager {
 		if (stage >= 2 && caster instanceof LivingEntity living)
 			living.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
 		ACTIVE_DASHES.add(new SlipstreamCast(level, caster, stage, direction, distance));
-		play(level, caster.position(), SoundEvents.TRIDENT_RIPTIDE_1, 0.75F, 1.65F);
+		play(level, caster.position(), SoundEvents.TRIDENT_RIPTIDE_1.value(), 0.75F, 1.65F);
 		return true;
 	}
 
@@ -534,7 +540,7 @@ public final class StormMageSpellManager {
 		}
 		ringParticles(level, caster.position().add(0.0D, 0.7D, 0.0D), radius,
 				overcharged ? 28 : 18);
-		play(level, caster.position(), SoundEvents.GENERIC_EXPLODE, 0.8F,
+		play(level, caster.position(), SoundEvents.GENERIC_EXPLODE.value(), 0.8F,
 				overcharged ? 1.25F : 1.65F);
 		return true;
 	}
@@ -608,7 +614,7 @@ public final class StormMageSpellManager {
 			awardHits(level, caster, state, new HitLedger(), hit);
 			recordDamagingCast(level, caster, state, hit.get(0), baseDamage);
 		}
-		play(level, root.position(), SoundEvents.TRIDENT_THUNDER, 0.75F,
+		play(level, root.position(), SoundEvents.TRIDENT_THUNDER.value(), 0.75F,
 				overcharged ? 1.35F : 1.75F);
 		return !hit.isEmpty();
 	}
@@ -687,14 +693,12 @@ public final class StormMageSpellManager {
 		if (caster instanceof LivingEntity living)
 			applyTempestSpeed(living, stage >= 6 ? 0.20D : 0.15D);
 		ringParticles(level, caster.position().add(0.0D, 0.8D, 0.0D), 2.2D, 28);
-		play(level, caster.position(), SoundEvents.TRIDENT_RIPTIDE_3, 1.0F, 1.35F);
+		play(level, caster.position(), SoundEvents.TRIDENT_RIPTIDE_3.value(), 1.0F, 1.35F);
 		return true;
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
+	public static void onServerTick(ServerTickEvent.Post event) {
 		tickList(ACTIVE_NEEDLES);
 		tickList(ACTIVE_DASHES);
 		tickList(ACTIVE_SKYBREAKERS);
@@ -973,7 +977,7 @@ public final class StormMageSpellManager {
 			return;
 		speed.removeModifier(TEMPEST_SPEED_MODIFIER);
 		speed.addTransientModifier(new AttributeModifier(TEMPEST_SPEED_MODIFIER,
-				"Storm Mage Tempest speed", amount, AttributeModifier.Operation.MULTIPLY_TOTAL));
+				amount, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 	}
 
 	private static void removeTempestSpeed(LivingEntity living) {
@@ -1443,7 +1447,13 @@ public final class StormMageSpellManager {
 			}
 			if (finalStrike && overcharged)
 				finalBurst(caster, state, candidates);
-			play(level, center, SoundEvents.TRIDENT_THUNDER, 0.70F, 1.45F);
+			if (finalStrike && caster instanceof ServerPlayer player)
+				AbilityDestructionManager.impact(player,
+						AbilityDestructionManager.Profile.STORM_THUNDERCLAP,
+						hit.isEmpty() ? center : hit.get(0).position(),
+						TemporaryStatBonusManager.effectiveIntelligence(player),
+						overcharged || stage >= 5);
+			play(level, center, SoundEvents.TRIDENT_THUNDER.value(), 0.70F, 1.45F);
 		}
 
 		private void finalBurst(Entity caster, StormState state,
@@ -1547,7 +1557,12 @@ public final class StormMageSpellManager {
 			}
 			columnParticles(level, center, 10.0D, ParticleTypes.ELECTRIC_SPARK, 18);
 			sparkBurst(level, center.add(0.0D, 1.0D, 0.0D), 16);
-			play(level, center, SoundEvents.TRIDENT_THUNDER, 1.25F, 0.85F);
+			if (caster instanceof ServerPlayer player)
+				AbilityDestructionManager.impact(player,
+						AbilityDestructionManager.Profile.STORM_SKYBREAKER, center,
+						TemporaryStatBonusManager.effectiveIntelligence(player),
+						overcharged || stage >= 5);
+			play(level, center, SoundEvents.TRIDENT_THUNDER.value(), 1.25F, 0.85F);
 		}
 
 		private void echo(Entity caster) {

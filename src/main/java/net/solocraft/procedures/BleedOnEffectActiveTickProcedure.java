@@ -17,7 +17,7 @@ public class BleedOnEffectActiveTickProcedure {
 			return;
 		if (world instanceof ServerLevel _level)
 			_level.sendParticles(ParticleTypes.DRIPPING_LAVA, x, y, z, 2, 0, 0, 0, 1);
-		if ((entity instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.BLEED.get()) ? _livEnt.getEffect(SololevelingModMobEffects.BLEED.get()).getDuration() : 0) % 30 == 0) {
+		if ((entity instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.BLEED) ? _livEnt.getEffect(SololevelingModMobEffects.BLEED).getDuration() : 0) % 30 == 0) {
 			entity.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.GENERIC)), (float) ((entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1) / 100));
 		}
 	}

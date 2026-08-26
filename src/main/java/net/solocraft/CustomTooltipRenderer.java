@@ -3,14 +3,15 @@ package net.solocraft;
 import net.solocraft.client.gui.WeaponTooltipProfiles;
 import net.solocraft.client.gui.WeaponTooltipRenderer;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RenderTooltipEvent;
-import net.minecraftforge.common.ForgeSpawnEggItem;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.RenderTooltipEvent;
+import net.neoforged.neoforge.common.DeferredSpawnEggItem;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -21,12 +22,12 @@ import java.awt.Color;
 import java.util.Locale;
 import java.util.Set;
 
-@Mod.EventBusSubscriber(modid = "sololeveling", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = "sololeveling", bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class CustomTooltipRenderer {
 
     private static final String MODID = "sololeveling";
     private static final TagKey<Item> WEAPONS_TAG =
-            TagKey.create(Registries.ITEM, new ResourceLocation(MODID, "weapons"));
+            TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(MODID, "weapons"));
 
     private static final Set<String> WEAPON_NAME_KEYS = Set.of(
             "sword", "long_sword", "longsword", "dagger", "katana",
@@ -127,7 +128,7 @@ public class CustomTooltipRenderer {
 
     // --- classify only your mod's weapons ---
     private static boolean isModItem(ItemStack stack) {
-        ResourceLocation key = ForgeRegistries.ITEMS.getKey(stack.getItem());
+        ResourceLocation key = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return key != null && MODID.equals(key.getNamespace());
     }
 
@@ -135,9 +136,9 @@ public class CustomTooltipRenderer {
         Item item = stack.getItem();
         if (item instanceof BlockItem) return false;
         if (item instanceof ArmorItem) return false;
-        if (item instanceof ForgeSpawnEggItem) return false;
+        if (item instanceof DeferredSpawnEggItem) return false;
 
-        ResourceLocation key = ForgeRegistries.ITEMS.getKey(item);
+        ResourceLocation key = BuiltInRegistries.ITEM.getKey(item);
         if (key == null || !MODID.equals(key.getNamespace())) return false;
 
         if (stack.is(WEAPONS_TAG)) return true;
@@ -154,7 +155,7 @@ public class CustomTooltipRenderer {
     }
 
     private static String getPath(Item item) {
-        ResourceLocation key = ForgeRegistries.ITEMS.getKey(item);
+        ResourceLocation key = BuiltInRegistries.ITEM.getKey(item);
         return key == null ? "" : key.getPath();
     }
 

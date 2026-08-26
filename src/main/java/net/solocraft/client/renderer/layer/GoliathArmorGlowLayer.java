@@ -21,8 +21,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 
 /** Full-bright mask pass for the custom Goliath spiritualization armor. */
 public class GoliathArmorGlowLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
-	private static final ResourceLocation HELMET_GLOW = new ResourceLocation("sololeveling", "textures/models/armor/goliath_helm_glow.png");
-	private static final ResourceLocation CHEST_GLOW = new ResourceLocation("sololeveling", "textures/models/armor/goliath_chest_glow.png");
+	private static final ResourceLocation HELMET_GLOW = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/models/armor/goliath_helm_glow.png");
+	private static final ResourceLocation CHEST_GLOW = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/models/armor/goliath_chest_glow.png");
 
 	private final Modelgoliathhelm<AbstractClientPlayer> helmetModel;
 	private final Modelgoliathchest<AbstractClientPlayer> chestModel;
@@ -65,7 +65,6 @@ public class GoliathArmorGlowLayer extends RenderLayer<AbstractClientPlayer, Pla
 	private static void renderGlow(net.minecraft.client.model.EntityModel<AbstractClientPlayer> model,
 			ResourceLocation texture, PoseStack poseStack, MultiBufferSource bufferSource) {
 		VertexConsumer vertices = bufferSource.getBuffer(RenderType.eyes(texture));
-		model.renderToBuffer(poseStack, vertices, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
-				1.0F, 1.0F, 1.0F, 1.0F);
+		model.renderToBuffer(poseStack, vertices, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
 	}
 }

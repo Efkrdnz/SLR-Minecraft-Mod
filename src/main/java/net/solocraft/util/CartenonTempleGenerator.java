@@ -7,10 +7,14 @@ import net.solocraft.entity.StatuehammerEntity;
 import net.solocraft.entity.StatueswordEntity;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -45,7 +49,7 @@ import java.util.UUID;
  * limits block inspection and mutation independently so empty air is scanned quickly
  * while dense terrain cannot create a single large tick spike.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class CartenonTempleGenerator {
 	private static final int HALF_WIDTH = 77;
 	private static final int MAX_Z = 154;
@@ -128,8 +132,8 @@ public final class CartenonTempleGenerator {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || ACTIVE_BUILDS.isEmpty())
+	public static void onServerTick(ServerTickEvent.Post event) {
+		if (false || ACTIVE_BUILDS.isEmpty())
 			return;
 
 		int activeCount = Math.max(1, ACTIVE_BUILDS.size());
@@ -614,7 +618,7 @@ public final class CartenonTempleGenerator {
 		private void removePreviousTempleStatues() {
 			BlockPos first = toWorld(-HALF_WIDTH, 0, 0);
 			BlockPos second = toWorld(HALF_WIDTH, MAX_Y, MAX_Z);
-			AABB bounds = new AABB(first, second).inflate(4.0D);
+			AABB bounds = AABB.encapsulatingFullBlocks(first, second).inflate(4.0D);
 			for (Mob mob : level.getEntitiesOfClass(Mob.class, bounds,
 					entity -> entity.getPersistentData().getBoolean("CartenonTempleStatue"))) {
 				mob.discard();
@@ -643,7 +647,7 @@ public final class CartenonTempleGenerator {
 			double dz = lookPos.getZ() - spawnPos.getZ();
 			float yaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
 			statue.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, yaw, 0.0F);
-			statue.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.STRUCTURE, null, null);
+			statue.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.STRUCTURE, null);
 			statue.setYRot(yaw);
 			statue.setYBodyRot(yaw);
 			statue.setYHeadRot(yaw);

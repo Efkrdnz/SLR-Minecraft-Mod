@@ -3,9 +3,13 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.EntityHighlightSystem;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -19,7 +23,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /** Periodically turns Perception into a private, short-lived entity sense. */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class SenseEffect2Procedure {
 	private static final String HIGHLIGHT_SOURCE = "perception:sense";
 	private static final String NEXT_SENSE_TICK = "slr_next_perception_sense";
@@ -32,8 +36,8 @@ public final class SenseEffect2Procedure {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END && event.player instanceof ServerPlayer player)
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true && event.getEntity() instanceof ServerPlayer player)
 			trySense(player);
 	}
 

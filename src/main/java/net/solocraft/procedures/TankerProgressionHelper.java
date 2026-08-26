@@ -53,7 +53,8 @@ public final class TankerProgressionHelper {
 				return;
 			boolean changed = migrateVariables(vars);
 			int rank = Math.max(1, Math.min(6, (int) Math.round(vars.HunterRank)));
-			for (String skill : TankerProgressionRules.entitlementsForRank(rank))
+			String styleKey = vars.classStyle == null ? "" : vars.classStyle;
+			for (String skill : TankerProgressionRules.entitlementsForRank(styleKey, rank))
 				changed |= ensureSkill(vars, skill);
 			if (changed)
 				vars.syncPlayerVariables(player);

@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class MiniGemGolemModel extends GeoModel<MiniGemGolemEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(MiniGemGolemEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/dungeonmons1.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/dungeonmons1.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(MiniGemGolemEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/dungeonmons1.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/dungeonmons1.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(MiniGemGolemEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

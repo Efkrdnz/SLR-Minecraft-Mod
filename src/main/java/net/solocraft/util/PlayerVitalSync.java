@@ -32,7 +32,8 @@ public final class PlayerVitalSync {
 	public static void restoreAfterRespawn(ServerPlayer player) {
 		applyDerivedAttributes(player);
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(variables -> {
-			variables.Mana = player.isCreative() ? CREATIVE_MANA : 1000.0D + 100.0D * variables.Intelligence;
+			variables.Mana = player.isCreative() ? CREATIVE_MANA
+					: 1000.0D + 100.0D * TemporaryStatBonusManager.effectiveIntelligence(player);
 			variables.MP = variables.Mana;
 			variables.Fatigue = 0.0D;
 			variables.syncPlayerVariables(player);

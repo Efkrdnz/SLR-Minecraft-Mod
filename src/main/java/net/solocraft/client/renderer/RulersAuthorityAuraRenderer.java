@@ -16,11 +16,9 @@ import net.minecraft.world.phys.Vec3;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 public class RulersAuthorityAuraRenderer extends EntityRenderer<RulersAuthorityAuraEntity> {
-    private static final ResourceLocation TEXTURE = new ResourceLocation("sololeveling:textures/particle/mana_blue.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.parse("sololeveling:textures/particle/mana_blue.png");
     private static final int SEGMENTS = 24;
 
     public RulersAuthorityAuraRenderer(EntityRendererProvider.Context context) {
@@ -142,11 +140,9 @@ public class RulersAuthorityAuraRenderer extends EntityRenderer<RulersAuthorityA
 
     private static void vertex(VertexConsumer vertices, PoseStack.Pose pose, float x, float y, float z,
             float u, float v, int alpha) {
-        Matrix4f matrix = pose.pose();
-        Matrix3f normal = pose.normal();
-        vertices.vertex(matrix, x, y, z).color(120, 210, 255, alpha).uv(u, v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240)
-                .normal(normal, x, 0.15F, z).endVertex();
+        vertices.addVertex(pose, x, y, z).setColor(120, 210, 255, alpha).setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(240)
+                .setNormal(pose, x, 0.15F, z);
     }
 
     private static float smoothstep(float edge0, float edge1, float value) {

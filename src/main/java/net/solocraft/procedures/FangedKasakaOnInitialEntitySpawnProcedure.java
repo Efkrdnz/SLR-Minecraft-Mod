@@ -6,6 +6,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -41,7 +42,7 @@ public class FangedKasakaOnInitialEntitySpawnProcedure {
 									ItemStack _itemstack = ItemStack.EMPTY;
 									if (this.getEntity() instanceof LivingEntity _livingentity)
 										_itemstack = _livingentity.getMainHandItem();
-									return !_itemstack.isEmpty() && _itemstack.hasCustomHoverName()
+									return !_itemstack.isEmpty() && _itemstack.has(DataComponents.CUSTOM_NAME)
 											? Component.translatable(_translatekey + ".item", _msgEntity.getDisplayName(), _component, _itemstack.getDisplayName())
 											: Component.translatable(_translatekey, _msgEntity.getDisplayName(), _component);
 								}

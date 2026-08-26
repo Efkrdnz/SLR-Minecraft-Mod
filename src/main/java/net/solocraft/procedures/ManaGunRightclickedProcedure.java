@@ -4,8 +4,10 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.item.ManaGunItem;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.ManaBulletEntity;
+import net.solocraft.util.TemporaryStatBonusManager;
+import net.solocraft.util.ItemStackData;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -22,30 +24,30 @@ public class ManaGunRightclickedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, ItemStack itemstack) {
 		if (entity == null)
 			return;
-		if (entity instanceof Player _player)
-			_player.getCooldowns().addCooldown(itemstack.getItem(), _player.isCreative() ? 10 : 20);
+		if (entity instanceof Player _player && !_player.isCreative())
+			_player.getCooldowns().addCooldown(itemstack.getItem(), 20);
 		if (itemstack.getItem() instanceof ManaGunItem)
-			itemstack.getOrCreateTag().putString("geckoAnim", "shoot");
+			ItemStackData.putString(itemstack, "geckoAnim", "shoot");
 		if (world instanceof Level _level) {
 			if (!_level.isClientSide()) {
-				_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.amethyst_block.break")), SoundSource.NEUTRAL, 2, (float) 0.5);
+				_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.amethyst_block.break")), SoundSource.NEUTRAL, 2, (float) 0.5);
 			} else {
-				_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.amethyst_block.break")), SoundSource.NEUTRAL, 2, (float) 0.5, false);
+				_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.amethyst_block.break")), SoundSource.NEUTRAL, 2, (float) 0.5, false);
 			}
 		}
 		if (world instanceof Level _level) {
 			if (!_level.isClientSide()) {
-				_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.beacon.activate")), SoundSource.NEUTRAL, 1, (float) 0.5);
+				_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.beacon.activate")), SoundSource.NEUTRAL, 1, (float) 0.5);
 			} else {
-				_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.beacon.activate")), SoundSource.NEUTRAL, 1, (float) 0.5, false);
+				_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.beacon.activate")), SoundSource.NEUTRAL, 1, (float) 0.5, false);
 			}
 		}
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Classes == 6) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 100
-					+ (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 1) {
+					+ TemporaryStatBonusManager.effectiveIntelligence(entity)) {
 				{
 					double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP
-							- (100 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 1);
+							- (100 + TemporaryStatBonusManager.effectiveIntelligence(entity));
 					entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 						capability.MP = _setval;
 						capability.syncPlayerVariables(entity);
@@ -60,12 +62,13 @@ public class ManaGunRightclickedProcedure {
 								AbstractArrow entityToSpawn = new ManaBulletEntity(SololevelingModEntities.MANA_BULLET.get(), level);
 								entityToSpawn.setOwner(shooter);
 								entityToSpawn.setBaseDamage(damage);
-								entityToSpawn.setKnockback(knockback);
+								net.solocraft.entity.LegacyProjectileCompat.setKnockback(entityToSpawn, knockback);
 								entityToSpawn.setSilent(true);
 								entityToSpawn.setPierceLevel(piercing);
 								return entityToSpawn;
 							}
-						}.getArrow(projectileLevel, entity, (float) (3 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 50), 0, (byte) 1);
+						}.getArrow(projectileLevel, entity,
+								(float) (3 + TemporaryStatBonusManager.effectiveIntelligence(entity) / 50), 0, (byte) 1);
 						_entityToSpawn.setPos(_shootFrom.getX(), _shootFrom.getEyeY() - 0.1, _shootFrom.getZ());
 						_entityToSpawn.shoot(_shootFrom.getLookAngle().x, _shootFrom.getLookAngle().y, _shootFrom.getLookAngle().z, 4, 0);
 						projectileLevel.addFreshEntity(_entityToSpawn);

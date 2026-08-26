@@ -1,10 +1,11 @@
 package net.solocraft.block;
 
+import com.mojang.serialization.MapCodec;
+
 import net.solocraft.block.entity.GuildComputerBlockEntity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
@@ -25,7 +27,7 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraftforge.network.NetworkHooks;
+import net.solocraft.network.compat.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -35,20 +37,30 @@ import java.util.List;
  *
  * When broken (any means — survival, creative, explosion) it drops itself
  * as a single item with all block-entity data (bound guild ID + storage
- * contents) saved inside the item's {@code BlockEntityTag}.  Placing the
+ * contents) saved inside the item's block-entity data component. Placing the
  * item back restores everything automatically via Minecraft's standard
  * {@code BlockItem.updateCustomBlockEntityTag} path.
  */
 public class GuildComputerBlock extends BaseEntityBlock {
+    public static final MapCodec<GuildComputerBlock> CODEC = simpleCodec(GuildComputerBlock::new);
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
     public GuildComputerBlock() {
-        super(BlockBehaviour.Properties.of()
+        this(BlockBehaviour.Properties.of()
                 .sound(SoundType.METAL)
                 .strength(3.5f, 12f));
+    }
+
+    public GuildComputerBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
         // Note: requiresCorrectToolForDrops() intentionally omitted so the
         // computer always drops itself regardless of tool used.
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
     }
 
     // ── BlockEntity ───────────────────────────────────────────────────────────
@@ -77,8 +89,8 @@ public class GuildComputerBlock extends BaseEntityBlock {
     // ── Interaction ───────────────────────────────────────────────────────────
 
     @Override
-    public InteractionResult use(BlockState state, Level world, BlockPos pos,
-                                 Player player, InteractionHand hand, BlockHitResult hit) {
+    protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos,
+                                                Player player, BlockHitResult hit) {
         if (world.isClientSide()) return InteractionResult.SUCCESS;
 
         BlockEntity be = world.getBlockEntity(pos);
@@ -102,7 +114,7 @@ public class GuildComputerBlock extends BaseEntityBlock {
      * Middle-click in creative: give the computer item with its current data.
      */
     @Override
-    public ItemStack getCloneItemStack(net.minecraft.world.level.BlockGetter level,
+    public ItemStack getCloneItemStack(LevelReader level,
                                        BlockPos pos, BlockState state) {
         return buildDrop(level.getBlockEntity(pos));
     }
@@ -112,7 +124,7 @@ public class GuildComputerBlock extends BaseEntityBlock {
      * manually before the block is removed.
      */
     @Override
-    public void playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
+    public BlockState playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
         if (!world.isClientSide() && player.isCreative()) {
             BlockEntity be = world.getBlockEntity(pos);
             ItemStack drop = buildDrop(be);
@@ -121,7 +133,7 @@ public class GuildComputerBlock extends BaseEntityBlock {
             ie.setDefaultPickUpDelay();
             world.addFreshEntity(ie);
         }
-        super.playerWillDestroy(world, pos, state, player);
+        return super.playerWillDestroy(world, pos, state, player);
     }
 
     // ── Cleanup on replacement (no loose-item spill — everything is in NBT) ──
@@ -141,12 +153,8 @@ public class GuildComputerBlock extends BaseEntityBlock {
 
     private ItemStack buildDrop(@Nullable BlockEntity be) {
         ItemStack stack = new ItemStack(this);
-        if (be instanceof GuildComputerBlockEntity computer) {
-            CompoundTag beTag = computer.saveWithoutMetadata();
-            if (!beTag.isEmpty()) {
-                stack.addTagElement("BlockEntityTag", beTag);
-            }
-        }
+        if (be instanceof GuildComputerBlockEntity computer && computer.getLevel() != null)
+            computer.saveToItem(stack, computer.getLevel().registryAccess());
         return stack;
     }
 }

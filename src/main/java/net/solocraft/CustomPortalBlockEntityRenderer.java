@@ -2,8 +2,8 @@ package net.solocraft;
 
 import org.joml.Matrix4f;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.resources.ResourceLocation;
@@ -22,7 +22,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
 @OnlyIn(Dist.CLIENT)
 public class CustomPortalBlockEntityRenderer<T extends BlockEntity> implements BlockEntityRenderer<T> {
-	public static final ResourceLocation TEXTURE_1 = new ResourceLocation("sololeveling:textures/entities/systemvoid.png");
+	public static final ResourceLocation TEXTURE_1 = ResourceLocation.parse("sololeveling:textures/entities/systemvoid.png");
 	private static final RenderType CUSTOM_PORTAL = RenderType.create("end_portal", DefaultVertexFormat.POSITION, VertexFormat.Mode.QUADS, 256, false, false,
 			RenderType.CompositeState.builder().setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeEndPortalShader))
 					.setTextureState(RenderStateShard.MultiTextureStateShard.builder().add(TEXTURE_1, false, false).add(TEXTURE_1, false, false).build()).createCompositeState(false));
@@ -48,10 +48,10 @@ public class CustomPortalBlockEntityRenderer<T extends BlockEntity> implements B
 
 	private void renderFace(T p_253949_, Matrix4f p_254247_, VertexConsumer p_254390_, float p_254147_, float p_253639_, float p_254107_, float p_254109_, float p_254021_, float p_254458_, float p_254086_, float p_254310_, Direction p_253619_) {
 		if (true) {
-			p_254390_.vertex(p_254247_, p_254147_, p_254107_, p_254021_).endVertex();
-			p_254390_.vertex(p_254247_, p_253639_, p_254107_, p_254458_).endVertex();
-			p_254390_.vertex(p_254247_, p_253639_, p_254109_, p_254086_).endVertex();
-			p_254390_.vertex(p_254247_, p_254147_, p_254109_, p_254310_).endVertex();
+			p_254390_.addVertex(p_254247_, p_254147_, p_254107_, p_254021_);
+			p_254390_.addVertex(p_254247_, p_253639_, p_254107_, p_254458_);
+			p_254390_.addVertex(p_254247_, p_253639_, p_254109_, p_254086_);
+			p_254390_.addVertex(p_254247_, p_254147_, p_254109_, p_254310_);
 		}
 	}
 

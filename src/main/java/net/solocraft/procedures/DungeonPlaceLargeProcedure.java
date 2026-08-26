@@ -29,10 +29,10 @@ public class DungeonPlaceLargeProcedure {
 		yOff = y - 23;
 		zOff = z - 25.5;
 		if (world instanceof ServerLevel _serverworld) {
-			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "updatedlargerandstart"));
+			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "updatedlargerandstart"));
 			if (template != null) {
 				template.placeInWorld(_serverworld, BlockPos.containing(xOff, yOff, zOff), BlockPos.containing(xOff, yOff, zOff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-						_serverworld.random, 3);
+						_serverworld.random, 2);
 			}
 		}
 		xOff = xOff + 49;
@@ -42,60 +42,60 @@ public class DungeonPlaceLargeProcedure {
 			if (comp < 4) {
 				if (Rand == 1) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "bigroom1"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "bigroom1"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(xOff, yOff, zOff), BlockPos.containing(xOff, yOff, zOff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-									_serverworld.random, 3);
+									_serverworld.random, 2);
 						}
 					}
 					xOff = xOff + 49;
 				}
 				if (Rand == 2) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "bigroom2"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "bigroom2"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(xOff, yOff, zOff), BlockPos.containing(xOff, yOff, zOff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-									_serverworld.random, 3);
+									_serverworld.random, 2);
 						}
 					}
 					xOff = xOff + 49;
 				}
 				if (Rand == 3) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "bigroom3"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "bigroom3"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(xOff, yOff, zOff), BlockPos.containing(xOff, yOff, zOff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-									_serverworld.random, 3);
+									_serverworld.random, 2);
 						}
 					}
 					xOff = xOff + 49;
 				}
 				if (Rand == 4) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "bigroom4"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "bigroom4"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(xOff, yOff, zOff), BlockPos.containing(xOff, yOff, zOff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-									_serverworld.random, 3);
+									_serverworld.random, 2);
 						}
 					}
 					xOff = xOff + 49;
 				}
 				if (Rand == 5) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "bigroom5"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "bigroom5"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(xOff, yOff, zOff), BlockPos.containing(xOff, yOff, zOff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-									_serverworld.random, 3);
+									_serverworld.random, 2);
 						}
 					}
 					xOff = xOff + 49;
 				}
 			} else {
 				if (world instanceof ServerLevel _serverworld) {
-					StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "bigroomboss"));
+					StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "bigroomboss"));
 					if (template != null) {
 						template.placeInWorld(_serverworld, BlockPos.containing(xOff, yOff, zOff), BlockPos.containing(xOff, yOff, zOff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-								_serverworld.random, 3);
+								_serverworld.random, 2);
 					}
 				}
 				break;

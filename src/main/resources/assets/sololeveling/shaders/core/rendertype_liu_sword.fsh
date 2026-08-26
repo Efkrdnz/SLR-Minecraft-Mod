@@ -168,7 +168,8 @@ void main() {
     vec3 saturated = mix(vec3(luminance), base, 1.28);
     vec3 color;
     if (kind >= 9.0 && kind < 10.0) {
-        vec3 fireHot = vec3(1.0, 0.88, 0.24);
+        bool blueFire = base.b > base.r * 1.08;
+        vec3 fireHot = blueFire ? vec3(0.68, 0.96, 1.0) : vec3(1.0, 0.88, 0.24);
         float fireEnergy = clamp(core * 1.48 + fine * 0.12, 0.0, 1.0);
         color = mix(saturated * (0.95 + n * 0.32), fireHot * 1.52, fireEnergy);
     } else if (kind >= 10.0) {

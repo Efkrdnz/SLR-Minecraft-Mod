@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class AncientSamuraiModel extends GeoModel<AncientSamuraiEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(AncientSamuraiEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/ancientsamurai.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/ancientsamurai.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(AncientSamuraiEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/ancientsamurai.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/ancientsamurai.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(AncientSamuraiEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

@@ -5,7 +5,7 @@ import net.solocraft.entity.RangerProjectileEntity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.CombatRangeHelper;
 
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.ICancellableEvent;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -45,7 +45,7 @@ public class HunterAIHelper {
 		decrement(entity, BACKLINE_DODGE_COOLDOWN);
 	}
 
-	public static void tryDefensiveReaction(Event event, Entity entity, Entity attacker) {
+	public static void tryDefensiveReaction(ICancellableEvent event, Entity entity, Entity attacker) {
 		if (!(entity instanceof HunterEntity hunter) || !(entity instanceof LivingEntity living) || attacker == null || entity.level().isClientSide())
 			return;
 		if (entity.getPersistentData().getInt(DEFENSE_COOLDOWN) > 0)
@@ -166,7 +166,7 @@ public class HunterAIHelper {
 		}
 	}
 
-	private static boolean block(Event event, LivingEntity hunter, Entity attacker, int rank, boolean tanker) {
+	private static boolean block(ICancellableEvent event, LivingEntity hunter, Entity attacker, int rank, boolean tanker) {
 		cancel(event);
 		hunter.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, tanker ? 38 : 22, tanker ? Math.min(2, 1 + rank / 3) : Math.min(1, rank / 3), false, false));
 		if (tanker)
@@ -176,7 +176,7 @@ public class HunterAIHelper {
 		return true;
 	}
 
-	private static boolean dodge(Event event, LivingEntity hunter, Entity attacker, int rank, double strength) {
+	private static boolean dodge(ICancellableEvent event, LivingEntity hunter, Entity attacker, int rank, double strength) {
 		cancel(event);
 		dodgeMove(hunter, attacker, strength + rank * 0.025D);
 		hunter.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 18, Math.min(2, rank / 3), false, false));
@@ -184,7 +184,7 @@ public class HunterAIHelper {
 		return true;
 	}
 
-	private static boolean ward(Event event, LivingEntity hunter, int rank) {
+	private static boolean ward(ICancellableEvent event, LivingEntity hunter, int rank) {
 		cancel(event);
 		hunter.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 24, Math.min(1, rank / 3), false, false));
 		hunter.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 38, Math.min(1, rank / 3), false, false));
@@ -192,8 +192,8 @@ public class HunterAIHelper {
 		return true;
 	}
 
-	private static void cancel(Event event) {
-		if (event != null && event.isCancelable())
+	private static void cancel(ICancellableEvent event) {
+		if (event != null)
 			event.setCanceled(true);
 	}
 
@@ -242,7 +242,7 @@ public class HunterAIHelper {
 		if (!(hunter instanceof LivingEntity living))
 			return;
 		for (Mob mob : hunter.level().getEntitiesOfClass(Mob.class, hunter.getBoundingBox().inflate(7 + rank), e -> true)) {
-			if (mob == hunter || mob instanceof HunterEntity || mob.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("hunters"))))
+			if (mob == hunter || mob instanceof HunterEntity || mob.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("hunters"))))
 				continue;
 			mob.setTarget(living);
 		}
@@ -282,7 +282,7 @@ public class HunterAIHelper {
 		if (projectile instanceof AbstractArrow arrow) {
 			arrow.setOwner(hunter);
 			arrow.setBaseDamage(damage);
-			arrow.setKnockback(1);
+			net.solocraft.entity.LegacyProjectileCompat.setKnockback(arrow, 1);
 			arrow.setSilent(true);
 		}
 		projectile.setPos(hunter.getX(), hunter.getEyeY() - 0.1D, hunter.getZ());

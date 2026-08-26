@@ -49,7 +49,6 @@ public class StoreWeaponScreen extends AbstractContainerScreen<StoreWeaponMenu> 
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
@@ -60,7 +59,7 @@ public class StoreWeaponScreen extends AbstractContainerScreen<StoreWeaponMenu> 
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/basewide.png"), this.leftPos + -145, this.topPos + -114, 0, 0, 300, 225, 300, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/basewide.png"), this.leftPos + -145, this.topPos + -114, 0, 0, 300, 225, 300, 225);
 
 		RenderSystem.disableBlend();
 	}
@@ -119,7 +118,7 @@ public class StoreWeaponScreen extends AbstractContainerScreen<StoreWeaponMenu> 
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_swordsa = new ImageButton(this.leftPos + -119, this.topPos + 33, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_swordsa.png"), 33, 66, e -> {
+		imagebutton_swordsa = new LegacyAtlasImageButton(this.leftPos + -119, this.topPos + 33, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_swordsa.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreWeaponButtonMessage(0, x, y, z));
 				StoreWeaponButtonMessage.handleButtonAction(entity, 0, x, y, z);
@@ -127,7 +126,7 @@ public class StoreWeaponScreen extends AbstractContainerScreen<StoreWeaponMenu> 
 		});
 		guistate.put("button:imagebutton_swordsa", imagebutton_swordsa);
 		this.addRenderableWidget(imagebutton_swordsa);
-		imagebutton_swordse = new ImageButton(this.leftPos + -119, this.topPos + -95, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_swordse.png"), 33, 66, e -> {
+		imagebutton_swordse = new LegacyAtlasImageButton(this.leftPos + -119, this.topPos + -95, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_swordse.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreWeaponButtonMessage(1, x, y, z));
 				StoreWeaponButtonMessage.handleButtonAction(entity, 1, x, y, z);
@@ -135,7 +134,7 @@ public class StoreWeaponScreen extends AbstractContainerScreen<StoreWeaponMenu> 
 		});
 		guistate.put("button:imagebutton_swordse", imagebutton_swordse);
 		this.addRenderableWidget(imagebutton_swordse);
-		imagebutton_swordsd = new ImageButton(this.leftPos + -119, this.topPos + -63, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_swordsd.png"), 33, 66, e -> {
+		imagebutton_swordsd = new LegacyAtlasImageButton(this.leftPos + -119, this.topPos + -63, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_swordsd.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreWeaponButtonMessage(2, x, y, z));
 				StoreWeaponButtonMessage.handleButtonAction(entity, 2, x, y, z);
@@ -143,7 +142,7 @@ public class StoreWeaponScreen extends AbstractContainerScreen<StoreWeaponMenu> 
 		});
 		guistate.put("button:imagebutton_swordsd", imagebutton_swordsd);
 		this.addRenderableWidget(imagebutton_swordsd);
-		imagebutton_swordsc = new ImageButton(this.leftPos + -119, this.topPos + -31, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_swordsc.png"), 33, 66, e -> {
+		imagebutton_swordsc = new LegacyAtlasImageButton(this.leftPos + -119, this.topPos + -31, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_swordsc.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreWeaponButtonMessage(3, x, y, z));
 				StoreWeaponButtonMessage.handleButtonAction(entity, 3, x, y, z);
@@ -151,7 +150,7 @@ public class StoreWeaponScreen extends AbstractContainerScreen<StoreWeaponMenu> 
 		});
 		guistate.put("button:imagebutton_swordsc", imagebutton_swordsc);
 		this.addRenderableWidget(imagebutton_swordsc);
-		imagebutton_swordsb = new ImageButton(this.leftPos + -119, this.topPos + 1, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_swordsb.png"), 33, 66, e -> {
+		imagebutton_swordsb = new LegacyAtlasImageButton(this.leftPos + -119, this.topPos + 1, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_swordsb.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreWeaponButtonMessage(4, x, y, z));
 				StoreWeaponButtonMessage.handleButtonAction(entity, 4, x, y, z);
@@ -159,7 +158,7 @@ public class StoreWeaponScreen extends AbstractContainerScreen<StoreWeaponMenu> 
 		});
 		guistate.put("button:imagebutton_swordsb", imagebutton_swordsb);
 		this.addRenderableWidget(imagebutton_swordsb);
-		imagebutton_swordss = new ImageButton(this.leftPos + -119, this.topPos + 65, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_swordss.png"), 33, 66, e -> {
+		imagebutton_swordss = new LegacyAtlasImageButton(this.leftPos + -119, this.topPos + 65, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_swordss.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StoreWeaponButtonMessage(5, x, y, z));
 				StoreWeaponButtonMessage.handleButtonAction(entity, 5, x, y, z);

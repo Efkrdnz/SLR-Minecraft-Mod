@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class AfterImageModel extends GeoModel<AfterImageEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(AfterImageEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/afterimage.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/afterimage.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(AfterImageEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/afterimage.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/afterimage.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(AfterImageEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

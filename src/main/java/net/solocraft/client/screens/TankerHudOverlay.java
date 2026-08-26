@@ -6,12 +6,13 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.GameType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.solocraft.network.SololevelingModVariables;
 
 /**
@@ -19,7 +20,7 @@ import net.solocraft.network.SololevelingModVariables;
  * the legacy "Guard" title with the canonical passive name without modifying
  * the shared multi-class overlay.
  */
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 @OnlyIn(Dist.CLIENT)
 public final class TankerHudOverlay {
 	private static final int PANEL_X = 8;
@@ -33,7 +34,7 @@ public final class TankerHudOverlay {
 	public static void onRenderGui(RenderGuiEvent.Pre event) {
 		Minecraft minecraft = Minecraft.getInstance();
 		if (minecraft.player == null || minecraft.options.hideGui
-				|| minecraft.options.renderDebug || minecraft.screen != null)
+				|| minecraft.getDebugOverlay().showDebugScreen() || minecraft.screen != null)
 			return;
 		SololevelingModVariables.PlayerVariables vars = minecraft.player
 				.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)

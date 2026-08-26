@@ -37,11 +37,10 @@ public class FireGriamoreScreen extends AbstractContainerScreen<FireGriamoreMenu
 		this.imageHeight = 0;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/fire_griamore.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/fire_griamore.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 		if (mouseX > leftPos + -100 && mouseX < leftPos + -76 && mouseY > topPos + -66 && mouseY < topPos + -42)
@@ -65,7 +64,7 @@ public class FireGriamoreScreen extends AbstractContainerScreen<FireGriamoreMenu
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/griamorefire.png"), this.leftPos + -149, this.topPos + -111, 0, 0, 300, 225, 300, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/griamorefire.png"), this.leftPos + -149, this.topPos + -111, 0, 0, 300, 225, 300, 225);
 
 		RenderSystem.disableBlend();
 	}
@@ -96,7 +95,7 @@ public class FireGriamoreScreen extends AbstractContainerScreen<FireGriamoreMenu
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_griamorefireb1 = new ImageButton(this.leftPos + -107, this.topPos + -69, 65, 30, 0, 0, 30, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_griamorefireb1.png"), 65, 60, e -> {
+		imagebutton_griamorefireb1 = new LegacyAtlasImageButton(this.leftPos + -107, this.topPos + -69, 65, 30, 0, 0, 30, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_griamorefireb1.png"), 65, 60, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new FireGriamoreButtonMessage(0, x, y, z));
 				FireGriamoreButtonMessage.handleButtonAction(entity, 0, x, y, z);
@@ -104,7 +103,7 @@ public class FireGriamoreScreen extends AbstractContainerScreen<FireGriamoreMenu
 		});
 		guistate.put("button:imagebutton_griamorefireb1", imagebutton_griamorefireb1);
 		this.addRenderableWidget(imagebutton_griamorefireb1);
-		imagebutton_griamorefireb2 = new ImageButton(this.leftPos + -107, this.topPos + -16, 65, 30, 0, 0, 30, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_griamorefireb2.png"), 65, 60, e -> {
+		imagebutton_griamorefireb2 = new LegacyAtlasImageButton(this.leftPos + -107, this.topPos + -16, 65, 30, 0, 0, 30, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_griamorefireb2.png"), 65, 60, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new FireGriamoreButtonMessage(1, x, y, z));
 				FireGriamoreButtonMessage.handleButtonAction(entity, 1, x, y, z);
@@ -112,7 +111,7 @@ public class FireGriamoreScreen extends AbstractContainerScreen<FireGriamoreMenu
 		});
 		guistate.put("button:imagebutton_griamorefireb2", imagebutton_griamorefireb2);
 		this.addRenderableWidget(imagebutton_griamorefireb2);
-		imagebutton_griamorefireb3 = new ImageButton(this.leftPos + -107, this.topPos + 41, 65, 30, 0, 0, 30, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_griamorefireb3.png"), 65, 60, e -> {
+		imagebutton_griamorefireb3 = new LegacyAtlasImageButton(this.leftPos + -107, this.topPos + 41, 65, 30, 0, 0, 30, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_griamorefireb3.png"), 65, 60, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new FireGriamoreButtonMessage(2, x, y, z));
 				FireGriamoreButtonMessage.handleButtonAction(entity, 2, x, y, z);

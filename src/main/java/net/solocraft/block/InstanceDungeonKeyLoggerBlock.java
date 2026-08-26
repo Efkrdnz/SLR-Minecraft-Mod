@@ -1,6 +1,8 @@
 
 package net.solocraft.block;
 
+import com.mojang.serialization.MapCodec;
+
 import net.solocraft.procedures.InstanceDungeonKeyLoggerOnBlockRightClickedProcedure;
 import net.solocraft.init.SololevelingModBlockEntities;
 
@@ -27,6 +29,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
@@ -40,12 +43,22 @@ import java.util.List;
 import java.util.Collections;
 
 public class InstanceDungeonKeyLoggerBlock extends BaseEntityBlock implements EntityBlock {
+	public static final MapCodec<InstanceDungeonKeyLoggerBlock> CODEC = simpleCodec(InstanceDungeonKeyLoggerBlock::new);
 	public static final IntegerProperty ANIMATION = IntegerProperty.create("animation", 0, (int) 1);
 	public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
 	public InstanceDungeonKeyLoggerBlock() {
-		super(BlockBehaviour.Properties.of().sound(SoundType.EMPTY).strength(-1, 3600000).noOcclusion().isRedstoneConductor((bs, br, bp) -> false));
+		this(BlockBehaviour.Properties.of().sound(SoundType.EMPTY).strength(-1, 3600000).noOcclusion().isRedstoneConductor((bs, br, bp) -> false));
+	}
+
+	public InstanceDungeonKeyLoggerBlock(BlockBehaviour.Properties properties) {
+		super(properties);
 		this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+	}
+
+	@Override
+	protected MapCodec<? extends BaseEntityBlock> codec() {
+		return CODEC;
 	}
 
 	@Override
@@ -60,8 +73,8 @@ public class InstanceDungeonKeyLoggerBlock extends BaseEntityBlock implements En
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, BlockGetter world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 	}
 
 	@Override
@@ -112,8 +125,7 @@ public class InstanceDungeonKeyLoggerBlock extends BaseEntityBlock implements En
 	}
 
 	@Override
-	public InteractionResult use(BlockState blockstate, Level world, BlockPos pos, Player entity, InteractionHand hand, BlockHitResult hit) {
-		super.use(blockstate, world, pos, entity, hand, hit);
+	protected InteractionResult useWithoutItem(BlockState blockstate, Level world, BlockPos pos, Player entity, BlockHitResult hit) {
 		int x = pos.getX();
 		int y = pos.getY();
 		int z = pos.getZ();

@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "sololeveling:dungeon_wall_small",
+    "sololeveling:dungeon_barrel",
+    "sololeveling:dungeon_grave_1",
+    "sololeveling:dungeon_grave_2"
+  ]
+}

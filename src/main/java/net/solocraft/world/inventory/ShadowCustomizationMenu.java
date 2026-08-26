@@ -3,8 +3,8 @@ package net.solocraft.world.inventory;
 import net.solocraft.init.SololevelingModMenus;
 import net.solocraft.util.ShadowMonarchManager;
 
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.SlotItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.SlotItemHandler;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -18,6 +18,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -31,11 +32,11 @@ import java.util.function.Supplier;
  */
 public class ShadowCustomizationMenu extends AbstractContainerMenu
 		implements Supplier<Map<Integer, Slot>> {
-	public static final int EQUIPMENT_SLOT_X = 201;
-	public static final int EQUIPMENT_SLOT_Y = 82;
-	public static final int PLAYER_INVENTORY_X = 129;
-	public static final int PLAYER_INVENTORY_Y = 172;
-	public static final int PLAYER_HOTBAR_Y = 230;
+	public static final int EQUIPMENT_SLOT_X = 300;
+	public static final int EQUIPMENT_SLOT_Y = 194;
+	public static final int PLAYER_INVENTORY_X = 87;
+	public static final int PLAYER_INVENTORY_Y = 216;
+	public static final int PLAYER_HOTBAR_Y = 274;
 
 	private static final int DATA_RANK = 0;
 	private static final int DATA_LEVEL_LOW = 1;
@@ -59,6 +60,8 @@ public class ShadowCustomizationMenu extends AbstractContainerMenu
 	private final ItemStackHandler equipment;
 	private final ContainerData shadowData;
 	private final Map<Integer, Slot> customSlots = new HashMap<>();
+	private final int[] glowColors;
+	private final boolean[] owned;
 	private boolean loadingEquipment;
 
 	public ShadowCustomizationMenu(int id, Inventory inventory, FriendlyByteBuf extraData) {
@@ -71,6 +74,14 @@ public class ShadowCustomizationMenu extends AbstractContainerMenu
 		this.y = position.getY();
 		this.z = position.getZ();
 		this.shadowType = extraData == null ? "" : extraData.readUtf(24);
+		List<String> types = ShadowMonarchManager.customizableTypes();
+		this.glowColors = new int[types.size()];
+		this.owned = new boolean[types.size()];
+		for (int index = 0; index < types.size(); index++) {
+			this.owned[index] = extraData != null && extraData.readBoolean();
+			this.glowColors[index] = extraData == null
+					? ShadowMonarchManager.NO_GLOW : extraData.readInt();
+		}
 
 		this.loadingEquipment = true;
 		this.equipment = new ItemStackHandler(1) {
@@ -163,7 +174,8 @@ public class ShadowCustomizationMenu extends AbstractContainerMenu
 
 	@Override
 	public boolean stillValid(Player player) {
-		return player == this.entity && ShadowMonarchManager.isCustomizableBoss(this.shadowType)
+		// Any owned shadow may be customized; only its artifact slot is boss-gated.
+		return player == this.entity && !this.shadowType.isEmpty()
 				&& (this.world.isClientSide()
 						|| ShadowMonarchManager.hasShadowForDisplay(player, this.shadowType));
 	}
@@ -199,6 +211,27 @@ public class ShadowCustomizationMenu extends AbstractContainerMenu
 
 	public String shadowType() {
 		return this.shadowType;
+	}
+
+	/** Outline colour for a roster index, or {@link ShadowMonarchManager#NO_GLOW}. */
+	public int glowColor(int index) {
+		return index >= 0 && index < this.glowColors.length
+				? this.glowColors[index] : ShadowMonarchManager.NO_GLOW;
+	}
+
+	/** Optimistic local update so the picker reacts before the server replies. */
+	public void setGlowColorLocal(int index, int color) {
+		if (index >= 0 && index < this.glowColors.length)
+			this.glowColors[index] = color;
+	}
+
+	public boolean ownsShadow(int index) {
+		return index >= 0 && index < this.owned.length && this.owned[index];
+	}
+
+	/** Artifacts exist only for the two boss shadows that have one. */
+	public boolean supportsArtifact() {
+		return ShadowMonarchManager.isCustomizableBoss(this.shadowType);
 	}
 
 	public int shadowRank() {

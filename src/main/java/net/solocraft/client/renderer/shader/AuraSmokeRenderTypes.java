@@ -2,10 +2,11 @@ package net.solocraft.client.renderer.shader;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -27,9 +28,9 @@ import java.util.Map;
  * {@link RenderType#entityTranslucentEmissive} when the custom shader is
 	 * unavailable.</p>
  */
-@Mod.EventBusSubscriber(
+@EventBusSubscriber(
 		modid = SololevelingMod.MODID,
-		bus = Mod.EventBusSubscriber.Bus.MOD,
+		bus = EventBusSubscriber.Bus.MOD,
 		value = Dist.CLIENT
 )
 public final class AuraSmokeRenderTypes extends RenderStateShard {
@@ -49,7 +50,7 @@ public final class AuraSmokeRenderTypes extends RenderStateShard {
 		event.registerShader(
 				new ShaderInstance(
 						event.getResourceProvider(),
-						new ResourceLocation(SololevelingMod.MODID, "aura_smoke"),
+						ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "aura_smoke"),
 						WorldShaderVertexFormat.NEW_ENTITY
 				),
 				shader -> {
@@ -61,7 +62,7 @@ public final class AuraSmokeRenderTypes extends RenderStateShard {
 		event.registerShader(
 				new ShaderInstance(
 						event.getResourceProvider(),
-						new ResourceLocation(SololevelingMod.MODID, "aura_smoke_add"),
+						ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "aura_smoke_add"),
 						WorldShaderVertexFormat.NEW_ENTITY
 				),
 				shader -> {

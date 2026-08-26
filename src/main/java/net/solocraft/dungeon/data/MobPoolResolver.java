@@ -1,6 +1,6 @@
 package net.solocraft.dungeon.data;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -67,7 +67,7 @@ public final class MobPoolResolver {
 			}
 		}
 		EntityType<?> type = selected.types.get(random.nextInt(selected.types.size()));
-		ResourceLocation typeId = ForgeRegistries.ENTITY_TYPES.getKey(type);
+		ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(type);
 		if (typeId == null)
 			return Optional.empty();
 		Optional<IntRange> chosenRange = waveLevel.isPresent() ? waveLevel : selected.entry.spawnLevel();
@@ -79,7 +79,7 @@ public final class MobPoolResolver {
 	/** Resolves a selector against the current server registry/tag state. */
 	public static List<EntityType<?>> resolve(ServerLevel level, EntitySelector selector) {
 		if (selector.kind() == SelectorKind.ENTITY) {
-			EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(selector.id());
+			EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(selector.id());
 			return type == null || !isSpawnableMob(level, type) ? List.of() : List.of(type);
 		}
 
@@ -88,7 +88,7 @@ public final class MobPoolResolver {
 		Map<ResourceLocation, EntityType<?>> unique = new LinkedHashMap<>();
 		for (Holder<EntityType<?>> holder : registry.getTagOrEmpty(tag)) {
 			EntityType<?> type = holder.value();
-			ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(type);
+			ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
 			if (id != null && isSpawnableMob(level, type))
 				unique.put(id, type);
 		}

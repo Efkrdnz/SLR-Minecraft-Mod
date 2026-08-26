@@ -6,7 +6,7 @@ import net.solocraft.dungeon.data.DungeonDataSnapshot;
 import net.solocraft.entity.DatapackGateEntity;
 import net.solocraft.network.DatapackGateSelectionStateMessage;
 
-import net.minecraftforge.network.PacketDistributor;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;

@@ -1,6 +1,7 @@
 package net.solocraft.dungeon;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -33,6 +34,8 @@ import java.util.UUID;
  */
 public final class ProceduralGateRunSavedData extends SavedData {
 	private static final String DATA_NAME = "sololeveling_procedural_gate_runs";
+	private static final SavedData.Factory<ProceduralGateRunSavedData> FACTORY =
+			new SavedData.Factory<>(ProceduralGateRunSavedData::new, ProceduralGateRunSavedData::load);
 	private static final int MAX_RUNS = 2_048;
 	private static final int MAX_PARTICIPANTS = 64;
 	private static final int MAX_TAG_LENGTH = 128;
@@ -46,7 +49,8 @@ public final class ProceduralGateRunSavedData extends SavedData {
 	}
 
 	public record RunView(Set<UUID> participants, ResourceKey<Level> dimension,
-			boolean authoritativeRoster, ExitDecision decision, @Nullable BlockPos exit) {
+			boolean authoritativeRoster, @Nullable BlockPos returnAnchor,
+			ExitDecision decision, @Nullable BlockPos exit) {
 		public RunView {
 			participants = Set.copyOf(participants);
 		}
@@ -59,10 +63,7 @@ public final class ProceduralGateRunSavedData extends SavedData {
 	public static ProceduralGateRunSavedData get(MinecraftServer server) {
 		if (server == null)
 			throw new IllegalArgumentException("A server is required.");
-		return server.overworld().getDataStorage().computeIfAbsent(
-				ProceduralGateRunSavedData::load,
-				ProceduralGateRunSavedData::new,
-				DATA_NAME);
+		return server.overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 	}
 
 	public Optional<RunView> run(String dungeonTag) {
@@ -124,6 +125,26 @@ public final class ProceduralGateRunSavedData extends SavedData {
 		setDirty();
 	}
 
+	/**
+	 * Persists the entrance-side return point before the boss is defeated.
+	 * Recording an anchor does not complete the gate or make the portal usable.
+	 */
+	public void recordReturnAnchor(String dungeonTag, ResourceKey<Level> dimension,
+			BlockPos returnAnchor, long gameTime) {
+		Run run = getOrCreate(dungeonTag, dimension);
+		if (run == null || returnAnchor == null
+				|| run.decision != ExitDecision.UNDECIDED)
+			return;
+		BlockPos immutableAnchor = returnAnchor.immutable();
+		boolean changed = !run.dimension.equals(dimension)
+				|| !immutableAnchor.equals(run.returnAnchor);
+		run.dimension = dimension;
+		run.returnAnchor = immutableAnchor;
+		run.updatedGameTime = Math.max(0L, gameTime);
+		if (changed)
+			setDirty();
+	}
+
 	public void chooseReturnPortal(String dungeonTag, ResourceKey<Level> dimension,
 			BlockPos exit, long gameTime) {
 		Run run = getOrCreate(dungeonTag, dimension);
@@ -162,7 +183,7 @@ public final class ProceduralGateRunSavedData extends SavedData {
 
 	@Override
 	@Nonnull
-	public CompoundTag save(@Nonnull CompoundTag root) {
+	public CompoundTag save(@Nonnull CompoundTag root, HolderLookup.Provider registries) {
 		ListTag list = new ListTag();
 		for (Run run : runs.values()) {
 			CompoundTag tag = new CompoundTag();
@@ -171,6 +192,8 @@ public final class ProceduralGateRunSavedData extends SavedData {
 			tag.putBoolean("AuthoritativeRoster", run.authoritativeRoster);
 			tag.putString("Decision", run.decision.name());
 			tag.putLong("UpdatedGameTime", run.updatedGameTime);
+			if (run.returnAnchor != null)
+				tag.put("ReturnAnchor", NbtUtils.writeBlockPos(run.returnAnchor));
 			if (run.exit != null)
 				tag.put("Exit", NbtUtils.writeBlockPos(run.exit));
 			ListTag participants = new ListTag();
@@ -186,7 +209,7 @@ public final class ProceduralGateRunSavedData extends SavedData {
 		return root;
 	}
 
-	private static ProceduralGateRunSavedData load(CompoundTag root) {
+	private static ProceduralGateRunSavedData load(CompoundTag root, HolderLookup.Provider registries) {
 		ProceduralGateRunSavedData data = new ProceduralGateRunSavedData();
 		ListTag list = root.getList("Runs", Tag.TAG_COMPOUND);
 		int limit = Math.min(MAX_RUNS, list.size());
@@ -205,8 +228,10 @@ public final class ProceduralGateRunSavedData extends SavedData {
 				run.decision = ExitDecision.UNDECIDED;
 			}
 			run.updatedGameTime = Math.max(0L, tag.getLong("UpdatedGameTime"));
+			if (tag.contains("ReturnAnchor", Tag.TAG_COMPOUND))
+				run.returnAnchor = NbtUtils.readBlockPos(tag, "ReturnAnchor").orElse(null);
 			if (tag.contains("Exit", Tag.TAG_COMPOUND))
-				run.exit = NbtUtils.readBlockPos(tag.getCompound("Exit"));
+				run.exit = NbtUtils.readBlockPos(tag, "Exit").orElse(null);
 			ListTag participants = tag.getList("Participants", Tag.TAG_COMPOUND);
 			int participantLimit = Math.min(MAX_PARTICIPANTS, participants.size());
 			for (int participantIndex = 0; participantIndex < participantLimit; participantIndex++) {
@@ -255,6 +280,8 @@ public final class ProceduralGateRunSavedData extends SavedData {
 		private final LinkedHashSet<UUID> participants = new LinkedHashSet<>();
 		private ResourceKey<Level> dimension;
 		private boolean authoritativeRoster;
+		@Nullable
+		private BlockPos returnAnchor;
 		private ExitDecision decision = ExitDecision.UNDECIDED;
 		@Nullable
 		private BlockPos exit;
@@ -266,7 +293,8 @@ public final class ProceduralGateRunSavedData extends SavedData {
 		}
 
 		private RunView view() {
-			return new RunView(participants, dimension, authoritativeRoster, decision, exit);
+			return new RunView(participants, dimension, authoritativeRoster,
+					returnAnchor, decision, exit);
 		}
 	}
 }

@@ -4,7 +4,7 @@
     "0": "sololeveling:block/woodtext",
     "1": "sololeveling:block/image",
     "2": "sololeveling:block/bladetext",
-    "missing": "sololeveling:block/",
+    "missing": "sololeveling:block/transparenttexture",
     "particle": "sololeveling:item/testsword"
   }
 }

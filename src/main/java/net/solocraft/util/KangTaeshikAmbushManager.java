@@ -129,7 +129,7 @@ public final class KangTaeshikAmbushManager {
 		if (kang == null)
 			return;
 		kang.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(), spawnPos.getZ() + 0.5D, player.getYRot(), 0.0F);
-		kang.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.EVENT, null, null);
+		kang.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.EVENT, null);
 		kang.getPersistentData().putBoolean(AMBUSH_TAG, true);
 		kang.getPersistentData().putUUID(OWNER_TAG, player.getUUID());
 		kang.setPersistenceRequired();

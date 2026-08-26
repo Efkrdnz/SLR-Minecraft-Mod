@@ -4,14 +4,17 @@ import org.joml.Vector3f;
 import org.joml.Matrix4f;
 
 import net.solocraft.util.SystemClientConfig;
+import net.solocraft.SololevelingMod;
+import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.block.state.BlockState;
@@ -53,7 +56,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.GAME,
+		value = Dist.CLIENT)
 public class RenderDamageNumberProcedure {
 	private static RenderLevelStageEvent provider = null;
 	private static Map<EntityType, Entity> data = new HashMap<>();
@@ -87,12 +91,45 @@ public class RenderDamageNumberProcedure {
 	}
 
 	public static void addNumber(double x, double y, double z, float amount, int color) {
-		if (!SystemClientConfig.isDamageNumbersEnabled())
+		boolean tracing = tracePacket();
+		if (!SystemClientConfig.isDamageNumbersEnabled()) {
+			if (tracing)
+				SololevelingMod.LOGGER.info(
+						"[damage-numbers] client received {} but the setting is OFF", amount);
 			return;
+		}
 		DAMAGE_NUMBERS.add(new DamageNumber(x, y, z, amount, color));
 		if (DAMAGE_NUMBERS.size() > 80) {
 			DAMAGE_NUMBERS.remove(0);
 		}
+		if (tracing)
+			SololevelingMod.LOGGER.info(
+					"[damage-numbers] client queued {} (queue size {})",
+					amount, DAMAGE_NUMBERS.size());
+	}
+
+	private static boolean stageObserved;
+	private static long lastTraceAt;
+
+	/** Developer mode gates the tracing so ordinary play logs nothing. */
+	private static boolean isTracing() {
+		return net.solocraft.util.DeveloperModeManager.isEnabled(
+				Minecraft.getInstance().player);
+	}
+
+	private static boolean tracePacket() {
+		return isTracing();
+	}
+
+	/** Render tracing runs every frame, so throttle it to once per second. */
+	private static boolean traceRender() {
+		if (!isTracing())
+			return false;
+		long now = System.currentTimeMillis();
+		if (now - lastTraceAt < 1000L)
+			return false;
+		lastTraceAt = now;
+		return true;
 	}
 
 	public static void setBackColor(int color) {
@@ -189,7 +226,8 @@ public class RenderDamageNumberProcedure {
 	}
 
 	public static void renderEntity(Entity entity, double x, double y, double z, float yaw, float pitch, float roll, float scale, boolean glowing) {
-		float partialTick = provider.getPartialTick();
+		float partialTick = provider.getPartialTick()
+				.getGameTimeDeltaPartialTick(false);
 		int packedLight = glowing ? LightTexture.FULL_BRIGHT : Minecraft.getInstance().getEntityRenderDispatcher().getPackedLightCoords(entity, partialTick);
 		renderEntity(entity, partialTick, x, y, z, yaw, pitch, roll, scale, packedLight);
 	}
@@ -241,8 +279,8 @@ public class RenderDamageNumberProcedure {
 		Vector3f normal = new Vec3(x2 - x1, y2 - y1, z2 - z1).normalize().toVector3f();
 		Matrix4f matrix4f = provider.getPoseStack().last().pose();
 		VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.lines());
-		vertexConsumer.vertex(matrix4f, (float) (x1 - pos.x()), (float) (y1 - pos.y()), (float) (z1 - pos.z())).color(color).normal(normal.x(), normal.y(), normal.z()).endVertex();
-		vertexConsumer.vertex(matrix4f, (float) (x2 - pos.x()), (float) (y2 - pos.y()), (float) (z2 - pos.z())).color(color).normal(normal.x(), normal.y(), normal.z()).endVertex();
+		vertexConsumer.addVertex(matrix4f, (float) (x1 - pos.x()), (float) (y1 - pos.y()), (float) (z1 - pos.z())).setColor(color).setNormal(normal.x(), normal.y(), normal.z());
+		vertexConsumer.addVertex(matrix4f, (float) (x2 - pos.x()), (float) (y2 - pos.y()), (float) (z2 - pos.z())).setColor(color).setNormal(normal.x(), normal.y(), normal.z());
 	}
 
 	public static void renderTexts(String texts, double x, double y, double z, float yaw, float pitch, float roll, boolean glowing) {
@@ -270,23 +308,48 @@ public class RenderDamageNumberProcedure {
 
 	@SubscribeEvent
 	public static void renderModels(RenderLevelStageEvent event) {
-		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES)
+		if (!DeferredWorldShaderRenderer.isRenderStage(event,
+				RenderLevelStageEvent.Stage.AFTER_ENTITIES))
 			return;
+		// Optimised renderers replace parts of the level pass, and a stage that
+		// never fires is indistinguishable in game from geometry that draws
+		// nothing. Confirm once per launch that this one reaches us at all.
+		if (!stageObserved && isTracing()) {
+			stageObserved = true;
+			SololevelingMod.LOGGER.info("[damage-numbers] render stage {} is firing",
+					event.getStage());
+		}
 		if (!SystemClientConfig.isDamageNumbersEnabled()) {
 			DAMAGE_NUMBERS.clear();
 			return;
 		}
 		if (DAMAGE_NUMBERS.isEmpty())
 			return;
+		if (!DeferredWorldShaderRenderer.beginWorldPass(event)) {
+			if (traceRender())
+				SololevelingMod.LOGGER.info(
+						"[damage-numbers] {} queued but the world pass was refused"
+								+ " (shader pack active: {})",
+						DAMAGE_NUMBERS.size(),
+						net.solocraft.client.renderer.shader.IrisCompat.isShaderPackInUse());
+			return;
+		}
+		if (traceRender())
+			SololevelingMod.LOGGER.info("[damage-numbers] rendering {} this frame",
+					DAMAGE_NUMBERS.size());
 		provider = event;
-		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-		execute(provider);
-		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-		RenderSystem.defaultBlendFunc();
-		RenderSystem.disableBlend();
-		RenderSystem.enableCull();
-		RenderSystem.enableDepthTest();
-		RenderSystem.depthMask(true);
+		try {
+			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+			renderDamageNumbers(DeferredWorldShaderRenderer.worldPoseStack(event));
+		} finally {
+			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+			RenderSystem.defaultBlendFunc();
+			RenderSystem.disableBlend();
+			RenderSystem.enableCull();
+			RenderSystem.enableDepthTest();
+			RenderSystem.depthMask(true);
+			DeferredWorldShaderRenderer.endWorldPass();
+		}
 	}
 
 	public static void execute() {
@@ -300,17 +363,16 @@ public class RenderDamageNumberProcedure {
 			DAMAGE_NUMBERS.clear();
 			return;
 		}
-		renderDamageNumbers();
+		renderDamageNumbers(provider.getPoseStack());
 	}
 
-	private static void renderDamageNumbers() {
+	private static void renderDamageNumbers(PoseStack poseStack) {
 		Minecraft minecraft = Minecraft.getInstance();
 		if (minecraft.level == null || minecraft.player == null)
 			return;
 		long now = System.currentTimeMillis();
 		MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
 		Vec3 cameraPos = provider.getCamera().getPosition();
-		PoseStack poseStack = provider.getPoseStack();
 		Font font = minecraft.font;
 
 		RenderSystem.enableBlend();
@@ -333,11 +395,17 @@ public class RenderDamageNumberProcedure {
 			poseStack.translate(number.x + number.offsetX - cameraPos.x(), number.y + rise - cameraPos.y(), number.z + number.offsetZ - cameraPos.z());
 			poseStack.mulPose(minecraft.getEntityRenderDispatcher().cameraOrientation());
 			float scale = 0.026F + age * 0.006F;
-			poseStack.scale(-scale, -scale, scale);
+			// Only Y is negated, matching EntityRenderer#renderNameTag. Negating X as
+			// well would give the transform a positive determinant, reversing the
+			// winding of every glyph quad; text render types cull back faces, so the
+			// numbers would draw and then be discarded entirely.
+			poseStack.scale(scale, -scale, scale);
 			float width = font.width(text) / 2.0F;
 			Matrix4f matrix = poseStack.last().pose();
-			font.drawInBatch(text, -width + 1.0F, 1.0F, shadow, false, matrix, bufferSource, Font.DisplayMode.SEE_THROUGH, 0, LightTexture.FULL_BRIGHT);
-			font.drawInBatch(text, -width, 0.0F, color, false, matrix, bufferSource, Font.DisplayMode.SEE_THROUGH, 0, LightTexture.FULL_BRIGHT);
+			font.drawInBatch(text, -width + 1.0F, 1.0F, shadow, false, matrix,
+					bufferSource, Font.DisplayMode.SEE_THROUGH, 0, LightTexture.FULL_BRIGHT);
+			font.drawInBatch(text, -width, 0.0F, color, false, matrix,
+					bufferSource, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
 			poseStack.popPose();
 		}
 		bufferSource.endBatch();

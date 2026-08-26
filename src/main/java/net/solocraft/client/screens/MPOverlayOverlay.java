@@ -10,11 +10,13 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.api.hunter.HunterClassRegistry;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.ArmorBarProcedure;
 import net.solocraft.procedures.FatigueTextProcedure;
@@ -49,7 +51,7 @@ import net.solocraft.procedures.TitleTextProcedure;
 import net.solocraft.util.SystemClientConfig;
 import net.solocraft.util.TitleManager;
 
-@Mod.EventBusSubscriber({Dist.CLIENT})
+@EventBusSubscriber({Dist.CLIENT})
 public class MPOverlayOverlay {
 	private static final int PANEL_X = 8;
 	private static final int PANEL_Y = 8;
@@ -60,7 +62,10 @@ public class MPOverlayOverlay {
 	public static void eventHandler(RenderGuiEvent.Pre event) {
 		Minecraft mc = Minecraft.getInstance();
 		Player player = mc.player;
-		if (player == null || mc.options.hideGui || mc.options.renderDebug || mc.screen != null)
+		// The layout editor is the one screen this stays visible behind, so the
+		// player arranges the real HUD rather than a mockup of it.
+		if (player == null || mc.options.hideGui || mc.getDebugOverlay().showDebugScreen()
+				|| (mc.screen != null && !net.solocraft.client.gui.OverlayTransform.isArranging()))
 			return;
 		if (!IfInSurvivalProcedure.execute(player))
 			return;
@@ -72,11 +77,14 @@ public class MPOverlayOverlay {
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 
+		net.solocraft.client.gui.OverlayTransform.push(event.getGuiGraphics(),
+				net.solocraft.util.OverlayLayoutConfig.VITALS);
 		if (SystemClientConfig.isLegacyOverlayEnabled()) {
-			renderLegacyHud(event.getGuiGraphics(), event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight(), player);
+			renderLegacyHud(event.getGuiGraphics(), event.getGuiGraphics().guiWidth(), event.getGuiGraphics().guiHeight(), player);
 		} else {
 			renderSystemHud(event.getGuiGraphics(), mc, player);
 		}
+		net.solocraft.client.gui.OverlayTransform.pop(event.getGuiGraphics());
 
 		RenderSystem.depthMask(true);
 		RenderSystem.defaultBlendFunc();
@@ -94,7 +102,7 @@ public class MPOverlayOverlay {
 		drawEnergyNoise(graphics, PANEL_X + 5, PANEL_Y + 5, PANEL_W - 10, PANEL_H - 10, 0x3213B8FF);
 
 		String job = clean(TitleTextProcedure.execute(player));
-		String clazz = className((int) Math.round(vars.Classes));
+		String clazz = HunterClassRegistry.of(player).displayName().getString();
 		String title = TitleManager.displayName((int) Math.round(vars.title));
 		if ("None".equals(title))
 			title = "No Title";
@@ -176,16 +184,16 @@ public class MPOverlayOverlay {
 	}
 
 	private static void renderLegacyHud(GuiGraphics graphics, int w, int h, Player entity) {
-		ResourceLocation empty = new ResourceLocation("sololeveling:textures/screens/bar1.png");
+		ResourceLocation empty = ResourceLocation.parse("sololeveling:textures/screens/bar1.png");
 		int barX = w / 2 - 85;
 		int manaY = h - 48;
 		int healthY = h - 35;
 		graphics.blit(manaTexture(entity, empty), barX, manaY, 0, 0, 90, 10, 90, 10);
 		graphics.blit(healthTexture(entity, empty), barX, healthY, 0, 0, 90, 10, 90, 10);
-		graphics.blit(new ResourceLocation("sololeveling:textures/screens/armorbar.png"), w / 2 + 6, h - 36, 0, 0, 12, 12, 12, 12);
-		graphics.blit(new ResourceLocation("sololeveling:textures/screens/hungerbar.png"), w / 2 + 6, h - 49, 0, 0, 12, 12, 12, 12);
-		graphics.blit(new ResourceLocation("sololeveling:textures/screens/levelbar.png"), w / 2 + 44, h - 49, 0, 0, 12, 12, 12, 12);
-		graphics.blit(new ResourceLocation("sololeveling:textures/screens/fatiguebar.png"), w / 2 + 42, h - 38, 0, 0, 16, 16, 16, 16);
+		graphics.blit(ResourceLocation.parse("sololeveling:textures/screens/armorbar.png"), w / 2 + 6, h - 36, 0, 0, 12, 12, 12, 12);
+		graphics.blit(ResourceLocation.parse("sololeveling:textures/screens/hungerbar.png"), w / 2 + 6, h - 49, 0, 0, 12, 12, 12, 12);
+		graphics.blit(ResourceLocation.parse("sololeveling:textures/screens/levelbar.png"), w / 2 + 44, h - 49, 0, 0, 12, 12, 12, 12);
+		graphics.blit(ResourceLocation.parse("sololeveling:textures/screens/fatiguebar.png"), w / 2 + 42, h - 38, 0, 0, 16, 16, 16, 16);
 
 		Font font = Minecraft.getInstance().font;
 		graphics.drawString(font, ManaTextProcedure.execute(entity), w / 2 - 76, h - 47, -1, false);
@@ -198,49 +206,49 @@ public class MPOverlayOverlay {
 
 	private static ResourceLocation manaTexture(Player entity, ResourceLocation empty) {
 		if (Mana100Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana100.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana100.png");
 		if (Mana90Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana90.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana90.png");
 		if (Mana80Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana80.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana80.png");
 		if (Mana70Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana70.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana70.png");
 		if (Mana60Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana60.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana60.png");
 		if (Mana50Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana50.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana50.png");
 		if (Mana40Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana40.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana40.png");
 		if (Mana30Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana30.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana30.png");
 		if (Mana20Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana20.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana20.png");
 		if (Mana10Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barmana10.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barmana10.png");
 		return Mana0Procedure.execute(entity) ? empty : empty;
 	}
 
 	private static ResourceLocation healthTexture(Player entity, ResourceLocation empty) {
 		if (Health100Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth100.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth100.png");
 		if (Health90Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth90.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth90.png");
 		if (Health80Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth80.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth80.png");
 		if (Health70Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth70.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth70.png");
 		if (Health60Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth60.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth60.png");
 		if (Health50Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth50.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth50.png");
 		if (Health40Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth40.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth40.png");
 		if (Health30Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth30.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth30.png");
 		if (Health20Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth20.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth20.png");
 		if (Health10Procedure.execute(entity))
-			return new ResourceLocation("sololeveling:textures/screens/barhealth10.png");
+			return ResourceLocation.parse("sololeveling:textures/screens/barhealth10.png");
 		return Health0Procedure.execute(entity) ? empty : empty;
 	}
 
@@ -295,18 +303,6 @@ public class MPOverlayOverlay {
 		if (text == null || text.isBlank() || "none".equalsIgnoreCase(text))
 			return "No Job";
 		return text.replaceAll("\\u00A7.", "");
-	}
-
-	private static String className(int cls) {
-		return switch (cls) {
-			case 1 -> "Assassin";
-			case 2 -> "Combat Mage";
-			case 3 -> "Fighter";
-			case 4 -> "Tanker";
-			case 5 -> "Support Mage";
-			case 6 -> "Ranger";
-			default -> "No Class";
-		};
 	}
 
 	private static float clamp(float value, float min, float max) {

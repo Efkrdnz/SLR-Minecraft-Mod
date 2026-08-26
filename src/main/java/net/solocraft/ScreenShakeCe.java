@@ -2,19 +2,20 @@ package net.solocraft;
 
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.Minecraft;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class ScreenShakeCe {
 	public ScreenShakeCe() {
 	}
@@ -24,7 +25,7 @@ public class ScreenShakeCe {
 		new ScreenShakeCe();
 	}
 
-	@Mod.EventBusSubscriber
+	@EventBusSubscriber
 	private static class ForgeBusEvents {
 		@SubscribeEvent
 		public static void serverLoad(ServerStartingEvent event) {
@@ -40,7 +41,7 @@ public class ScreenShakeCe {
 		public static void CameraShake(ViewportEvent.ComputeCameraAngles event) {
 			LocalPlayer player = Minecraft.getInstance().player;
 			if (player != null) {
-				if (player.hasEffect(SololevelingModMobEffects.SCREEN_SHAKE.get())) {
+				if (player.hasEffect(SololevelingModMobEffects.SCREEN_SHAKE)) {
 					if (Math.random() < 0.5) {
 						{
 							event.setPitch((float) (event.getPitch() + (Math.random() * 2)));

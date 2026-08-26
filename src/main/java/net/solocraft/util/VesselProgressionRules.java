@@ -7,7 +7,6 @@ package net.solocraft.util;
 final class VesselProgressionRules {
 	static final int SHADOW_MONARCH_JOB = 1;
 	static final double MONARCHS_DOMAIN_FLOOR = 10.0D;
-	static final double SHADOW_EXCHANGE_STORAGE = 30.0D;
 	static final double SHADOW_MANIFESTATION_LEVEL = 120.0D;
 	static final double SHADOW_MANIFESTATION_STORAGE = 60.0D;
 
@@ -18,10 +17,13 @@ final class VesselProgressionRules {
 		return resolvedJob == SHADOW_MONARCH_JOB && dkcCleared >= MONARCHS_DOMAIN_FLOOR;
 	}
 
-	static boolean canUnlockShadowExchange(int resolvedJob, boolean alreadyUnlocked,
-			double shadowStorageUsage) {
-		return resolvedJob == SHADOW_MONARCH_JOB
-				&& (alreadyUnlocked || shadowStorageUsage >= SHADOW_EXCHANGE_STORAGE);
+	static boolean isShadowMonarch(int resolvedJob) {
+		return resolvedJob == SHADOW_MONARCH_JOB;
+	}
+
+	static boolean canUseShadowExchangeRunestone(int resolvedJob,
+			boolean alreadyUnlocked) {
+		return isShadowMonarch(resolvedJob) && !alreadyUnlocked;
 	}
 
 	static boolean canUnlockShadowManifestation(int resolvedJob, boolean alreadyUnlocked,

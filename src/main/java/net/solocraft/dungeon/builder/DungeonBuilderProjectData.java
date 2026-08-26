@@ -9,6 +9,7 @@ import net.solocraft.dungeon.builder.model.RoomSnapshot;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
@@ -18,7 +19,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,6 +46,8 @@ import java.util.UUID;
  */
 public final class DungeonBuilderProjectData extends SavedData {
 	private static final String DATA_NAME = "sololeveling_dungeon_builder_projects";
+	private static final SavedData.Factory<DungeonBuilderProjectData> FACTORY =
+			new SavedData.Factory<>(DungeonBuilderProjectData::new, DungeonBuilderProjectData::load);
 	private static final int SCHEMA_VERSION = 6;
 	private static final int MAX_PROJECTS_PER_BUILDER = 128;
 	public static final int MAX_MOB_POOLS_PER_BUILDER = 128;
@@ -71,8 +74,7 @@ public final class DungeonBuilderProjectData extends SavedData {
 
 	public static DungeonBuilderProjectData get(ServerLevel level) {
 		ServerLevel storageLevel = level.getServer().overworld();
-		return storageLevel.getDataStorage().computeIfAbsent(
-				DungeonBuilderProjectData::load, DungeonBuilderProjectData::new, DATA_NAME);
+		return storageLevel.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 	}
 
 	/** Current server-authoritative edit revision for this player's workspace. */
@@ -347,7 +349,7 @@ public final class DungeonBuilderProjectData extends SavedData {
 
 	@Nonnull
 	@Override
-	public CompoundTag save(@Nonnull CompoundTag tag) {
+	public CompoundTag save(@Nonnull CompoundTag tag, HolderLookup.Provider registries) {
 		tag.putInt("SchemaVersion", SCHEMA_VERSION);
 		ListTag workspaceList = new ListTag();
 		workspaces.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
@@ -359,7 +361,7 @@ public final class DungeonBuilderProjectData extends SavedData {
 		return tag;
 	}
 
-	private static DungeonBuilderProjectData load(CompoundTag tag) {
+	private static DungeonBuilderProjectData load(CompoundTag tag, HolderLookup.Provider registries) {
 		DungeonBuilderProjectData data = new DungeonBuilderProjectData();
 		// Presence-tested fields below are authoritative; the version is retained for
 		// diagnostics and future migrations without rejecting older saves.
@@ -563,7 +565,8 @@ public final class DungeonBuilderProjectData extends SavedData {
 		}
 
 		private static Bounds load(CompoundTag tag) {
-			return new Bounds(NbtUtils.readBlockPos(tag.getCompound("Min")), NbtUtils.readBlockPos(tag.getCompound("Max")));
+			return new Bounds(NbtUtils.readBlockPos(tag, "Min").orElse(BlockPos.ZERO),
+					NbtUtils.readBlockPos(tag, "Max").orElse(BlockPos.ZERO));
 		}
 	}
 
@@ -594,7 +597,8 @@ public final class DungeonBuilderProjectData extends SavedData {
 
 		private static Marker load(CompoundTag tag) {
 			String group = tag.contains("Group", Tag.TAG_STRING) ? tag.getString("Group") : "default";
-			return new Marker(tag.getString("Id"), tag.getString("Type"), NbtUtils.readBlockPos(tag.getCompound("Position")), group);
+			return new Marker(tag.getString("Id"), tag.getString("Type"),
+					NbtUtils.readBlockPos(tag, "Position").orElse(BlockPos.ZERO), group);
 		}
 	}
 
@@ -648,7 +652,8 @@ public final class DungeonBuilderProjectData extends SavedData {
 
 		private static Pending load(CompoundTag tag) {
 			Direction facing = tag.contains("Facing") ? Direction.byName(tag.getString("Facing")) : null;
-			return new Pending(tag.getString("Kind"), NbtUtils.readBlockPos(tag.getCompound("First")), facing);
+			return new Pending(tag.getString("Kind"),
+					NbtUtils.readBlockPos(tag, "First").orElse(BlockPos.ZERO), facing);
 		}
 	}
 
@@ -952,8 +957,8 @@ public final class DungeonBuilderProjectData extends SavedData {
 			if (!isResourceId(block))
 				return "Shell block must be a resource ID such as minecraft:bedrock.";
 			ResourceLocation blockId = ResourceLocation.tryParse(block);
-			if (blockId == null || !ForgeRegistries.BLOCKS.containsKey(blockId)
-					|| ForgeRegistries.BLOCKS.getValue(blockId) == Blocks.AIR)
+			if (blockId == null || !BuiltInRegistries.BLOCK.containsKey(blockId)
+					|| BuiltInRegistries.BLOCK.get(blockId) == Blocks.AIR)
 				return "Shell block " + block + " is not a loaded, solid block.";
 			if (thickness < 0 || thickness > 4)
 				return "Shell thickness must be from 0 (disabled) to 4.";
@@ -1598,7 +1603,7 @@ public final class DungeonBuilderProjectData extends SavedData {
 			if (tag.contains("StructureBounds", Tag.TAG_COMPOUND))
 				project.structureBounds = Bounds.load(tag.getCompound("StructureBounds"));
 			if (tag.contains("Origin", Tag.TAG_COMPOUND))
-				project.origin = NbtUtils.readBlockPos(tag.getCompound("Origin"));
+				project.origin = NbtUtils.readBlockPos(tag, "Origin").orElse(BlockPos.ZERO);
 			if (tag.contains("Pending", Tag.TAG_COMPOUND))
 				project.pending = Pending.load(tag.getCompound("Pending"));
 			readList(tag, "Regions").forEach(element -> project.regions.add(Region.load(element)));
@@ -1785,8 +1790,8 @@ public final class DungeonBuilderProjectData extends SavedData {
 		String structural = dungeonDraftStructuralProblem(draft);
 		if (structural != null)
 			return structural;
-		if (!ForgeRegistries.BLOCKS.containsKey(draft.shellBlock())
-				|| ForgeRegistries.BLOCKS.getValue(draft.shellBlock()) == Blocks.AIR)
+		if (!BuiltInRegistries.BLOCK.containsKey(draft.shellBlock())
+				|| BuiltInRegistries.BLOCK.get(draft.shellBlock()) == Blocks.AIR)
 			return "Shell block " + draft.shellBlock() + " is not a loaded, solid block.";
 
 		for (DungeonDraft.RoomRef ref : draft.rooms()) {
@@ -1896,8 +1901,10 @@ public final class DungeonBuilderProjectData extends SavedData {
 		if (structureKey == null || !tag.contains("Size", Tag.TAG_COMPOUND)
 				|| !tag.contains("CaptureMin", Tag.TAG_COMPOUND))
 			throw new IllegalArgumentException("Malformed room snapshot metadata");
-		return new RoomSnapshot(structureKey, NbtUtils.readBlockPos(tag.getCompound("Size")),
-				NbtUtils.readBlockPos(tag.getCompound("CaptureMin")), tag.getString("Checksum"),
+		return new RoomSnapshot(structureKey,
+				NbtUtils.readBlockPos(tag, "Size").orElseThrow(() -> new IllegalArgumentException("Malformed room size")),
+				NbtUtils.readBlockPos(tag, "CaptureMin").orElseThrow(() -> new IllegalArgumentException("Malformed capture minimum")),
+				tag.getString("Checksum"),
 				tag.contains("CapturedAt", Tag.TAG_LONG) ? tag.getLong("CapturedAt") : 0L,
 				tag.contains("MetadataRevision", Tag.TAG_LONG) ? tag.getLong("MetadataRevision") : 0L);
 	}
@@ -2028,7 +2035,7 @@ public final class DungeonBuilderProjectData extends SavedData {
 		ResourceLocation shell = tag.contains("ShellBlock", Tag.TAG_STRING)
 				? ResourceLocation.tryParse(tag.getString("ShellBlock")) : null;
 		if (shell == null)
-			shell = new ResourceLocation("minecraft", "bedrock");
+			shell = ResourceLocation.fromNamespaceAndPath("minecraft", "bedrock");
 		List<DungeonDraft.RoomRef> rooms = new ArrayList<>();
 		for (CompoundTag roomTag : readList(tag, "Rooms")) {
 			if (rooms.size() >= MAX_DRAFT_ROOM_REFS)

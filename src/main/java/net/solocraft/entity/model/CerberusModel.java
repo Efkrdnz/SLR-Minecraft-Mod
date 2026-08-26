@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class CerberusModel extends GeoModel<CerberusEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(CerberusEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/cerberus.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/cerberus.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(CerberusEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/cerberus.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/cerberus.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(CerberusEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

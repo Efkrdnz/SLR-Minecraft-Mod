@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class ArrowSplashModel extends GeoModel<ArrowSplashEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(ArrowSplashEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/arrowsplash.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/arrowsplash.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(ArrowSplashEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/arrowsplash.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/arrowsplash.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(ArrowSplashEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

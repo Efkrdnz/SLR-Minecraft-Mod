@@ -4,15 +4,20 @@ import net.solocraft.entity.SteelFangWolfEntity;
 import net.solocraft.entity.SteelFangedLycanEntity;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,15 +31,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class TitleManager {
 	public static final int NONE = 0;
 	public static final int WOLF_ASSASSIN = 1;
 	public static final String WOLF_ASSASSIN_KEY = "wolf_assassin";
 	public static final int WOLF_ASSASSIN_REQUIRED_KILLS = 20;
 
-	private static final UUID WOLF_ASSASSIN_SPEED_ID = UUID.fromString("2ba3c4d2-2cf0-42f9-bf4d-89a296e1c304");
-	private static final String WOLF_ASSASSIN_SPEED_NAME = "Wolf Assassin title speed";
+	private static final ResourceLocation WOLF_ASSASSIN_SPEED_ID =
+			ResourceLocation.fromNamespaceAndPath("sololeveling",
+					"attribute/wolf_assassin_title_speed");
 
 	private TitleManager() {
 	}
@@ -91,7 +97,7 @@ public final class TitleManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOW)
-	public static void onLivingHurt(LivingHurtEvent event) {
+	public static void onLivingHurt(LivingIncomingDamageEvent event) {
 		if (!isWolfFamily(event.getEntity()))
 			return;
 		ServerPlayer owner = owningPlayer(event.getSource().getEntity());
@@ -127,8 +133,8 @@ public final class TitleManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		if (player.tickCount % 20 == 0) {
 			player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(TitleManager::ensureLegacyUnlock);
@@ -146,7 +152,8 @@ public final class TitleManager {
 		SololevelingModVariables.PlayerVariables vars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		ensureLegacyUnlock(vars);
 		if ((int) vars.title == WOLF_ASSASSIN && isUnlocked(vars, WOLF_ASSASSIN)) {
-			speed.addTransientModifier(new AttributeModifier(WOLF_ASSASSIN_SPEED_ID, WOLF_ASSASSIN_SPEED_NAME, 0.03D, AttributeModifier.Operation.MULTIPLY_TOTAL));
+			speed.addTransientModifier(new AttributeModifier(WOLF_ASSASSIN_SPEED_ID,
+					0.03D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 		}
 	}
 

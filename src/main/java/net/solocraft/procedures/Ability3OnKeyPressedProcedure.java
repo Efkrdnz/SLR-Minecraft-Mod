@@ -5,7 +5,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.FireFlyEntity;
 
-import net.minecraftforge.network.NetworkHooks;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -30,6 +30,7 @@ import java.util.Comparator;
 import io.netty.buffer.Unpooled;
 import net.solocraft.util.CooldownManager;
 import net.solocraft.util.FrostMonarchManager;
+import net.solocraft.util.VesselProgressionManager;
 
 public class Ability3OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -58,8 +59,7 @@ public class Ability3OnKeyPressedProcedure {
 				}
 			}
 		} else {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1
-					|| (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).ShadowExchange) {
+			if (VesselProgressionManager.isShadowMonarch(entity)) {
 				if (DoesHaveExchangeProcedure.execute(entity)) {
 					if (entity instanceof ServerPlayer _ent) {
 						BlockPos _bpos = BlockPos.containing(x, y, z);

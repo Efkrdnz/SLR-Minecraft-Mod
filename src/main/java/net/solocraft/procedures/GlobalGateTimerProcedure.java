@@ -5,22 +5,26 @@ import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.util.GateSpawnerUtil;
 import net.solocraft.util.DungeonBuilderMode;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class GlobalGateTimerProcedure {
 	@SubscribeEvent
-	public static void onWorldTick(TickEvent.LevelTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.level);
+	public static void onWorldTick(LevelTickEvent.Post event) {
+		if (true) {
+			execute(event, event.getLevel());
 		}
 	}
 

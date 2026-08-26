@@ -15,7 +15,7 @@ import net.minecraft.world.level.LevelAccessor;
 import java.util.UUID;
 
 public final class MageCombatHelper {
-	private static final ResourceKey<net.minecraft.world.damagesource.DamageType> MAGE_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:mage"));
+	private static final ResourceKey<net.minecraft.world.damagesource.DamageType> MAGE_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:mage"));
 	private static final String HIT_PREFIX = "mage_hit_";
 
 	private MageCombatHelper() {
@@ -107,8 +107,7 @@ public final class MageCombatHelper {
 		if (caster == null)
 			return 0;
 		if (caster instanceof Player)
-			return caster.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-					.map(data -> data.Intelligence).orElse(0.0D);
+			return TemporaryStatBonusManager.effectiveIntelligence(caster);
 		return caster.getPersistentData().getDouble("int");
 	}
 

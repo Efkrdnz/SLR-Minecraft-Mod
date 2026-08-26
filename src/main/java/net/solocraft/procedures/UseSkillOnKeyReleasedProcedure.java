@@ -10,12 +10,14 @@ import net.solocraft.util.JobSkillManager;
 import net.solocraft.util.FireMageSpellManager;
 import net.solocraft.util.BarrierMageSpellManager;
 import net.solocraft.util.ArcaneMageSpellManager;
+import net.solocraft.util.CurseMageSpellManager;
 import net.solocraft.util.StormMageSpellManager;
 import net.solocraft.util.OrbOfAvariceManager;
 import net.solocraft.util.AssassinSkillManager;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
+import net.neoforged.api.distmarker.Dist;
+import net.solocraft.network.compat.DistExecutor;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -32,7 +34,7 @@ public class UseSkillOnKeyReleasedProcedure {
 
         // Always clean up per-tick effects regardless of which skill was held
         if (entity instanceof LivingEntity _entity)
-            _entity.removeEffect(SololevelingModMobEffects.CONSECUTIVE_SLASHES.get());
+            _entity.removeEffect(SololevelingModMobEffects.CONSECUTIVE_SLASHES);
         {
             double _setval = 0;
             entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -113,7 +115,8 @@ public class UseSkillOnKeyReleasedProcedure {
                         .orElse(new SololevelingModVariables.PlayerVariables());
 
         QTEResult result   = MageQTEHelper.computeResult(zoneStart, pressedMs);
-        double   mult      = MageQTEHelper.getManaCostMultiplier(result, cap.Intelligence);
+        double   mult      = MageQTEHelper.getManaCostMultiplier(result,
+                TemporaryStatBonusManager.effectiveIntelligence(entity));
         double   effectiveMult = mult * OrbOfAvariceManager.manaCostMultiplier(entity);
 
         boolean cast = false;
@@ -126,6 +129,8 @@ public class UseSkillOnKeyReleasedProcedure {
 			cast = ArcaneMageSpellManager.cast(entity, power, result);
 		} else if (StormMageSpellManager.isQteSkill(power)) {
 			cast = StormMageSpellManager.cast(entity, power, result);
+		} else if (CurseMageSpellManager.isQteSkill(power)) {
+			cast = CurseMageSpellManager.cast(entity, power, result);
         }
 
         // QTE result feedback — only shown when the spell actually cast

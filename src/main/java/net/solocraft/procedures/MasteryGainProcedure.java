@@ -3,10 +3,11 @@ package net.solocraft.procedures;
 import net.solocraft.entity.ManaArrowEntity;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
@@ -21,10 +22,10 @@ import net.minecraft.core.registries.Registries;
 import javax.annotation.Nullable;
 import net.solocraft.util.CooldownManager;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class MasteryGainProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, event.getSource(), entity, event.getSource().getEntity(), event.getAmount());
@@ -56,7 +57,7 @@ public class MasteryGainProcedure {
 						}
 						CooldownManager.set(sourceentity, "mastery", 10);
 					}
-				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:fighter")))) {
+				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:fighter")))) {
 					if (!CooldownManager.isOnCooldown(sourceentity, "mastery")) {
 						{
 							double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_fighter + 1;
@@ -67,7 +68,7 @@ public class MasteryGainProcedure {
 						}
 						CooldownManager.set(sourceentity, "mastery", 10);
 					}
-				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:mage")))
+				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:mage")))
 						&& sourceentity instanceof Player && playerClass(sourceentity) == 2.0D) {
 					if (!CooldownManager.isOnCooldown(sourceentity, "mastery")) {
 						{
@@ -79,7 +80,7 @@ public class MasteryGainProcedure {
 						}
 						CooldownManager.set(sourceentity, "mastery", 10);
 					}
-				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:tanker")))) {
+				} else if ((damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:tanker")))) {
 					if (!CooldownManager.isOnCooldown(sourceentity, "mastery")) {
 						{
 							double _setval = (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).progression_tanker + 1;
@@ -212,16 +213,16 @@ public class MasteryGainProcedure {
 	}
 
 	private static boolean isAssassinDamage(DamageSource damagesource, Entity sourceentity) {
-		if (damagesource.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))))
+		if (damagesource.is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"))))
 			return true;
 		if (!damagesource.is(DamageTypes.PLAYER_ATTACK) || !(sourceentity instanceof LivingEntity living))
 			return false;
-		return living.getMainHandItem().is(ItemTags.create(new ResourceLocation("dagger")))
-				|| living.getOffhandItem().is(ItemTags.create(new ResourceLocation("dagger")));
+		return living.getMainHandItem().is(ItemTags.create(ResourceLocation.parse("dagger")))
+				|| living.getOffhandItem().is(ItemTags.create(ResourceLocation.parse("dagger")));
 	}
 
 	private static boolean isRangerDamage(DamageSource damagesource) {
-		return damagesource.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:ranger")))
+		return damagesource.is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:ranger")))
 				|| damagesource.getDirectEntity() instanceof ManaArrowEntity;
 	}
 

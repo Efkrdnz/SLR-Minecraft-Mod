@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class IceChunkModel extends GeoModel<IceChunkEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(IceChunkEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/icechunks.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/icechunks.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(IceChunkEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/icechunks.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/icechunks.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(IceChunkEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

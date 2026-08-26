@@ -47,6 +47,18 @@
             "type": "float",
             "count": 4,
             "values": [ 0.0, 0.0, 0.0, 0.0 ]
+        },
+        {
+            "name": "CustomAccent",
+            "type": "float",
+            "count": 3,
+            "values": [ 0.72, 0.34, 1.0 ]
+        },
+        {
+            "name": "CustomBackdrop",
+            "type": "float",
+            "count": 1,
+            "values": [ 0.0 ]
         }
     ]
 }

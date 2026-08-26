@@ -5,10 +5,11 @@ import net.solocraft.entity.IgrisShadowEntity;
 import net.solocraft.entity.TuskShadowEntity;
 import net.solocraft.init.SololevelingModItems;
 
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * Server-authoritative combat effects supplied by boss-shadow equipment.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class ShadowEquipmentCombatHandler {
 	private static final float TUSK_ORB_DAMAGE_MULTIPLIER = 2.0F;
 	private static final String IGRIS_STORM_COOLDOWN = "sl_igris_equipment_storm_at";
@@ -45,7 +46,7 @@ public final class ShadowEquipmentCombatHandler {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void amplifyEquippedTuskDamage(LivingHurtEvent event) {
+	public static void amplifyEquippedTuskDamage(LivingIncomingDamageEvent event) {
 		if (event.getEntity().level().isClientSide() || event.getAmount() <= 0.0F
 				|| !isOrbAmplifiedTuskDamage(event.getSource()))
 			return;

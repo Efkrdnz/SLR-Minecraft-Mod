@@ -15,9 +15,9 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.Vec3;
 
 public class ChaHaeInOnEntityTickUpdateProcedure {
-	private static final int SWORD_DANCE_CYCLE = 120;
-	private static final int OVERHEAD_CYCLE = 80;
-	private static final int DASH_CHARGE_TICKS = 12;
+	private static final int SWORD_DANCE_CYCLE = 160;
+	private static final int OVERHEAD_CYCLE = 120;
+	private static final int DASH_CHARGE_TICKS = 28;
 
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (!(entity instanceof ChaHaeInEntity cha))
@@ -35,8 +35,8 @@ public class ChaHaeInOnEntityTickUpdateProcedure {
 
 	private static void tickSwordDance(ChaHaeInEntity cha) {
 		int timer = cha.getEntityData().get(ChaHaeInEntity.DATA_IA) + 1;
-		if (timer == 60 && !cha.level().isClientSide()) {
-			cha.addEffect(new MobEffectInstance(SololevelingModMobEffects.SWORD_DANCE.get(), 70, 2, false, false));
+		if (timer == 80 && !cha.level().isClientSide()) {
+			cha.addEffect(new MobEffectInstance(SololevelingModMobEffects.SWORD_DANCE, 50, 2, false, false));
 		}
 		cha.getEntityData().set(ChaHaeInEntity.DATA_IA, timer >= SWORD_DANCE_CYCLE ? 0 : timer);
 	}
@@ -44,12 +44,12 @@ public class ChaHaeInOnEntityTickUpdateProcedure {
 	private static void tickOverhead(LevelAccessor world, ChaHaeInEntity cha,
 			LivingEntity target, double surfaceDistance) {
 		int timer = cha.getEntityData().get(ChaHaeInEntity.DATA_OverheadTimer) + 1;
-		if (timer == 70)
+		if (timer == 105)
 			cha.setAnimation("overhead");
 		if (timer >= OVERHEAD_CYCLE) {
 			if (surfaceDistance <= 3.25D && !cha.level().isClientSide()) {
 				target.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
-						.getHolderOrThrow(DamageTypes.MOB_ATTACK), cha), 22.0F);
+						.getHolderOrThrow(DamageTypes.MOB_ATTACK), cha), 16.0F);
 			}
 			timer = 0;
 		}
@@ -57,7 +57,8 @@ public class ChaHaeInOnEntityTickUpdateProcedure {
 	}
 
 	private static void tickDash(ChaHaeInEntity cha, LivingEntity target, double surfaceDistance) {
-		if (surfaceDistance <= 6.0D) {
+		if (surfaceDistance < 7.0D || surfaceDistance > 22.0D
+				|| !cha.hasLineOfSight(target)) {
 			cha.getEntityData().set(ChaHaeInEntity.DATA_DashTimer, 0);
 			return;
 		}
@@ -69,7 +70,7 @@ public class ChaHaeInOnEntityTickUpdateProcedure {
 			direction = new Vec3(direction.x, 0.0D, direction.z);
 			if (direction.lengthSqr() > 1.0E-5D) {
 				direction = direction.normalize();
-				cha.setDeltaMovement(direction.x * 1.35D, 0.14D, direction.z * 1.35D);
+				cha.setDeltaMovement(direction.x * 0.90D, 0.10D, direction.z * 0.90D);
 				cha.hasImpulse = true;
 			}
 			timer = 0;

@@ -4,8 +4,8 @@ package net.solocraft.item;
 import net.solocraft.procedures.RunestoneWillpowerRCProcedure;
 import net.solocraft.procedures.TankerProgressionHelper;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.TooltipFlag;
@@ -31,8 +31,8 @@ public class RunestoneWillpowerItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		TankerTooltipHelper.addRunestone(list, TankerProgressionHelper.WILLPOWER,
 				"tooltip.sololeveling.tanker.runestone.willpower.description",
 				"A", 650, "9", 45);

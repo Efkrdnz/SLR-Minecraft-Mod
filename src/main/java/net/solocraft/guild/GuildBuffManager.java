@@ -3,6 +3,7 @@ package net.solocraft.guild;
 import net.solocraft.entity.ManaArrowEntity;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.TemporaryStatBonusManager;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -17,20 +18,25 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHealEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingHealEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.UUID;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class GuildBuffManager {
-    private static final UUID FOOTWORK_SPEED_ID = UUID.fromString("c71353c3-7299-4829-88af-1f8a0c715063");
-    private static final String FOOTWORK_SPEED_NAME = "Guild assassin footwork";
+    private static final ResourceLocation FOOTWORK_SPEED_ID =
+            ResourceLocation.fromNamespaceAndPath("sololeveling",
+                    "attribute/guild_assassin_footwork");
     private static final String COMBAT_UNTIL = "sl_guild_combat_until";
     private static final String DEFENSE_UNTIL = "sl_guild_defense_until";
     private static final String BATTLE_UNTIL = "sl_guild_battle_until";
@@ -49,7 +55,7 @@ public final class GuildBuffManager {
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
-    public static void onLivingHurt(LivingHurtEvent event) {
+    public static void onLivingHurt(LivingIncomingDamageEvent event) {
         if (event.getAmount() <= 0 || event.getEntity().level().isClientSide()) return;
 
         ServerPlayer attacker = owningPlayer(event.getSource().getEntity());
@@ -107,8 +113,8 @@ public final class GuildBuffManager {
     }
 
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) return;
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (false || !(event.getEntity() instanceof ServerPlayer player)) return;
         applyFootworkSpeed(player);
         tickManaBuffs(player);
     }
@@ -122,7 +128,9 @@ public final class GuildBuffManager {
                 vars.MP = Math.min(vars.Mana, vars.MP + spent * 0.25D);
             }
             if (hasActive(player, GuildBuffRegistry.ARCANE_CIRCULATION) && vars.MP < vars.Mana && player.tickCount % 20 == 0) {
-                double base = Math.max(1.0D, ((vars.Intelligence / 20.0D) * 2.0D) + vars.manaregen);
+                double base = Math.max(1.0D,
+                        ((TemporaryStatBonusManager.effectiveIntelligence(player) / 20.0D) * 2.0D)
+                                + vars.manaregen);
                 vars.MP = Math.min(vars.Mana, vars.MP + base * 0.10D);
             }
             if (Double.compare(vars.MP, beforeMp) != 0)
@@ -138,8 +146,8 @@ public final class GuildBuffManager {
         boolean desired = hasActive(player, GuildBuffRegistry.ASSASSIN_FOOTWORK)
                 && player.getPersistentData().getLong(COMBAT_UNTIL) > player.level().getGameTime();
         boolean matches = old != null
-                && Double.compare(old.getAmount(), 0.12D) == 0
-                && old.getOperation() == AttributeModifier.Operation.MULTIPLY_TOTAL;
+                && Double.compare(old.amount(), 0.12D) == 0
+                && old.operation() == AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL;
         if (!desired) {
             if (old != null)
                 speed.removeModifier(FOOTWORK_SPEED_ID);
@@ -149,8 +157,8 @@ public final class GuildBuffManager {
             return;
         if (old != null)
             speed.removeModifier(FOOTWORK_SPEED_ID);
-        speed.addTransientModifier(new AttributeModifier(FOOTWORK_SPEED_ID, FOOTWORK_SPEED_NAME,
-                0.12D, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        speed.addTransientModifier(new AttributeModifier(FOOTWORK_SPEED_ID,
+                0.12D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
     }
 
     private static void markCombat(ServerPlayer player, int ticks) {
@@ -166,14 +174,14 @@ public final class GuildBuffManager {
         return source.is(DamageTypes.MAGIC)
                 || source.is(DamageTypes.LIGHTNING_BOLT)
                 || source.is(DamageTypes.IN_FIRE)
-                || source.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:mage")));
+                || source.is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:mage")));
     }
 
     private static boolean isSkillDamage(DamageSource source) {
         if (isMagicDamage(source)) return true;
-        return source.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin")))
-                || source.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:fighter")))
-                || source.is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:ranger")))
+        return source.is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin")))
+                || source.is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:fighter")))
+                || source.is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:ranger")))
                 || source.getDirectEntity() instanceof ManaArrowEntity;
     }
 

@@ -6,7 +6,7 @@ import net.solocraft.dungeon.data.DungeonDataTypes;
 import net.solocraft.dungeon.data.DungeonDataTypes.EntitySelector;
 import net.solocraft.dungeon.data.MobPoolResolver;
 
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 
 import net.minecraft.server.level.ServerLevel;
 

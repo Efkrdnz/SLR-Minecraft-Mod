@@ -12,11 +12,7 @@
     "particle": { "options": { "type": "minecraft:reverse_portal" }, "probability": 0.004 }
   },
   "spawners": {
-    "monster": [
-      { "type": "sololeveling:orc", "weight": 48, "minCount": 2, "maxCount": 5 },
-      { "type": "sololeveling:green_orc", "weight": 34, "minCount": 2, "maxCount": 4 },
-      { "type": "sololeveling:high_orc", "weight": 12, "minCount": 1, "maxCount": 2 }
-    ],
+    "monster": [],
     "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
   },
   "spawn_costs": {},

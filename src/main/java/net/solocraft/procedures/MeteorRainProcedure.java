@@ -50,9 +50,7 @@ public class MeteorRainProcedure {
 						public Projectile getFireball(Level level, Entity shooter, double ax, double ay, double az) {
 							AbstractHurtingProjectile entityToSpawn = new LargeFireball(EntityType.FIREBALL, level);
 							entityToSpawn.setOwner(shooter);
-							entityToSpawn.xPower = ax;
-							entityToSpawn.yPower = ay;
-							entityToSpawn.zPower = az;
+							entityToSpawn.accelerationPower = Math.sqrt(ax * ax + ay * ay + az * az);
 							return entityToSpawn;
 						}
 					}.getFireball(projectileLevel, entity, 0, (-0.3), 0);

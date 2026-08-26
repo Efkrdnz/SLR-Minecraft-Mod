@@ -4,10 +4,11 @@ import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.GateCompletionTokens;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
@@ -17,10 +18,10 @@ import net.minecraft.core.registries.Registries;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class IsGateClearedProcedure {
 	@SubscribeEvent
-	public static void onEntityTick(LivingEvent.LivingTickEvent event) {
+	public static void onEntityTick(EntityTickEvent.Post event) {
 		execute(event, event.getEntity().level(), event.getEntity());
 	}
 
@@ -32,7 +33,7 @@ public class IsGateClearedProcedure {
 		if (entity == null || entity.level().isClientSide() || entity.tickCount % 20 != 0)
 			return;
 
-		if (!entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals"))))
+		if (!entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("portals"))))
 			return;
 
 		SololevelingModVariables.MapVariables variables = SololevelingModVariables.MapVariables.get(world);

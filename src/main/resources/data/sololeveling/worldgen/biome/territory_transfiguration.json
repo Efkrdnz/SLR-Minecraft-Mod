@@ -12,10 +12,7 @@
     "particle": { "options": { "type": "minecraft:warped_spore" }, "probability": 0.014 }
   },
   "spawners": {
-    "monster": [
-      { "type": "sololeveling:mutated", "weight": 54, "minCount": 2, "maxCount": 5 },
-      { "type": "sololeveling:magic_eye", "weight": 34, "minCount": 1, "maxCount": 3 }
-    ],
+    "monster": [],
     "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
   },
   "spawn_costs": {},

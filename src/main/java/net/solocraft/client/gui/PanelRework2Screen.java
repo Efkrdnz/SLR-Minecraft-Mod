@@ -59,11 +59,10 @@ public class PanelRework2Screen extends AbstractContainerScreen<PanelRework2Menu
 		this.imageHeight = 0;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/panel_rework_2.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/panel_rework_2.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 		if (mouseX > leftPos + -50 && mouseX < leftPos + -26 && mouseY > topPos + -93 && mouseY < topPos + -69)
@@ -93,7 +92,7 @@ public class PanelRework2Screen extends AbstractContainerScreen<PanelRework2Menu
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/panel_rework_8.png"), this.leftPos + -149, this.topPos + -120, 0, 0, 300, 240, 300, 240);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/panel_rework_8.png"), this.leftPos + -149, this.topPos + -120, 0, 0, 300, 240, 300, 240);
 
 		RenderSystem.disableBlend();
 	}
@@ -163,90 +162,79 @@ public class PanelRework2Screen extends AbstractContainerScreen<PanelRework2Menu
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_invest2 = new ImageButton(this.leftPos + -87, this.topPos + 29, 7, 7, 0, 0, 7, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_invest2.png"), 7, 14, e -> {
+		imagebutton_invest2 = new LegacyAtlasImageButton(this.leftPos + -87, this.topPos + 29, 7, 7, 0, 0, 7, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_invest2.png"), 7, 14, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(0, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 0, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_invest2", imagebutton_invest2);
 		this.addRenderableWidget(imagebutton_invest2);
-		imagebutton_invest21 = new ImageButton(this.leftPos + -87, this.topPos + 45, 7, 7, 0, 0, 7, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_invest21.png"), 7, 14, e -> {
+		imagebutton_invest21 = new LegacyAtlasImageButton(this.leftPos + -87, this.topPos + 45, 7, 7, 0, 0, 7, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_invest21.png"), 7, 14, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(1, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 1, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_invest21", imagebutton_invest21);
 		this.addRenderableWidget(imagebutton_invest21);
-		imagebutton_invest22 = new ImageButton(this.leftPos + -87, this.topPos + 61, 7, 7, 0, 0, 7, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_invest22.png"), 7, 14, e -> {
+		imagebutton_invest22 = new LegacyAtlasImageButton(this.leftPos + -87, this.topPos + 61, 7, 7, 0, 0, 7, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_invest22.png"), 7, 14, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(2, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 2, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_invest22", imagebutton_invest22);
 		this.addRenderableWidget(imagebutton_invest22);
-		imagebutton_invest23 = new ImageButton(this.leftPos + 85, this.topPos + 29, 7, 7, 0, 0, 7, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_invest23.png"), 7, 14, e -> {
+		imagebutton_invest23 = new LegacyAtlasImageButton(this.leftPos + 85, this.topPos + 29, 7, 7, 0, 0, 7, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_invest23.png"), 7, 14, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(3, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 3, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_invest23", imagebutton_invest23);
 		this.addRenderableWidget(imagebutton_invest23);
-		imagebutton_invest24 = new ImageButton(this.leftPos + 85, this.topPos + 45, 7, 7, 0, 0, 7, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_invest24.png"), 7, 14, e -> {
+		imagebutton_invest24 = new LegacyAtlasImageButton(this.leftPos + 85, this.topPos + 45, 7, 7, 0, 0, 7, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_invest24.png"), 7, 14, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(4, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 4, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_invest24", imagebutton_invest24);
 		this.addRenderableWidget(imagebutton_invest24);
-		imagebutton_buttonshop = new ImageButton(this.leftPos + -159, this.topPos + -90, 32, 32, 0, 0, 32, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_buttonshop.png"), 32, 64, e -> {
+		imagebutton_buttonshop = new LegacyAtlasImageButton(this.leftPos + -159, this.topPos + -90, 32, 32, 0, 0, 32, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_buttonshop.png"), 32, 64, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(5, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 5, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_buttonshop", imagebutton_buttonshop);
 		this.addRenderableWidget(imagebutton_buttonshop);
-		imagebutton_buttonquests = new ImageButton(this.leftPos + -159, this.topPos + 44, 32, 32, 0, 0, 32, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_buttonquests.png"), 32, 64, e -> {
+		imagebutton_buttonquests = new LegacyAtlasImageButton(this.leftPos + -159, this.topPos + 44, 32, 32, 0, 0, 32, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_buttonquests.png"), 32, 64, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(6, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 6, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_buttonquests", imagebutton_buttonquests);
 		this.addRenderableWidget(imagebutton_buttonquests);
-		imagebutton_buttonrewards = new ImageButton(this.leftPos + -161, this.topPos + -23, 32, 32, 0, 0, 32, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_buttonrewards.png"), 32, 64, e -> {
+		imagebutton_buttonrewards = new LegacyAtlasImageButton(this.leftPos + -161, this.topPos + -23, 32, 32, 0, 0, 32, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_buttonrewards.png"), 32, 64, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(7, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 7, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_buttonrewards", imagebutton_buttonrewards);
 		this.addRenderableWidget(imagebutton_buttonrewards);
-		imagebutton_buttoncrafting = new ImageButton(this.leftPos + 136, this.topPos + -12, 32, 32, 0, 0, 32, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_buttoncrafting.png"), 32, 64, e -> {
+		imagebutton_buttoncrafting = new LegacyAtlasImageButton(this.leftPos + 136, this.topPos + -12, 32, 32, 0, 0, 32, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_buttoncrafting.png"), 32, 64, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(8, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 8, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_buttoncrafting", imagebutton_buttoncrafting);
 		this.addRenderableWidget(imagebutton_buttoncrafting);
-		imagebutton_buttontrain = new ImageButton(this.leftPos + 134, this.topPos + -78, 32, 32, 0, 0, 32, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_buttontrain.png"), 32, 64, e -> {
+		imagebutton_buttontrain = new LegacyAtlasImageButton(this.leftPos + 134, this.topPos + -78, 32, 32, 0, 0, 32, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_buttontrain.png"), 32, 64, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(9, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 9, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_buttontrain", imagebutton_buttontrain);
 		this.addRenderableWidget(imagebutton_buttontrain);
-		imagebutton_buttonabilities = new ImageButton(this.leftPos + 134, this.topPos + 56, 32, 32, 0, 0, 32, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_buttonabilities.png"), 32, 64, e -> {
+		imagebutton_buttonabilities = new LegacyAtlasImageButton(this.leftPos + 134, this.topPos + 56, 32, 32, 0, 0, 32, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_buttonabilities.png"), 32, 64, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(10, x, y, z));
-				PanelRework2ButtonMessage.handleButtonAction(entity, 10, x, y, z);
 			}
 		});
 		guistate.put("button:imagebutton_buttonabilities", imagebutton_buttonabilities);

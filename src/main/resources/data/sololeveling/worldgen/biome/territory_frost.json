@@ -12,10 +12,7 @@
     "particle": { "options": { "type": "minecraft:snowflake" }, "probability": 0.01 }
   },
   "spawners": {
-    "monster": [
-      { "type": "sololeveling:steel_fang_wolf", "weight": 55, "minCount": 2, "maxCount": 5 },
-      { "type": "sololeveling:steel_fanged_lycan", "weight": 18, "minCount": 1, "maxCount": 3 }
-    ],
+    "monster": [],
     "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
   },
   "spawn_costs": {},

@@ -12,11 +12,7 @@
     "particle": { "options": { "type": "minecraft:campfire_cosy_smoke" }, "probability": 0.0015 }
   },
   "spawners": {
-    "monster": [
-      { "type": "sololeveling:stone_golem", "weight": 52, "minCount": 1, "maxCount": 3 },
-      { "type": "sololeveling:mini_gem_golem", "weight": 32, "minCount": 2, "maxCount": 4 },
-      { "type": "sololeveling:futuristic_golem", "weight": 10, "minCount": 1, "maxCount": 1 }
-    ],
+    "monster": [],
     "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
   },
   "spawn_costs": {},

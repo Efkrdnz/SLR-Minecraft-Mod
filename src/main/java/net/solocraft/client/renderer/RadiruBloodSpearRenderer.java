@@ -15,7 +15,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
 public class RadiruBloodSpearRenderer extends EntityRenderer<RadiruBloodSpearEntity> {
-	private static final ResourceLocation TEXTURE = new ResourceLocation("sololeveling", "textures/item/radiru_blood_spear.png");
+	private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/item/radiru_blood_spear.png");
 	private final net.minecraft.client.renderer.entity.ItemRenderer itemRenderer;
 
 	public RadiruBloodSpearRenderer(EntityRendererProvider.Context context) {

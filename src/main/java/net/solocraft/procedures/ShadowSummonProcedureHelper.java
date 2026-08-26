@@ -13,7 +13,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 
 final class ShadowSummonProcedureHelper {
-	private static final ResourceKey<Level> SURVIVAL_DIMENSION = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:survival_dimension"));
+	private static final ResourceKey<Level> SURVIVAL_DIMENSION = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:survival_dimension"));
 
 	private ShadowSummonProcedureHelper() {
 	}

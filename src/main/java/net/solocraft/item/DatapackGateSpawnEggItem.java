@@ -5,7 +5,7 @@ import net.solocraft.dungeon.DatapackGateSelectionService;
 import net.solocraft.entity.DatapackGateEntity;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.common.ForgeSpawnEggItem;
+import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
@@ -24,7 +24,7 @@ import net.minecraft.world.item.context.UseOnContext;
  * allowed to create a gate. This avoids consuming the egg or leaving a dead,
  * unconfigurable gate when no valid dungeon definitions are loaded.</p>
  */
-public class DatapackGateSpawnEggItem extends ForgeSpawnEggItem {
+public class DatapackGateSpawnEggItem extends DeferredSpawnEggItem {
 	public DatapackGateSpawnEggItem(int backgroundColor, int highlightColor) {
 		super(SololevelingModEntities.DATAPACK_GATE, backgroundColor, highlightColor,
 				new Item.Properties());

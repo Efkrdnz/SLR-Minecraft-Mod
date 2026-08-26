@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-public class SwordTwinwingCItem extends SwordItem {
+public class SwordTwinwingCItem extends LegacySwordItem {
 	public SwordTwinwingCItem() {
 		super(new Tier() {
 			public int getUses() {
@@ -27,8 +27,8 @@ public class SwordTwinwingCItem extends SwordItem {
 				return 5f;
 			}
 
-			public int getLevel() {
-				return 1;
+			public net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> getIncorrectBlocksForDrops() {
+				return net.minecraft.tags.BlockTags.INCORRECT_FOR_STONE_TOOL;
 			}
 
 			public int getEnchantmentValue() {
@@ -42,7 +42,7 @@ public class SwordTwinwingCItem extends SwordItem {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 	}
 }

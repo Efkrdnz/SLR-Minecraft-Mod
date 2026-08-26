@@ -28,6 +28,10 @@ float noise(vec2 p) {
                local.y);
 }
 
+vec3 safeNormalize(vec3 value) {
+    return value * inversesqrt(max(dot(value, value), 1.0e-8));
+}
+
 void main() {
     float material = floor(texCoord0.x);
     vec2 uv = vec2(fract(texCoord0.x), texCoord0.y);
@@ -47,8 +51,8 @@ void main() {
         // Dark hammered steel. Broad dents are deliberately subtle so the
         // silhouette stays legible under resource packs and low light.
         float hammer = 0.76 + coarse * 0.16 + fine * 0.08;
-        float fresnel = pow(1.0 - abs(dot(normalize(viewNormal),
-                normalize(-viewPosition))), 2.0);
+        float fresnel = pow(1.0 - abs(dot(safeNormalize(viewNormal),
+                safeNormalize(-viewPosition))), 2.0);
         color = base * hammer * (0.34 + light * 0.76);
         color += vec3(0.28, 0.31, 0.30) * edge * (0.08 + fresnel * 0.1);
     } else if (material < 2.0) {

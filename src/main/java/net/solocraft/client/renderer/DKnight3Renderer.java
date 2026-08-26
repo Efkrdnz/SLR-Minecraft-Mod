@@ -18,6 +18,6 @@ public class DKnight3Renderer extends HumanoidMobRenderer<DKnight3Entity, Humano
 
 	@Override
 	public ResourceLocation getTextureLocation(DKnight3Entity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/knight_mc_skin.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/knight_mc_skin.png");
 	}
 }

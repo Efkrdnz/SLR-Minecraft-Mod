@@ -18,6 +18,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -47,6 +48,7 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 	private boolean closed;
 	private boolean accessDenied;
 	private float reveal;
+	private boolean suppressNestedBackground;
 
 	protected SystemContainerScreen(T menu, Inventory inv, Component title) {
 		super(menu, inv, title);
@@ -144,8 +146,8 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-		return super.mouseScrolled(logicalMouseX(mouseX), logicalMouseY(mouseY), delta);
+	public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
+		return super.mouseScrolled(logicalMouseX(mouseX), logicalMouseY(mouseY), deltaX, deltaY);
 	}
 
 	@Override
@@ -216,7 +218,7 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 		int logicalMouseX = transform.logicalMouseX(mouseX);
 		int logicalMouseY = transform.logicalMouseY(mouseY);
 
-		this.renderBackground(g);
+		this.renderTransparentBackground(g);
 		g.flush();
 		ResponsiveGuiScale.push(g, transform);
 
@@ -228,7 +230,15 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 
 		ResponsiveGuiScale.enableScissor(g, transform, sx0, top, sx1, bottom);
 		drawShaderBackground(g, ax, ay, logicalMouseX, logicalMouseY);
-		super.render(g, logicalMouseX, logicalMouseY, partialTicks); // renderBg (panel+cells) + slots/items + labels + widgets
+		// AbstractContainerScreen.render() owns a background pass in 1.21. The
+		// unscaled pass above is intentional; suppress only the nested pass here
+		// so it cannot blur or cover the System panel before slots/text render.
+		this.suppressNestedBackground = true;
+		try {
+			super.render(g, logicalMouseX, logicalMouseY, partialTicks);
+		} finally {
+			this.suppressNestedBackground = false;
+		}
 		g.disableScissor();
 
 		if (reveal < 1.0f) {
@@ -247,6 +257,15 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 
 		if (state == State.OPEN)
 			this.renderTooltip(g, mouseX, mouseY);
+	}
+
+	@Override
+	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY,
+			float partialTick) {
+		if (this.suppressNestedBackground)
+			renderBg(graphics, partialTick, mouseX, mouseY);
+		else
+			super.renderBackground(graphics, mouseX, mouseY, partialTick);
 	}
 
 	protected ResponsiveGuiScale.Transform responsiveTransform() {
@@ -289,13 +308,12 @@ public abstract class SystemContainerScreen<T extends AbstractContainerMenu> ext
 		configureBackgroundShader(shader, localX, localY);
 
 		Matrix4f matrix = g.pose().last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-		buffer.vertex(matrix, ax, ay + pH, 0).uv(0f, 1f).endVertex();
-		buffer.vertex(matrix, ax + pW, ay + pH, 0).uv(1f, 1f).endVertex();
-		buffer.vertex(matrix, ax + pW, ay, 0).uv(1f, 0f).endVertex();
-		buffer.vertex(matrix, ax, ay, 0).uv(0f, 0f).endVertex();
-		Tesselator.getInstance().end();
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		buffer.addVertex(matrix, ax, ay + pH, 0).setUv(0f, 1f);
+		buffer.addVertex(matrix, ax + pW, ay + pH, 0).setUv(1f, 1f);
+		buffer.addVertex(matrix, ax + pW, ay, 0).setUv(1f, 0f);
+		buffer.addVertex(matrix, ax, ay, 0).setUv(0f, 0f);
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 
 		RenderSystem.enableCull();
 		RenderSystem.disableBlend();

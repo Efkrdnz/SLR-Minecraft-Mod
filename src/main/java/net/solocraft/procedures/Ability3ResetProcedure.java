@@ -2,12 +2,14 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.SilladIcePrisonManager;
 import net.solocraft.entity.ShadowKaiselinEntity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -15,6 +17,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.tags.TagKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.Registries;
@@ -24,7 +27,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Comparator;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class Ability3ResetProcedure {
 	private static final String SHADOW_OWNER = "sl_shadow_owner";
 
@@ -41,6 +44,11 @@ public class Ability3ResetProcedure {
 		if (entity == null)
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
+			// A manual dismiss-all is denied atomically while any owned shadow is
+			// imprisoned. Logout cleanup still runs so entities cannot be orphaned.
+			if (event == null && entity instanceof Player player
+					&& SilladIcePrisonManager.guardManualDismiss(player))
+				return;
 			boolean keepRiddenKaisel = event == null && isRidingOwnedKaisel(entity);
 			resetShadowCounters(entity, keepRiddenKaisel);
 			{
@@ -51,7 +59,7 @@ public class Ability3ResetProcedure {
 					boolean ownedTaggedShadow = entityiterator.getPersistentData().hasUUID(SHADOW_OWNER) && entityiterator.getPersistentData().getUUID(SHADOW_OWNER).equals(entity.getUUID());
 					if (keepRiddenKaisel && entityiterator == entity.getVehicle())
 						continue;
-					if (entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows"))) && (ownedTameShadow || ownedTaggedShadow)) {
+					if (entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows"))) && (ownedTameShadow || ownedTaggedShadow)) {
 						if (!entityiterator.level().isClientSide()) {
 							ShadowMonarchManager.saveBossHealthBeforeDespawn(entity, entityiterator);
 							ShadowMonarchManager.dropStoredShadowInventory(entityiterator);

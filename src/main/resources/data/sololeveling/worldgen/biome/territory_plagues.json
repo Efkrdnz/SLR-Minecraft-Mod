@@ -12,11 +12,7 @@
     "particle": { "options": { "type": "minecraft:spore_blossom_air" }, "probability": 0.008 }
   },
   "spawners": {
-    "monster": [
-      { "type": "sololeveling:red_ants", "weight": 62, "minCount": 3, "maxCount": 7 },
-      { "type": "sololeveling:centipede", "weight": 10, "minCount": 1, "maxCount": 1 },
-      { "type": "sololeveling:mutated", "weight": 20, "minCount": 1, "maxCount": 3 }
-    ],
+    "monster": [],
     "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
   },
   "spawn_costs": {},

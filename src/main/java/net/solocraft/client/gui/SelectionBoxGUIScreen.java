@@ -38,11 +38,10 @@ public class SelectionBoxGUIScreen extends AbstractContainerScreen<SelectionBoxG
 		this.imageHeight = 36;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/selection_box_gui.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/selection_box_gui.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}

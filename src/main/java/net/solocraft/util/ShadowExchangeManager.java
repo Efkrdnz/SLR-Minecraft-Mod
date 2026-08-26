@@ -47,6 +47,12 @@ public final class ShadowExchangeManager {
 	public static boolean saveAnchor(LevelAccessor world, Entity entity, String shadowType, String displayName) {
 		if (!(entity instanceof ServerPlayer player))
 			return false;
+		if (!canUseExchange(player)) {
+			player.closeContainer();
+			negative(player, "EXCHANGE UNAVAILABLE",
+					"This ability does not belong to your current vessel.");
+			return false;
+		}
 		if (isRestrictedDimension(player)) {
 			negative(player, "EXCHANGE LOCKED", "You cannot set an anchor here.");
 			return false;
@@ -88,6 +94,12 @@ public final class ShadowExchangeManager {
 	public static boolean startExchange(LevelAccessor world, Entity entity, int slot) {
 		if (!(entity instanceof ServerPlayer player))
 			return false;
+		if (!canUseExchange(player)) {
+			player.closeContainer();
+			negative(player, "EXCHANGE UNAVAILABLE",
+					"This ability does not belong to your current vessel.");
+			return false;
+		}
 		if (CooldownManager.isOnCooldown(player, "shadow_exchange")) {
 			negative(player, "EXCHANGE UNAVAILABLE", "Skill is on cooldown.");
 			return false;
@@ -152,6 +164,11 @@ public final class ShadowExchangeManager {
 	private static void completeExchange(ServerPlayer player, int slot, String anchorId) {
 		if (player == null || !player.isAlive())
 			return;
+		if (!canUseExchange(player)) {
+			negative(player, "EXCHANGE CANCELED",
+					"Your vessel changed before the exchange completed.");
+			return;
+		}
 		ensureMigrated(player);
 		CompoundTag anchor = anchor(player, slot);
 		if (anchor == null || !anchorId.equals(anchor.getString("id"))) {
@@ -239,6 +256,12 @@ public final class ShadowExchangeManager {
 		SololevelingModVariables.PlayerVariables vars = vars(player);
 		String dimension = player.level().dimension().location().getPath();
 		return vars.dungeoning || dimension.contains("dungeon") || dimension.contains("castle");
+	}
+
+	private static boolean canUseExchange(ServerPlayer player) {
+		return player != null
+				&& VesselProgressionManager.isShadowMonarch(player)
+				&& vars(player).ShadowExchange;
 	}
 
 	private static void ensureMigrated(Player player) {

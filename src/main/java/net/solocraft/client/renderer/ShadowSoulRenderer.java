@@ -22,7 +22,7 @@ public class ShadowSoulRenderer extends MobRenderer<ShadowSoulEntity, Modelshado
 
 	@Override
 	public ResourceLocation getTextureLocation(ShadowSoulEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/soultext.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/soultext.png");
 	}
 
 	@Override

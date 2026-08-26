@@ -2,33 +2,41 @@ package net.solocraft.util;
 
 import net.solocraft.init.SololevelingModItems;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.item.ItemTossEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingDropsEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetCarriedItemPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.component.Unbreakable;
 
 import java.util.UUID;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class LiuManifestationManager {
 	private static final String ROOT = "slr_liu_manifestation";
 	private static final String ACTIVE = "Active";
@@ -40,8 +48,8 @@ public final class LiuManifestationManager {
 	private static final String SAVED_OFFHAND = "SavedOffhand";
 	private static final String MANIFESTED = "slr_liu_manifested_sword";
 	private static final String SCALED_STRENGTH = "slr_liu_scaled_strength";
-	private static final UUID MANIFESTED_DAMAGE_UUID = UUID.fromString("64218a7e-c2ce-42c1-b996-53d4db0ce871");
-	private static final UUID MANIFESTED_SPEED_UUID = UUID.fromString("0861e2c6-ea7d-4455-8cec-1324138a29ad");
+	private static final ResourceLocation MANIFESTED_DAMAGE_ID = ResourceLocation.fromNamespaceAndPath("sololeveling", "liu_manifested_sword_damage");
+	private static final ResourceLocation MANIFESTED_SPEED_ID = ResourceLocation.fromNamespaceAndPath("sololeveling", "liu_manifested_sword_speed");
 
 	private LiuManifestationManager() {
 	}
@@ -63,13 +71,14 @@ public final class LiuManifestationManager {
 
 	public static boolean isManifestedSword(ItemStack stack) {
 		return !stack.isEmpty() && stack.is(SololevelingModItems.DRAGON_SHORTSWORD.get())
-				&& stack.hasTag() && stack.getTag().getBoolean(MANIFESTED);
+				&& ItemStackData.copy(stack).getBoolean(MANIFESTED);
 	}
 
 	public static boolean belongsTo(ItemStack stack, Player player) {
-		if (!isManifestedSword(stack) || player == null || !stack.getTag().hasUUID(OWNER))
+		CompoundTag data = ItemStackData.copy(stack);
+		if (!isManifestedSword(stack) || player == null || !data.hasUUID(OWNER))
 			return false;
-		return player.getUUID().equals(stack.getTag().getUUID(OWNER));
+		return player.getUUID().equals(data.getUUID(OWNER));
 	}
 
 	public static void restore(ServerPlayer player) {
@@ -80,8 +89,8 @@ public final class LiuManifestationManager {
 		}
 
 		int lockedSlot = Math.max(0, Math.min(8, root.getInt(LOCKED_SLOT)));
-		ItemStack savedMain = ItemStack.of(root.getCompound(SAVED_MAIN));
-		ItemStack savedOffhand = ItemStack.of(root.getCompound(SAVED_OFFHAND));
+		ItemStack savedMain = ItemStackData.load(root.getCompound(SAVED_MAIN), player.registryAccess());
+		ItemStack savedOffhand = ItemStackData.load(root.getCompound(SAVED_OFFHAND), player.registryAccess());
 		removeManifestedCopies(player);
 		placeRestoredStack(player, lockedSlot, savedMain);
 		placeRestoredOffhand(player, savedOffhand);
@@ -107,8 +116,8 @@ public final class LiuManifestationManager {
 		root.putBoolean(ACTIVE, true);
 		root.putUUID(SESSION, session);
 		root.putInt(LOCKED_SLOT, slot);
-		root.put(SAVED_MAIN, inventory.getItem(slot).save(new CompoundTag()));
-		root.put(SAVED_OFFHAND, inventory.offhand.get(0).save(new CompoundTag()));
+		root.put(SAVED_MAIN, ItemStackData.save(inventory.getItem(slot), player.registryAccess()));
+		root.put(SAVED_OFFHAND, ItemStackData.save(inventory.offhand.get(0), player.registryAccess()));
 		player.getPersistentData().put(ROOT, root);
 
 		inventory.setItem(slot, createSword(player, session, "main"));
@@ -121,12 +130,13 @@ public final class LiuManifestationManager {
 
 	private static ItemStack createSword(ServerPlayer player, UUID session, String hand) {
 		ItemStack stack = new ItemStack(SololevelingModItems.DRAGON_SHORTSWORD.get());
-		CompoundTag tag = stack.getOrCreateTag();
-		tag.putBoolean(MANIFESTED, true);
-		tag.putUUID(OWNER, player.getUUID());
-		tag.putUUID(SESSION, session);
-		tag.putString(HAND, hand);
-		tag.putBoolean("Unbreakable", true);
+		ItemStackData.update(stack, tag -> {
+			tag.putBoolean(MANIFESTED, true);
+			tag.putUUID(OWNER, player.getUUID());
+			tag.putUUID(SESSION, session);
+			tag.putString(HAND, hand);
+		});
+		stack.set(DataComponents.UNBREAKABLE, new Unbreakable(true));
 		refreshScaledAttributes(stack, player);
 		return stack;
 	}
@@ -161,30 +171,32 @@ public final class LiuManifestationManager {
 	}
 
 	private static void refreshScaledAttributes(ItemStack stack, ServerPlayer player) {
-		CompoundTag tag = stack.getOrCreateTag();
-		double strength = TemporaryStatBonusManager.effectiveStrength(player);
-		strength = Math.max(0.0D, strength);
-		if (tag.contains(SCALED_STRENGTH) && tag.contains("AttributeModifiers")
+		CompoundTag tag = ItemStackData.copy(stack);
+		double strength = Math.max(0.0D, TemporaryStatBonusManager.effectiveStrength(player));
+		if (tag.contains(SCALED_STRENGTH) && stack.has(DataComponents.ATTRIBUTE_MODIFIERS)
 				&& Math.abs(tag.getDouble(SCALED_STRENGTH) - strength) < 0.001D)
 			return;
 
 		// Manifested swords begin modestly and grow into their National Rank output with Strength.
 		double attackBonus = Mth.clamp(2.5D + strength * 0.065D
 				+ Math.pow(strength, 1.15D) * 0.008D, 3.0D, 28.0D);
-		tag.remove("AttributeModifiers");
-		stack.addAttributeModifier(Attributes.ATTACK_DAMAGE,
-				new AttributeModifier(MANIFESTED_DAMAGE_UUID, "Liu manifested sword damage",
-						attackBonus, AttributeModifier.Operation.ADDITION), EquipmentSlot.MAINHAND);
-		stack.addAttributeModifier(Attributes.ATTACK_SPEED,
-				new AttributeModifier(MANIFESTED_SPEED_UUID, "Liu manifested sword speed",
-						-1.9D, AttributeModifier.Operation.ADDITION), EquipmentSlot.MAINHAND);
-		tag.putDouble(SCALED_STRENGTH, strength);
+		ItemAttributeModifiers modifiers = ItemAttributeModifiers.builder()
+				.add(Attributes.ATTACK_DAMAGE,
+						new AttributeModifier(MANIFESTED_DAMAGE_ID, attackBonus, AttributeModifier.Operation.ADD_VALUE),
+						EquipmentSlotGroup.MAINHAND)
+				.add(Attributes.ATTACK_SPEED,
+						new AttributeModifier(MANIFESTED_SPEED_ID, -1.9D, AttributeModifier.Operation.ADD_VALUE),
+						EquipmentSlotGroup.MAINHAND)
+				.build();
+		stack.set(DataComponents.ATTRIBUTE_MODIFIERS, modifiers);
+		ItemStackData.update(stack, data -> data.putDouble(SCALED_STRENGTH, strength));
 	}
 
 	private static boolean validSword(ItemStack stack, ServerPlayer player, UUID session, String hand) {
-		if (!belongsTo(stack, player) || !stack.getTag().hasUUID(SESSION))
+		CompoundTag data = ItemStackData.copy(stack);
+		if (!belongsTo(stack, player) || !data.hasUUID(SESSION))
 			return false;
-		return session.equals(stack.getTag().getUUID(SESSION)) && hand.equals(stack.getTag().getString(HAND));
+		return session.equals(data.getUUID(SESSION)) && hand.equals(data.getString(HAND));
 	}
 
 	private static void removeManifestedCopiesExcept(ServerPlayer player, int retainedMainSlot) {
@@ -235,9 +247,9 @@ public final class LiuManifestationManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()
-				|| !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || event.getEntity().level().isClientSide()
+				|| !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		if (isActive(player) || player.tickCount % 20 == 0)
 			enforce(player);

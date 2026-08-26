@@ -45,12 +45,12 @@ public class PortalLabRightClickedOnEntityProcedure {
 					PlayerEntryGenerationGuard.begin(entryPlayer);
 			final ResourceKey<Level> dungeonDimension = ResourceKey.create(
 					Registries.DIMENSION,
-					new ResourceLocation("sololeveling:dungeon_dimension_a"));
+					ResourceLocation.parse("sololeveling:dungeon_dimension_a"));
 			{
 				final Vec3 _center = new Vec3(x, y, z);
 				List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(500 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 				for (Entity entityiterator : _entfound) {
-					if (entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))
+					if (entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))
 							&& (entityiterator instanceof TamableAnimal _tamIsTamedBy && sourceentity instanceof LivingEntity _livEnt ? _tamIsTamedBy.isOwnedBy(_livEnt) : false)) {
 						if (!entityiterator.level().isClientSide())
 							entityiterator.discard();
@@ -98,7 +98,7 @@ public class PortalLabRightClickedOnEntityProcedure {
 						_player.teleportTo(nextLevel, _player.getX(), _player.getY(), _player.getZ(), _player.getYRot(), _player.getXRot());
 						_player.connection.send(new ClientboundPlayerAbilitiesPacket(_player.getAbilities()));
 						for (MobEffectInstance _effectinstance : _player.getActiveEffects())
-							_player.connection.send(new ClientboundUpdateMobEffectPacket(_player.getId(), _effectinstance));
+							_player.connection.send(new ClientboundUpdateMobEffectPacket(_player.getId(), _effectinstance, false));
 						_player.connection.send(new ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false));
 					}
 				}

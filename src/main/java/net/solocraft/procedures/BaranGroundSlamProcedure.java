@@ -1,10 +1,11 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.DemonCastleBossDamageRules;
 import net.solocraft.entity.BaranEntity;
 import net.solocraft.entity.KaiselinEntity;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
@@ -53,7 +54,7 @@ public class BaranGroundSlamProcedure {
 			if (world instanceof ServerLevel sl) {
 				sl.sendParticles(ParticleTypes.CRIT, x, y + 0.1, z, 20, 2.0, 0.1, 2.0, 0.1);
 				sl.playSound(null, BlockPos.containing(x, y, z),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.ravager.roar")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.ravager.roar")),
 						SoundSource.HOSTILE, 1.5f, 0.8f);
 			}
 		}
@@ -61,10 +62,11 @@ public class BaranGroundSlamProcedure {
 		if (MF == 12) {
 			// Primary slam
 			dealShockwave(world, baran, x, y, z, 7.0,
-					phase2 ? 29f : 23f, true, ParticleTypes.EXPLOSION);
+					DemonCastleBossDamageRules.baranGroundSlam(phase2),
+					true, ParticleTypes.EXPLOSION);
 			if (world instanceof ServerLevel sl) {
 				sl.playSound(null, BlockPos.containing(x, y, z),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")),
 						SoundSource.HOSTILE, 2.0f, 0.5f);
 			}
 		}
@@ -72,17 +74,20 @@ public class BaranGroundSlamProcedure {
 		if (MF == 22) {
 			// Secondary ripple
 			dealShockwave(world, baran, x, y, z, 12.0,
-					phase2 ? 15f : 12f, false, ParticleTypes.LARGE_SMOKE);
+					DemonCastleBossDamageRules.baranGroundRipple(phase2),
+					false, ParticleTypes.LARGE_SMOKE);
 			if (world instanceof ServerLevel sl) {
 				sl.playSound(null, BlockPos.containing(x, y, z),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.stone.break")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.stone.break")),
 						SoundSource.HOSTILE, 2.0f, 0.4f);
 			}
 		}
 
 		// Phase 2 third wave
 		if (phase2 && MF == 32) {
-			dealShockwave(world, baran, x, y, z, 16.0, 8f, false, ParticleTypes.CAMPFIRE_COSY_SMOKE);
+			dealShockwave(world, baran, x, y, z, 16.0,
+					DemonCastleBossDamageRules.BARAN_GROUND_THIRD_WAVE,
+					false, ParticleTypes.CAMPFIRE_COSY_SMOKE);
 		}
 
 		int resetAt = phase2 ? 65 : 50;

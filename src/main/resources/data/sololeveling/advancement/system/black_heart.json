@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:nether_star"
+    },
+    "title": {
+      "translate": "advancements.system.black_heart.title"
+    },
+    "description": {
+      "translate": "advancements.system.black_heart.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "released": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:system/level_100"
+}

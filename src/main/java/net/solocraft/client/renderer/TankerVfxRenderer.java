@@ -6,12 +6,13 @@ import net.solocraft.client.renderer.shader.IrisCompat;
 import net.solocraft.client.renderer.shader.TankerVfxRenderTypes;
 import net.solocraft.network.TankerVfxEventMessage;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -35,8 +36,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import java.util.ArrayList;
@@ -50,9 +49,9 @@ import java.util.List;
  * <p>No visual entity or per-tick network packet is created. Every timeline is
  * reconstructed from {@code serverStartTick}, seed, and bounded event facts.</p>
  */
-@Mod.EventBusSubscriber(
+@EventBusSubscriber(
 		modid = SololevelingMod.MODID,
-		bus = Mod.EventBusSubscriber.Bus.FORGE,
+		bus = EventBusSubscriber.Bus.GAME,
 		value = Dist.CLIENT
 )
 public final class TankerVfxRenderer {
@@ -202,7 +201,7 @@ public final class TankerVfxRenderer {
 		MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
 		RenderFrame frame = new RenderFrame(poseStack, event.getCamera().getPosition(),
 				minecraft.getEntityRenderDispatcher().cameraOrientation(),
-				event.getPartialTick(), quality);
+				event.getPartialTick().getGameTimeDeltaPartialTick(false), quality);
 		FrameBudget budget = new FrameBudget(quality.maxVertices);
 
 		RenderType surfaceType = TankerVfxRenderTypes.surface();
@@ -228,7 +227,8 @@ public final class TankerVfxRenderer {
 	private static List<VisibleEvent> collectVisible(RenderLevelStageEvent renderEvent,
 			Minecraft minecraft, Quality quality, long now) {
 		Vec3 camera = renderEvent.getCamera().getPosition();
-		float partialTick = renderEvent.getPartialTick();
+		float partialTick = renderEvent.getPartialTick()
+				.getGameTimeDeltaPartialTick(false);
 		List<VisibleEvent> candidates = new ArrayList<>(EVENTS.size());
 
 		for (ActiveEvent event : EVENTS) {
@@ -1267,31 +1267,30 @@ public final class TankerVfxRenderer {
 			normal = new Vec3(0.0D, 0.0D, 1.0D);
 		else
 			normal = normal.normalize();
-		vertex(vertices, pose.pose(), pose.normal(), first, normal, 0.0F, 1.0F,
+		vertex(vertices, pose, first, normal, 0.0F, 1.0F,
 				color, alpha, material, packedLight);
-		vertex(vertices, pose.pose(), pose.normal(), second, normal, 1.0F, 1.0F,
+		vertex(vertices, pose, second, normal, 1.0F, 1.0F,
 				color, alpha, material, packedLight);
-		vertex(vertices, pose.pose(), pose.normal(), third, normal, 1.0F, 0.0F,
+		vertex(vertices, pose, third, normal, 1.0F, 0.0F,
 				color, alpha, material, packedLight);
-		vertex(vertices, pose.pose(), pose.normal(), fourth, normal, 0.0F, 0.0F,
+		vertex(vertices, pose, fourth, normal, 0.0F, 0.0F,
 				color, alpha, material, packedLight);
 	}
 
-	private static void vertex(VertexConsumer vertices, Matrix4f matrix,
-			Matrix3f normalMatrix, Vec3 point, Vec3 normal, float u, float v,
+	private static void vertex(VertexConsumer vertices, PoseStack.Pose pose,
+			Vec3 point, Vec3 normal, float u, float v,
 			int color, int alpha, int material, int packedLight) {
 		int red = color >> 16 & 0xFF;
 		int green = color >> 8 & 0xFF;
 		int blue = color & 0xFF;
 		float materialU = material + Mth.clamp(u, 0.0F, 0.999F);
-		vertices.vertex(matrix, (float) point.x, (float) point.y, (float) point.z)
-				.color(red, green, blue, Mth.clamp(alpha, 0, 255))
-				.uv(materialU, Mth.clamp(v, 0.0F, 1.0F))
-				.overlayCoords(OverlayTexture.NO_OVERLAY)
-				.uv2(packedLight)
-				.normal(normalMatrix, (float) normal.x, (float) normal.y,
-						(float) normal.z)
-				.endVertex();
+		vertices.addVertex(pose, (float) point.x, (float) point.y, (float) point.z)
+				.setColor(red, green, blue, Mth.clamp(alpha, 0, 255))
+				.setUv(materialU, Mth.clamp(v, 0.0F, 1.0F))
+				.setOverlay(OverlayTexture.NO_OVERLAY)
+				.setLight(packedLight)
+				.setNormal(pose, (float) normal.x, (float) normal.y,
+						(float) normal.z);
 	}
 
 	private static float easeOut(float value) {
@@ -1512,13 +1511,13 @@ public final class TankerVfxRenderer {
 	private static SoundProfile soundFor(TankerVfxEventMessage message) {
 		return switch (message.eventType) {
 			case TankerVfxEventMessage.LEAP_START ->
-					new SoundProfile(SoundEvents.ARMOR_EQUIP_IRON, 0.58F, 0.72F);
+					new SoundProfile(SoundEvents.ARMOR_EQUIP_IRON.value(), 0.58F, 0.72F);
 			case TankerVfxEventMessage.LEAP_LAND ->
 					new SoundProfile(SoundEvents.ANVIL_LAND, 0.95F, 0.68F);
 			case TankerVfxEventMessage.TAUNT_RING ->
 					new SoundProfile(SoundEvents.ANVIL_PLACE, 0.72F, 0.74F);
 			case TankerVfxEventMessage.BASH_SWEEP ->
-					new SoundProfile(SoundEvents.ARMOR_EQUIP_IRON, 0.52F, 0.84F);
+					new SoundProfile(SoundEvents.ARMOR_EQUIP_IRON.value(), 0.52F, 0.84F);
 			case TankerVfxEventMessage.BASH_HIT ->
 					new SoundProfile(SoundEvents.SHIELD_BLOCK, 0.88F, 0.78F);
 			case TankerVfxEventMessage.BASH_STRAIN_RELIEF ->
@@ -1528,7 +1527,7 @@ public final class TankerVfxRenderer {
 			case TankerVfxEventMessage.REINFORCEMENT_BRACE_HIT ->
 					new SoundProfile(SoundEvents.ANVIL_USE, 0.78F, 1.08F);
 			case TankerVfxEventMessage.REINFORCEMENT_STANCE_START ->
-					new SoundProfile(SoundEvents.ARMOR_EQUIP_IRON, 0.48F, 0.74F);
+					new SoundProfile(SoundEvents.ARMOR_EQUIP_IRON.value(), 0.48F, 0.74F);
 			case TankerVfxEventMessage.REINFORCEMENT_STANCE_END ->
 					new SoundProfile(SoundEvents.IRON_DOOR_OPEN, 0.4F, 0.92F);
 			case TankerVfxEventMessage.WILLPOWER_START ->

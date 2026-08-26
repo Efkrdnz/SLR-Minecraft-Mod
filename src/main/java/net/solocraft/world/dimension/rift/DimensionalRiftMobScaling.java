@@ -4,10 +4,11 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.dungeon.runtime.DungeonLevelHelper;
 import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -17,13 +18,13 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 
 /** Installs an outward radial level before legacy join-time scaling executes. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DimensionalRiftMobScaling {
 	public static final String SCALED_TAG = "slr_rift_radial_scaled";
 	public static final String SPAWN_DISTANCE_TAG = "slr_rift_spawn_distance";
 	public static final String PROGRESSION_TIER_TAG = "slr_rift_progression_tier";
 	private static final TagKey<EntityType<?>> SCALABLE = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation(SololevelingMod.MODID, "rift_scalable"));
+			ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rift_scalable"));
 
 	private DimensionalRiftMobScaling() {
 	}

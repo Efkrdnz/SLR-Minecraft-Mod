@@ -3,7 +3,7 @@ package net.solocraft.potion;
 
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.client.extensions.common.IClientMobEffectExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientMobEffectExtensions;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -23,14 +23,15 @@ public class NoFallDamageMobEffect extends MobEffect {
 	}
 
 	@Override
-	public void applyEffectTick(LivingEntity entity, int amplifier) {
+	public boolean applyEffectTick(LivingEntity entity, int amplifier) {
 		entity.fallDistance = 0;
 		if (entity.onGround())
-			entity.removeEffect(SololevelingModMobEffects.NO_FALL_DAMAGE.get());
+			entity.removeEffect(SololevelingModMobEffects.NO_FALL_DAMAGE);
+		return true;
 	}
 
 	@Override
-	public boolean isDurationEffectTick(int duration, int amplifier) {
+	public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
 		return true;
 	}
 

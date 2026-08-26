@@ -7,14 +7,18 @@ import net.solocraft.network.CartenonAwakeningStateMessage;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.DungeonDimensionPlayerLeavesDimensionProcedure;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -33,6 +37,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -45,10 +50,10 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 
 /** Discovery, instancing, entry safety, and awakening choice for Cartenon. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class CartenonTempleManager {
 	public static final ResourceKey<Level> CARTENON_DIMENSION = ResourceKey.create(Registries.DIMENSION,
-			new ResourceLocation(SololevelingMod.MODID, "cartenon_temple"));
+			ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "cartenon_temple"));
 
 	private static final Set<String> ELIGIBLE_DUNGEONS = Set.of(
 			"dungeon_dimension_d",
@@ -68,6 +73,10 @@ public final class CartenonTempleManager {
 	private static final String ENTRY_PROTECTION_TAG = "slr_cartenon_entry_protection";
 	private static final String AWAKENING_PENDING_TAG = "slr_cartenon_awakening_pending";
 	private static final String DECLINE_TICKS_TAG = "slr_cartenon_decline_ticks";
+	private static final String FINALE_GATE_TAG = "slr_cartenon_finale_gate";
+	private static final String KNEEL_TICKS_TAG = "slr_temple_kneel_ticks";
+	/** Two seconds of held sneak. Long enough that it is never accidental. */
+	private static final int KNEEL_REQUIRED_TICKS = 40;
 	private static final String DEATH_BYPASS_TAG = "slr_cartenon_death_bypass";
 	private static final String PREVIOUS_INVULNERABLE_TAG = "slr_cartenon_previous_invulnerable";
 	private static final String PREVIOUS_NO_GRAVITY_TAG = "slr_cartenon_previous_no_gravity";
@@ -180,7 +189,15 @@ public final class CartenonTempleManager {
 	}
 
 	public static void enterGate(ServerPlayer player, CartenonGateEntity gate) {
-		if (player == null || gate == null || gate.isRemoved() || SystemPlayerAccess.hasSystem(player))
+		if (player == null || gate == null || gate.isRemoved())
+			return;
+		// The return is taken by a player who already has the System, which the
+		// awakening path below explicitly refuses. Route it first.
+		if (gate.getPersistentData().getBoolean(FINALE_GATE_TAG)) {
+			enterFinaleGate(player, gate);
+			return;
+		}
+		if (SystemPlayerAccess.hasSystem(player))
 			return;
 		if (!gate.isAllowed(player.getUUID())) {
 			player.sendSystemMessage(Component.literal("This hidden gate does not respond to you.")
@@ -238,6 +255,127 @@ public final class CartenonTempleManager {
 		}
 	}
 
+	/**
+	 * Spawns the return gate beside a player who has reached the peak.
+	 *
+	 * <p>Offered once and remembered in saved data, so it does not reappear every
+	 * tick. Declining or walking out cancels the offer, which lets it be made
+	 * again later -- the ending is never missable.
+	 */
+	/**
+	 * Issues the standing summons once the player reaches the peak.
+	 *
+	 * <p>The System asks rather than dropping a portal at their feet. Opening the
+	 * way is then the player's own deliberate act -- see {@link #tickKneel}.
+	 */
+	public static void offerFinaleSummons(ServerPlayer player) {
+		if (player == null || !SystemAuthorityManager.isFinaleAvailable(player))
+			return;
+		ServerLevel level = player.serverLevel();
+		if (level.dimension() == CARTENON_DIMENSION
+				|| player.server.getLevel(CARTENON_DIMENSION) == null)
+			return;
+		CartenonProgressSavedData progressData = CartenonProgressSavedData.get(level);
+		if (progressData.isFinaleOffered(player.getUUID())
+				|| progressData.isFinaleResolved(player.getUUID()))
+			return;
+		UrgentQuestManager.startCartenonSummons(player);
+	}
+
+	/**
+	 * Kneeling answers the summons and opens the gate.
+	 *
+	 * <p>A held action rather than a tap so it cannot fire from an incidental
+	 * crouch, and it only counts while the summons quest is actually active.
+	 */
+	private static void tickKneel(ServerPlayer player) {
+		if (!UrgentQuestManager.hasCartenonSummons(player))
+			return;
+		if (!player.isShiftKeyDown() || !player.onGround()) {
+			player.getPersistentData().remove(KNEEL_TICKS_TAG);
+			return;
+		}
+		int kneeling = player.getPersistentData().getInt(KNEEL_TICKS_TAG) + 1;
+		if (kneeling < KNEEL_REQUIRED_TICKS) {
+			player.getPersistentData().putInt(KNEEL_TICKS_TAG, kneeling);
+			if (kneeling % 10 == 0)
+				player.serverLevel().sendParticles(
+						net.minecraft.core.particles.ParticleTypes.REVERSE_PORTAL,
+						player.getX(), player.getY() + 0.2D, player.getZ(),
+						12, 0.4D, 0.1D, 0.4D, 0.02D);
+			return;
+		}
+		player.getPersistentData().remove(KNEEL_TICKS_TAG);
+		if (openFinaleGate(player))
+			UrgentQuestManager.clearCartenonSummons(player);
+	}
+
+	private static boolean openFinaleGate(ServerPlayer player) {
+		if (!SystemAuthorityManager.isFinaleAvailable(player))
+			return false;
+		ServerLevel level = player.serverLevel();
+		CartenonProgressSavedData progressData = CartenonProgressSavedData.get(level);
+		if (progressData.isFinaleOffered(player.getUUID())
+				|| progressData.isFinaleResolved(player.getUUID()))
+			return false;
+
+		CartenonGateEntity gate = SololevelingModEntities.CARTENON_GATE.get().create(level);
+		if (gate == null)
+			return false;
+		int instanceId = progressData.allocateInstance();
+		gate.configure(player.getUUID(), new LinkedHashSet<>(List.of(player.getUUID())), instanceId);
+		gate.getPersistentData().putBoolean(FINALE_GATE_TAG, true);
+		BlockPos gatePos = findGatePosition(level, player.blockPosition());
+		gate.moveTo(gatePos.getX() + 0.5D, gatePos.getY(), gatePos.getZ() + 0.5D,
+				player.getYRot() + 180.0F, 0.0F);
+		if (!level.addFreshEntity(gate))
+			return false;
+		progressData.markFinaleOffered(player.getUUID(), instanceId);
+		level.playSound(null, gatePos, SoundEvents.END_PORTAL_SPAWN, SoundSource.HOSTILE, 1.2F, 0.7F);
+		SystemNotifications.showTitleUnder(player, 0xFF9B5CFF, 140,
+				Component.literal("THE WAY BACK").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
+				Component.literal("The temple that measured you has opened again.")
+						.withStyle(ChatFormatting.GRAY));
+		return true;
+	}
+
+	private static void enterFinaleGate(ServerPlayer player, CartenonGateEntity gate) {
+		if (!gate.isAllowed(player.getUUID()))
+			return;
+		CartenonProgressSavedData progressData = CartenonProgressSavedData.get(player.serverLevel());
+		if (progressData.isFinaleResolved(player.getUUID()))
+			return;
+		ServerLevel templeLevel = player.server.getLevel(CARTENON_DIMENSION);
+		if (templeLevel == null) {
+			player.sendSystemMessage(Component.literal("The Cartenon Temple dimension is unavailable.")
+					.withStyle(ChatFormatting.RED));
+			return;
+		}
+		int instanceId = Math.max(1, gate.getInstanceId());
+		queuePlayer(player.server, instanceId, player.getUUID());
+		// One use. The return gate is a door that closes behind you; leaving it
+		// standing in the overworld is both wrong and confusing.
+		gate.discard();
+		BlockPos origin = instanceOrigin(instanceId);
+		if (progressData.isInstanceBuilt(instanceId)
+				|| templeLevel.getBlockState(origin.below(2)).is(Blocks.LODESTONE)) {
+			progressData.markInstanceBuilt(instanceId);
+			teleportWaitingPlayers(player.server, instanceId);
+			return;
+		}
+		SystemNotifications.showTitleUnder(player, 0xFF9B5CFF, 100,
+				Component.literal("CARTENON TEMPLE").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
+				Component.literal("The way back is stabilizing...").withStyle(ChatFormatting.GRAY));
+		if (CartenonTempleGenerator.isBuildingAt(templeLevel, origin))
+			return;
+		MinecraftServer server = player.server;
+		CartenonTempleGenerator.startAt(templeLevel, origin, Direction.SOUTH,
+				player.getUUID(), player.getGameProfile().getName(), true, () -> {
+					CartenonProgressSavedData.get(templeLevel).markInstanceBuilt(instanceId);
+					teleportWaitingPlayers(server, instanceId);
+				});
+	}
+
 	public static void resolveAwakeningChoice(ServerPlayer player, boolean accept) {
 		if (player == null || !player.getPersistentData().getBoolean(AWAKENING_PENDING_TAG))
 			return;
@@ -285,20 +423,25 @@ public final class CartenonTempleManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public static void onLivingDamage(LivingDamageEvent event) {
+	public static void onLivingDamage(LivingDamageEvent.Pre event) {
 		if (!(event.getEntity() instanceof ServerPlayer player) || player.serverLevel().dimension() != CARTENON_DIMENSION)
 			return;
+		// Same reasoning as onLivingDeath: without this the return visit makes the
+		// player effectively immortal, because every lethal hit is zeroed out and
+		// converted into an awakening offer they already accepted long ago.
 		if (player.getPersistentData().getBoolean(DEATH_BYPASS_TAG)
+				|| SystemPlayerAccess.hasSystem(player)
+				|| CartenonFinaleManager.isActive(player)
 				|| CartenonProgressSavedData.get(player.serverLevel()).isResolved(player.getUUID()))
 			return;
 		if (player.getPersistentData().getBoolean(AWAKENING_PENDING_TAG)
 				|| player.getPersistentData().getInt(DECLINE_TICKS_TAG) > 0) {
-			event.setCanceled(true);
+			event.setNewDamage(0.0F);
 			return;
 		}
-		if (event.getAmount() + 0.001F < player.getHealth())
+		if (event.getNewDamage() + 0.001F < player.getHealth())
 			return;
-		event.setCanceled(true);
+		event.setNewDamage(0.0F);
 		if (!StoryModeIntroManager.canTriggerAwakening(player,
 				event.getSource()))
 			return;
@@ -309,7 +452,14 @@ public final class CartenonTempleManager {
 	public static void onLivingDeath(LivingDeathEvent event) {
 		if (!(event.getEntity() instanceof ServerPlayer player) || player.serverLevel().dimension() != CARTENON_DIMENSION)
 			return;
+		// The whole first-visit script -- cancelling death, the awakening offer --
+		// belongs to a player who does not have the System yet. On the return the
+		// player already has it, so dying here is an ordinary death. Checking
+		// hasSystem as well as isResolved matters because a player can hold the
+		// System without ever having resolved a Cartenon visit.
 		if (player.getPersistentData().getBoolean(DEATH_BYPASS_TAG)
+				|| SystemPlayerAccess.hasSystem(player)
+				|| CartenonFinaleManager.isActive(player)
 				|| CartenonProgressSavedData.get(player.serverLevel()).isResolved(player.getUUID()))
 			return;
 		event.setCanceled(true);
@@ -322,8 +472,8 @@ public final class CartenonTempleManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 
 		int declineTicks = player.getPersistentData().getInt(DECLINE_TICKS_TAG);
@@ -349,6 +499,12 @@ public final class CartenonTempleManager {
 				sendAwakeningState(player, true);
 			return;
 		}
+
+		// Offered on a slow cadence rather than every tick: reaching the peak is a
+		// permanent state, so this would otherwise re-check for the rest of the run.
+		if (player.tickCount % 100 == 0)
+			offerFinaleSummons(player);
+		tickKneel(player);
 
 		int protectionTicks = player.getPersistentData().getInt(ENTRY_PROTECTION_TAG);
 		if (protectionTicks <= 0)
@@ -429,6 +585,14 @@ public final class CartenonTempleManager {
 		player.stopRiding();
 		player.teleportTo(templeLevel, entry.getX() + 0.5D, entry.getY(), entry.getZ() + 0.5D,
 				0.0F, 0.0F);
+		// A player who already has the System is here for the return, not the
+		// awakening. The intro hooks and the arrival banner both belong to the
+		// first visit only.
+		if (CartenonProgressSavedData.get(templeLevel).isFinaleOffered(player.getUUID())
+				&& SystemPlayerAccess.hasSystem(player)) {
+			CartenonFinaleManager.begin(player, instanceId);
+			return;
+		}
 		StoryModeIntroManager.onPlayerEnteredTemple(player, templeLevel, instanceId);
 		SystemNotifications.showTitleUnder(player, 0xFF597EFF, 120,
 				Component.literal("HIDDEN DUNGEON").withStyle(ChatFormatting.DARK_AQUA, ChatFormatting.BOLD),
@@ -457,6 +621,38 @@ public final class CartenonTempleManager {
 		if (!participants.contains(killer))
 			participants.add(killer);
 		return participants;
+	}
+
+	/**
+	 * The whole footprint of a temple instance.
+	 *
+	 * <p>The temple runs 154 blocks deep and its statues sit as far back as the
+	 * dais, so anything hunting for them has to search the instance rather than a
+	 * radius around the player, who arrives eight blocks inside the entrance.
+	 */
+	public static AABB instanceBounds(int instanceId) {
+		BlockPos origin = instanceOrigin(instanceId);
+		return AABB.encapsulatingFullBlocks(origin.offset(-96, -16, -8),
+				origin.offset(96, 72, 168));
+	}
+
+	/**
+	 * Sends a player home from the temple.
+	 *
+	 * <p>The Cartenon dimension has no return portal of its own -- the awakening
+	 * teleports the player out as part of resolving, and anything else that puts
+	 * someone in here has to do the same or they are stranded in a sealed
+	 * instance with no exit.
+	 */
+	public static void returnToOverworld(ServerPlayer player) {
+		if (player == null)
+			return;
+		ServerLevel overworld = player.server.overworld();
+		BlockPos spawn = findSafeOverworldSpawn(overworld);
+		player.stopRiding();
+		player.fallDistance = 0.0F;
+		player.teleportTo(overworld, spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D,
+				overworld.getSharedSpawnAngle(), 0.0F);
 	}
 
 	private static BlockPos instanceOrigin(int instanceId) {

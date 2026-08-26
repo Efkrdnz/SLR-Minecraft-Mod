@@ -3,12 +3,14 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModSounds;
 import net.solocraft.entity.ChaHaeInEntity;
+import net.solocraft.entity.SilladBossEntity;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.ICancellableEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -38,12 +40,12 @@ import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class SwingRandomChaProcedure {
 	private static final DustParticleOptions CHA_SLASH_PARTICLE = new DustParticleOptions(new Vector3f(0.99F, 0.79F, 0.0F), 1.0F);
 
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity.level(), entity.getX(), entity.getY(), entity.getZ(), event.getSource(), entity, event.getSource().getEntity());
@@ -54,7 +56,7 @@ public class SwingRandomChaProcedure {
 		execute(null, world, x, y, z, damagesource, entity, sourceentity);
 	}
 
-	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, DamageSource damagesource, Entity entity, Entity sourceentity) {
+	private static void execute(@Nullable ICancellableEvent event, LevelAccessor world, double x, double y, double z, DamageSource damagesource, Entity entity, Entity sourceentity) {
 		if (damagesource == null || entity == null || sourceentity == null)
 			return;
 		double rand = 0;
@@ -151,20 +153,21 @@ public class SwingRandomChaProcedure {
 			}
 			playSwingSounds(world, sourceentity, random);
 		}
-		if (entity instanceof ChaHaeInEntity) {
-			if (sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("dm")))) {
+		if (entity instanceof ChaHaeInEntity
+				&& !(sourceentity instanceof SilladBossEntity)) {
+			if (sourceentity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("dm")))) {
 				if (sourceentity.getPersistentData().getDouble("Level") > 0) {
 					if (Math.random() < (20) / ((float) sourceentity.getPersistentData().getDouble("Level"))) {
-						if (event != null && event.isCancelable()) {
+						if (event != null) {
 							event.setCanceled(true);
 						}
 						if (world instanceof ServerLevel _level)
 							_level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, (y + 1.4), z, 35, 0.05, 0.05, 0.05, 1);
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2);
+								_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2);
 							} else {
-								_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2, false);
+								_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2, false);
 							}
 						}
 						if (entity instanceof Mob _entity && sourceentity instanceof LivingEntity _ent)
@@ -193,19 +196,19 @@ public class SwingRandomChaProcedure {
 						return false;
 					}
 				}.checkGamemode(sourceentity)) {
-					if (!(damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:mage")))) {
+					if (!(damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:mage")))) {
 						if ((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Player) {
 							if (Math.random() < (15) / ((float) (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level)) {
-								if (event != null && event.isCancelable()) {
+								if (event != null) {
 									event.setCanceled(true);
 								}
 								if (world instanceof ServerLevel _level)
 									_level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, (y + 1.4), z, 35, 0.05, 0.05, 0.05, 1);
 								if (world instanceof Level _level) {
 									if (!_level.isClientSide()) {
-										_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2);
+										_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2);
 									} else {
-										_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2, false);
+										_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2, false);
 									}
 								}
 								if (entity instanceof Mob _entity && sourceentity instanceof LivingEntity _ent)
@@ -213,16 +216,16 @@ public class SwingRandomChaProcedure {
 							}
 						} else {
 							if (Math.random() < (1) / ((float) (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).HunterRank + 2)) {
-								if (event != null && event.isCancelable()) {
+								if (event != null) {
 									event.setCanceled(true);
 								}
 								if (world instanceof ServerLevel _level)
 									_level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, (y + 1.4), z, 35, 0.05, 0.05, 0.05, 1);
 								if (world instanceof Level _level) {
 									if (!_level.isClientSide()) {
-										_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2);
+										_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2);
 									} else {
-										_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2, false);
+										_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:swordclash")), SoundSource.NEUTRAL, (float) 0.5, (float) 1.2, false);
 									}
 								}
 								if (entity instanceof Mob _entity && sourceentity instanceof LivingEntity _ent)

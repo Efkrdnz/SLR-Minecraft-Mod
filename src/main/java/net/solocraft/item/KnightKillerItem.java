@@ -3,8 +3,8 @@ package net.solocraft.item;
 
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -20,7 +20,7 @@ import net.minecraft.client.Minecraft;
 
 import java.util.List;
 
-public class KnightKillerItem extends SwordItem {
+public class KnightKillerItem extends LegacySwordItem {
 	public KnightKillerItem() {
 		super(new Tier() {
 			public int getUses() {
@@ -35,8 +35,8 @@ public class KnightKillerItem extends SwordItem {
 				return 6f;
 			}
 
-			public int getLevel() {
-				return 1;
+			public net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> getIncorrectBlocksForDrops() {
+				return net.minecraft.tags.BlockTags.INCORRECT_FOR_STONE_TOOL;
 			}
 
 			public int getEnchantmentValue() {
@@ -50,8 +50,8 @@ public class KnightKillerItem extends SwordItem {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("Level of Difficulty: \u00A71B"));
 		list.add(Component.literal("Type: Dagger"));
 		list.add(Component.literal("Attack \u00A79+75"));
@@ -68,6 +68,6 @@ public class KnightKillerItem extends SwordItem {
 	@OnlyIn(Dist.CLIENT)
 	public boolean isFoil(ItemStack itemstack) {
 		return Minecraft.getInstance().player != null
-				&& Minecraft.getInstance().player.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get());
+				&& Minecraft.getInstance().player.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE);
 	}
 }

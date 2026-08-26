@@ -773,7 +773,7 @@
 			"bones": {
 				"Torso": {
 					"position": {
-						"vector": [0, "+math.cos(-60+query.anim_time*180)*0.5", 0]
+						"vector": [0, "math.cos(-60+query.anim_time*180)*0.5", 0]
 					}
 				},
 				"Neck": {
@@ -853,12 +853,12 @@
 				},
 				"Rleg": {
 					"rotation": {
-						"vector": [0, 0, "+math.cos(-60+query.anim_time*180)*0.5"]
+						"vector": [0, 0, "math.cos(-60+query.anim_time*180)*0.5"]
 					}
 				},
 				"Lleg": {
 					"rotation": {
-						"vector": [0, 0, "+math.cos(-60+query.anim_time*180)*-0.5"]
+						"vector": [0, 0, "math.cos(-60+query.anim_time*180)*-0.5"]
 					}
 				}
 			}
@@ -872,7 +872,7 @@
 						"vector": [10, 0, 0]
 					},
 					"position": {
-						"vector": [0, "+math.cos(-60+query.anim_time*180)*1", 0]
+						"vector": [0, "math.cos(-60+query.anim_time*180)*1", 0]
 					}
 				},
 				"Neck": {

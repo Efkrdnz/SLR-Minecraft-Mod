@@ -4,14 +4,12 @@ import net.solocraft.dkc.event.EsilPermitClaimEvent;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.neoforged.neoforge.common.NeoForge;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -25,13 +23,12 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.solocraft.entity.ai.LegacyMeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -78,13 +75,9 @@ public class EsilRadiruEntity extends PathfinderMob {
 
 	private UUID encounterOwner;
 
-	public EsilRadiruEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.ESIL_RADIRU.get(), level);
-	}
-
 	public EsilRadiruEntity(EntityType<? extends EsilRadiruEntity> type, Level level) {
 		super(type, level);
-		setMaxUpStep(0.6F);
+		getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
 		xpReward = 0; // Route rewards are owner-scoped by the Floor 15 encounter.
 		setPersistenceRequired();
 		setCustomName(Component.translatable("entity.sololeveling.esil_radiru")
@@ -93,16 +86,16 @@ public class EsilRadiruEntity extends PathfinderMob {
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		entityData.define(DATA_STATE, EncounterState.SURRENDERED.id());
-		entityData.define(DATA_PERMIT_CLAIMED, false);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(DATA_STATE, EncounterState.SURRENDERED.id());
+		builder.define(DATA_PERMIT_CLAIMED, false);
 	}
 
 	@Override
 	protected void registerGoals() {
 		goalSelector.addGoal(1, new FloatGoal(this));
-		goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.15D, false) {
+		goalSelector.addGoal(2, new LegacyMeleeAttackGoal(this, 1.15D, false) {
 			@Override
 			public boolean canUse() {
 				return isHostile() && super.canUse();
@@ -159,7 +152,7 @@ public class EsilRadiruEntity extends PathfinderMob {
 			return InteractionResult.PASS;
 
 		EsilPermitClaimEvent event = new EsilPermitClaimEvent(this, serverPlayer);
-		boolean canceled = MinecraftForge.EVENT_BUS.post(event);
+		boolean canceled = NeoForge.EVENT_BUS.post(event).isCanceled();
 		if (!canceled && event.decision() == EsilPermitClaimEvent.Decision.GRANT) {
 			markPermitClaimed();
 			return InteractionResult.CONSUME;
@@ -205,23 +198,13 @@ public class EsilRadiruEntity extends PathfinderMob {
 	}
 
 	@Override
-	public boolean canBeLeashed(Player player) {
+	public boolean canBeLeashed() {
 		return false;
 	}
 
 	@Override
 	public boolean isPushable() {
 		return isHostile();
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
 	}
 
 	@Override

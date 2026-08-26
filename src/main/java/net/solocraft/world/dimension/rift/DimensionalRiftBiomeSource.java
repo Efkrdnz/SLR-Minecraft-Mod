@@ -1,6 +1,7 @@
 package net.solocraft.world.dimension.rift;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.core.Holder;
@@ -15,7 +16,7 @@ import java.util.stream.Stream;
 
 /** Angular biome source for the eight Monarch territories and central star. */
 public final class DimensionalRiftBiomeSource extends BiomeSource {
-	public static final Codec<DimensionalRiftBiomeSource> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+	public static final MapCodec<DimensionalRiftBiomeSource> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
 			Biome.CODEC.fieldOf("battlefield").forGetter(source -> source.battlefield),
 			Biome.CODEC.fieldOf("wasteland").forGetter(source -> source.wasteland),
 			Biome.CODEC.fieldOf("rift_scar").forGetter(source -> source.riftScar),
@@ -61,7 +62,7 @@ public final class DimensionalRiftBiomeSource extends BiomeSource {
 	}
 
 	@Override
-	protected Codec<? extends BiomeSource> codec() {
+	protected MapCodec<? extends BiomeSource> codec() {
 		return CODEC;
 	}
 

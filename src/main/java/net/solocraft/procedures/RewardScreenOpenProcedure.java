@@ -5,7 +5,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.RewardManager;
 import net.solocraft.util.SystemNotifications;
 
-import net.minecraftforge.network.NetworkHooks;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -26,6 +26,8 @@ public class RewardScreenOpenProcedure {
 		if (entity == null)
 			return;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Player) {
+			if (entity instanceof ServerPlayer serverPlayer)
+				RewardManager.reconcileFullRecoveryRewards(serverPlayer);
 			if (RewardManager.hasRewards(entity)) {
 				if (entity instanceof ServerPlayer _ent) {
 					BlockPos _bpos = BlockPos.containing(x, y, z);

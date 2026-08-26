@@ -5,8 +5,8 @@ import net.solocraft.init.SololevelingModItems;
 import net.solocraft.item.RedkeyItem;
 import net.solocraft.util.InstanceDungeonKeyAccess;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
@@ -20,17 +20,22 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.resources.ResourceLocation;
 
 public class RewardCollectProcedure {
-	public static void execute(Entity entity, String reward_name) {
+	public static boolean execute(Entity entity, String reward_name) {
 		if (entity == null || reward_name == null)
-			return;
+			return false;
 		double rand = 0;
 		String reward = "";
 		String reward_list = "";
 		String item = "";
 		ItemStack itemtogive = ItemStack.EMPTY;
+		// Tracks whether this reward actually resolved to something. Returning true
+		// unconditionally made the caller clear the slot for rewards nothing handled,
+		// which destroyed them silently.
+		boolean granted = false;
 		reward_list = "SP5, SP10, SP15, SP20, FR, ITEMBOX, GOLD";
 		reward = reward_name;
 		if ((reward).equals("FR")) {
+			granted = true;
 			if (entity instanceof LivingEntity _entity)
 				_entity.setHealth(entity instanceof LivingEntity _livEnt ? _livEnt.getMaxHealth() : -1);
 			{
@@ -49,6 +54,7 @@ public class RewardCollectProcedure {
 			}
 		}
 		if ((reward).equals("ITEMBOX")) {
+			granted = true;
 			if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MainQuest).equals("Getting Stronger")
 					&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).QuestProgression == 0) {
 				{
@@ -113,7 +119,20 @@ public class RewardCollectProcedure {
 						_player.closeContainer();
 				} else {
 					if (entity instanceof Player _player) {
-						ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("loot_items"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+						// An empty or unloaded loot_items tag resolves to AIR, and
+						// handing the player AIR silently consumed the reward. Report
+						// the failure instead so the slot stays claimable.
+						Item rolled = net.solocraft.util.RegistryTagAccess
+								.getTag(ItemTags.create(ResourceLocation.parse("loot_items")))
+								.getRandomElement(RandomSource.create())
+								.orElse(Items.AIR);
+						if (rolled == Items.AIR) {
+							System.err.println(
+									"[SoloLeveling] Random item reward rolled nothing;"
+											+ " the loot_items item tag is empty or missing.");
+							return false;
+						}
+						ItemStack _setstack = new ItemStack(rolled);
 						_setstack.setCount(1);
 						ItemHandlerHelper.giveItemToPlayer(_player, _setstack);
 					}
@@ -121,6 +140,7 @@ public class RewardCollectProcedure {
 			}
 		}
 		if (reward.startsWith("SP")) {
+			granted = true;
 			try {
 				int amount = Integer.parseInt(reward.substring(2));
 				{
@@ -131,10 +151,11 @@ public class RewardCollectProcedure {
 					});
 				}
 			} catch (NumberFormatException e) {
-				return;
+				return false;
 			}
 		}
 		if (reward.startsWith("GOLD")) {
+			granted = true;
 			try {
 				int amount = Integer.parseInt(reward.substring(4));
 				{
@@ -145,23 +166,25 @@ public class RewardCollectProcedure {
 					});
 				}
 			} catch (NumberFormatException e) {
-				return;
+				return false;
 			}
 		}
 		if (reward.startsWith("XP")) {
+			granted = true;
 			try {
 				int amount = Integer.parseInt(reward.substring(2));
 				if (entity instanceof Player player)
-					XPGainProcedure.awardBaseXp(entity.level(), player, amount);
+					XPGainProcedure.awardRewardXp(player, amount);
 			} catch (NumberFormatException e) {
-				return;
+				return false;
 			}
 		}
 		if (reward.startsWith("ITEM:")) {
+			granted = true;
 			String itemResourceLocation = reward.substring(5); // Remove "ITEM:" prefix
 			try {
-				ResourceLocation itemLocation = new ResourceLocation(itemResourceLocation);
-				Item itemm = ForgeRegistries.ITEMS.getValue(itemLocation);
+				ResourceLocation itemLocation = ResourceLocation.parse(itemResourceLocation);
+				Item itemm = BuiltInRegistries.ITEM.get(itemLocation);
 				if (itemm != null && itemm != Items.AIR) {
 					if (entity instanceof Player _player) {
 						if (itemm == SololevelingModItems.INSTANCE_DUNGEON_KEY.get()) {
@@ -176,11 +199,16 @@ public class RewardCollectProcedure {
 					}
 				} else {
 					System.err.println("[SoloLeveling] Invalid item reward: " + itemResourceLocation);
+					return false;
 				}
 			} catch (Exception e) {
 				System.err.println("[SoloLeveling] Failed to parse item reward: " + reward);
 				e.printStackTrace();
+				return false;
 			}
 		}
+		if (!granted)
+			System.err.println("[SoloLeveling] Unrecognised reward kept unclaimed: " + reward);
+		return granted;
 	}
 }

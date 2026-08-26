@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "sololeveling:radiru_blood_spear"
+    },
+    "title": {
+      "translate": "advancements.vessels.white_flames.blood_spear.title"
+    },
+    "description": {
+      "translate": "advancements.vessels.white_flames.blood_spear.descr"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:vessels/white_flames/storm_inheritance"
+}

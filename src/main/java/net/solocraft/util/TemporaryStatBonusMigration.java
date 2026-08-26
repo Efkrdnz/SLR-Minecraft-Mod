@@ -3,9 +3,10 @@ package net.solocraft.util;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.server.level.ServerPlayer;
 
@@ -15,7 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
  * and expected effect removal to subtract it. A server stopped while either
  * effect was active therefore loads with that addition still baked in.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class TemporaryStatBonusMigration {
 	static final String MIGRATION_RECEIPT = "slr_temporary_stat_bonus_model_v1";
 
@@ -38,8 +39,8 @@ public final class TemporaryStatBonusMigration {
 		if (player == null || player.getPersistentData().getBoolean(MIGRATION_RECEIPT))
 			return;
 
-		boolean legacyHaste = player.hasEffect(SololevelingModMobEffects.HASTE_BUFF.get());
-		boolean legacyPhysical = player.hasEffect(SololevelingModMobEffects.PHYSICAL_BUFF.get());
+		boolean legacyHaste = player.hasEffect(SololevelingModMobEffects.HASTE_BUFF);
+		boolean legacyPhysical = player.hasEffect(SololevelingModMobEffects.PHYSICAL_BUFF);
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(variables -> {
 			if (legacyHaste)
 				variables.Speed = Math.max(0.0D,

@@ -34,11 +34,10 @@ public class ReaderGUIScreen extends AbstractContainerScreen<ReaderGUIMenu> {
 		this.imageHeight = 100;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/reader_gui.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/reader_gui.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
@@ -50,7 +49,7 @@ public class ReaderGUIScreen extends AbstractContainerScreen<ReaderGUIMenu> {
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui_gate.png"), this.leftPos + 7, this.topPos + 10, 0, 0, 25, 25, 25, 25);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui_gate.png"), this.leftPos + 7, this.topPos + 10, 0, 0, 25, 25, 25, 25);
 
 		RenderSystem.disableBlend();
 	}

@@ -30,6 +30,8 @@ public class GoblinArcherShadowOnEntityTickUpdateProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
 		if (entity == null)
 			return;
+		if (ShadowMonarchManager.handleUnavailableShadowOwner(entity))
+			return;
 		double hei = 0;
 		if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) == null)) {
 			if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
@@ -72,10 +74,17 @@ public class GoblinArcherShadowOnEntityTickUpdateProcedure {
 					if (!projectileLevel.isClientSide()) {
 						Projectile _entityToSpawn = new Object() {
 							public Projectile getArrow(Level level, Entity shooter, float damage, int knockback) {
-								AbstractArrow entityToSpawn = new Arrow(EntityType.ARROW, level);
+								AbstractArrow entityToSpawn = new Arrow(EntityType.ARROW, level) {
+									@Override
+									protected boolean canHitEntity(Entity target) {
+										return super.canHitEntity(target)
+												&& ShadowMonarchManager.canShadowDamage(
+														shooter, target);
+									}
+								};
 								entityToSpawn.setOwner(shooter);
 								entityToSpawn.setBaseDamage(damage);
-								entityToSpawn.setKnockback(knockback);
+								net.solocraft.entity.LegacyProjectileCompat.setKnockback(entityToSpawn, knockback);
 								entityToSpawn.setCritArrow(true);
 								return entityToSpawn;
 							}
@@ -96,7 +105,7 @@ public class GoblinArcherShadowOnEntityTickUpdateProcedure {
 			if (entity.getPersistentData().getDouble("MF") == 60) {
 				entity.getPersistentData().putDouble("MF", 0);
 			}
-			if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+			if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 				if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).isAlive())) {
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles(ParticleTypes.SMOKE, (entity.getX()), (entity.getY()), (entity.getZ()), 30, 0.05, 0.05, 0.05, 1);
@@ -106,7 +115,7 @@ public class GoblinArcherShadowOnEntityTickUpdateProcedure {
 					}
 				}
 			}
-			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 				if (!entity.level().isClientSide()) {
 					ShadowMonarchManager.dropStoredShadowInventory(entity);
 					entity.discard();

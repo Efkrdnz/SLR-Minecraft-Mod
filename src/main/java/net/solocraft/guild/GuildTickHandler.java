@@ -9,10 +9,14 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -23,14 +27,14 @@ import java.util.UUID;
  * Server-tick listener that resolves completed hunter deployments.
  * Runs every 5 seconds (100 ticks) to avoid unnecessary overhead.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class GuildTickHandler {
 
     private static int counter = 0;
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public static void onServerTick(ServerTickEvent.Post event) {
+        if (false) return;
         if (++counter < 100) return;
         counter = 0;
 
@@ -215,7 +219,7 @@ public class GuildTickHandler {
         if (guild == null || stack.isEmpty()) return;
         for (int i = 0; i < guild.storageItems.size() && !stack.isEmpty(); i++) {
             ItemStack slot = guild.storageItems.get(i);
-            if (!slot.isEmpty() && ItemStack.isSameItemSameTags(slot, stack) && slot.getCount() < slot.getMaxStackSize()) {
+            if (!slot.isEmpty() && ItemStack.isSameItemSameComponents(slot, stack) && slot.getCount() < slot.getMaxStackSize()) {
                 int move = Math.min(stack.getCount(), slot.getMaxStackSize() - slot.getCount());
                 slot.grow(move);
                 stack.shrink(move);

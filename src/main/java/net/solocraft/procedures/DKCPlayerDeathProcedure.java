@@ -12,10 +12,11 @@ import net.solocraft.entity.KaiselinEntity;
 import net.solocraft.entity.ShadowSoulEntity;
 import net.solocraft.entity.VulcanEntity;
 
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -39,7 +40,7 @@ import net.minecraft.world.phys.AABB;
  *   full health and the floor-spawned flag is cleared so the intro
  *   message shows again on re-entry.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class DKCPlayerDeathProcedure {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)

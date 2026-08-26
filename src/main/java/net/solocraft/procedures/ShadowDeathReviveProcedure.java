@@ -15,9 +15,10 @@ import net.solocraft.entity.TuskShadowEntity;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.CooldownManager;
 
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -32,7 +33,7 @@ import net.minecraft.world.entity.player.Player;
  * authoritative roster death handler releases that summon's exact slot while
  * retaining its level, XP and rank for a later summon.</p>
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class ShadowDeathReviveProcedure {
 	private ShadowDeathReviveProcedure() {
 	}
@@ -64,7 +65,7 @@ public final class ShadowDeathReviveProcedure {
 		if (variables == null || variables.MP < manaCost)
 			return;
 
-		if (event != null && event.isCancelable())
+		if (event != null)
 			event.setCanceled(true);
 		variables.MP = Math.max(0.0D, variables.MP - manaCost);
 		variables.syncPlayerVariables(owner);

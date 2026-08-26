@@ -1,0 +1,24 @@
+{
+  "display": {
+    "background": "sololeveling:textures/screens/base.png",
+    "icon": {
+      "id": "sololeveling:creativetabitem"
+    },
+    "title": {
+      "translate": "advancements.rulers_will.title"
+    },
+    "description": {
+      "translate": "advancements.rulers_will.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "rulers_will": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:system/vessel"
+}

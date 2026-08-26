@@ -2,23 +2,24 @@ package net.solocraft.client.aura;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 
 import net.minecraft.resources.ResourceLocation;
 
 /** Registers the temporary frost spiritualization aura on physical clients. */
-@Mod.EventBusSubscriber(
+@EventBusSubscriber(
 		modid = SololevelingMod.MODID,
-		bus = Mod.EventBusSubscriber.Bus.MOD,
+		bus = EventBusSubscriber.Bus.MOD,
 		value = Dist.CLIENT
 )
 public final class FrostSpiritualizationAuraRegistration {
 	public static final String ID = "frost_spiritualization";
 
-	private static final ResourceLocation BLUE_GLOW = new ResourceLocation(
+	private static final ResourceLocation BLUE_GLOW = ResourceLocation.fromNamespaceAndPath(
 			SololevelingMod.MODID,
 			"textures/particle/mana_blue.png"
 	);

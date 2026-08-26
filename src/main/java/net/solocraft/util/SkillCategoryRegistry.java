@@ -18,6 +18,7 @@ public final class SkillCategoryRegistry {
 	private static final Category FIRE_MAGE = new Category("FM", 0xFF6A32);
 	private static final Category BARRIER_MAGE = new Category("BM", 0x62DFFF);
 	private static final Category STORM_MAGE = new Category("ST", 0xFFD45A);
+	private static final Category CURSE_MAGE = new Category("CM", 0xA05CFF);
 	private static final Category FORBIDDEN = new Category("FB", 0xFF3434);
 
 	private static final Map<String, Category> SKILLS = new HashMap<>();
@@ -26,16 +27,35 @@ public final class SkillCategoryRegistry {
 		register(ASSASSIN, Set.of(
 				AssassinSkillManager.GHOST_STEP, AssassinSkillManager.NIGHT_REND,
 				AssassinSkillManager.STEALTH, AssassinSkillManager.FLASH_CUT, AssassinSkillManager.DUALWIELD,
+				AssassinSkillManager.SHADOW_FEINT, AssassinSkillManager.SILENT_DOMAIN,
+				AssassinSkillManager.ZERO_PRESENCE,
 				"Critical Attack", "Mutilation", "Murderious Intent", "Dagger Throw", "Dagger Rush"));
 		register(FIGHTER, Set.of(
 				"Ground Slam", "Slash Dash", "Cross Strike", "Critical Strike", "Slash Fury",
-				"Sword Dance", "Sword of Light", "Sword Beam"));
+				"Sword Dance", "Sword of Light", "Sword Beam",
+				FighterSkillManager.IRON_KNUCKLE, FighterSkillManager.BREAKER_COMBO,
+				FighterSkillManager.METEOR_FIST, FighterSkillManager.TITANS_BARRAGE,
+				FighterSkillManager.RADIANT_EXECUTION, FighterSkillManager.MAGICAL_EYE,
+				FighterSkillManager.CLAW_STRIKES, FighterSkillManager.BEAST_SENSE,
+				FighterSkillManager.PARTIAL_TRANSFORMATION,
+				FighterSkillManager.PREDATOR_RUSH,
+				FighterSkillManager.FULL_BEAST_TRANSFORMATION));
 		register(TANKER, Set.of(
 				"Taunt", "Reinforcement", "Tank Leap", "Shield Bash", "Willpower",
-				"Protection Mark"));
+				"Protection Mark",
+				JuggernautSkillManager.HEAVY_BLOW, JuggernautSkillManager.IRON_BODY,
+				JuggernautSkillManager.SEISMIC_GRAPPLE,
+				JuggernautSkillManager.GIGANTIFICATION,
+				JuggernautSkillManager.COLOSSUS_CHARGE,
+				JuggernautSkillManager.MOUNTAIN_BREAKER));
 		register(HEALER, Set.of(
 				"Heal Beam", "Haste Buff", "Purification", "Physical Buff", "Overheal",
-				"Blessing Mark"));
+				"Blessing Mark",
+				HealerSkillManager.HEALING_PULSE, HealerSkillManager.CAMOUFLAGE,
+				HealerSkillManager.PURIFYING_WAVE, HealerSkillManager.GUARDIAN_STEP,
+				HealerSkillManager.SANCTUARY, HealerSkillManager.SECOND_WIND,
+				HealerSkillManager.GUARDIAN_WARD, HealerSkillManager.MANA_FONT,
+				HealerSkillManager.VITALITY_SURGE, HealerSkillManager.DIVINE_FAVOR));
 		register(RANGER, Set.of(
 				RangerCombatManager.MANA_QUIVER, RangerCombatManager.BACK_STEP,
 				RangerCombatManager.HAWKEYE, RangerCombatManager.RAPID_FIRE,
@@ -46,6 +66,7 @@ public final class SkillCategoryRegistry {
 		register(BARRIER_MAGE, BarrierMageSpellManager.BARRIER_SKILLS);
 		register(ARCANE_MAGE, ArcaneMageSpellManager.ARCANE_SKILLS);
 		register(STORM_MAGE, StormMageSpellManager.STORM_SKILLS);
+		register(CURSE_MAGE, CurseMageSpellManager.CURSE_SKILLS);
 		register(FORBIDDEN, Set.of("Cold Blood"));
 	}
 

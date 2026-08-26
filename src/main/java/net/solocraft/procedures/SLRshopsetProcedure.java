@@ -22,7 +22,7 @@ public class SLRshopsetProcedure {
 		ItemStack selected = ItemArgument.getItem(arguments, "item").getItem().getDefaultInstance();
 		try {
 			for (Entity target : EntityArgument.getEntities(arguments, "name")) {
-				if (!selected.is(ItemTags.create(new ResourceLocation("forge:shop_items")))) {
+				if (!selected.is(ItemTags.create(ResourceLocation.parse("sololeveling:shop_items")))) {
 					if (target instanceof Player player && !player.level().isClientSide())
 						player.displayClientMessage(Component.literal("This item cannot be added into the shop"), false);
 					continue;

@@ -12,11 +12,7 @@
     "particle": { "options": { "type": "minecraft:mycelium" }, "probability": 0.003 }
   },
   "spawners": {
-    "monster": [
-      { "type": "sololeveling:steel_fang_wolf", "weight": 62, "minCount": 3, "maxCount": 6 },
-      { "type": "sololeveling:steel_fanged_lycan", "weight": 24, "minCount": 1, "maxCount": 3 },
-      { "type": "sololeveling:orc", "weight": 12, "minCount": 1, "maxCount": 3 }
-    ],
+    "monster": [],
     "creature": [], "ambient": [], "axolotls": [], "underground_water_creature": [], "water_creature": [], "water_ambient": [], "misc": []
   },
   "spawn_costs": {},

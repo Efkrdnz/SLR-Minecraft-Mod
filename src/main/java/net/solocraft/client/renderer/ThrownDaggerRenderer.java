@@ -19,7 +19,7 @@ import com.mojang.math.Axis;
 
 /** Renders the real held item as a spinning blade plus a shader-driven violet/blue motion ribbon. */
 public class ThrownDaggerRenderer extends EntityRenderer<ThrownDaggerEntity> {
-	private static final ResourceLocation TRAIL_TEXTURE = new ResourceLocation("sololeveling", "textures/particle/slashgood1.png");
+	private static final ResourceLocation TRAIL_TEXTURE = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/slashgood1.png");
 	private final net.minecraft.client.renderer.entity.ItemRenderer itemRenderer;
 
 	public ThrownDaggerRenderer(EntityRendererProvider.Context context) {
@@ -102,10 +102,10 @@ public class ThrownDaggerRenderer extends EntityRenderer<ThrownDaggerEntity> {
 
 	private static void vertex(VertexConsumer out, PoseStack.Pose pose, float x, float y, float z,
 			float u, float v, int color, int alpha) {
-		out.vertex(pose.pose(), x, y, z)
-				.color((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
-				.uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240)
-				.normal(pose.normal(), 0.0F, 1.0F, 0.0F).endVertex();
+		out.addVertex(pose, x, y, z)
+				.setColor((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
+				.setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240)
+				.setNormal(pose, 0.0F, 1.0F, 0.0F);
 	}
 
 	@Override

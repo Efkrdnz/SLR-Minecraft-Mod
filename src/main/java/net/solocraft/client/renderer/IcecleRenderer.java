@@ -22,6 +22,6 @@ public class IcecleRenderer extends MobRenderer<IcecleEntity, Modelicecle<Icecle
 
 	@Override
 	public ResourceLocation getTextureLocation(IcecleEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/icecle.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/icecle.png");
 	}
 }

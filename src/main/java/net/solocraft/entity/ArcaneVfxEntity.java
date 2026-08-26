@@ -3,11 +3,9 @@ package net.solocraft.entity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.ArcaneMageSpellManager;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -55,34 +53,25 @@ public class ArcaneVfxEntity extends Entity {
 	private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(ArcaneVfxEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 	private static final EntityDataAccessor<Optional<UUID>> TARGET = SynchedEntityData.defineId(ArcaneVfxEntity.class, EntityDataSerializers.OPTIONAL_UUID);
 
-	public ArcaneVfxEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.ARCANE_VFX.get(), level);
-	}
-
 	public ArcaneVfxEntity(EntityType<? extends ArcaneVfxEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		entityData.define(STYLE, AETHER_BOLT);
-		entityData.define(STAGE, 1);
-		entityData.define(SCALE, 1.0F);
-		entityData.define(LENGTH, 1.0F);
-		entityData.define(LIFETIME, 20);
-		entityData.define(PRIMARY_COLOR, ArcaneMageSpellManager.NORMAL_PRIMARY);
-		entityData.define(SECONDARY_COLOR, ArcaneMageSpellManager.NORMAL_SECONDARY);
-		entityData.define(SEED, 0);
-		entityData.define(ORB_AMPLIFIED, false);
-		entityData.define(OVERCAST, false);
-		entityData.define(OWNER, Optional.empty());
-		entityData.define(TARGET, Optional.empty());
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(STYLE, AETHER_BOLT);
+		builder.define(STAGE, 1);
+		builder.define(SCALE, 1.0F);
+		builder.define(LENGTH, 1.0F);
+		builder.define(LIFETIME, 20);
+		builder.define(PRIMARY_COLOR, ArcaneMageSpellManager.NORMAL_PRIMARY);
+		builder.define(SECONDARY_COLOR, ArcaneMageSpellManager.NORMAL_SECONDARY);
+		builder.define(SEED, 0);
+		builder.define(ORB_AMPLIFIED, false);
+		builder.define(OVERCAST, false);
+		builder.define(OWNER, Optional.empty());
+		builder.define(TARGET, Optional.empty());
 	}
 
 	public static ArcaneVfxEntity spawn(ServerLevel level, Vec3 position, int style, int stage,

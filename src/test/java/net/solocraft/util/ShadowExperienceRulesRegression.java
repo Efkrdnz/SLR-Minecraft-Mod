@@ -106,7 +106,7 @@ public final class ShadowExperienceRulesRegression {
 	private static void bossCoverageIncludesCurrentEncounters()
 			throws IOException {
 		String bosses = Files.readString(RESOURCES.resolve(Path.of(
-				"data", "minecraft", "tags", "entity_types",
+				"data", "minecraft", "tags", "entity_type",
 				"soloboss.json")));
 		for (String id : new String[] {
 				"blood_red_com_igris", "ancient_samurai",

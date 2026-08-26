@@ -9,16 +9,16 @@ import net.minecraft.resources.ResourceLocation;
 public class GriamoreItemModel extends GeoModel<GriamoreItem> {
 	@Override
 	public ResourceLocation getAnimationResource(GriamoreItem animatable) {
-		return new ResourceLocation("sololeveling", "animations/griamore.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/griamore.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(GriamoreItem animatable) {
-		return new ResourceLocation("sololeveling", "geo/griamore.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/griamore.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(GriamoreItem animatable) {
-		return new ResourceLocation("sololeveling", "textures/item/griamore.png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/item/griamore.png");
 	}
 }

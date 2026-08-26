@@ -11,9 +11,6 @@ import net.minecraft.world.phys.Vec3;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-
 /**
  * Shared code-native mana-arrow mesh used by held and flying arrows.
  *
@@ -22,7 +19,7 @@ import org.joml.Matrix4f;
  */
 public final class ManaArrowVisual {
 	public static final ResourceLocation WHITE_TEXTURE =
-			new ResourceLocation("minecraft", "textures/misc/white.png");
+			ResourceLocation.fromNamespaceAndPath("minecraft", "textures/misc/white.png");
 
 	private ManaArrowVisual() {
 	}
@@ -62,7 +59,7 @@ public final class ManaArrowVisual {
 
 		VertexConsumer vertices = buffers.getBuffer(RenderType.entityTranslucentEmissive(WHITE_TEXTURE));
 		PoseStack.Pose pose = poseStack.last();
-		drawPrism(vertices, pose.pose(), pose.normal(), start, end, right, up, radius,
+		drawPrism(vertices, pose, start, end, right, up, radius,
 				12, 62, 76, 42, 150, 174, 224);
 	}
 
@@ -89,11 +86,9 @@ public final class ManaArrowVisual {
 
 		VertexConsumer vertices = buffers.getBuffer(RenderType.entityTranslucentEmissive(WHITE_TEXTURE));
 		PoseStack.Pose pose = poseStack.last();
-		Matrix4f matrix = pose.pose();
-		Matrix3f normal = pose.normal();
-		drawPrism(vertices, matrix, normal, tail, headBase, right, up, shaftRadius,
+		drawPrism(vertices, pose, tail, headBase, right, up, shaftRadius,
 				72, 42, 24, 112, 72, 34, 255);
-		drawCrystalHead(vertices, matrix, normal, headBase, tip, right, up, headRadius,
+		drawCrystalHead(vertices, pose, headBase, tip, right, up, headRadius,
 				152, 164, 174, 224, 234, 240, 255);
 	}
 
@@ -128,27 +123,24 @@ public final class ManaArrowVisual {
 
 		VertexConsumer vertices = buffers.getBuffer(RenderType.entityTranslucentEmissive(WHITE_TEXTURE));
 		PoseStack.Pose pose = poseStack.last();
-		Matrix4f matrix = pose.pose();
-		Matrix3f normal = pose.normal();
-
 		if (nocked) {
-			drawPrism(vertices, matrix, normal, shaftStart, headBase, right, up, shaftRadius,
+			drawPrism(vertices, pose, shaftStart, headBase, right, up, shaftRadius,
 					14, 92, 156, 24, 126, 190, Math.min(alpha, 224));
 		} else {
-			drawPrism(vertices, matrix, normal, shaftStart, headBase, right, up, shaftRadius,
+			drawPrism(vertices, pose, shaftStart, headBase, right, up, shaftRadius,
 					accent[0], accent[1], accent[2], coreRed, coreGreen, coreBlue, alpha);
 		}
 
 		double collarLength = Math.min(safeHeadLength * 0.22D, length * 0.05D);
 		Vec3 collarStart = headBase.subtract(forward.scale(collarLength));
-		drawPrism(vertices, matrix, normal, collarStart, headBase, right, up,
+		drawPrism(vertices, pose, collarStart, headBase, right, up,
 				headRadius * 0.52D, coreRed, coreGreen, coreBlue,
 				accent[0], accent[1], accent[2], alpha);
 
-		drawCrystalHead(vertices, matrix, normal, headBase, tip, right, up, headRadius,
+		drawCrystalHead(vertices, pose, headBase, tip, right, up, headRadius,
 				accent[0], accent[1], accent[2], coreRed, coreGreen, coreBlue, alpha);
 		if (!nocked && safeFinLength > 0.0001D && finRadius > 0.0001D)
-			drawFins(vertices, matrix, normal, tail, forward, right, up,
+			drawFins(vertices, pose, tail, forward, right, up,
 					safeFinLength, finRadius, accent[0], accent[1], accent[2], finAlpha);
 	}
 
@@ -172,7 +164,7 @@ public final class ManaArrowVisual {
 		return new int[] {red, green, 255};
 	}
 
-	private static void drawPrism(VertexConsumer vertices, Matrix4f matrix, Matrix3f normalMatrix,
+	private static void drawPrism(VertexConsumer vertices, PoseStack.Pose pose,
 			Vec3 start, Vec3 end, Vec3 right, Vec3 up, double radius,
 			int redA, int greenA, int blueA, int redB, int greenB, int blueB, int alpha) {
 		Vec3[] startRing = diamondRing(start, right, up, radius);
@@ -180,14 +172,14 @@ public final class ManaArrowVisual {
 		for (int index = 0; index < 4; index++) {
 			int next = (index + 1) & 3;
 			boolean alternate = (index & 1) == 0;
-			quad(vertices, matrix, normalMatrix,
+			quad(vertices, pose,
 					startRing[index], endRing[index], endRing[next], startRing[next],
 					alternate ? redA : redB, alternate ? greenA : greenB,
 					alternate ? blueA : blueB, alpha);
 		}
 	}
 
-	private static void drawCrystalHead(VertexConsumer vertices, Matrix4f matrix, Matrix3f normalMatrix,
+	private static void drawCrystalHead(VertexConsumer vertices, PoseStack.Pose pose,
 			Vec3 base, Vec3 tip, Vec3 right, Vec3 up, double radius,
 			int redA, int greenA, int blueA, int redB, int greenB, int blueB, int alpha) {
 		Vec3[] ring = diamondRing(base, right, up, radius);
@@ -195,17 +187,17 @@ public final class ManaArrowVisual {
 		for (int index = 0; index < 4; index++) {
 			int next = (index + 1) & 3;
 			boolean alternate = (index & 1) == 0;
-			quad(vertices, matrix, normalMatrix,
+			quad(vertices, pose,
 					ring[index], tipRing[index], tipRing[next], ring[next],
 					alternate ? redA : redB, alternate ? greenA : greenB,
 					alternate ? blueA : blueB, alpha);
 		}
-		quad(vertices, matrix, normalMatrix,
+		quad(vertices, pose,
 				tipRing[0], tipRing[1], tipRing[2], tipRing[3],
 				redB, greenB, blueB, alpha);
 	}
 
-	private static void drawFins(VertexConsumer vertices, Matrix4f matrix, Matrix3f normalMatrix,
+	private static void drawFins(VertexConsumer vertices, PoseStack.Pose pose,
 			Vec3 tail, Vec3 forward, Vec3 right, Vec3 up, double length, double radius,
 			int red, int green, int blue, int alpha) {
 		Vec3[] radial = new Vec3[] {right, up, right.scale(-1.0D), up.scale(-1.0D)};
@@ -214,7 +206,7 @@ public final class ManaArrowVisual {
 			Vec3 rootFront = tail.add(forward.scale(length));
 			Vec3 outerFront = tail.add(forward.scale(length * 0.62D)).add(direction.scale(radius));
 			Vec3 outerBack = tail.add(forward.scale(length * 0.12D)).add(direction.scale(radius * 0.62D));
-			quad(vertices, matrix, normalMatrix, rootBack, rootFront, outerFront, outerBack,
+			quad(vertices, pose, rootBack, rootFront, outerFront, outerBack,
 					red, green, blue, alpha);
 		}
 	}
@@ -228,7 +220,7 @@ public final class ManaArrowVisual {
 		};
 	}
 
-	private static void quad(VertexConsumer vertices, Matrix4f matrix, Matrix3f normalMatrix,
+	private static void quad(VertexConsumer vertices, PoseStack.Pose pose,
 			Vec3 first, Vec3 second, Vec3 third, Vec3 fourth,
 			int red, int green, int blue, int alpha) {
 		Vec3 faceNormal = second.subtract(first).cross(third.subtract(first));
@@ -236,20 +228,19 @@ public final class ManaArrowVisual {
 			faceNormal = new Vec3(0.0D, 1.0D, 0.0D);
 		else
 			faceNormal = faceNormal.normalize();
-		vertex(vertices, matrix, normalMatrix, first, faceNormal, red, green, blue, alpha);
-		vertex(vertices, matrix, normalMatrix, second, faceNormal, red, green, blue, alpha);
-		vertex(vertices, matrix, normalMatrix, third, faceNormal, red, green, blue, alpha);
-		vertex(vertices, matrix, normalMatrix, fourth, faceNormal, red, green, blue, alpha);
+		vertex(vertices, pose, first, faceNormal, red, green, blue, alpha);
+		vertex(vertices, pose, second, faceNormal, red, green, blue, alpha);
+		vertex(vertices, pose, third, faceNormal, red, green, blue, alpha);
+		vertex(vertices, pose, fourth, faceNormal, red, green, blue, alpha);
 	}
 
-	private static void vertex(VertexConsumer vertices, Matrix4f matrix, Matrix3f normalMatrix,
+	private static void vertex(VertexConsumer vertices, PoseStack.Pose pose,
 			Vec3 point, Vec3 faceNormal, int red, int green, int blue, int alpha) {
-		vertices.vertex(matrix, (float) point.x, (float) point.y, (float) point.z)
-				.color(red, green, blue, alpha)
-				.uv(0.5F, 0.5F)
-				.overlayCoords(OverlayTexture.NO_OVERLAY)
-				.uv2(LightTexture.FULL_BRIGHT)
-				.normal(normalMatrix, (float) faceNormal.x, (float) faceNormal.y, (float) faceNormal.z)
-				.endVertex();
+		vertices.addVertex(pose, (float) point.x, (float) point.y, (float) point.z)
+				.setColor(red, green, blue, alpha)
+				.setUv(0.5F, 0.5F)
+				.setOverlay(OverlayTexture.NO_OVERLAY)
+				.setLight(LightTexture.FULL_BRIGHT)
+				.setNormal(pose, (float) faceNormal.x, (float) faceNormal.y, (float) faceNormal.z);
 	}
 }

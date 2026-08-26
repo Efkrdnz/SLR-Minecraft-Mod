@@ -55,7 +55,7 @@ public class BearTrapOnEntityTickUpdateProcedure {
 					if (counter > 0) {
 						if (world instanceof Level _level && !_level.isClientSide()) {
 							_level.explode((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null),
-									new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:ranger"))),
+									new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:ranger"))),
 											(entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null)),
 									null, x, y, z, 3, false, Level.ExplosionInteraction.NONE);
 						}

@@ -18,11 +18,12 @@ import net.solocraft.procedures.Ability3ReturnProcedure;
 import net.solocraft.procedures.Ability2ReturnProcedure;
 import net.solocraft.procedures.Ability1ReturnProcedure;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
@@ -33,14 +34,14 @@ import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.platform.GlStateManager;
 
-@Mod.EventBusSubscriber({Dist.CLIENT})
+@EventBusSubscriber({Dist.CLIENT})
 public class BlueFlameMonarchGUIOverlay {
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public static void eventHandler(RenderGuiEvent.Pre event) {
 		if (legacyOverlayDisabled())
 			return;
-		int w = event.getWindow().getGuiScaledWidth();
-		int h = event.getWindow().getGuiScaledHeight();
+		int w = event.getGuiGraphics().guiWidth();
+		int h = event.getGuiGraphics().guiHeight();
 		Level world = null;
 		double x = 0;
 		double y = 0;
@@ -60,33 +61,33 @@ public class BlueFlameMonarchGUIOverlay {
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		if (false && BlueFlameMonarchGUIDisplayOverlayIngameProcedure.execute(entity)) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).ShadowSelect == 1) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbaranstormburst.png"), w - 24, h - 70, 0, 0, 20, 20, 20, 20);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/newbaranstormburst.png"), w - 24, h - 70, 0, 0, 20, 20, 20, 20);
 			}
-			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbaranlaser.png"), w - 24, h - 24, 0, 0, 20, 20, 20, 20);
+			event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/newbaranlaser.png"), w - 24, h - 24, 0, 0, 20, 20, 20, 20);
 
-			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbaranlightningstrike.png"), w - 24, h - 47, 0, 0, 20, 20, 20, 20);
+			event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/newbaranlightningstrike.png"), w - 24, h - 47, 0, 0, 20, 20, 20, 20);
 
-			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbaransummon.png"), w - 24, h - 93, 0, 0, 20, 20, 20, 20);
+			event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/newbaransummon.png"), w - 24, h - 93, 0, 0, 20, 20, 20, 20);
 
 			if (IsCD4OnCooldownProcedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbasiccdcover.png"), w - 24, h - 93, 0, 0, 20, 20, 20, 20);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/newbasiccdcover.png"), w - 24, h - 93, 0, 0, 20, 20, 20, 20);
 			}
-			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/keyplaceholder.png"), w - 31, h - 89, 0, 0, 12, 12, 12, 12);
+			event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/keyplaceholder.png"), w - 31, h - 89, 0, 0, 12, 12, 12, 12);
 
 			if (IsCD3OnCooldownProcedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbasiccdcover.png"), w - 24, h - 70, 0, 0, 20, 20, 20, 20);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/newbasiccdcover.png"), w - 24, h - 70, 0, 0, 20, 20, 20, 20);
 			}
-			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/keyplaceholder.png"), w - 31, h - 66, 0, 0, 12, 12, 12, 12);
+			event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/keyplaceholder.png"), w - 31, h - 66, 0, 0, 12, 12, 12, 12);
 
 			if (IsCD2OnCooldownProcedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbasiccdcover.png"), w - 24, h - 47, 0, 0, 20, 20, 20, 20);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/newbasiccdcover.png"), w - 24, h - 47, 0, 0, 20, 20, 20, 20);
 			}
-			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/keyplaceholder.png"), w - 31, h - 43, 0, 0, 12, 12, 12, 12);
+			event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/keyplaceholder.png"), w - 31, h - 43, 0, 0, 12, 12, 12, 12);
 
 			if (IsCD1OnCooldownProcedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/newbasiccdcover.png"), w - 24, h - 24, 0, 0, 20, 20, 20, 20);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/newbasiccdcover.png"), w - 24, h - 24, 0, 0, 20, 20, 20, 20);
 			}
-			event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/keyplaceholder.png"), w - 31, h - 20, 0, 0, 12, 12, 12, 12);
+			event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/keyplaceholder.png"), w - 31, h - 20, 0, 0, 12, 12, 12, 12);
 
 			event.getGuiGraphics().drawString(Minecraft.getInstance().font,
 

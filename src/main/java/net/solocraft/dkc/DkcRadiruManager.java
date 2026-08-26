@@ -13,18 +13,20 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.XPGainProcedure;
 import net.solocraft.procedures.DKCDemonSpawnerProcedure;
 import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.ItemStackData;
 import net.solocraft.util.SystemNotifications;
 import net.solocraft.util.VesselProgressionManager;
 
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -56,7 +58,7 @@ import java.util.UUID;
  * Persistent Floor-15 branch: surrender, Esil's permit, sanctuary protection,
  * the post-conquest Radiru route, and six no-AI damage-test targets.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DkcRadiruManager {
 	public static final int FLOOR = 15;
 	public static final String RESIDENT_TAG = "radiru_resident";
@@ -420,7 +422,7 @@ public final class DkcRadiruManager {
 
 	/** Sanctuary residents cannot be harmed; training targets remain damageable. */
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void protectSanctuary(LivingAttackEvent event) {
+	public static void protectSanctuary(LivingIncomingDamageEvent event) {
 		Entity target = event.getEntity();
 		CompoundTag tag = target.getPersistentData();
 		if (tag.getBoolean(TRAINING_DUMMY_TAG)) {
@@ -443,15 +445,13 @@ public final class DkcRadiruManager {
 
 	/** Shows final post-mitigation output and resets each dummy before every hit. */
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public static void meterTrainingDamage(LivingDamageEvent event) {
+	public static void meterTrainingDamage(LivingDamageEvent.Post event) {
 		if (!event.getEntity().getPersistentData().getBoolean(TRAINING_DUMMY_TAG))
 			return;
 		ServerPlayer player = creditedPlayer(event.getSource());
-		if (player == null) {
-			event.setCanceled(true);
+		if (player == null)
 			return;
-		}
-		float damage = Math.max(0.0F, event.getAmount());
+		float damage = Math.max(0.0F, event.getNewDamage());
 		event.getEntity().setHealth(event.getEntity().getMaxHealth());
 		CompoundTag data = player.getPersistentData();
 		long now = player.level().getGameTime();
@@ -675,7 +675,7 @@ public final class DkcRadiruManager {
 					continue;
 				dummy.moveTo(anchor.getX() + 0.5D, anchor.getY(), anchor.getZ() + 0.5D, 180.0F, 0.0F);
 				try {
-					dummy.finalizeSpawn(level, level.getCurrentDifficultyAt(anchor), MobSpawnType.EVENT, null, null);
+					dummy.finalizeSpawn(level, level.getCurrentDifficultyAt(anchor), MobSpawnType.EVENT, null);
 				} catch (RuntimeException ignored) {
 					// Appearance randomization is optional for a training target.
 				}
@@ -742,10 +742,11 @@ public final class DkcRadiruManager {
 	/** A replacement-safe permit that is worthless at every pedestal except Floor 15. */
 	public static ItemStack createFloorPermit(ServerPlayer player) {
 		ItemStack permit = new ItemStack(SololevelingModItems.ENTRY_PERMIT.get());
-		CompoundTag tag = permit.getOrCreateTag();
-		tag.putInt(PERMIT_FLOOR_TAG, FLOOR);
-		if (player != null)
-			tag.putUUID(PERMIT_OWNER_TAG, player.getUUID());
+		ItemStackData.update(permit, tag -> {
+			tag.putInt(PERMIT_FLOOR_TAG, FLOOR);
+			if (player != null)
+				tag.putUUID(PERMIT_OWNER_TAG, player.getUUID());
+		});
 		return permit;
 	}
 
@@ -753,8 +754,8 @@ public final class DkcRadiruManager {
 	public static boolean isPermitValidForFloor(ItemStack stack, ServerPlayer player, int floor) {
 		if (stack == null || !stack.is(SololevelingModItems.ENTRY_PERMIT.get()))
 			return false;
-		CompoundTag tag = stack.getTag();
-		if (tag == null || !tag.contains(PERMIT_FLOOR_TAG))
+		CompoundTag tag = ItemStackData.copy(stack);
+		if (!tag.contains(PERMIT_FLOOR_TAG))
 			return true;
 		if (tag.getInt(PERMIT_FLOOR_TAG) != floor)
 			return false;

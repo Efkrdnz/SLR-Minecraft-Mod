@@ -2,12 +2,10 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -43,27 +41,18 @@ public class BasicAttackSlashEntity extends Entity {
 	private float damage;
 	private boolean dealtDamage;
 
-	public BasicAttackSlashEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.BASIC_ATTACK_SLASH.get(), world);
-	}
-
 	public BasicAttackSlashEntity(EntityType<? extends BasicAttackSlashEntity> type, Level world) {
 		super(type, world);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(OWNER_UUID, Optional.empty());
-		this.entityData.define(STYLE, STYLE_FIST);
-		this.entityData.define(SWING_INDEX, 0);
-		this.entityData.define(ROLL, 0.0F);
-		this.entityData.define(SCALE, 1.0F);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(OWNER_UUID, Optional.empty());
+		builder.define(STYLE, STYLE_FIST);
+		builder.define(SWING_INDEX, 0);
+		builder.define(ROLL, 0.0F);
+		builder.define(SCALE, 1.0F);
 	}
 
 	public static void spawn(LevelAccessor world, LivingEntity owner, int style, int swingIndex, float damage, float scale) {

@@ -16,7 +16,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 public class Slash3Renderer extends EntityRenderer<Slash3Entity> {
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/entities/slash.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/entities/slash.png");
 	private final ModelSlash3 model;
 
 	public Slash3Renderer(EntityRendererProvider.Context context) {
@@ -30,7 +30,7 @@ public class Slash3Renderer extends EntityRenderer<Slash3Entity> {
 		poseStack.pushPose();
 		poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 90));
 		poseStack.mulPose(Axis.ZP.rotationDegrees(90 + Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
-		model.renderToBuffer(poseStack, vb, packedLightIn, OverlayTexture.NO_OVERLAY, 1, 1, 1, 0.0625f);
+		model.renderToBuffer(poseStack, vb, packedLightIn, OverlayTexture.NO_OVERLAY, net.minecraft.util.FastColor.ARGB32.colorFromFloat(0.0625F, 1.0F, 1.0F, 1.0F));
 		poseStack.popPose();
 		super.render(entityIn, entityYaw, partialTicks, poseStack, bufferIn, packedLightIn);
 	}

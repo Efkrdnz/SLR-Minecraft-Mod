@@ -2,10 +2,11 @@ package net.solocraft.client.renderer.shader;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
@@ -18,7 +19,7 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
  * The instance deliberately remains nullable: a broken or unsupported shader
  * resource must never prevent the quest screen from opening.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class DkcTowerBackgroundRenderTypes {
 	private static ShaderInstance shader;
 
@@ -30,7 +31,7 @@ public final class DkcTowerBackgroundRenderTypes {
 		shader = null;
 		try {
 			event.registerShader(
-					new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_dkc_tower_background"),
+					new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rendertype_dkc_tower_background"),
 							DefaultVertexFormat.POSITION_TEX),
 					loaded -> shader = loaded);
 		} catch (Exception exception) {

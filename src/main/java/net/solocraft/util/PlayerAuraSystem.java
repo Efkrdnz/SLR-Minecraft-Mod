@@ -3,16 +3,17 @@ package net.solocraft.util;
 import net.solocraft.SololevelingMod;
 import net.solocraft.network.PlayerAuraMessage;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 
 /** Server API for aura state that must be visible to every tracking player. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class PlayerAuraSystem {
 	private static final String AURA_ID = "sololeveling_player_aura";
 	private static final String AURA_INTENSITY = "sololeveling_player_aura_intensity";
@@ -55,6 +56,15 @@ public final class PlayerAuraSystem {
 	public static void onStartTracking(PlayerEvent.StartTracking event) {
 		if (event.getEntity() instanceof ServerPlayer receiver && event.getTarget() instanceof ServerPlayer subject)
 			sendCurrent(subject, receiver);
+	}
+
+	@SubscribeEvent
+	public static void onStopTracking(PlayerEvent.StopTracking event) {
+		if (event.getEntity() instanceof ServerPlayer receiver
+				&& event.getTarget() instanceof ServerPlayer subject) {
+			SololevelingMod.PACKET_HANDLER.send(PacketDistributor.PLAYER.with(() -> receiver),
+					new PlayerAuraMessage(subject.getId(), "", PlayerAuraMessage.CLEAR, 0, 1.0F));
+		}
 	}
 
 	@SubscribeEvent

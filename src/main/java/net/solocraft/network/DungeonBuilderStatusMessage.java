@@ -5,12 +5,13 @@ import net.solocraft.client.gui.DungeonBuilderClientState;
 import net.solocraft.dungeon.ProceduralDungeonRank;
 import net.solocraft.dungeon.builder.DungeonBuilderProjectData;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.solocraft.network.compat.DistExecutor;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.solocraft.network.compat.NetworkEvent;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -23,7 +24,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /** Small server-authoritative snapshot used only by the Dungeon Builder HUD. */
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public final class DungeonBuilderStatusMessage {
 	public static final int OK = 0;
 	public static final int TODO = 1;

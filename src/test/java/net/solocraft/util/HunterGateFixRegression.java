@@ -96,7 +96,7 @@ public final class HunterGateFixRegression {
 				"DatapackDungeonGateHandler.java");
 		expectTrue(datapack.contains(
 						"instance.setReturnPortalDeferred(true)"),
-				"Normal datapack gates must persist a boss-created exit");
+				"Normal datapack gates must defer their authored exit until the boss");
 		String source = read("dungeon", "runtime",
 				"SnowRedGateArenaManager.java");
 		expectTrue(source.contains(

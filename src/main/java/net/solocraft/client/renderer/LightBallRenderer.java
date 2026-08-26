@@ -16,7 +16,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 public class LightBallRenderer extends EntityRenderer<LightBallEntity> {
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/entities/light_ball.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/entities/light_ball.png");
 	private final Modellight_ball model;
 
 	public LightBallRenderer(EntityRendererProvider.Context context) {
@@ -30,7 +30,7 @@ public class LightBallRenderer extends EntityRenderer<LightBallEntity> {
 		poseStack.pushPose();
 		poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entityIn.yRotO, entityIn.getYRot()) - 90));
 		poseStack.mulPose(Axis.ZP.rotationDegrees(90 + Mth.lerp(partialTicks, entityIn.xRotO, entityIn.getXRot())));
-		model.renderToBuffer(poseStack, vb, packedLightIn, OverlayTexture.NO_OVERLAY, 1, 1, 1, 0.0625f);
+		model.renderToBuffer(poseStack, vb, packedLightIn, OverlayTexture.NO_OVERLAY, net.minecraft.util.FastColor.ARGB32.colorFromFloat(0.0625F, 1.0F, 1.0F, 1.0F));
 		poseStack.popPose();
 		super.render(entityIn, entityYaw, partialTicks, poseStack, bufferIn, packedLightIn);
 	}

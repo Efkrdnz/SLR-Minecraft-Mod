@@ -3,6 +3,7 @@ package net.solocraft.util;
 import net.solocraft.dungeon.runtime.DungeonLevelHelper;
 import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -22,7 +23,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.projectile.Projectile;
 
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 
 import javax.annotation.Nullable;
 
@@ -56,14 +57,15 @@ public final class ShadowExperienceManager {
 	private ShadowExperienceManager() {
 	}
 
-	public static void recordDamage(LivingDamageEvent event) {
-		if (event == null || event.isCanceled()
+	public static void recordDamage(LivingDamageEvent.Post event) {
+		if (event == null
 				|| event.getEntity().level().isClientSide()
+				|| JobChangeQuestManager.isAttemptEntity(
+						event.getEntity())
 				|| !isEligibleTarget(event.getEntity()))
 			return;
 		LivingEntity victim = event.getEntity();
-		double damage = Math.min(Math.max(0.0D, event.getAmount()),
-				Math.max(0.0D, victim.getHealth()));
+		double damage = Math.max(0.0D, event.getNewDamage());
 		if (!Double.isFinite(damage) || damage <= 0.0D)
 			return;
 
@@ -87,7 +89,8 @@ public final class ShadowExperienceManager {
 	 * received XP.
 	 */
 	public static int awardContributions(LivingEntity victim) {
-		if (!isEligibleTarget(victim)
+		if (JobChangeQuestManager.isAttemptEntity(victim)
+				|| !isEligibleTarget(victim)
 				|| !(victim.level() instanceof ServerLevel level))
 			return 0;
 		CompoundTag persistent = victim.getPersistentData();
@@ -218,7 +221,7 @@ public final class ShadowExperienceManager {
 	}
 
 	private static double attributeValue(LivingEntity entity,
-			Attribute attribute) {
+			Holder<Attribute> attribute) {
 		AttributeInstance instance = entity.getAttribute(attribute);
 		return instance == null ? 0.0D
 				: Math.max(0.0D, instance.getValue());
@@ -237,6 +240,6 @@ public final class ShadowExperienceManager {
 	private static TagKey<EntityType<?>> entityTypeTag(String namespace,
 			String path) {
 		return TagKey.create(Registries.ENTITY_TYPE,
-				new ResourceLocation(namespace, path));
+				ResourceLocation.fromNamespaceAndPath(namespace, path));
 	}
 }

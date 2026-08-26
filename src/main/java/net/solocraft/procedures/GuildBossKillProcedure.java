@@ -4,9 +4,10 @@ import net.solocraft.guild.GuildData;
 import net.solocraft.guild.GuildSavedData;
 import net.solocraft.dkc.DkcFloorRegistry;
 
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -24,11 +25,11 @@ import java.util.Map;
  * Awards guild XP when any soloboss is killed by a guild member.
  * XP scales with the gate tier the boss was killed in.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class GuildBossKillProcedure {
 
     private static final TagKey<EntityType<?>> SOLOBOSS =
-            TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("soloboss"));
+            TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("soloboss"));
 
     /** XP awarded per gate tier. Keyed by dimension path (the part after "sololeveling:"). */
     private static final Map<String, Integer> DIM_XP = Map.of(

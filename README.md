@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Minecraft-1.20.1-62B47A" alt="Minecraft 1.20.1">
   <img src="https://img.shields.io/badge/Forge-47.2.0-EF7C35" alt="Forge 47.2.0">
-  <img src="https://img.shields.io/badge/Version-1.0.3-3F88C5" alt="Version 1.0.3">
+  <img src="https://img.shields.io/badge/Version-1.0.4-3F88C5" alt="Version 1.0.4">
   <img src="https://img.shields.io/badge/Status-In_Development-8A5CF5" alt="In development">
 </p>
 
@@ -47,7 +47,7 @@ The mod is still in active development. Some parts are polished and some are sti
 
 1. Install [Minecraft Forge 47.2.0](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.20.1.html) for Minecraft 1.20.1.
 2. Install GeckoLib 4.4.2 for Forge 1.20.1.
-3. Place `SLR1.0.3.jar` and the GeckoLib jar in your `mods` folder.
+3. Place `SLR1.0.4.jar` and the GeckoLib jar in your `mods` folder.
 4. Start Minecraft with the Forge profile.
 
 For multiplayer, the server and every player need the same mod and dependency versions.
@@ -99,7 +99,7 @@ On Linux or macOS, use `./gradlew` instead of `.\gradlew.bat`.
 The finished mod is written to:
 
 ```text
-build/libs/SLR1.0.3.jar
+build/libs/SLR1.0.4.jar
 ```
 
 To start a development server or run the checks separately:

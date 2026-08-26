@@ -2,8 +2,8 @@ package net.solocraft.item;
 
 import net.solocraft.procedures.RunestoneColdBloodRCProcedure;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -29,8 +29,8 @@ public class RunestoneColdBloodItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("Right click this rune to obtain \"Cold Blood\""));
 		list.add(Component.literal("Enter a forbidden execution state that grows stronger with each kill."));
 	}

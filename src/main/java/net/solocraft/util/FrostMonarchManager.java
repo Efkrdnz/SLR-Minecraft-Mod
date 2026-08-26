@@ -7,18 +7,22 @@ import net.solocraft.init.SololevelingModBlocks;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.EntityMountEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityMountEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.util.BlockSnapshot;
+import net.neoforged.neoforge.event.EventHooks;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -68,7 +72,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Server-authoritative Frost Monarch combat kit and temporary-world lifecycle. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class FrostMonarchManager {
 	public static final String FLASH_FREEZE = "Flash Freeze";
 	public static final String FROZEN_PATH = "Frozen Path";
@@ -100,9 +104,9 @@ public final class FrostMonarchManager {
 	private static final int PURSUIT_BLOCK_GRACE_TICKS = 12;
 	private static final int PURSUIT_REMOUNT_GRACE_TICKS = 10;
 	private static final TagKey<EntityType<?>> BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("soloboss"));
+			ResourceLocation.parse("soloboss"));
 	private static final TagKey<EntityType<?>> SHADOWS = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("shadows"));
+			ResourceLocation.parse("shadows"));
 
 	private static final int SPEAR_BIT = 1;
 	private static final int STILLNESS_BIT = 1 << 1;
@@ -141,7 +145,9 @@ public final class FrostMonarchManager {
 
 	public static boolean isFrostMonarch(Entity entity) {
 		return entity != null && entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-				.map(data -> (int) data.JOB == 3).orElse(false);
+				.map(data -> (int) data.JOB == 3
+						&& (data.vesselIdentity.isBlank() || "sillad".equals(data.vesselIdentity)))
+				.orElse(false);
 	}
 
 	/** X/C/V/B use Frost job actions only while the universal combat controls are off. */
@@ -196,7 +202,7 @@ public final class FrostMonarchManager {
 			SPEARS.remove(player.getUUID(), state);
 			return;
 		}
-		level.playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THROW,
+		level.playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THROW.value(),
 				SoundSource.PLAYERS, 1.0F, 1.25F);
 	}
 
@@ -326,7 +332,7 @@ public final class FrostMonarchManager {
 				: player.getEyePosition().add(direction.scale(0.82D));
 		GlacialPursuitEntity pursuit = GlacialPursuitEntity.spawn(level, player, start, direction,
 				riderMode, manifested);
-		if (!pursuit.isAddedToWorld()) {
+		if (!pursuit.isAddedToLevel()) {
 			pursuit.discard();
 			message(player, "The frozen current failed to form.", ChatFormatting.RED);
 			return;
@@ -339,7 +345,7 @@ public final class FrostMonarchManager {
 		GLACIAL_PURSUITS.put(player.getUUID(), state);
 		if (riderMode)
 			player.startRiding(pursuit, true);
-		level.playSound(null, player.blockPosition(), SoundEvents.TRIDENT_RIPTIDE_2,
+		level.playSound(null, player.blockPosition(), SoundEvents.TRIDENT_RIPTIDE_2.value(),
 				SoundSource.PLAYERS, 0.9F, manifested ? 0.72F : 0.86F);
 	}
 
@@ -421,9 +427,9 @@ public final class FrostMonarchManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()
-				|| !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || event.getEntity().level().isClientSide()
+				|| !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		if (!isFrostMonarch(player)) {
 			if (hasAnyState(player) || Math.abs(variables(player).frostcharge) > 0.01D)
@@ -450,8 +456,9 @@ public final class FrostMonarchManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void onFrostCounterHurt(LivingHurtEvent event) {
-		if (!(event.getEntity() instanceof ServerPlayer player) || player.level().isClientSide())
+	public static void onFrostCounterHurt(LivingIncomingDamageEvent event) {
+		if (!(event.getEntity() instanceof ServerPlayer player) || player.level().isClientSide()
+				|| CartenonSuppression.blockVesselPassive(player))
 			return;
 		if (event.getSource().is(DamageTypes.FALL)
 				&& player.getPersistentData().getLong(PATH_FALL_PROTECTION_UNTIL) >= player.level().getGameTime()) {
@@ -480,7 +487,7 @@ public final class FrostMonarchManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onFrozenTargetHurt(LivingHurtEvent event) {
+	public static void onFrozenTargetHurt(LivingIncomingDamageEvent event) {
 		if (event.getEntity().level().isClientSide() || !event.getSource().is(DamageTypes.PLAYER_ATTACK))
 			return;
 		FrozenTargetState state = FROZEN_TARGETS.get(event.getEntity().getUUID());
@@ -494,7 +501,7 @@ public final class FrostMonarchManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public static void onWhiteoutProjectileDamage(LivingHurtEvent event) {
+	public static void onWhiteoutProjectileDamage(LivingIncomingDamageEvent event) {
 		if (!(event.getSource().getDirectEntity() instanceof Projectile projectile))
 			return;
 		long now = event.getEntity().level().getGameTime();
@@ -644,7 +651,7 @@ public final class FrostMonarchManager {
 	}
 
 	private static float shatterFlatBonus(ServerPlayer owner, LivingEntity target) {
-		double intelligence = variables(owner).Intelligence;
+		double intelligence = TemporaryStatBonusManager.effectiveIntelligence(owner);
 		double healthContribution = Math.min(isBoss(target) ? 10.0D : 16.0D, target.getMaxHealth() * 0.025D);
 		double damage = 5.0D + intelligence / 40.0D + healthContribution;
 		if (target instanceof Player)
@@ -657,7 +664,8 @@ public final class FrostMonarchManager {
 		Vec3 center = shattered.getBoundingBox().getCenter();
 		double radius = manifested ? 5.0D : 3.6D;
 		int maximum = manifested ? 9 : 6;
-		float shardDamage = (float) ((manifested ? 7.0D : 5.0D) + variables(owner).Intelligence / 52.0D);
+		float shardDamage = (float) ((manifested ? 7.0D : 5.0D)
+				+ TemporaryStatBonusManager.effectiveIntelligence(owner) / 52.0D);
 		List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
 				shattered.getBoundingBox().inflate(radius), candidate -> candidate != shattered && validTarget(owner, candidate));
 		nearby.sort(Comparator.comparingDouble(candidate -> candidate.distanceToSqr(center)));
@@ -815,7 +823,7 @@ public final class FrostMonarchManager {
 				player.getZ(), state.manifested ? 110 : 78, radius * 0.55D, 0.55D, radius * 0.55D, 0.13D);
 		player.serverLevel().sendParticles(ParticleTypes.END_ROD, player.getX(), player.getY() + 0.25D,
 				player.getZ(), state.manifested ? 24 : 16, radius * 0.42D, 0.25D, radius * 0.42D, 0.08D);
-		player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE,
+		player.level().playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(),
 				SoundSource.PLAYERS, 1.0F, 1.55F);
 	}
 
@@ -892,6 +900,12 @@ public final class FrostMonarchManager {
 			state.expiresAt = now + (state.manifested ? 120 : 80);
 			visual.setPos(state.anchorPoint.x, state.anchorPoint.y, state.anchorPoint.z);
 			impactParticles(level, state.anchorPoint, 12);
+			AbilityDestructionManager.impact(player,
+					AbilityDestructionManager.Profile.FROST_SPEAR,
+					state.anchorPoint,
+					TemporaryStatBonusManager.effectiveIntelligence(player)
+							+ TemporaryStatBonusManager.effectiveStrength(player) * 0.55D,
+					state.manifested);
 			level.playSound(null, state.anchorBlock, SoundEvents.GLASS_PLACE,
 					SoundSource.PLAYERS, 0.8F, 1.35F);
 			return;
@@ -1075,7 +1089,7 @@ public final class FrostMonarchManager {
 			for (LivingEntity target : targets) {
 				if (target == null)
 					continue;
-				double intelligence = variables(player).Intelligence;
+				double intelligence = TemporaryStatBonusManager.effectiveIntelligence(player);
 				float cap = (float) (target instanceof Player ? 12.0D + intelligence / 30.0D
 						: 18.0D + intelligence / 20.0D);
 				float damage = cap * (state.charges / 3.0F);
@@ -1140,8 +1154,8 @@ public final class FrostMonarchManager {
 				.setValue(FrostCausewayBlock.RETURN_LEVEL, returnLevel);
 		if (!level.setBlock(pos, frost, 2))
 			return FrozenCellResult.SKIPPED;
-		if (ForgeEventFactory.onBlockPlace(player, snapshot, Direction.UP)) {
-			snapshot.restore(true, false);
+		if (EventHooks.onBlockPlace(player, snapshot, Direction.UP)) {
+			snapshot.restore(2);
 			return FrozenCellResult.SKIPPED;
 		}
 		FrostCausewayBlock.refresh(level, pos, level.getBlockState(pos));
@@ -1180,8 +1194,11 @@ public final class FrostMonarchManager {
 				endGlacialPursuit(player, state, false, false);
 				return;
 			}
-			if (player.distanceToSqr(pursuit) > 9.0D)
-				player.teleportTo(pursuit.getX(), pursuit.getY() + pursuit.getPassengersRidingOffset(), pursuit.getZ());
+			if (player.distanceToSqr(pursuit) > 9.0D) {
+				Vec3 ridingPosition = pursuit.getPassengerRidingPosition(player);
+				player.teleportTo(ridingPosition.x, ridingPosition.y,
+						ridingPosition.z);
+			}
 			if (!player.startRiding(pursuit, true)) {
 				state.remountFailures++;
 				pursuit.setFlight(pursuit.position(), Vec3.ZERO);
@@ -1493,7 +1510,8 @@ public final class FrostMonarchManager {
 			target.hurtMarked = true;
 			if (target instanceof Mob mob)
 				mob.getNavigation().stop();
-			float damage = (float) (16.0D + variables(player).Intelligence / 20.0D);
+			float damage = (float) (16.0D
+					+ TemporaryStatBonusManager.effectiveIntelligence(player) / 20.0D);
 			hurtPhysical(player, target, damage);
 			impactParticles(player.serverLevel(), target.getBoundingBox().getCenter(), 28);
 			return;
@@ -1529,7 +1547,7 @@ public final class FrostMonarchManager {
 		target.fallDistance = 0;
 		target.hurtMarked = true;
 		double moved = before.distanceTo(chosen.position);
-		double intelligence = variables(player).Intelligence;
+		double intelligence = TemporaryStatBonusManager.effectiveIntelligence(player);
 		float damage = (float) Math.min(24.0D + intelligence / 20.0D,
 				12.0D + intelligence / 15.0D + moved * 1.5D);
 		if (target instanceof Player)
@@ -1895,7 +1913,7 @@ public final class FrostMonarchManager {
 	private static float spearPrimaryDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
 		double damage = 22.0D + TemporaryStatBonusManager.effectiveStrength(player) / 8.0D
-				+ data.Intelligence / 14.0D;
+				+ TemporaryStatBonusManager.effectiveIntelligence(player) / 14.0D;
 		if (target instanceof Player)
 			damage *= 0.75D;
 		if (manifested)
@@ -1906,28 +1924,28 @@ public final class FrostMonarchManager {
 	private static float flashFreezeDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
 		return scaleFrostDamage(12.0D + TemporaryStatBonusManager.effectiveStrength(player) / 18.0D
-						+ data.Intelligence / 10.0D,
+						+ TemporaryStatBonusManager.effectiveIntelligence(player) / 10.0D,
 				target, manifested);
 	}
 
 	private static float frostCounterDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
 		return scaleFrostDamage(16.0D + TemporaryStatBonusManager.effectiveStrength(player) / 12.0D
-						+ data.Intelligence / 12.0D,
+						+ TemporaryStatBonusManager.effectiveIntelligence(player) / 12.0D,
 				target, manifested);
 	}
 
 	private static float glacialPursuitDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
 		return scaleFrostDamage(14.0D + TemporaryStatBonusManager.effectiveStrength(player) / 14.0D
-						+ data.Intelligence / 10.0D,
+						+ TemporaryStatBonusManager.effectiveIntelligence(player) / 10.0D,
 				target, manifested);
 	}
 
 	private static float absoluteZeroPulseDamage(ServerPlayer player, LivingEntity target, boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
 		return scaleFrostDamage(4.0D + TemporaryStatBonusManager.effectiveStrength(player) / 50.0D
-						+ data.Intelligence / 30.0D,
+						+ TemporaryStatBonusManager.effectiveIntelligence(player) / 30.0D,
 				target, manifested);
 	}
 
@@ -1935,7 +1953,7 @@ public final class FrostMonarchManager {
 			boolean manifested) {
 		SololevelingModVariables.PlayerVariables data = variables(player);
 		return scaleFrostDamage(18.0D + TemporaryStatBonusManager.effectiveStrength(player) / 14.0D
-						+ data.Intelligence / 9.0D,
+						+ TemporaryStatBonusManager.effectiveIntelligence(player) / 9.0D,
 				target, manifested);
 	}
 

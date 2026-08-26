@@ -41,7 +41,7 @@ public class Ability1OnKeyReleasedProcedure {
 			});
 		}
 		if (entity instanceof LivingEntity _entity)
-			_entity.removeEffect(SololevelingModMobEffects.USING_FIRE.get());
+			_entity.removeEffect(SololevelingModMobEffects.USING_FIRE);
 		CooldownManager.clear(entity, "mana_refresh");
 		{
 			boolean _setval = false;

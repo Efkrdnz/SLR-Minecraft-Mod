@@ -4,16 +4,20 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.DailyQuestHelper;
-import net.solocraft.procedures.RewardCollectProcedure;
 import net.solocraft.util.DkcQuestManager;
+import net.solocraft.util.JobChangeQuestManager;
 import net.solocraft.util.RewardManager;
 import net.solocraft.util.SystemNotifications;
 import net.solocraft.util.SystemPlayerAccess;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
@@ -30,7 +34,7 @@ import javax.annotation.Nullable;
  * Owns assignment, migration, timing, failure and rewards for the Daily Quest.
  * Objective progress itself lives in {@link DailyQuestObjectiveManager}.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DailyQuestLifecycleManager {
 	public static final int SAVE_SCHEMA = 2;
 	public static final double QUEST_DURATION_TICKS = 20.0D * 60.0D * 20.0D;
@@ -38,19 +42,21 @@ public final class DailyQuestLifecycleManager {
 	private static final double FIVE_MINUTES_TICKS = 5.0D * 60.0D * 20.0D;
 	private static final double ONE_MINUTE_TICKS = 60.0D * 20.0D;
 	private static final String DAILY_FULL_RECOVERY_REWARD = "FR";
-	private static final String DAILY_SKILL_POINTS_REWARD = "SP10";
+	private static final String DAILY_SKILL_POINTS_REWARD =
+			"SP" + net.solocraft.util.SkillPointRules.DAILY_QUEST;
 	private static final String DAILY_ITEM_REWARD = "ITEMBOX";
-	private static final String SECRET_SKILL_POINTS_REWARD = "SP20";
+	private static final String SECRET_SKILL_POINTS_REWARD =
+			"SP" + net.solocraft.util.SkillPointRules.SECRET_DAILY_QUEST;
 	private static final String SECRET_DKC_KEY_REWARD = "ITEM:sololeveling:redkey";
 	private static final ResourceKey<Level> SURVIVAL_DIMENSION = ResourceKey.create(
-			Registries.DIMENSION, new ResourceLocation(SololevelingMod.MODID, "survival_dimension"));
+			Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "survival_dimension"));
 
 	private DailyQuestLifecycleManager() {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		SololevelingModVariables.PlayerVariables variables = variables(player);
 		if (variables == null)
@@ -161,6 +167,11 @@ public final class DailyQuestLifecycleManager {
 
 	private static void startQuest(ServerPlayer player,
 			SololevelingModVariables.PlayerVariables variables, long minecraftDay) {
+		// Guarded here rather than only at the daily tick because startQuestNow
+		// reaches this same funnel from the admin command. A released System has
+		// nobody left to set the player a task.
+		if (variables.systemReleased)
+			return;
 		variables.dailyQuestSchema = SAVE_SCHEMA;
 		variables.ActiveDaily = true;
 		variables.dailytimer = QUEST_DURATION_TICKS;
@@ -225,12 +236,29 @@ public final class DailyQuestLifecycleManager {
 		SololevelingModVariables.PlayerVariables variables = variables(player);
 		if (variables == null || !variables.ActiveDaily)
 			return;
+		boolean applyPunishment = shouldPunishFailure(player);
 		boolean keepSecret = DailyQuestHelper.isSecretQuest(player)
 				|| DailyQuestHelper.canActivateSecretQuest(player);
+		// A quest can remain active across a Minecraft-day boundary. Record the
+		// day it actually ended so the idle tick cannot assign a replacement
+		// immediately after failure.
+		variables.lastDailyQuestDay = minecraftDay(player);
 		DailyQuestHelper.sendQuestFailedChat(player);
 		DailyQuestHelper.resetDailyProgress(player);
 		if (keepSecret)
 			DailyQuestHelper.keepSecretQuestPending(player);
+		if (applyPunishment)
+			enterPunishmentZone(player);
+	}
+
+	private static boolean shouldPunishFailure(ServerPlayer player) {
+		return player.level().getGameRules()
+				.getBoolean(SololevelingModGameRules.SOLO_PUNISHMENT)
+				&& !JobChangeQuestManager.isFinished(player);
+	}
+
+	private static boolean enterPunishmentZone(ServerPlayer player) {
+		return DailyPunishmentManager.enter(player);
 	}
 
 	private static void completeQuest(ServerPlayer player) {
@@ -244,35 +272,42 @@ public final class DailyQuestLifecycleManager {
 		// events harmless even if a reward path causes another capability sync.
 		variables.ActiveDaily = false;
 		variables.dailytimer = 0.0D;
+		// Daily quests can span a day boundary. Mark the completion day, rather
+		// than retaining only the assignment day, so a new quest waits for the
+		// next reset window.
+		variables.lastDailyQuestDay = minecraftDay(player);
 		clearLegacyWorkoutState(variables);
 		variables.syncPlayerVariables(player);
 		DailyQuestObjectiveManager.resetQuestRuntime(player);
 
-		// Daily rewards are fixed and independent from the shared pending-reward
-		// inbox. Consuming reward_1/2/3 here allowed an XP reward queued by a
-		// boss or command to be mistaken for Daily Quest XP.
-		RewardCollectProcedure.execute(player, DAILY_FULL_RECOVERY_REWARD);
-		RewardCollectProcedure.execute(player, DAILY_SKILL_POINTS_REWARD);
-		RewardCollectProcedure.execute(player, DAILY_ITEM_REWARD);
+		// Append fixed rewards without consuming unrelated inbox entries. A Full
+		// Recovery remains pending unless one already exists, in which case the
+		// overflow recovery is immediately applied by RewardManager.
+		RewardManager.appendReward(player, DAILY_FULL_RECOVERY_REWARD);
+		RewardManager.appendReward(player, DAILY_SKILL_POINTS_REWARD);
+		RewardManager.appendReward(player, DAILY_ITEM_REWARD);
 		if (secretQuest) {
-			RewardCollectProcedure.execute(player, DAILY_FULL_RECOVERY_REWARD);
-			RewardCollectProcedure.execute(player, SECRET_SKILL_POINTS_REWARD);
 			DkcQuestManager.unlock(player);
 			DailyQuestHelper.completeSecretQuest(player);
+			RewardManager.appendReward(player, DAILY_FULL_RECOVERY_REWARD);
+			RewardManager.appendReward(player, SECRET_SKILL_POINTS_REWARD);
+			RewardManager.appendReward(player, SECRET_DKC_KEY_REWARD);
 		}
 
 		variables.syncPlayerVariables(player);
-		if (secretQuest)
-			RewardManager.appendReward(player, SECRET_DKC_KEY_REWARD);
 
 		if (secretQuest) {
-			SystemNotifications.showTitle(player, 0xFFFF3D8D, 120,
+			SystemNotifications.showTitleUnder(player, 0xFFFF3D8D, 120,
 					Component.literal("SECRET QUEST COMPLETE")
-							.withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD));
+							.withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD),
+					Component.literal("Rewards added to System Rewards.")
+							.withStyle(ChatFormatting.LIGHT_PURPLE));
 		} else {
-			SystemNotifications.showTitle(player, 0xFFFF9A3D, 100,
+			SystemNotifications.showTitleUnder(player, 0xFFFF9A3D, 100,
 					Component.literal("DAILY QUEST COMPLETE")
-							.withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
+							.withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD),
+					Component.literal("Rewards added to System Rewards.")
+							.withStyle(ChatFormatting.GRAY));
 		}
 	}
 
@@ -318,7 +353,10 @@ public final class DailyQuestLifecycleManager {
 	}
 
 	private static long minecraftDay(ServerPlayer player) {
-		return Math.floorDiv(player.level().getDayTime(), 24000L);
+		// Custom dimensions may expose a different day-time value. Daily resets
+		// always use the server Overworld clock so changing dimensions cannot
+		// manufacture another assignment.
+		return Math.floorDiv(player.server.overworld().getDayTime(), 24000L);
 	}
 
 	@Nullable

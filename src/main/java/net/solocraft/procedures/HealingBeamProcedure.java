@@ -8,7 +8,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.MobType;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.Entity;
@@ -78,7 +78,7 @@ public class HealingBeamProcedure {
 										capability.syncPlayerVariables(entity);
 									});
 								}
-								if (entityiterator instanceof LivingEntity _livEnt58 && _livEnt58.getMobType() == MobType.UNDEAD) {
+								if (entityiterator instanceof LivingEntity _livEnt58 && _livEnt58.getType().is(EntityTypeTags.UNDEAD)) {
 									entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MAGIC)), 8);
 								} else {
 									if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party)

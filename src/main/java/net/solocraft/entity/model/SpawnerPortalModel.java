@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class SpawnerPortalModel extends GeoModel<SpawnerPortalEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(SpawnerPortalEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/spawnerportal.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/spawnerportal.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(SpawnerPortalEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/spawnerportal.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/spawnerportal.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(SpawnerPortalEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

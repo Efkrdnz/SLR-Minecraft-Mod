@@ -6,16 +6,17 @@ import net.solocraft.procedures.PartyLeaveProcedure;
 import net.solocraft.procedures.PartyMembersProcedure;
 import net.solocraft.procedures.PartyShowProcedure;
 
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.commands.Commands;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 
 /** Compatibility commands backed by the same server party service as the GUI. */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class CreatePartyCommand {
 	private CreatePartyCommand() {
 	}

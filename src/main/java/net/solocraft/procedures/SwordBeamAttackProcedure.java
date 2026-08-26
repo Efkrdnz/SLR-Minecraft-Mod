@@ -3,8 +3,9 @@ package net.solocraft.procedures;
 import net.solocraft.entity.SwordBeamProjectileEntity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.ManaRules;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -26,7 +27,18 @@ public class SwordBeamAttackProcedure {
 			return;
 		if (CooldownManager.isOnCooldown(entity, "Sword Beam"))
 			return;
-		CooldownManager.set(entity, "Sword Beam", 50);
+		// Sword Beam previously cost nothing at all, which made the class's
+		// ranged pressure free while its opener cost 1000.
+		int cost = ManaRules.cost(entity, ManaRules.Band.LOW);
+		if (!ManaRules.spend(entity, cost)) {
+			if (entity instanceof net.minecraft.world.entity.player.Player player
+					&& !player.level().isClientSide())
+				player.displayClientMessage(
+						net.minecraft.network.chat.Component.literal("Not enough MP!"), true);
+			return;
+		}
+		CooldownManager.set(entity, "Sword Beam", 60);
+		CooldownManager.set(entity, "mana_refresh", 30);
 		livingEntity.swing(InteractionHand.MAIN_HAND, true);
 		float damage = (float) Math.max(1.0D, livingEntity.getAttribute(Attributes.ATTACK_DAMAGE).getValue() * 0.34D);
 		Level level = livingEntity.level();
@@ -35,7 +47,7 @@ public class SwordBeamAttackProcedure {
 		Vec3 eye = livingEntity.getEyePosition();
 		projectile.setOwner(livingEntity);
 		projectile.setBaseDamage(damage);
-		projectile.setKnockback(1);
+		net.solocraft.entity.LegacyProjectileCompat.setKnockback(projectile, 1);
 		projectile.setSilent(true);
 		projectile.setCritArrow(false);
 		projectile.setOrigin(eye.x, eye.y, eye.z);
@@ -48,6 +60,6 @@ public class SwordBeamAttackProcedure {
 
 	private static void playSound(Level level, double x, double y, double z) {
 		float pitch = Mth.nextFloat(level.getRandom(), 0.74F, 0.92F);
-		level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, 0.9F, pitch);
+		level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:slash")), SoundSource.NEUTRAL, 0.9F, pitch);
 	}
 }

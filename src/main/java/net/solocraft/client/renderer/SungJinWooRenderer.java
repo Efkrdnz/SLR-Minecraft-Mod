@@ -18,6 +18,6 @@ public class SungJinWooRenderer extends HumanoidMobRenderer<SungJinWooEntity, Hu
 
 	@Override
 	public ResourceLocation getTextureLocation(SungJinWooEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/sung_jin_woo.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/sung_jin_woo.png");
 	}
 }

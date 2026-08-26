@@ -18,6 +18,6 @@ public class TrainingBotRenderer extends HumanoidMobRenderer<TrainingBotEntity, 
 
 	@Override
 	public ResourceLocation getTextureLocation(TrainingBotEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/noob_saibot_bi_han_mortal_kombat_xl_villain_ninja_dark_black_shadow_mask_fighter_mk11.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/noob_saibot_bi_han_mortal_kombat_xl_villain_ninja_dark_black_shadow_mask_fighter_mk11.png");
 	}
 }

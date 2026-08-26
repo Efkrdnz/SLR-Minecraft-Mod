@@ -1,21 +1,22 @@
 package net.solocraft.procedures;
 
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.TamableAnimal;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class DKCCombatTrackerProcedure {
 	private static final String LAST_COMBAT_TICK = "solocraft_dkc_last_combat_tick";
 	private static final long OUT_OF_COMBAT_TICKS = 20L * 20L;
 
 	@SubscribeEvent
-	public static void onEntityHurt(LivingHurtEvent event) {
+	public static void onEntityHurt(LivingIncomingDamageEvent event) {
 		if (event == null || event.getEntity() == null)
 			return;
 		if (event.getEntity().getPersistentData().getBoolean("radiru_training_dummy"))

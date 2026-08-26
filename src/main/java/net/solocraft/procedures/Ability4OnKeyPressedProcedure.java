@@ -6,7 +6,7 @@ import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -26,6 +26,7 @@ import net.minecraft.core.BlockPos;
 import net.solocraft.util.CooldownManager;
 import net.solocraft.util.FrostMonarchManager;
 import net.solocraft.util.TemporaryArmorSessionManager;
+import net.solocraft.util.VesselProgressionManager;
 
 public class Ability4OnKeyPressedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -43,28 +44,26 @@ public class Ability4OnKeyPressedProcedure {
 			if (!CooldownManager.isOnCooldown(entity, "aura")) {
 				CooldownManager.set(entity, "aura", 7200);
 				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.AURA.get(), 3600, 1, false, false));
+					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.AURA, 3600, 1, false, false));
 				if (world instanceof Level _level) {
 					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.beacon.activate")), SoundSource.NEUTRAL, 1, 2);
+						_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.beacon.activate")), SoundSource.NEUTRAL, 1, 2);
 					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.beacon.activate")), SoundSource.NEUTRAL, 1, 2, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.beacon.activate")), SoundSource.NEUTRAL, 1, 2, false);
 					}
 				}
 				if (entity instanceof Player _player && !_player.level().isClientSide())
 					_player.displayClientMessage(Component.literal("\u00A71Activated Aura"), true);
 			}
 		} else {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1
-					|| (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).ShadowBody) {
+			if (VesselProgressionManager.isShadowMonarch(entity)) {
 				if (DoesHaveShadowManifestationProcedure.execute(entity)) {
 					if (!((entity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.HEAD) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_HELMET.get())
 							&& !((entity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.CHEST) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_CHESTPLATE.get())
 							&& !((entity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.LEGS) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_LEGGINGS.get())
 							&& !((entity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.FEET) : ItemStack.EMPTY).getItem() == SololevelingModItems.SHADOW_ARMOR_BOOTS.get())
 							&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 500
-							&& ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1
-									|| (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).ShadowBody)) {
+							&& VesselProgressionManager.isShadowMonarch(entity)) {
 						{
 							ItemStack _setval = (entity instanceof LivingEntity _entGetArmor ? _entGetArmor.getItemBySlot(EquipmentSlot.HEAD) : ItemStack.EMPTY);
 							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {

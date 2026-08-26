@@ -42,10 +42,10 @@ public class DungeonPlaceKamishProcedure {
 				}
 			} else if (spawn == true) {
 				if (world instanceof ServerLevel _serverworld) {
-					StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishupdatedstart"));
+					StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishupdatedstart"));
 					if (template != null) {
 						template.placeInWorld(_serverworld, BlockPos.containing(xOff - 24, yOff, zOff - 24), BlockPos.containing(xOff - 24, yOff, zOff - 24),
-								new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+								new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 					}
 				}
 				xOff = xOff + 49;
@@ -61,37 +61,37 @@ public class DungeonPlaceKamishProcedure {
 						if ((world.getBlockState(BlockPos.containing(xOff + sx, yOff + sy, zOff + sz))).getBlock() == Blocks.OBSIDIAN) {
 							if ((world.getBlockState(BlockPos.containing(xOff + sx + 27, (yOff + sy) - 5, zOff + sz))).getBlock() == Blocks.AIR) {
 								if (world instanceof ServerLevel _serverworld) {
-									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishblock"));
+									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishblock"));
 									if (template != null) {
 										template.placeInWorld(_serverworld, BlockPos.containing(xOff + sx + 25, yOff + sy + 3, (zOff + sz) - 1), BlockPos.containing(xOff + sx + 25, yOff + sy + 3, (zOff + sz) - 1),
-												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 									}
 								}
 							}
 							if ((world.getBlockState(BlockPos.containing((xOff + sx) - 27, (yOff + sy) - 5, zOff + sz))).getBlock() == Blocks.AIR) {
 								if (world instanceof ServerLevel _serverworld) {
-									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishblock"));
+									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishblock"));
 									if (template != null) {
 										template.placeInWorld(_serverworld, BlockPos.containing((xOff + sx) - 26, yOff + sy + 3, (zOff + sz) - 1), BlockPos.containing((xOff + sx) - 26, yOff + sy + 3, (zOff + sz) - 1),
-												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 									}
 								}
 							}
 							if ((world.getBlockState(BlockPos.containing(xOff + sx, yOff + sy + 10, (zOff + sz) - (-27)))).getBlock() == Blocks.AIR) {
 								if (world instanceof ServerLevel _serverworld) {
-									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishblock"));
+									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishblock"));
 									if (template != null) {
 										template.placeInWorld(_serverworld, BlockPos.containing((xOff + sx) - 1, yOff + sy + 3, (zOff + sz) - 26), BlockPos.containing((xOff + sx) - 1, yOff + sy + 3, (zOff + sz) - 26),
-												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 									}
 								}
 							}
 							if ((world.getBlockState(BlockPos.containing(xOff + sx, (yOff + sy) - 5, zOff + sz + 27))).getBlock() == Blocks.AIR) {
 								if (world instanceof ServerLevel _serverworld) {
-									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishblock"));
+									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishblock"));
 									if (template != null) {
 										template.placeInWorld(_serverworld, BlockPos.containing((xOff + sx) - 1, yOff + sy + 3, zOff + sz + 25), BlockPos.containing((xOff + sx) - 1, yOff + sy + 3, zOff + sz + 25),
-												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 									}
 								}
 							}
@@ -108,26 +108,26 @@ public class DungeonPlaceKamishProcedure {
 					if (asd == false) {
 						if (Rand < 0.33) {
 							if (world instanceof ServerLevel _serverworld) {
-								StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishroom1"));
+								StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishroom1"));
 								if (template != null) {
 									template.placeInWorld(_serverworld, BlockPos.containing(xOff - 24, yOff, zOff - 24), BlockPos.containing(xOff - 24, yOff, zOff - 24),
-											new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+											new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 								}
 							}
 						} else if (Rand < 0.67) {
 							if (world instanceof ServerLevel _serverworld) {
-								StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishroom2"));
+								StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishroom2"));
 								if (template != null) {
 									template.placeInWorld(_serverworld, BlockPos.containing(xOff - 24, yOff, zOff - 24), BlockPos.containing(xOff - 24, yOff, zOff - 24),
-											new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+											new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 								}
 							}
 						} else if (Rand < 1) {
 							if (world instanceof ServerLevel _serverworld) {
-								StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishroom3"));
+								StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishroom3"));
 								if (template != null) {
 									template.placeInWorld(_serverworld, BlockPos.containing(xOff - 24, yOff, zOff - 24), BlockPos.containing(xOff - 24, yOff, zOff - 24),
-											new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+											new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 								}
 							}
 						}
@@ -137,35 +137,35 @@ public class DungeonPlaceKamishProcedure {
 							Rand = Math.random();
 							if (Rand < 0.33) {
 								if (world instanceof ServerLevel _serverworld) {
-									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishroom1"));
+									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishroom1"));
 									if (template != null) {
 										template.placeInWorld(_serverworld, BlockPos.containing(xOff - 24, yOff, zOff - 24), BlockPos.containing(xOff - 24, yOff, zOff - 24),
-												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 									}
 								}
 							} else if (Rand < 0.67) {
 								if (world instanceof ServerLevel _serverworld) {
-									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishroom2"));
+									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishroom2"));
 									if (template != null) {
 										template.placeInWorld(_serverworld, BlockPos.containing(xOff - 24, yOff, zOff - 24), BlockPos.containing(xOff - 24, yOff, zOff - 24),
-												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 									}
 								}
 							} else if (Rand < 1) {
 								if (world instanceof ServerLevel _serverworld) {
-									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishroom3"));
+									StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishroom3"));
 									if (template != null) {
 										template.placeInWorld(_serverworld, BlockPos.containing(xOff - 24, yOff, zOff - 24), BlockPos.containing(xOff - 24, yOff, zOff - 24),
-												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+												new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 									}
 								}
 							}
 						} else if (Rand < 1) {
 							if (world instanceof ServerLevel _serverworld) {
-								StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "kamishboss"));
+								StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "kamishboss"));
 								if (template != null) {
 									template.placeInWorld(_serverworld, BlockPos.containing(xOff - 24, yOff, zOff - 24), BlockPos.containing(xOff - 24, yOff, zOff - 24),
-											new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+											new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 								}
 							}
 							break;

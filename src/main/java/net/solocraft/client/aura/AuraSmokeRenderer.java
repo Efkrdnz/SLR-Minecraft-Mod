@@ -5,10 +5,11 @@ import net.solocraft.client.aura.AuraSmokeField.Puff;
 import net.solocraft.client.renderer.shader.AuraSmokeRenderTypes;
 import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -20,8 +21,6 @@ import net.minecraft.world.phys.Vec3;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 
 import java.util.List;
@@ -32,9 +31,9 @@ import java.util.Map;
  * space. Rendering here (rather than in {@code RenderPlayerEvent}) is what lets
  * the smoke lag behind and drift independently of the player's rigid pose.
  */
-@Mod.EventBusSubscriber(
+@EventBusSubscriber(
 		modid = SololevelingMod.MODID,
-		bus = Mod.EventBusSubscriber.Bus.FORGE,
+		bus = EventBusSubscriber.Bus.GAME,
 		value = Dist.CLIENT
 )
 public final class AuraSmokeRenderer {
@@ -79,7 +78,8 @@ public final class AuraSmokeRenderer {
 			Camera camera = event.getCamera();
 			Vec3 cameraPosition = camera.getPosition();
 			Quaternionf billboard = minecraft.getEntityRenderDispatcher().cameraOrientation();
-			float partialTick = event.getPartialTick();
+			float partialTick = event.getPartialTick()
+					.getGameTimeDeltaPartialTick(false);
 			boolean custom = AuraSmokeRenderTypes.usesCustomShader();
 
 			PoseStack poseStack = DeferredWorldShaderRenderer.worldPoseStack(event);
@@ -172,21 +172,19 @@ public final class AuraSmokeRenderer {
 		poseStack.translate(x, y, z);
 		poseStack.mulPose(billboard);
 
-		Matrix4f pose = poseStack.last().pose();
-		Matrix3f normal = poseStack.last().normal();
+		PoseStack.Pose pose = poseStack.last();
 
-		vertex(vertices, pose, normal, -size, -size, uBase, 1.0F, red, green, blue, packedAlpha);
-		vertex(vertices, pose, normal, size, -size, uBase + 1.0F, 1.0F, red, green, blue, packedAlpha);
-		vertex(vertices, pose, normal, size, size, uBase + 1.0F, 0.0F, red, green, blue, packedAlpha);
-		vertex(vertices, pose, normal, -size, size, uBase, 0.0F, red, green, blue, packedAlpha);
+		vertex(vertices, pose, -size, -size, uBase, 1.0F, red, green, blue, packedAlpha);
+		vertex(vertices, pose, size, -size, uBase + 1.0F, 1.0F, red, green, blue, packedAlpha);
+		vertex(vertices, pose, size, size, uBase + 1.0F, 0.0F, red, green, blue, packedAlpha);
+		vertex(vertices, pose, -size, size, uBase, 0.0F, red, green, blue, packedAlpha);
 
 		poseStack.popPose();
 	}
 
 	private static void vertex(
 			VertexConsumer vertices,
-			Matrix4f pose,
-			Matrix3f normal,
+			PoseStack.Pose pose,
 			float x,
 			float y,
 			float u,
@@ -196,12 +194,11 @@ public final class AuraSmokeRenderer {
 			int blue,
 			int alpha
 	) {
-		vertices.vertex(pose, x, y, 0.0F)
-				.color(red, green, blue, alpha)
-				.uv(u, v)
-				.overlayCoords(OverlayTexture.NO_OVERLAY)
-				.uv2(240)
-				.normal(normal, 0.0F, 0.0F, 1.0F)
-				.endVertex();
+		vertices.addVertex(pose, x, y, 0.0F)
+				.setColor(red, green, blue, alpha)
+				.setUv(u, v)
+				.setOverlay(OverlayTexture.NO_OVERLAY)
+				.setLight(240)
+				.setNormal(pose, 0.0F, 0.0F, 1.0F);
 	}
 }

@@ -42,7 +42,6 @@ public class ChooseClassScreen extends AbstractContainerScreen<ChooseClassMenu> 
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 		if (mouseX > leftPos + -67 && mouseX < leftPos + -43 && mouseY > topPos + -65 && mouseY < topPos + -41)
@@ -89,7 +88,7 @@ public class ChooseClassScreen extends AbstractContainerScreen<ChooseClassMenu> 
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/techbase.png"), this.leftPos + -75, this.topPos + -73, 0, 0, 150, 150, 150, 150);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/techbase.png"), this.leftPos + -75, this.topPos + -73, 0, 0, 150, 150, 150, 150);
 
 		RenderSystem.disableBlend();
 	}
@@ -120,7 +119,7 @@ public class ChooseClassScreen extends AbstractContainerScreen<ChooseClassMenu> 
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_classchooseassasin = new ImageButton(this.leftPos + -65, this.topPos + -63, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_classchooseassasin.png"), 64, 42, e -> {
+		imagebutton_classchooseassasin = new LegacyAtlasImageButton(this.leftPos + -65, this.topPos + -63, 64, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_classchooseassasin.png"), 64, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new ChooseClassButtonMessage(0, x, y, z));
 				ChooseClassButtonMessage.handleButtonAction(entity, 0, x, y, z);
@@ -128,7 +127,7 @@ public class ChooseClassScreen extends AbstractContainerScreen<ChooseClassMenu> 
 		});
 		guistate.put("button:imagebutton_classchooseassasin", imagebutton_classchooseassasin);
 		this.addRenderableWidget(imagebutton_classchooseassasin);
-		imagebutton_classchoosemage = new ImageButton(this.leftPos + 1, this.topPos + -63, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_classchoosemage.png"), 64, 42, e -> {
+		imagebutton_classchoosemage = new LegacyAtlasImageButton(this.leftPos + 1, this.topPos + -63, 64, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_classchoosemage.png"), 64, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new ChooseClassButtonMessage(1, x, y, z));
 				ChooseClassButtonMessage.handleButtonAction(entity, 1, x, y, z);
@@ -136,7 +135,7 @@ public class ChooseClassScreen extends AbstractContainerScreen<ChooseClassMenu> 
 		});
 		guistate.put("button:imagebutton_classchoosemage", imagebutton_classchoosemage);
 		this.addRenderableWidget(imagebutton_classchoosemage);
-		imagebutton_classchooseknight = new ImageButton(this.leftPos + -65, this.topPos + -26, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_classchooseknight.png"), 64, 42, e -> {
+		imagebutton_classchooseknight = new LegacyAtlasImageButton(this.leftPos + -65, this.topPos + -26, 64, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_classchooseknight.png"), 64, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new ChooseClassButtonMessage(2, x, y, z));
 				ChooseClassButtonMessage.handleButtonAction(entity, 2, x, y, z);
@@ -144,7 +143,7 @@ public class ChooseClassScreen extends AbstractContainerScreen<ChooseClassMenu> 
 		});
 		guistate.put("button:imagebutton_classchooseknight", imagebutton_classchooseknight);
 		this.addRenderableWidget(imagebutton_classchooseknight);
-		imagebutton_classchoosetank = new ImageButton(this.leftPos + 1, this.topPos + -26, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_classchoosetank.png"), 64, 42, e -> {
+		imagebutton_classchoosetank = new LegacyAtlasImageButton(this.leftPos + 1, this.topPos + -26, 64, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_classchoosetank.png"), 64, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new ChooseClassButtonMessage(3, x, y, z));
 				ChooseClassButtonMessage.handleButtonAction(entity, 3, x, y, z);
@@ -152,7 +151,7 @@ public class ChooseClassScreen extends AbstractContainerScreen<ChooseClassMenu> 
 		});
 		guistate.put("button:imagebutton_classchoosetank", imagebutton_classchoosetank);
 		this.addRenderableWidget(imagebutton_classchoosetank);
-		imagebutton_classchoosehealer = new ImageButton(this.leftPos + -65, this.topPos + 11, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_classchoosehealer.png"), 64, 42, e -> {
+		imagebutton_classchoosehealer = new LegacyAtlasImageButton(this.leftPos + -65, this.topPos + 11, 64, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_classchoosehealer.png"), 64, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new ChooseClassButtonMessage(4, x, y, z));
 				ChooseClassButtonMessage.handleButtonAction(entity, 4, x, y, z);
@@ -160,7 +159,7 @@ public class ChooseClassScreen extends AbstractContainerScreen<ChooseClassMenu> 
 		});
 		guistate.put("button:imagebutton_classchoosehealer", imagebutton_classchoosehealer);
 		this.addRenderableWidget(imagebutton_classchoosehealer);
-		imagebutton_classchoosearcher = new ImageButton(this.leftPos + 1, this.topPos + 11, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_classchoosearcher.png"), 64, 42, e -> {
+		imagebutton_classchoosearcher = new LegacyAtlasImageButton(this.leftPos + 1, this.topPos + 11, 64, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_classchoosearcher.png"), 64, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new ChooseClassButtonMessage(5, x, y, z));
 				ChooseClassButtonMessage.handleButtonAction(entity, 5, x, y, z);

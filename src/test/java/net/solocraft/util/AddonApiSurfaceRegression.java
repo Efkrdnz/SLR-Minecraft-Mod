@@ -73,6 +73,9 @@ public final class AddonApiSurfaceRegression {
 		skillListMatchesTheModsOwnFormat();
 		SessionSurvivesAContributedClass();
 		syncNeverStripsBehaviour();
+		jobChangeGeneratesGroundBeforeDropping();
+		rulersAuthorityIsCommandOnly();
+		ourExplosionsSpareDroppedItems();
 
 		System.out.println("Addon API surface regression checks passed.");
 	}
@@ -464,6 +467,89 @@ public final class AddonApiSurfaceRegression {
 		expect(body.contains("executorClassName") && body.contains("existing.executor"),
 				"replaceDataDefinitions must carry both a deferred class name and an "
 						+ "already-resolved executor across the replace");
+	}
+
+	/**
+	 * The Job Change arena must exist before the player can fall into it.
+	 *
+	 * <p>The arena sits at a random coordinate up to thirty million blocks out in
+	 * a dimension where nothing is loaded. Teleporting first only requests those
+	 * chunks; restoring gravity on a fixed timer then assumed generation had
+	 * finished. On a slower server it had not, and the player fell through empty
+	 * space into the void -- while a friend beside them, whose own coordinates had
+	 * generated in time, was fine.
+	 */
+	private static void jobChangeGeneratesGroundBeforeDropping() throws IOException {
+		String source = read("procedures", "JobChangeQuestEntryProcedure.java");
+
+		expect(source.contains("ensureArenaChunksLoaded("),
+				"The arena chunks must be generated before the player is sent there");
+		expect(source.contains("ChunkStatus.FULL"),
+				"Chunk generation must be forced to completion, not merely requested");
+
+		int ensure = source.indexOf("ensureArenaChunksLoaded(player.serverLevel()");
+		int teleport = source.indexOf("player.connection.teleport(entryX");
+		expect(ensure >= 0 && teleport >= 0 && ensure < teleport,
+				"The ground must be generated BEFORE the teleport, not after");
+
+		expect(source.contains("restoreGravityWhenGrounded("),
+				"Gravity must be handed back when there is ground, not on a timer");
+		expect(source.contains("hasGroundBeneath("),
+				"Something must actually check for ground beneath the player");
+	}
+
+	/**
+	 * Selecting a Ruler through the Job Change quest must not hand out Ruler's
+	 * Authority. The runestone Igris drops is how it is earned; granting it on
+	 * selection made that drop pointless. A vessel handed over by command is the
+	 * exception, because the recipient may never have fought Igris at all.
+	 */
+	private static void rulersAuthorityIsCommandOnly() throws IOException {
+		String source = read("util", "VesselManager.java");
+
+		expect(source.contains("boolean enforceLimit, boolean grantAuthority"),
+				"Assignment must carry whether the Authority comes with it");
+		expect(source.contains("RULER.equals(definition.type()) && grantAuthority"),
+				"A Ruler vessel must only grant Authority when the caller asked for it");
+		expect(source.contains("assignPlayer(player, definition, enforceLimit, false)"),
+				"The default assignment path must not grant Authority");
+
+		int cmd = source.indexOf("public static int assign(CommandContext");
+		expect(cmd >= 0, "The command entry point must still exist");
+		String command = source.substring(cmd, Math.min(source.length(), cmd + 1500));
+		expect(command.contains("assignPlayer(player, definition, true, true)"),
+				"The command is the one path that grants Authority");
+	}
+
+	/**
+	 * This mod's own explosions must not delete dropped loot.
+	 *
+	 * <p>Most of them already pass {@code ExplosionInteraction.NONE} so they leave
+	 * the terrain alone, but a vanilla explosion still damages every entity in
+	 * range and an item entity has too little health to survive one. A boss using
+	 * an area attack over a fight's worth of drops erased them.
+	 *
+	 * <p>An unattributed explosion cannot be recognised as ours, so the guard only
+	 * works while the mod's own explosions name a source.
+	 */
+	private static void ourExplosionsSpareDroppedItems() throws IOException {
+		String guard = read("util", "ModExplosionItemGuard.java");
+		expect(guard.contains("ExplosionEvent.Detonate"),
+				"The guard must run while the explosion is choosing its victims");
+		expect(guard.contains("ItemEntity") && guard.contains("ExperienceOrb"),
+				"Both dropped items and experience must be spared");
+		expect(guard.contains("getNamespace()"),
+				"The guard must be scoped to this mod's own explosions; vanilla TNT "
+						+ "destroying items is a rule players rely on");
+
+		for (String procedure : new String[] {
+				"LightBallWhileProjectileFlyingTickProcedure",
+				"FireFlyHitsSomeoneProcedure" }) {
+			String source = read("procedures", procedure + ".java");
+			expect(!source.contains("explode(null"),
+					procedure + " must attribute its explosion, or the item guard "
+							+ "cannot tell the explosion is ours");
+		}
 	}
 
 	private static String read(String... parts) throws IOException {

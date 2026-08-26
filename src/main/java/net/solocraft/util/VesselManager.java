@@ -61,7 +61,9 @@ public final class VesselManager {
 			for (Entity target : EntityArgument.getEntities(context, "name")) {
 				if (!(target instanceof ServerPlayer player))
 					continue;
-				AssignmentResult result = assignPlayer(player, definition, true);
+				// Command-granted: the recipient may never have fought Igris, so
+				// hand over the Authority that would otherwise make the vessel inert.
+				AssignmentResult result = assignPlayer(player, definition, true, true);
 				if (result == AssignmentResult.LOCKED) {
 					locked++;
 					player.sendSystemMessage(Component.literal("That vessel has reached the server limit.").withStyle(ChatFormatting.RED));
@@ -133,7 +135,26 @@ public final class VesselManager {
 		return assignPlayer(player, ANTARES_DEFINITION, enforceLimit);
 	}
 
+	/**
+	 * Assigns a vessel without handing out Ruler's Authority.
+	 *
+	 * <p>The default, because the ordinary way to earn Authority is the runestone
+	 * Igris drops. A Ruler taken through the Job Change quest has already been
+	 * down that road, and granting it again on selection made the runestone
+	 * pointless.
+	 */
 	public static AssignmentResult assignPlayer(ServerPlayer player, VesselDefinition definition, boolean enforceLimit) {
+		return assignPlayer(player, definition, enforceLimit, false);
+	}
+
+	/**
+	 * @param grantAuthority true only when the vessel was handed over directly by
+	 *                       command, where the recipient may never have fought
+	 *                       Igris and would otherwise hold a Ruler vessel with no
+	 *                       way to use it.
+	 */
+	public static AssignmentResult assignPlayer(ServerPlayer player, VesselDefinition definition,
+			boolean enforceLimit, boolean grantAuthority) {
 		if (player == null || definition == null)
 			return AssignmentResult.INVALID;
 		VesselClaimSavedData claims = VesselClaimSavedData.get(player.serverLevel());
@@ -142,7 +163,7 @@ public final class VesselManager {
 			return AssignmentResult.LOCKED;
 		if (!enforceLimit)
 			claims.claimExisting(definition.key(), player.getUUID());
-		applyDefinition(player, definition);
+		applyDefinition(player, definition, grantAuthority);
 		return AssignmentResult.SUCCESS;
 	}
 
@@ -265,21 +286,22 @@ public final class VesselManager {
 			return;
 		}
 		// Existing worlds are grandfathered so lowering the gamerule never deletes a job.
-		assignPlayer(player, definition, false);
+		assignPlayer(player, definition, false, false);
 	}
 
-	private static void applyDefinition(ServerPlayer player, VesselDefinition definition) {
+	private static void applyDefinition(ServerPlayer player, VesselDefinition definition,
+			boolean grantAuthority) {
 		AntaresCombatManager.resetPlayerState(player);
 		if (LiuManifestationManager.isActive(player))
 			LiuManifestationManager.restore(player);
 		TemporaryArmorSessionManager.endForVesselChange(player);
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-			if (RULER.equals(definition.type())) {
+			if (RULER.equals(definition.type()) && grantAuthority) {
 				if (!hasAbility(capability.abilities, "telekinesis")) {
 					capability.abilities = appendAbility(capability.abilities, "telekinesis");
 					capability.vesselGrantedAuthority = true;
 				}
-			} else {
+			} else if (!RULER.equals(definition.type())) {
 				revokeAutomaticAuthority(capability);
 			}
 			capability.vesselType = definition.type();

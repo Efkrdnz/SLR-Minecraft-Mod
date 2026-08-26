@@ -40,7 +40,10 @@ public class FireFlyHitsSomeoneProcedure {
 			if (world instanceof ServerLevel _level)
 				_level.sendParticles(ParticleTypes.FLAME, x, y, z, 5, 3, 3, 3, 1);
 			if (world instanceof Level _level && !_level.isClientSide())
-				_level.explode(null, x, y, z, 1, Level.ExplosionInteraction.NONE);
+				// The firefly, not nobody. It has already been discarded, which the
+				// explosion does not mind, and attributing it is what lets the item
+				// guard recognise this as one of ours.
+				_level.explode(sourceentity, x, y, z, 1, Level.ExplosionInteraction.NONE);
 		}
 	}
 }

@@ -24,7 +24,10 @@ public class LightBallWhileProjectileFlyingTickProcedure {
 		}
 		if ((entity instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.TIEMR) ? _livEnt.getEffect(SololevelingModMobEffects.TIEMR).getDuration() : 0) % 20 == 0) {
 			if (world instanceof Level _level && !_level.isClientSide())
-				_level.explode(null, x, y, z, 3, Level.ExplosionInteraction.NONE);
+				// Attributed to the projectile rather than to nobody: an unowned
+				// explosion cannot be recognised as this mod's, so the item guard
+				// could not spare dropped loot from it.
+				_level.explode(immediatesourceentity, x, y, z, 3, Level.ExplosionInteraction.NONE);
 			if (!immediatesourceentity.level().isClientSide())
 				immediatesourceentity.discard();
 		}

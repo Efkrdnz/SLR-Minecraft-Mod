@@ -836,6 +836,37 @@ handled.
 `restore` is safe to call when the form equipped nothing, so your deactivate path
 does not have to remember which of the two it used.
 
+### Taking over left click
+
+A form can claim the attack button, the way Goliath's stance does:
+
+```java
+// during mod construction
+String form = ExampleContent.id("grave_spiritualization").toString();
+VesselMelee.claimForForm(form, 150);        // priority; built-ins are never displaced
+VesselState.declareMeleeClaimingForm(form); // so another addon knows to stand down
+```
+
+Then handle the swing server-side:
+
+```java
+@SubscribeEvent
+public static void onVesselMelee(VesselMeleeAttackEvent event) {
+    // Another addon's claim reaches this subscriber too. Check whose it is.
+    if (!MY_FORM.equals(event.getFormId())) return;
+    ServerPlayer player = event.getPlayer();
+    ...
+}
+```
+
+The event proves a button was pressed and nothing more. **Rate limiting and any
+resource cost belong in the handler**, because a modified client can press as
+fast as it likes — `AbilityCooldowns` with your own key is the easy way.
+
+The arm swing is played for you. Claiming the button cancels the vanilla attack,
+which would otherwise cancel the animation with it and leave your melee landing
+damage while the player stands perfectly still.
+
 ---
 
 ## 11. Running and debugging

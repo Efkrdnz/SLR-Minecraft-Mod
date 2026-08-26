@@ -85,7 +85,9 @@ public final class ClassStyleRules {
 			new Style(FIGHTER_CLASS_ID, 2, "blade", "Swordsman",
 					"Movement cuts, sword waves and precise finishers",
 					0xFFF2E08A, true),
-			new Style(FIGHTER_CLASS_ID, 3, "feral", "Ravager",
+			// Renamed from "Ravager"; the stored key stays "feral" so every
+			// hunter who already took this style keeps it.
+			new Style(FIGHTER_CLASS_ID, 3, "feral", "Mutant",
 					"Beast senses, claws and partial transformation",
 					0xFFFFA726, true),
 

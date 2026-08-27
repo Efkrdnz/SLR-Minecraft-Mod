@@ -3,10 +3,11 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.FangedKasakaEntity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.player.Player;
@@ -23,7 +24,7 @@ import javax.annotation.Nullable;
 
 import java.util.ArrayList;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class KasakaEntityDiesProcedure {
 	@SubscribeEvent
 	public static void onEntityDeath(LivingDeathEvent event) {
@@ -51,7 +52,7 @@ public class KasakaEntityDiesProcedure {
 		}
 		if (entity instanceof FangedKasakaEntity) {
 			if (sourceentity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) {
-				if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_kasaka")))) {
+				if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_kasaka")))) {
 					{
 						Entity _ent = (sourceentity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null);
 						if (!_ent.level().isClientSide() && _ent.getServer() != null) {
@@ -103,7 +104,7 @@ public class KasakaEntityDiesProcedure {
 				}
 			} else if (sourceentity instanceof Player) {
 				if (((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party).equals("")) {
-					if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_kasaka")))) {
+					if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_kasaka")))) {
 						{
 							Entity _ent = sourceentity;
 							if (!_ent.level().isClientSide() && _ent.getServer() != null) {
@@ -154,7 +155,7 @@ public class KasakaEntityDiesProcedure {
 						if (((sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party)
 								.equals((entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party)) {
 							if ((entity.level().dimension()) == (entityiterator.level().dimension())) {
-								if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_kasaka")))) {
+								if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_kasaka")))) {
 									{
 										Entity _ent = entityiterator;
 										if (!_ent.level().isClientSide() && _ent.getServer() != null) {

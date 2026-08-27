@@ -4,12 +4,13 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -20,14 +21,14 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Durable ownership and recovery rules for the one-time Instant Dungeon Key.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class InstanceDungeonKeyAccess {
 	private static final String CLAIMED_TAG = "slr_instance_dungeon_key_claimed";
 	private static final String COMPLETED_TAG = "slr_instance_dungeon_completed";
 	private static final ResourceLocation KASAKA_ADVANCEMENT =
-			new ResourceLocation("sololeveling", "kasakas_domain");
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "kasakas_domain");
 	private static final ResourceLocation INSTANCE_ENTRY_ADVANCEMENT =
-			new ResourceLocation("sololeveling", "explore_dun_instance_c");
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "explore_dun_instance_c");
 
 	private InstanceDungeonKeyAccess() {
 	}
@@ -68,12 +69,15 @@ public final class InstanceDungeonKeyAccess {
 		if (player == null)
 			return false;
 		CompoundTag persisted = persistentPlayerData(player);
-		if (persisted.getBoolean(COMPLETED_TAG))
+		if (persisted.getBoolean(COMPLETED_TAG)) {
+			clearCompletedGettingStrongerQuest(player);
 			return true;
+		}
 		if (hasAdvancement(player, KASAKA_ADVANCEMENT)
 				&& hasAdvancement(player, INSTANCE_ENTRY_ADVANCEMENT)) {
 			persisted.putBoolean(CLAIMED_TAG, true);
 			persisted.putBoolean(COMPLETED_TAG, true);
+			clearCompletedGettingStrongerQuest(player);
 			return true;
 		}
 		return false;
@@ -90,6 +94,7 @@ public final class InstanceDungeonKeyAccess {
 		CompoundTag persisted = persistentPlayerData(player);
 		persisted.putBoolean(CLAIMED_TAG, true);
 		persisted.putBoolean(COMPLETED_TAG, true);
+		clearCompletedGettingStrongerQuest(player);
 	}
 
 	public static boolean hasPhysicalKey(Player player) {
@@ -130,8 +135,8 @@ public final class InstanceDungeonKeyAccess {
 	private static boolean hasAdvancement(Player player, ResourceLocation id) {
 		if (!(player instanceof ServerPlayer serverPlayer))
 			return false;
-		Advancement advancement = serverPlayer.server.getAdvancements()
-				.getAdvancement(id);
+		AdvancementHolder advancement = serverPlayer.server.getAdvancements()
+				.get(id);
 		return advancement != null && serverPlayer.getAdvancements()
 				.getOrStartProgress(advancement).isDone();
 	}
@@ -147,5 +152,18 @@ public final class InstanceDungeonKeyAccess {
 		return player.getCapability(
 				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 				.orElse(new SololevelingModVariables.PlayerVariables());
+	}
+
+	private static void clearCompletedGettingStrongerQuest(Player player) {
+		if (player == null)
+			return;
+		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY,
+				null).ifPresent(variables -> {
+			if (!"Getting Stronger".equals(variables.MainQuest))
+				return;
+			variables.MainQuest = "";
+			variables.QuestProgression = 0.0D;
+			variables.syncPlayerVariables(player);
+		});
 	}
 }

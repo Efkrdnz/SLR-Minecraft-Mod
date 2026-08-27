@@ -3,15 +3,14 @@ package net.solocraft.entity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.DaggerThrowManager;
 import net.solocraft.util.EntityHighlightSystem;
+import net.solocraft.util.ItemStackData;
 import net.solocraft.util.RulersAuthorityManager;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -57,28 +56,19 @@ public class ThrownDaggerEntity extends Projectile {
 	private long rulerControlTick = Long.MIN_VALUE;
 	private boolean recoveredDiscard;
 
-	public ThrownDaggerEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.THROWN_DAGGER.get(), level);
-	}
-
 	public ThrownDaggerEntity(EntityType<? extends ThrownDaggerEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(ITEM, ItemStack.EMPTY);
-		this.entityData.define(OWNER_ID, Optional.empty());
-		this.entityData.define(TOKEN, Optional.empty());
-		this.entityData.define(SPECTRAL, false);
-		this.entityData.define(RETURNING, false);
-		this.entityData.define(DELAY, 0);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(ITEM, ItemStack.EMPTY);
+		builder.define(OWNER_ID, Optional.empty());
+		builder.define(TOKEN, Optional.empty());
+		builder.define(SPECTRAL, false);
+		builder.define(RETURNING, false);
+		builder.define(DELAY, 0);
 	}
 
 	public static ThrownDaggerEntity createPhysical(ServerPlayer owner, ItemStack item, UUID token, Vec3 origin, Vec3 velocity) {
@@ -248,7 +238,7 @@ public class ThrownDaggerEntity extends Projectile {
 				continue;
 			hitTicks.put(target.getUUID(), this.tickCount);
 			DamageSource source = new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
-					.getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), this, owner);
+					.getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"))), this, owner);
 			float damage = isSpectral() ? DaggerThrowManager.rushDamage(owner) : DaggerThrowManager.physicalDamage(owner);
 			if (target.hurt(source, damage)) {
 				target.invulnerableTime = 0;
@@ -256,7 +246,7 @@ public class ThrownDaggerEntity extends Projectile {
 						SoundSource.PLAYERS, 0.7F, isSpectral() ? 1.45F : 1.1F);
 				if (isPhysical()) {
 					ItemStack dagger = getDaggerStack().copy();
-					dagger.hurtAndBreak(1, owner, broken -> { });
+					dagger.hurtAndBreak(1, owner.serverLevel(), owner, broken -> { });
 					this.entityData.set(ITEM, dagger);
 					DaggerThrowManager.updateEscrowItem(owner, getEscrowToken(), dagger);
 					if (dagger.isEmpty()) {
@@ -288,7 +278,7 @@ public class ThrownDaggerEntity extends Projectile {
 
 	@Override
 	protected void readAdditionalSaveData(CompoundTag tag) {
-		this.entityData.set(ITEM, ItemStack.of(tag.getCompound("Item")));
+		this.entityData.set(ITEM, ItemStackData.load(tag.getCompound("Item"), registryAccess()));
 		if (tag.hasUUID("Owner")) {
 			this.entityData.set(OWNER_ID, Optional.of(tag.getUUID("Owner")));
 		}
@@ -300,7 +290,7 @@ public class ThrownDaggerEntity extends Projectile {
 
 	@Override
 	protected void addAdditionalSaveData(CompoundTag tag) {
-		tag.put("Item", getDaggerStack().save(new CompoundTag()));
+		tag.put("Item", ItemStackData.save(getDaggerStack(), registryAccess()));
 		UUID owner = getOwnerId();
 		if (owner != null)
 			tag.putUUID("Owner", owner);

@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class ShadowPolarBearModel extends GeoModel<ShadowPolarBearEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(ShadowPolarBearEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/polarbear.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/polarbear.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(ShadowPolarBearEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/polarbear.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/polarbear.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(ShadowPolarBearEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

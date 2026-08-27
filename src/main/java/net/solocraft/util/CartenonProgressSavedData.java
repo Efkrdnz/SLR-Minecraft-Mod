@@ -5,6 +5,7 @@ import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -19,14 +20,15 @@ import java.util.UUID;
 /** Persistent per-world discovery and instance state for the Cartenon Temple. */
 public final class CartenonProgressSavedData extends SavedData {
 	private static final String DATA_NAME = "sololeveling_cartenon_progress";
+	private static final SavedData.Factory<CartenonProgressSavedData> FACTORY =
+			new SavedData.Factory<>(CartenonProgressSavedData::new, CartenonProgressSavedData::load);
 
 	private final Map<UUID, PlayerProgress> players = new LinkedHashMap<>();
 	private final Set<Integer> builtInstances = new LinkedHashSet<>();
 	private int nextInstanceId = 1;
 
 	public static CartenonProgressSavedData get(ServerLevel level) {
-		return level.getServer().overworld().getDataStorage()
-				.computeIfAbsent(CartenonProgressSavedData::load, CartenonProgressSavedData::new, DATA_NAME);
+		return level.getServer().overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 	}
 
 	/** Records one unique normal-dungeon clear and reports whether a gate is now due. */
@@ -90,6 +92,46 @@ public final class CartenonProgressSavedData extends SavedData {
 		setDirty();
 	}
 
+	// --- The return. A second, separate visit made at the peak of the run. It
+	// tracks its own instance so the finale temple can never collide with the
+	// instance the player awakened in.
+
+	public boolean isFinaleOffered(UUID playerId) {
+		PlayerProgress progress = players.get(playerId);
+		return progress != null && progress.finaleOffered;
+	}
+
+	public boolean isFinaleResolved(UUID playerId) {
+		PlayerProgress progress = players.get(playerId);
+		return progress != null && progress.finaleResolved;
+	}
+
+	public void markFinaleOffered(UUID playerId, int instanceId) {
+		PlayerProgress progress = progress(playerId);
+		progress.finaleOffered = true;
+		progress.finaleInstanceId = Math.max(1, instanceId);
+		setDirty();
+	}
+
+	/** Declining re-opens the offer; the player may return later. */
+	public void cancelFinaleOffer(UUID playerId) {
+		PlayerProgress progress = progress(playerId);
+		progress.finaleOffered = false;
+		progress.finaleInstanceId = 0;
+		setDirty();
+	}
+
+	public void resolveFinale(UUID playerId) {
+		PlayerProgress progress = progress(playerId);
+		progress.finaleResolved = true;
+		setDirty();
+	}
+
+	public int finaleInstanceFor(UUID playerId) {
+		PlayerProgress progress = players.get(playerId);
+		return progress == null ? 0 : progress.finaleInstanceId;
+	}
+
 	public boolean isInstanceBuilt(int instanceId) {
 		return builtInstances.contains(instanceId);
 	}
@@ -106,7 +148,7 @@ public final class CartenonProgressSavedData extends SavedData {
 
 	@Nonnull
 	@Override
-	public CompoundTag save(@Nonnull CompoundTag tag) {
+	public CompoundTag save(@Nonnull CompoundTag tag, HolderLookup.Provider registries) {
 		tag.putInt("NextInstance", nextInstanceId);
 		tag.put("BuiltInstances", new IntArrayTag(builtInstances.stream().mapToInt(Integer::intValue).toArray()));
 
@@ -120,6 +162,9 @@ public final class CartenonProgressSavedData extends SavedData {
 			playerTag.putBoolean("Resolved", progress.resolved);
 			playerTag.putBoolean("Accepted", progress.accepted);
 			playerTag.putInt("Instance", progress.instanceId);
+			playerTag.putBoolean("FinaleOffered", progress.finaleOffered);
+			playerTag.putBoolean("FinaleResolved", progress.finaleResolved);
+			playerTag.putInt("FinaleInstance", progress.finaleInstanceId);
 			ListTag clears = new ListTag();
 			for (String dungeonTag : progress.dungeonTags)
 				clears.add(StringTag.valueOf(dungeonTag));
@@ -130,7 +175,7 @@ public final class CartenonProgressSavedData extends SavedData {
 		return tag;
 	}
 
-	private static CartenonProgressSavedData load(CompoundTag tag) {
+	private static CartenonProgressSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
 		CartenonProgressSavedData data = new CartenonProgressSavedData();
 		data.nextInstanceId = Math.max(1, tag.getInt("NextInstance"));
 		for (int instanceId : tag.getIntArray("BuiltInstances")) {
@@ -152,6 +197,9 @@ public final class CartenonProgressSavedData extends SavedData {
 			progress.resolved = playerTag.getBoolean("Resolved");
 			progress.accepted = playerTag.getBoolean("Accepted");
 			progress.instanceId = Math.max(0, playerTag.getInt("Instance"));
+			progress.finaleOffered = playerTag.getBoolean("FinaleOffered");
+			progress.finaleResolved = playerTag.getBoolean("FinaleResolved");
+			progress.finaleInstanceId = Math.max(0, playerTag.getInt("FinaleInstance"));
 			ListTag clears = playerTag.getList("DungeonTags", Tag.TAG_STRING);
 			for (int clearIndex = 0; clearIndex < clears.size(); clearIndex++)
 				progress.dungeonTags.add(clears.getString(clearIndex));
@@ -167,6 +215,9 @@ public final class CartenonProgressSavedData extends SavedData {
 		private boolean resolved;
 		private boolean accepted;
 		private int instanceId;
+		private boolean finaleOffered;
+		private boolean finaleResolved;
+		private int finaleInstanceId;
 
 		private PlayerProgress(int targetClear) {
 			this.targetClear = targetClear;

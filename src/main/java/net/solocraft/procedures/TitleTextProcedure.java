@@ -15,8 +15,14 @@ public class TitleTextProcedure {
 		if ("liu_zhigang".equals(vars.vesselIdentity)) {
 			return "Sword Demon";
 		}
+		if ("sung_il_hwan".equals(vars.vesselIdentity)) {
+			return "Silent Authority";
+		}
 		if ("rakan".equals(vars.vesselIdentity)) {
 			return "Monarch of Fangs";
+		}
+		if ("antares".equals(vars.vesselIdentity)) {
+			return "Monarch of Destruction";
 		}
 		if (vars.JOB == 1) {
 			return "Shadow Monarch";

@@ -25,6 +25,13 @@ public final class FrostArchitecturePauseScreen extends Screen {
 	}
 
 	@Override
+	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY,
+			float partialTick) {
+		// Screen.render() invokes this automatically in 1.21. A no-op keeps the
+		// radial world view genuinely transparent instead of applying menu blur.
+	}
+
+	@Override
 	public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
 		if (FrostArchitectureClientState.isActivationKey(keyCode, scanCode)) {
 			FrostArchitectureClientState.releaseAndSend();

@@ -18,6 +18,6 @@ public class KangTaeshikRenderer extends HumanoidMobRenderer<KangTaeshikEntity, 
 
 	@Override
 	public ResourceLocation getTextureLocation(KangTaeshikEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/kangskin1.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/kangskin1.png");
 	}
 }

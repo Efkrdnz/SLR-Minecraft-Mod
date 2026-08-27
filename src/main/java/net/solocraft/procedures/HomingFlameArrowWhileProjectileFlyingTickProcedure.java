@@ -1,6 +1,6 @@
 package net.solocraft.procedures;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -42,9 +42,9 @@ public class HomingFlameArrowWhileProjectileFlyingTickProcedure {
 						if (!entity.getPersistentData().getBoolean("dong")) {
 							if (world instanceof Level _level) {
 								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 2);
+									_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 2);
 								} else {
-									_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 2, false);
+									_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 2, false);
 								}
 							}
 						}

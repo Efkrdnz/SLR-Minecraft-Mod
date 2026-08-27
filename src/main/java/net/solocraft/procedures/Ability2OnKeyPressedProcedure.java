@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.RulersAuthorityManager;
+import net.solocraft.util.SilladIcePrisonManager;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -53,12 +54,17 @@ public class Ability2OnKeyPressedProcedure {
 			}
 		} else {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
+				// This legacy key path dismisses every shadow and then rewrites all
+				// counters. Refuse it before either half can run.
+				if (entity instanceof Player player
+						&& SilladIcePrisonManager.guardManualDismiss(player))
+					return;
 				{
 					final Vec3 _center = new Vec3(x, y, z);
 					List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(400 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 					for (Entity entityiterator : _entfound) {
 						if ((entityiterator instanceof TamableAnimal _tamIsTamedBy && entity instanceof LivingEntity _livEnt ? _tamIsTamedBy.isOwnedBy(_livEnt) : false)
-								&& entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+								&& entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 							if (!entityiterator.level().isClientSide())
 								entityiterator.discard();
 						}

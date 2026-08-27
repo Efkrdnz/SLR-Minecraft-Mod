@@ -5,7 +5,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.advancements.AdvancementProgress;
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 
 public class FangedKasakaEntityDiesProcedure {
 	public static void execute(Entity entity, Entity sourceentity) {
@@ -14,7 +14,7 @@ public class FangedKasakaEntityDiesProcedure {
 		if (sourceentity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) {
 			if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) == null)) {
 				if ((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) instanceof ServerPlayer _player) {
-					Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:kasakas_domain"));
+					AdvancementHolder _adv = _player.server.getAdvancements().get(ResourceLocation.parse("sololeveling:kasakas_domain"));
 					AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
 					if (!_ap.isDone()) {
 						for (String criteria : _ap.getRemainingCriteria())
@@ -24,7 +24,7 @@ public class FangedKasakaEntityDiesProcedure {
 			}
 		} else {
 			if (sourceentity instanceof ServerPlayer _player) {
-				Advancement _adv = _player.server.getAdvancements().getAdvancement(new ResourceLocation("sololeveling:kasakas_domain"));
+				AdvancementHolder _adv = _player.server.getAdvancements().get(ResourceLocation.parse("sololeveling:kasakas_domain"));
 				AdvancementProgress _ap = _player.getAdvancements().getOrStartProgress(_adv);
 				if (!_ap.isDone()) {
 					for (String criteria : _ap.getRemainingCriteria())

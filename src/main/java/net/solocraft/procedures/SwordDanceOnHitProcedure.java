@@ -2,10 +2,11 @@ package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,10 +21,10 @@ import net.minecraft.commands.arguments.EntityAnchorArgument;
 import javax.annotation.Nullable;
 import net.solocraft.util.CooldownManager;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class SwordDanceOnHitProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity, event.getSource().getEntity());
@@ -42,7 +43,7 @@ public class SwordDanceOnHitProcedure {
 		double ZTeleport = 0;
 		double YTeleport = 0;
 		double XTeleport = 0;
-		if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get())) {
+		if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_DANCE)) {
 			if (!CooldownManager.isOnCooldown(sourceentity, "dance")) {
 				rand = Mth.nextInt(RandomSource.create(), 1, 2);
 				if (rand == 1) {
@@ -64,7 +65,7 @@ public class SwordDanceOnHitProcedure {
 					}
 					sourceentity.lookAt(EntityAnchorArgument.Anchor.EYES, new Vec3((entity.getX()), (entity.getY() + 1.6), (entity.getZ())));
 					if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 30, 1, false, false));
+						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE, 30, 1, false, false));
 					if (sourceentity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 30, 1, false, false));
 					CooldownManager.set(sourceentity, "dance", 15);

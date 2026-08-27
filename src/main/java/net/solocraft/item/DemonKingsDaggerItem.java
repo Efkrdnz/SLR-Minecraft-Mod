@@ -3,8 +3,8 @@ package net.solocraft.item;
 
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -19,7 +19,7 @@ import net.minecraft.client.Minecraft;
 
 import java.util.List;
 
-public class DemonKingsDaggerItem extends SwordItem {
+public class DemonKingsDaggerItem extends LegacySwordItem {
 	public DemonKingsDaggerItem() {
 		super(new Tier() {
 			public int getUses() {
@@ -34,8 +34,8 @@ public class DemonKingsDaggerItem extends SwordItem {
 				return 8f;
 			}
 
-			public int getLevel() {
-				return 1;
+			public net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> getIncorrectBlocksForDrops() {
+				return net.minecraft.tags.BlockTags.INCORRECT_FOR_STONE_TOOL;
 			}
 
 			public int getEnchantmentValue() {
@@ -49,8 +49,8 @@ public class DemonKingsDaggerItem extends SwordItem {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("\u00A76ITEM CLASS: S"));
 		list.add(Component.literal("\u00A76TYPE: DAGGER"));
 		list.add(Component.literal("\u00A76ATTACK +220"));
@@ -58,13 +58,13 @@ public class DemonKingsDaggerItem extends SwordItem {
 		list.add(Component.literal("\u00A76SET EFFECT WILL ACTIVATE IF BOTH \"DEMON KING'S DAGGERS\" ARE EQUIPPED AT THE SAME TIME."));
 		list.add(Component.literal(".."));
 		list.add(Component.literal("\u00A76SET EFFECT \"TWO AS ONE\":"));
-		list.add(Component.literal("\u00A76TWO AS ONE WILL GRANT BONUS STRENGTH EQUAL TO THE WIELDER'S PERMANENT STRENGTH."));
+		list.add(Component.literal("\u00A76TWO AS ONE DRAWS ON THE WIELDER'S PERMANENT STRENGTH TO GRANT A SCALING STRENGTH BONUS."));
 	}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public boolean isFoil(ItemStack itemstack) {
 		return Minecraft.getInstance().player != null
-				&& Minecraft.getInstance().player.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get());
+				&& Minecraft.getInstance().player.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE);
 	}
 }

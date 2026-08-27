@@ -61,7 +61,6 @@ public class AbilitiesGUIScreen extends AbstractContainerScreen<AbilitiesGUIMenu
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 		if (IsPlayerProcedure.execute(entity))
@@ -79,45 +78,45 @@ public class AbilitiesGUIScreen extends AbstractContainerScreen<AbilitiesGUIMenu
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/panel_rework_vertical2.png"), this.leftPos + -103, this.topPos + -114, 0, 0, 200, 225, 200, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/panel_rework_vertical2.png"), this.leftPos + -103, this.topPos + -114, 0, 0, 200, 225, 200, 225);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/guipercent.png"), this.leftPos + -17, this.topPos + -61, 0, 0, 16, 16, 16, 16);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/guipercent.png"), this.leftPos + -17, this.topPos + -61, 0, 0, 16, 16, 16, 16);
 
 		if (SpeedPercent10Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui10percent.png"), this.leftPos + -3, this.topPos + -61, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui10percent.png"), this.leftPos + -3, this.topPos + -61, 0, 0, 16, 16, 16, 16);
 		}
 		if (SpeedPercent20Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui20percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui20percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
 		}
 		if (SpeedPercent30Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui30percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui30percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
 		}
 		if (SpeedPercent40Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui40percent.png"), this.leftPos + -2, this.topPos + -62, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui40percent.png"), this.leftPos + -2, this.topPos + -62, 0, 0, 16, 16, 16, 16);
 		}
 		if (SpeedPercent50Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui50percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui50percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
 		}
 		if (SpeedPercent60Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui60percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui60percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
 		}
 		if (SpeedPercent70Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui70percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui70percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
 		}
 		if (SpeedPercent80Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui80percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui80percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
 		}
 		if (SpeedPercent90Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui90percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui90percent.png"), this.leftPos + -3, this.topPos + -62, 0, 0, 16, 16, 16, 16);
 		}
 		if (SpeedPercent100Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui100percent.png"), this.leftPos + -4, this.topPos + -62, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui100percent.png"), this.leftPos + -4, this.topPos + -62, 0, 0, 16, 16, 16, 16);
 		}
 		if (TripleJumpButtonDisplayConProcedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/guiabilitytjon.png"), this.leftPos + -48, this.topPos + -15, 0, 0, 32, 32, 32, 32);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/guiabilitytjon.png"), this.leftPos + -48, this.topPos + -15, 0, 0, 32, 32, 32, 32);
 		}
 		if (SpeedPercent0Procedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/gui0percent.png"), this.leftPos + -8, this.topPos + -61, 0, 0, 16, 16, 16, 16);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/gui0percent.png"), this.leftPos + -8, this.topPos + -61, 0, 0, 16, 16, 16, 16);
 		}
 		RenderSystem.disableBlend();
 	}
@@ -150,21 +149,21 @@ public class AbilitiesGUIScreen extends AbstractContainerScreen<AbilitiesGUIMenu
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_back = new ImageButton(this.leftPos + -124, this.topPos + -21, 20, 20, 0, 0, 20, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_back.png"), 20, 40, e -> {
+		imagebutton_back = new LegacyAtlasImageButton(this.leftPos + -124, this.topPos + -21, 20, 20, 0, 0, 20, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_back.png"), 20, 40, e -> {
 			if (IsPlayerProcedure.execute(entity)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new AbilitiesGUIButtonMessage(0, x, y, z));
 				AbilitiesGUIButtonMessage.handleButtonAction(entity, 0, x, y, z);
 			}
 		}) {
 			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
+			public void renderWidget(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
 				if (IsPlayerProcedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
+					super.renderWidget(guiGraphics, gx, gy, ticks);
 			}
 		};
 		guistate.put("button:imagebutton_back", imagebutton_back);
 		this.addRenderableWidget(imagebutton_back);
-		imagebutton_guiback = new ImageButton(this.leftPos + -36, this.topPos + -61, 16, 16, 0, 0, 16, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_guiback.png"), 16, 32, e -> {
+		imagebutton_guiback = new LegacyAtlasImageButton(this.leftPos + -36, this.topPos + -61, 16, 16, 0, 0, 16, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_guiback.png"), 16, 32, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new AbilitiesGUIButtonMessage(1, x, y, z));
 				AbilitiesGUIButtonMessage.handleButtonAction(entity, 1, x, y, z);
@@ -172,7 +171,7 @@ public class AbilitiesGUIScreen extends AbstractContainerScreen<AbilitiesGUIMenu
 		});
 		guistate.put("button:imagebutton_guiback", imagebutton_guiback);
 		this.addRenderableWidget(imagebutton_guiback);
-		imagebutton_guiforward = new ImageButton(this.leftPos + 18, this.topPos + -61, 16, 16, 0, 0, 16, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_guiforward.png"), 16, 32, e -> {
+		imagebutton_guiforward = new LegacyAtlasImageButton(this.leftPos + 18, this.topPos + -61, 16, 16, 0, 0, 16, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_guiforward.png"), 16, 32, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new AbilitiesGUIButtonMessage(2, x, y, z));
 				AbilitiesGUIButtonMessage.handleButtonAction(entity, 2, x, y, z);
@@ -180,7 +179,7 @@ public class AbilitiesGUIScreen extends AbstractContainerScreen<AbilitiesGUIMenu
 		});
 		guistate.put("button:imagebutton_guiforward", imagebutton_guiforward);
 		this.addRenderableWidget(imagebutton_guiforward);
-		imagebutton_guiabilitytj = new ImageButton(this.leftPos + -48, this.topPos + -15, 32, 32, 0, 0, 32, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_guiabilitytj.png"), 32, 64, e -> {
+		imagebutton_guiabilitytj = new LegacyAtlasImageButton(this.leftPos + -48, this.topPos + -15, 32, 32, 0, 0, 32, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_guiabilitytj.png"), 32, 64, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new AbilitiesGUIButtonMessage(3, x, y, z));
 				AbilitiesGUIButtonMessage.handleButtonAction(entity, 3, x, y, z);
@@ -188,21 +187,21 @@ public class AbilitiesGUIScreen extends AbstractContainerScreen<AbilitiesGUIMenu
 		});
 		guistate.put("button:imagebutton_guiabilitytj", imagebutton_guiabilitytj);
 		this.addRenderableWidget(imagebutton_guiabilitytj);
-		imagebutton_job1 = new ImageButton(this.leftPos + 96, this.topPos + -117, 25, 25, 0, 0, 25, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_job1.png"), 25, 50, e -> {
+		imagebutton_job1 = new LegacyAtlasImageButton(this.leftPos + 96, this.topPos + -117, 25, 25, 0, 0, 25, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_job1.png"), 25, 50, e -> {
 			if (SMonTextProcedure.execute(entity)) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new AbilitiesGUIButtonMessage(4, x, y, z));
 				AbilitiesGUIButtonMessage.handleButtonAction(entity, 4, x, y, z);
 			}
 		}) {
 			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
+			public void renderWidget(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
 				if (SMonTextProcedure.execute(entity))
-					super.render(guiGraphics, gx, gy, ticks);
+					super.renderWidget(guiGraphics, gx, gy, ticks);
 			}
 		};
 		guistate.put("button:imagebutton_job1", imagebutton_job1);
 		this.addRenderableWidget(imagebutton_job1);
-		imagebutton_panel_rework_rewardbutton = new ImageButton(this.leftPos + -34, this.topPos + -41, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton.png"), 64, 42, e -> {
+		imagebutton_panel_rework_rewardbutton = new LegacyAtlasImageButton(this.leftPos + -34, this.topPos + -41, 64, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton.png"), 64, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new AbilitiesGUIButtonMessage(5, x, y, z));
 				AbilitiesGUIButtonMessage.handleButtonAction(entity, 5, x, y, z);

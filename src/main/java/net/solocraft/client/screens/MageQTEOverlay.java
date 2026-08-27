@@ -8,11 +8,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.MageQTEHelper;
@@ -37,7 +38,7 @@ import org.joml.Matrix4f;
  *   [Release in the gold zone!]      ← hint below ring
  *   After release: [PERFECT!] / [GOOD!] / [MISS!]
  */
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 @OnlyIn(Dist.CLIENT)
 public class MageQTEOverlay {
 
@@ -189,17 +190,16 @@ public class MageQTEOverlay {
             float er, float eg, float eb, float ea) {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Matrix4f m   = ps.last().pose();
-        BufferBuilder buf = Tesselator.getInstance().getBuilder();
-        buf.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
-        buf.vertex(m, cx, cy, 0).color(cr, cg, cb, ca).endVertex();
+        BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+        buf.addVertex(m, cx, cy, 0).setColor(cr, cg, cb, ca);
         int seg = 72;
         for (int i = 0; i <= seg; i++) {
             float ang = (float)(2 * Math.PI * i / seg);
-            buf.vertex(m, cx + (float)Math.cos(ang) * radius,
+            buf.addVertex(m, cx + (float)Math.cos(ang) * radius,
                           cy + (float)Math.sin(ang) * radius, 0)
-               .color(er, eg, eb, ea).endVertex();
+               .setColor(er, eg, eb, ea);
         }
-        BufferUploader.drawWithShader(buf.end());
+        BufferUploader.drawWithShader(buf.buildOrThrow());
     }
 
     private static void renderRing(PoseStack ps,
@@ -209,16 +209,15 @@ public class MageQTEOverlay {
         float innerR = radius - thickness * 0.5f;
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Matrix4f m   = ps.last().pose();
-        BufferBuilder buf = Tesselator.getInstance().getBuilder();
-        buf.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
         int seg = 96;
         for (int i = 0; i <= seg; i++) {
             float ang = (float)(2 * Math.PI * i / seg);
             float cos = (float)Math.cos(ang), sin = (float)Math.sin(ang);
-            buf.vertex(m, cx + cos * outerR, cy + sin * outerR, 0).color(r, g, b, a).endVertex();
-            buf.vertex(m, cx + cos * innerR, cy + sin * innerR, 0).color(r, g, b, a).endVertex();
+            buf.addVertex(m, cx + cos * outerR, cy + sin * outerR, 0).setColor(r, g, b, a);
+            buf.addVertex(m, cx + cos * innerR, cy + sin * innerR, 0).setColor(r, g, b, a);
         }
-        BufferUploader.drawWithShader(buf.end());
+        BufferUploader.drawWithShader(buf.buildOrThrow());
     }
 
     private static void renderArc(PoseStack ps,
@@ -232,16 +231,15 @@ public class MageQTEOverlay {
         if (endRad < startRad) endRad += 2 * Math.PI;
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         Matrix4f m   = ps.last().pose();
-        BufferBuilder buf = Tesselator.getInstance().getBuilder();
-        buf.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
         int seg = 72;
         for (int i = 0; i <= seg; i++) {
             float ang = startRad + (endRad - startRad) * ((float)i / seg);
             float cos = (float)Math.cos(ang), sin = (float)Math.sin(ang);
-            buf.vertex(m, cx + cos * outerR, cy + sin * outerR, 0).color(r, g, b, a).endVertex();
-            buf.vertex(m, cx + cos * innerR, cy + sin * innerR, 0).color(r, g, b, a).endVertex();
+            buf.addVertex(m, cx + cos * outerR, cy + sin * outerR, 0).setColor(r, g, b, a);
+            buf.addVertex(m, cx + cos * innerR, cy + sin * innerR, 0).setColor(r, g, b, a);
         }
-        BufferUploader.drawWithShader(buf.end());
+        BufferUploader.drawWithShader(buf.buildOrThrow());
     }
 
     /** A short radial quad (the rotating needle) that extends outward from the ring. */
@@ -258,12 +256,11 @@ public class MageQTEOverlay {
         float iy   = cy + sin * (radius + outwardOffset - tickLen);
         float px   = -sin * halfWidth, py = cos * halfWidth;
         Matrix4f m = ps.last().pose();
-        BufferBuilder buf = Tesselator.getInstance().getBuilder();
-        buf.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        buf.vertex(m, ix - px, iy - py, 0).color(r, g, b, a).endVertex();
-        buf.vertex(m, ix + px, iy + py, 0).color(r, g, b, a).endVertex();
-        buf.vertex(m, ox + px, oy + py, 0).color(r, g, b, a).endVertex();
-        buf.vertex(m, ox - px, oy - py, 0).color(r, g, b, a).endVertex();
-        BufferUploader.drawWithShader(buf.end());
+        BufferBuilder buf = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        buf.addVertex(m, ix - px, iy - py, 0).setColor(r, g, b, a);
+        buf.addVertex(m, ix + px, iy + py, 0).setColor(r, g, b, a);
+        buf.addVertex(m, ox + px, oy + py, 0).setColor(r, g, b, a);
+        buf.addVertex(m, ox - px, oy - py, 0).setColor(r, g, b, a);
+        BufferUploader.drawWithShader(buf.buildOrThrow());
     }
 }

@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModItems;
+import net.solocraft.util.ItemStackData;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,7 +12,7 @@ public class ReturnIDClassProcedure {
 		if (entity == null)
 			return "";
 		if ((entity instanceof LivingEntity _entity) ? _entity.isHolding(SololevelingModItems.HUNTER_ID.get()) : false) {
-			return "Hunter Type: \u00A7l" + ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getOrCreateTag().getString("Class"));
+			return "Hunter Type: \u00A7l" + ItemStackData.getString(entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY, "Class");
 		}
 		return "";
 	}

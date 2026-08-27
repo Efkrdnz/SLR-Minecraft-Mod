@@ -3,10 +3,14 @@ package net.solocraft.client.aura;
 import net.solocraft.SololevelingMod;
 import net.solocraft.client.aura.ClientPlayerAuraManager.AuraInstance;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -32,9 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * a streaming trail behind and standing still makes the aura billow in place —
  * this is what stops the effect from reading as a solid decal glued to the body.</p>
  */
-@Mod.EventBusSubscriber(
+@EventBusSubscriber(
 		modid = SololevelingMod.MODID,
-		bus = Mod.EventBusSubscriber.Bus.FORGE,
+		bus = EventBusSubscriber.Bus.GAME,
 		value = Dist.CLIENT
 )
 public final class AuraSmokeField {
@@ -49,8 +53,8 @@ public final class AuraSmokeField {
 	}
 
 	@SubscribeEvent
-	public static void onClientTick(TickEvent.ClientTickEvent event) {
-		if (event.phase != TickEvent.Phase.END) {
+	public static void onClientTick(ClientTickEvent.Post event) {
+		if (false) {
 			return;
 		}
 

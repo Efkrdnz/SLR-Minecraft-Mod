@@ -10,14 +10,18 @@ import net.solocraft.util.CartenonTempleManager;
 import net.solocraft.util.EntityHighlightSystem;
 import net.solocraft.util.SystemNotifications;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -38,7 +42,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /** Activates persisted encounter regions and completes instances from tracked boss deaths. */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class DungeonEncounterRuntime {
 	private static final int ACTIVATION_INTERVAL = 10;
 	private static final int FAILED_ACTIVATION_RETRY_TICKS = 200;
@@ -51,8 +55,8 @@ public final class DungeonEncounterRuntime {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || ++tickCounter % ACTIVATION_INTERVAL != 0)
+	public static void onServerTick(ServerTickEvent.Post event) {
+		if (false || ++tickCounter % ACTIVATION_INTERVAL != 0)
 			return;
 		MinecraftServer server = event.getServer();
 		ProceduralDungeonCompletionHandler.migrateLegacyUnscopedRuns(server);
@@ -395,14 +399,20 @@ public final class DungeonEncounterRuntime {
 		boolean managedExit = instance.returnPortalDeferred()
 				|| SnowRedGateArenaManager.isArenaInstance(instance);
 		if (level != null && defeatedBoss != null && managedExit) {
-			boolean bossCreatedExit = instance.returnPortalDeferred();
-			BlockPos exitPosition = bossCreatedExit
-					? defeatedBoss.blockPosition()
-					: instance.exit().orElseGet(defeatedBoss::blockPosition);
-			if (bossCreatedExit)
+			// Deferred means "reveal after the boss", not "move to the boss".
+			// Keep the authored return marker authoritative; malformed legacy
+			// instances fall back to their player start, never the death position.
+			BlockPos exitPosition = instance.exit()
+					.or(() -> instance.playerStart())
+					.orElse(null);
+			if (instance.returnPortalDeferred() && exitPosition != null) {
+				exitPosition = ProceduralDungeonCompletionHandler
+						.safeReturnPortalPosition(level, exitPosition);
 				instance.setExit(exitPosition);
+			}
 			String dungeonTag = completionDungeonTag(server, instance, defeatedBoss);
-			Entity creditedSource = ShadowKillCreditHelper.creditedSource(level, damageSource);
+			Entity creditedSource = ShadowKillCreditHelper.creditedSourceForDeath(
+					level, defeatedBoss, damageSource, null);
 			Optional<List<ServerPlayer>> exactParticipants =
 					activeInstanceParticipants(server, level, instance);
 			boolean cartenonSpawned = exactParticipants.isPresent()
@@ -416,7 +426,7 @@ public final class DungeonEncounterRuntime {
 				ProceduralDungeonCompletionHandler.discardMatchingReturnPortals(
 						level, instance.id(), dungeonTag);
 				ProceduralDungeonCompletionHandler.markExitHandled(defeatedBoss);
-			} else {
+			} else if (exitPosition != null) {
 				boolean portalReady = ProceduralDungeonCompletionHandler
 						.reconcileReturnPortal(level, instance.id(), dungeonTag,
 								exitPosition)
@@ -480,13 +490,16 @@ public final class DungeonEncounterRuntime {
 			return;
 		ServerLevel level = server.getLevel(instance.dimension());
 		BlockPos exit = instance.exit().orElse(null);
-		if (level == null || exit == null || !level.hasChunkAt(exit))
+		if (level == null || exit == null)
 			return;
 		boolean participantPresent = level.players().stream().anyMatch(player ->
 				instance.participants().contains(player.getUUID())
 						&& instance.id().toString().equals(player.getPersistentData()
 								.getString(DungeonMobLevelAdapter.INSTANCE_TAG)));
-		if (!participantPresent || ProceduralDungeonCompletionHandler.reconcileReturnPortal(
+		if (!participantPresent
+				|| !ProceduralDungeonCompletionHandler.loadReturnPortalChunk(level,
+						exit)
+				|| ProceduralDungeonCompletionHandler.reconcileReturnPortal(
 				level, instance.id(), "", exit))
 			return;
 		String dungeonTag = completionDungeonTag(server, instance, null);

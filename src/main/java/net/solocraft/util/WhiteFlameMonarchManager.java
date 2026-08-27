@@ -7,12 +7,16 @@ import net.solocraft.entity.WhiteFlameVfxEntity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -35,7 +39,10 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -43,7 +50,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class WhiteFlameMonarchManager {
 	public static final String LIGHTNING_BREATH = "Lightning Breath";
 	public static final String HELLSTORM_DOMINION = "Hellstorm Dominion";
@@ -62,6 +69,7 @@ public final class WhiteFlameMonarchManager {
 	private static final String DOMAIN_NEXT = "mowf_domain_next";
 	private static final String DOMAIN_LAST_TARGET = "mowf_domain_last_target";
 	private static final String DOMAIN_REPEAT_HITS = "mowf_domain_repeat_hits";
+	private static final String DOMAIN_TERRAIN_STRIKES = "mowf_domain_terrain_strikes";
 	private static final String DOPPEL_CHARGES = "mowf_doppel_charges";
 	private static final String DOPPEL_UNTIL = "mowf_doppel_until";
 	private static final String BRAND_UNTIL = "mowf_brand_until";
@@ -70,7 +78,7 @@ public final class WhiteFlameMonarchManager {
 	public static final String SUMMON_OWNER = "mowf_summon_owner";
 	public static final String SUMMON_UNTIL = "mowf_summon_until";
 	private static final TagKey<EntityType<?>> SHADOWS = TagKey.create(Registries.ENTITY_TYPE,
-			new net.minecraft.resources.ResourceLocation("shadows"));
+			net.minecraft.resources.ResourceLocation.withDefaultNamespace("shadows"));
 
 	private WhiteFlameMonarchManager() {
 	}
@@ -137,6 +145,7 @@ public final class WhiteFlameMonarchManager {
 		player.getPersistentData().putLong(DOMAIN_NEXT, now + 4);
 		player.getPersistentData().remove(DOMAIN_LAST_TARGET);
 		player.getPersistentData().remove(DOMAIN_REPEAT_HITS);
+		player.getPersistentData().remove(DOMAIN_TERRAIN_STRIKES);
 		for (int wave = 0; wave < 3; wave++) {
 			int delay = wave * 3;
 			SololevelingMod.queueServerWork(delay, () -> {
@@ -158,7 +167,7 @@ public final class WhiteFlameMonarchManager {
 		CooldownManager.set(player, RADIRU_BLOOD_SPEAR, spiritualized ? 72 : 96);
 		float damage = magicDamage(player, spiritualized ? 38.0D : 28.0D, spiritualized ? 5.6D : 7.0D);
 		RadiruBloodSpearEntity.launch(player, damage, spiritualized);
-		player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THROW,
+		player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THROW.value(),
 				SoundSource.PLAYERS, 1.1F, spiritualized ? 0.72F : 0.9F);
 	}
 
@@ -211,7 +220,8 @@ public final class WhiteFlameMonarchManager {
 			}
 			if (knight.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE) != null)
 				knight.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)
-						.setBaseValue(Math.min(34.0D, (spiritualized ? 15.0D : 11.0D) + variables(player).Intelligence / 28.0D));
+						.setBaseValue(Math.min(34.0D, (spiritualized ? 15.0D : 11.0D)
+								+ TemporaryStatBonusManager.effectiveIntelligence(player) / 28.0D));
 			knight.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, (int) (expiry - level.getGameTime()), 0, false, false));
 		}
 		player.level().playSound(null, player.blockPosition(), SoundEvents.WITHER_SPAWN,
@@ -237,8 +247,8 @@ public final class WhiteFlameMonarchManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide() || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || event.getEntity().level().isClientSide() || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		long now = player.level().getGameTime();
 		if (player.getPersistentData().getBoolean(SPIRITUALIZED)) {
@@ -260,8 +270,9 @@ public final class WhiteFlameMonarchManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
-	public static void onPlayerAttacked(LivingAttackEvent event) {
-		if (!(event.getEntity() instanceof ServerPlayer player) || !isWhiteFlameVessel(player) || !canDodge(event.getSource()))
+	public static void onPlayerAttacked(LivingIncomingDamageEvent event) {
+		if (!(event.getEntity() instanceof ServerPlayer player) || !isWhiteFlameVessel(player)
+				|| CartenonSuppression.blockVesselPassive(player) || !canDodge(event.getSource()))
 			return;
 		long now = player.level().getGameTime();
 		if (event.isCanceled()) {
@@ -294,7 +305,7 @@ public final class WhiteFlameMonarchManager {
 	}
 
 	@SubscribeEvent
-	public static void onSummonTick(LivingEvent.LivingTickEvent event) {
+	public static void onSummonTick(EntityTickEvent.Post event) {
 		if (!(event.getEntity() instanceof DemonKnightEntity knight) || knight.level().isClientSide()
 				|| !knight.getPersistentData().hasUUID(SUMMON_OWNER) || !(knight.level() instanceof ServerLevel level))
 			return;
@@ -341,9 +352,18 @@ public final class WhiteFlameMonarchManager {
 			if (projection > 0 && sideDistance <= (spiritualized ? 2.8D : 2.0D) + distance * 0.06D) {
 				dealMagic(player, target, damage);
 				brand(target, player, spiritualized ? 130 : 90, 1);
-				target.setSecondsOnFire(spiritualized ? 4 : 2);
+				target.igniteForSeconds(spiritualized ? 4 : 2);
 			}
 		}
+		Vec3 intendedEnd = eye.add(look.scale(range));
+		BlockHitResult terrainHit = level.clip(new ClipContext(eye, intendedEnd,
+				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+		Vec3 terrainEnd = terrainHit.getType() == HitResult.Type.BLOCK
+				? terrainHit.getLocation() : intendedEnd;
+		AbilityDestructionManager.line(player,
+				AbilityDestructionManager.Profile.WHITE_FLAME_BREATH, eye,
+				terrainEnd,
+				TemporaryStatBonusManager.effectiveIntelligence(player), spiritualized);
 	}
 
 	private static void domainStrike(ServerPlayer player) {
@@ -368,6 +388,14 @@ public final class WhiteFlameMonarchManager {
 					player.getY(), player.getZ() + Math.sin(angle) * radius);
 		}
 		spawnVisualLightning(level, point);
+		int terrainStrikes = player.getPersistentData().getInt(DOMAIN_TERRAIN_STRIKES);
+		if (terrainStrikes < (spiritualized ? 6 : 4)) {
+			player.getPersistentData().putInt(DOMAIN_TERRAIN_STRIKES,
+					terrainStrikes + 1);
+			AbilityDestructionManager.impact(player,
+					AbilityDestructionManager.Profile.WHITE_FLAME_HELLSTORM, point,
+					TemporaryStatBonusManager.effectiveIntelligence(player), spiritualized);
+		}
 		spawnDomainVolley(level, player.position(), spiritualized ? 2 : 1, spiritualized ? 15.0D : 11.0D);
 		level.playSound(null, BlockPos.containing(point), SoundEvents.LIGHTNING_BOLT_IMPACT,
 				SoundSource.PLAYERS, 0.65F, 1.05F + player.getRandom().nextFloat() * 0.18F);
@@ -532,7 +560,7 @@ public final class WhiteFlameMonarchManager {
 	}
 
 	private static float magicDamage(ServerPlayer player, double base, double intelligenceDivisor) {
-		return (float) (base + variables(player).Intelligence / intelligenceDivisor);
+		return (float) (base + TemporaryStatBonusManager.effectiveIntelligence(player) / intelligenceDivisor);
 	}
 
 	private static boolean consumeMana(ServerPlayer player, int amount) {

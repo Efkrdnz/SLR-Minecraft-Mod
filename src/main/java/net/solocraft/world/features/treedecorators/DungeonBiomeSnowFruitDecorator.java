@@ -1,10 +1,13 @@
 
 package net.solocraft.world.features.treedecorators;
 
-import net.minecraftforge.registries.RegisterEvent;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.solocraft.SololevelingMod;
+import net.neoforged.neoforge.registries.RegisterEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecoratorType;
 import net.minecraft.world.level.levelgen.feature.treedecorators.TreeDecorator;
@@ -13,19 +16,21 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.util.RandomSource;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 
-import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class DungeonBiomeSnowFruitDecorator extends CocoaDecorator {
-	public static Codec<DungeonBiomeSnowFruitDecorator> CODEC = Codec.unit(DungeonBiomeSnowFruitDecorator::new);
-	public static TreeDecoratorType<?> DECORATOR_TYPE = new TreeDecoratorType<>(CODEC);
+	public static final MapCodec<DungeonBiomeSnowFruitDecorator> CODEC = MapCodec.unit(DungeonBiomeSnowFruitDecorator::new);
+	public static final TreeDecoratorType<DungeonBiomeSnowFruitDecorator> DECORATOR_TYPE = new TreeDecoratorType<>(CODEC);
 
 	@SubscribeEvent
 	public static void registerPointOfInterest(RegisterEvent event) {
-		event.register(ForgeRegistries.Keys.TREE_DECORATOR_TYPES, registerHelper -> registerHelper.register("dungeon_biome_snow_tree_fruit_decorator", DECORATOR_TYPE));
+		event.register(Registries.TREE_DECORATOR_TYPE, registerHelper -> registerHelper.register(
+				ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "dungeon_biome_snow_tree_fruit_decorator"), DECORATOR_TYPE));
 	}
 
 	public DungeonBiomeSnowFruitDecorator() {

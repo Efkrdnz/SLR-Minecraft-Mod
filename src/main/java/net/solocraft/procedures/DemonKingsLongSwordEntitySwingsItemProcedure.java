@@ -34,7 +34,7 @@ public class DemonKingsLongSwordEntitySwingsItemProcedure {
 		double delay = 0;
 		if (!CooldownManager.isOnCooldown(entity, "soff")
 				&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Player) {
-			if (!(entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get()))) {
+			if (!(entity instanceof LivingEntity _livEnt1 && _livEnt1.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE))) {
 				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 100) {
 					{
 						final Vec3 _center = new Vec3(x, y, z);

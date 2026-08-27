@@ -4,10 +4,11 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.entity.ThrownDaggerEntity;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -18,14 +19,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.MobType;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Server-side ownership, escrow, recovery and casting for both dagger projectile skills. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class DaggerThrowManager {
 	public static final String DAGGER_THROW = "Dagger Throw";
 	public static final String DAGGER_RUSH = "Dagger Rush";
@@ -94,7 +92,7 @@ public final class DaggerThrowManager {
 		UUID token = UUID.randomUUID();
 		CompoundTag saved = escrow(player, true);
 		saved.putUUID("Token", token);
-		saved.put("Item", exact.save(new CompoundTag()));
+		saved.put("Item", ItemStackData.save(exact, player.registryAccess()));
 		saved.putInt("Slot", held.slot);
 		saved.putString("Reward", recoveryReward(token, exact));
 
@@ -149,7 +147,7 @@ public final class DaggerThrowManager {
 	}
 
 	public static boolean isDagger(ItemStack stack) {
-		return stack != null && !stack.isEmpty() && stack.is(ItemTags.create(new ResourceLocation("dagger")));
+		return stack != null && !stack.isEmpty() && stack.is(ItemTags.create(ResourceLocation.parse("dagger")));
 	}
 
 	public static float physicalDamage(ServerPlayer player) {
@@ -191,14 +189,14 @@ public final class DaggerThrowManager {
 			return;
 		}
 		CompoundTag escrow = escrow(owner, false);
-		escrow.put("Item", stack.save(new CompoundTag()));
+		escrow.put("Item", ItemStackData.save(stack, owner.registryAccess()));
 	}
 
 	public static boolean completeReturn(ServerPlayer owner, UUID token, ThrownDaggerEntity entity) {
 		if (!isAuthorized(owner, token))
 			return false;
 		CompoundTag escrow = escrow(owner, false);
-		ItemStack stack = ItemStack.of(escrow.getCompound("Item"));
+		ItemStack stack = ItemStackData.load(escrow.getCompound("Item"), owner.registryAccess());
 		int slot = escrow.getInt("Slot");
 		if (stack.isEmpty()) {
 			clearEscrow(owner);
@@ -225,7 +223,7 @@ public final class DaggerThrowManager {
 					.withStyle(ChatFormatting.GRAY), true);
 			return true;
 		}
-		ItemStack stack = ItemStack.of(escrow.getCompound("Item"));
+		ItemStack stack = ItemStackData.load(escrow.getCompound("Item"), owner.registryAccess());
 		int slot = escrow.getInt("Slot");
 		if (stack.isEmpty())
 			return true;
@@ -256,7 +254,7 @@ public final class DaggerThrowManager {
 		CompoundTag saved = escrow(owner, false);
 		if (saved == null)
 			return;
-		ItemStack stack = ItemStack.of(saved.getCompound("Item"));
+		ItemStack stack = ItemStackData.load(saved.getCompound("Item"), owner.registryAccess());
 		int preferredSlot = saved.getInt("Slot");
 		String reward = saved.getString("Reward");
 		UUID token = saved.hasUUID("Token") ? saved.getUUID("Token") : null;
@@ -278,7 +276,7 @@ public final class DaggerThrowManager {
 		String[] parts = reward.split(":", 4);
 		if (parts.length == 4) {
 			try {
-				var item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(parts[2], parts[3]));
+				var item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath(parts[2], parts[3]));
 				if (item != null)
 					return Component.translatable("reward.sololeveling.dagger_recovery", new ItemStack(item).getHoverName()).getString();
 			} catch (Exception ignored) {
@@ -343,19 +341,9 @@ public final class DaggerThrowManager {
 	private static double daggerMeleeDamage(ItemStack stack) {
 		if (stack == null || stack.isEmpty())
 			return 4.0D;
-		double addition = 0.0D;
-		double multiplier = 1.0D;
-		for (AttributeModifier modifier : stack.getAttributeModifiers(EquipmentSlot.MAINHAND).get(Attributes.ATTACK_DAMAGE)) {
-			if (modifier.getOperation() == AttributeModifier.Operation.ADDITION) {
-				addition += modifier.getAmount();
-			} else if (modifier.getOperation() == AttributeModifier.Operation.MULTIPLY_BASE) {
-				multiplier += modifier.getAmount();
-			} else if (modifier.getOperation() == AttributeModifier.Operation.MULTIPLY_TOTAL) {
-				multiplier *= 1.0D + modifier.getAmount();
-			}
-		}
-		double enchantment = EnchantmentHelper.getDamageBonus(stack, MobType.UNDEFINED);
-		return Mth.clamp(addition * multiplier + enchantment, 4.0D, 40.0D);
+		double modifiers = ItemStackData.computedModifierValue(stack, Attributes.ATTACK_DAMAGE, EquipmentSlot.MAINHAND);
+		double enchantment = ItemStackData.legacyUndefinedDamageBonus(stack);
+		return Mth.clamp(modifiers + enchantment, 4.0D, 40.0D);
 	}
 
 	private static void setAssassinCooldown(ServerPlayer player, String key, int durationTicks) {
@@ -378,7 +366,7 @@ public final class DaggerThrowManager {
 	}
 
 	private static String recoveryReward(UUID token, ItemStack stack) {
-		ResourceLocation id = ForgeRegistries.ITEMS.getKey(stack.getItem());
+		ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
 		return RECOVERY_PREFIX + token + ":" + (id == null ? "minecraft:air" : id);
 	}
 

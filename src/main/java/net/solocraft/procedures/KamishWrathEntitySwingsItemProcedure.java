@@ -5,7 +5,7 @@ import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -59,7 +59,7 @@ public class KamishWrathEntitySwingsItemProcedure {
 		double ypos4 = 0;
 		double zpos4 = 0;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).kamishcharge == 60 && entity instanceof LivingEntity _livEnt0
-				&& _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get())) {
+				&& _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE)) {
 			if (entity instanceof LivingEntity _entity)
 				_entity.swing(InteractionHand.MAIN_HAND, true);
 			radius = 4;
@@ -77,19 +77,19 @@ public class KamishWrathEntitySwingsItemProcedure {
 			}
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:seismicslash")), SoundSource.NEUTRAL, 2, 1);
+					_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:seismicslash")), SoundSource.NEUTRAL, 2, 1);
 				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:seismicslash")), SoundSource.NEUTRAL, 2, 1, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:seismicslash")), SoundSource.NEUTRAL, 2, 1, false);
 				}
 			}
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.KAMISHCOOL.get(), 200, 1));
+				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.KAMISHCOOL, 200, 1));
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 20, 3));
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 3));
 			if (entity instanceof LivingEntity _entity)
-				_entity.removeEffect(SololevelingModMobEffects.SWORD_ENHANCE.get());
+				_entity.removeEffect(SololevelingModMobEffects.SWORD_ENHANCE);
 			for (int index0 = 0; index0 < (int) particleNum; index0++) {
 				angle = i * (arcAngle / particleNum);
 				radAngle = Math.toRadians(angle);

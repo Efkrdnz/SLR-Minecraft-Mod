@@ -15,18 +15,19 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.level.GameType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.ClassPassiveClientState;
 import net.solocraft.util.RangerClientState;
 import net.solocraft.util.StormClientState;
 import org.joml.Matrix4f;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 @OnlyIn(Dist.CLIENT)
 public class ClassPassivesOverlay {
 	private static final int PANEL_X = 8;
@@ -47,7 +48,10 @@ public class ClassPassivesOverlay {
 	@SubscribeEvent
 	public static void onRenderGui(RenderGuiEvent.Pre event) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.player == null || mc.options.hideGui || mc.options.renderDebug || mc.screen != null)
+		// Stays visible behind the layout editor so the player arranges the
+		// real HUD rather than a mockup of it.
+		if (mc.player == null || mc.options.hideGui || mc.getDebugOverlay().showDebugScreen()
+				|| (mc.screen != null && !net.solocraft.client.gui.OverlayTransform.isArranging()))
 			return;
 		SololevelingModVariables.PlayerVariables vars = mc.player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		int cls = (int) Math.round(vars.Classes);
@@ -66,34 +70,75 @@ public class ClassPassivesOverlay {
 		PoseStack pose = graphics.pose();
 		pose.pushPose();
 		pose.translate(0, 0, 210);
+		net.solocraft.client.gui.OverlayTransform.push(graphics,
+				net.solocraft.util.OverlayLayoutConfig.PASSIVES);
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 		RenderSystem.disableDepthTest();
 
+		// Veil belongs to whoever owns a concealment ability, not to a class, so
+		// the server's sync is the signal rather than the player's class id.
+		boolean veiled = ClassPassiveClientState.assassinVeilAvailable;
 		if (vars.CustomHUD) {
 			switch (cls) {
 				case 1 -> renderSegmentPassive(graphics, mc.font, panelY, "Tempo", ClassPassiveClientState.assassinTempo, 5, 0xFF17121D, 0xFF9E55FF, 0xFFDCC2FF);
 				case 3 -> renderBarPassive(graphics, mc.font, panelY, "Battle", ClassPassiveClientState.fighterPower, 100.0D, 0xFF24170D, 0xFFFF812E, 0xFFFFD14A);
 				case 4 -> renderSegmentPassive(graphics, mc.font, panelY, "Guard", ClassPassiveClientState.tankWallStacks, 10, 0xFF101924, 0xFF3092FF, 0xFFA5D8FF);
 				case 5 -> renderSegmentPassive(graphics, mc.font, panelY, "Resonance", ClassPassiveClientState.healerResonance, 5, 0xFF0D1D14, 0xFF37E384, 0xFFA2FFD0);
-				case 6 -> renderRangerPassive(graphics, mc, panelY, event.getWindow().getGuiScaledWidth(), event.getWindow().getGuiScaledHeight());
+				case 6 -> renderRangerPassive(graphics, mc, panelY, mc.getWindow().getGuiScaledWidth(), mc.getWindow().getGuiScaledHeight());
+			}
+			// Panels stack downward: class panel, then any ability-driven
+			// resources the player actually owns, then Storm. None of these
+			// depend on the player's class.
+			int stackedPanels = hasBaseClassPanel(cls) ? 1 : 0;
+			if (veiled) {
+				renderBarPassive(graphics, mc.font,
+						panelY + (PANEL_H + PANEL_GAP) * stackedPanels, "Veil",
+						ClassPassiveClientState.assassinVeil, 100.0D,
+						0xFF0B0A14, 0xFF6E5CFF, 0xFFCFC6FF);
+				stackedPanels++;
+			}
+			if (ClassPassiveClientState.fighterTempoAvailable) {
+				renderSegmentPassive(graphics, mc.font,
+						panelY + (PANEL_H + PANEL_GAP) * stackedPanels, "Sword",
+						ClassPassiveClientState.fighterTempo, 5,
+						0xFF1E1A0C, 0xFFF2C14A, 0xFFFFF0BC);
+				stackedPanels++;
+			}
+			if (ClassPassiveClientState.fighterFeralAvailable) {
+				renderBarPassive(graphics, mc.font,
+						panelY + (PANEL_H + PANEL_GAP) * stackedPanels, "Feral",
+						ClassPassiveClientState.fighterFeral, 100.0D,
+						0xFF1A0E06, 0xFFFF8A2B, 0xFFFFD9A0);
+				stackedPanels++;
+			}
+			if (ClassPassiveClientState.tankerPoiseAvailable) {
+				renderBarPassive(graphics, mc.font,
+						panelY + (PANEL_H + PANEL_GAP) * stackedPanels, "Poise",
+						ClassPassiveClientState.tankerPoise, 100.0D,
+						0xFF16110A, 0xFFC97B3A, 0xFFE8C89A);
+				stackedPanels++;
 			}
 			if (StormClientState.hasAccess) {
 				boolean nativeStormMage = cls == 2
-						&& "storm".equalsIgnoreCase(vars.mageSpecialization);
-				int stormY = nativeStormMage || !hasBaseClassPanel(cls)
-						? panelY : panelY + PANEL_H + PANEL_GAP;
+						&& ("storm".equalsIgnoreCase(vars.classStyle)
+								|| "storm".equalsIgnoreCase(
+										vars.mageSpecialization));
+				int stormY = nativeStormMage || stackedPanels == 0
+						? panelY
+						: panelY + (PANEL_H + PANEL_GAP) * stackedPanels;
 				renderStormPassive(graphics, mc.font, stormY);
 			}
 		} else {
 			if (rangerCombatOnly)
 				renderRangerCombatHud(graphics, mc.font,
-						event.getWindow().getGuiScaledWidth() * 0.5F,
-						event.getWindow().getGuiScaledHeight() * 0.5F);
+						mc.getWindow().getGuiScaledWidth() * 0.5F,
+						mc.getWindow().getGuiScaledHeight() * 0.5F);
 			if (StormClientState.hasAccess)
 				renderStormPassive(graphics, mc.font, panelY);
 		}
 
+		net.solocraft.client.gui.OverlayTransform.pop(graphics);
 		RenderSystem.enableDepthTest();
 		RenderSystem.disableBlend();
 		RenderSystem.setShaderColor(1, 1, 1, 1);
@@ -300,17 +345,16 @@ public class ClassPassivesOverlay {
 
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 		Matrix4f matrix = pose.last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 		int segments = 72;
 		for (int i = 0; i <= segments; i++) {
 			float angle = startRad + (endRad - startRad) * ((float) i / segments);
 			float cos = (float) Math.cos(angle);
 			float sin = (float) Math.sin(angle);
-			buffer.vertex(matrix, cx + cos * outerR, cy + sin * outerR, 0).color(red, green, blue, alpha).endVertex();
-			buffer.vertex(matrix, cx + cos * innerR, cy + sin * innerR, 0).color(red, green, blue, alpha).endVertex();
+			buffer.addVertex(matrix, cx + cos * outerR, cy + sin * outerR, 0).setColor(red, green, blue, alpha);
+			buffer.addVertex(matrix, cx + cos * innerR, cy + sin * innerR, 0).setColor(red, green, blue, alpha);
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static double clamp(double value, double min, double max) {

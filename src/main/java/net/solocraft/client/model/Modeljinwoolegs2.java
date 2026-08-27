@@ -22,7 +22,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 public class Modeljinwoolegs2<T extends Entity> extends EntityModel<T> {
 	// This layer location should be baked with EntityRendererProvider.Context in
 	// the entity renderer and passed into this model's constructor
-	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation("sololeveling", "modeljinwoolegs_2"), "main");
+	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath("sololeveling", "modeljinwoolegs_2"), "main");
 	public final ModelPart RightLeg;
 	public final ModelPart LeftLeg;
 
@@ -44,9 +44,9 @@ public class Modeljinwoolegs2<T extends Entity> extends EntityModel<T> {
 	}
 
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-		RightLeg.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		LeftLeg.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
+		RightLeg.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		LeftLeg.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
 	}
 
 	public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {

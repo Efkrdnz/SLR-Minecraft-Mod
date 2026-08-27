@@ -5,7 +5,7 @@ import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.TemporaryArmorSessionManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -115,9 +115,9 @@ public class GoliathManifestationProcedure {
 	private static void playStartSound(LevelAccessor world, double x, double y, double z) {
 		if (world instanceof Level level) {
 			if (!level.isClientSide())
-				level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.beacon.activate")), SoundSource.NEUTRAL, 1.0f, 0.8f);
+				level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.beacon.activate")), SoundSource.NEUTRAL, 1.0f, 0.8f);
 			else
-				level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.beacon.activate")), SoundSource.NEUTRAL, 1.0f, 0.8f, false);
+				level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.beacon.activate")), SoundSource.NEUTRAL, 1.0f, 0.8f, false);
 		}
 	}
 

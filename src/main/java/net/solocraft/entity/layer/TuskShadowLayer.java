@@ -15,7 +15,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 public class TuskShadowLayer extends GeoRenderLayer<TuskShadowEntity> {
-	private static final ResourceLocation LAYER = new ResourceLocation("sololeveling", "textures/entities/kardalgan_shadow_eye.png");
+	private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/kardalgan_shadow_eye.png");
 
 	public TuskShadowLayer(GeoRenderer<TuskShadowEntity> entityRenderer) {
 		super(entityRenderer);
@@ -24,6 +24,6 @@ public class TuskShadowLayer extends GeoRenderLayer<TuskShadowEntity> {
 	@Override
 	public void render(PoseStack poseStack, TuskShadowEntity animatable, BakedGeoModel bakedModel, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
 		RenderType glowRenderType = RenderType.eyes(LAYER);
-		getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, glowRenderType, bufferSource.getBuffer(glowRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+		getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, glowRenderType, bufferSource.getBuffer(glowRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
 	}
 }

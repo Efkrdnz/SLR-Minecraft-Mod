@@ -7,15 +7,16 @@ import net.solocraft.entity.SteelFangWolfEntity;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingDropsEvent;
-import net.minecraftforge.event.entity.living.LivingExperienceDropEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -38,10 +39,9 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 
 import java.util.Set;
-import java.util.UUID;
 
 /** Runtime behavior for the difficulty and dungeon-death world creation rules. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class SoloLevelingWorldRulesManager {
 	private static final int STANDARD_PERCENT = 100;
 	private static final int FORGIVING_DEATH_RULE = 1;
@@ -54,18 +54,18 @@ public final class SoloLevelingWorldRulesManager {
 	private static final String SNAPSHOT_XP_TOTAL = "ExperienceTotal";
 	private static final String SNAPSHOT_XP_PROGRESS = "ExperienceProgress";
 
-	private static final UUID ENEMY_HEALTH_ID = UUID.fromString("33d15df7-4cb8-458b-98c0-d9c3d289c157");
-	private static final UUID ENEMY_DAMAGE_ID = UUID.fromString("21003733-c044-42ae-a1c3-76bb8ca105c1");
-	private static final UUID BOSS_HEALTH_ID = UUID.fromString("2320716c-d01e-4cc6-b15d-b9059e8cb4dd");
-	private static final UUID BOSS_DAMAGE_ID = UUID.fromString("553f2e8a-143d-4382-acbc-f5f6473c8630");
-	private static final UUID BOSS_ARMOR_ID = UUID.fromString("3e28b8ac-f64a-4496-92ca-d03ac4ad4b0a");
-	private static final UUID BOSS_TOUGHNESS_ID = UUID.fromString("57d07fc8-6505-4ac4-824d-0c4b66446005");
-	private static final UUID BOSS_KNOCKBACK_ID = UUID.fromString("6ca2c497-5875-491d-899d-f8e89e410606");
+	private static final ResourceLocation ENEMY_HEALTH_ID = modifierId("enemy_health");
+	private static final ResourceLocation ENEMY_DAMAGE_ID = modifierId("enemy_damage");
+	private static final ResourceLocation BOSS_HEALTH_ID = modifierId("boss_health");
+	private static final ResourceLocation BOSS_DAMAGE_ID = modifierId("boss_damage");
+	private static final ResourceLocation BOSS_ARMOR_ID = modifierId("boss_armor");
+	private static final ResourceLocation BOSS_TOUGHNESS_ID = modifierId("boss_armor_toughness");
+	private static final ResourceLocation BOSS_KNOCKBACK_ID = modifierId("boss_knockback_resistance");
 
 	private static final TagKey<net.minecraft.world.entity.EntityType<?>> SOLO_BOSS_TAG =
-			TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("minecraft", "soloboss"));
+			TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath("minecraft", "soloboss"));
 	private static final TagKey<net.minecraft.world.entity.EntityType<?>> SOLO_ENEMY_TAG =
-			TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("minecraft", "dm"));
+			TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath("minecraft", "dm"));
 
 	private static final Set<String> NON_ENEMY_MONSTER_IDS = Set.of(
 			"after_image",
@@ -89,14 +89,14 @@ public final class SoloLevelingWorldRulesManager {
 	}
 
 	/**
-	 * Runs after legacy and runtime level scalers. Fixed UUIDs make repeated joins
+	 * Runs after legacy and runtime level scalers. Stable resource IDs make repeated joins
 	 * and chunk reloads replace these modifiers instead of compounding them.
 	 */
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void onEntityJoin(EntityJoinLevelEvent event) {
 		if (event.getLevel().isClientSide() || !(event.getEntity() instanceof Mob mob))
 			return;
-		ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(mob.getType());
+		ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
 		boolean runtimeDungeonMob = mob.getPersistentData().getBoolean(
 				DungeonMobLevelAdapter.RUNTIME_SPAWN_TAG)
 				|| !mob.getPersistentData().getString(
@@ -122,21 +122,21 @@ public final class SoloLevelingWorldRulesManager {
 				? Mth.clamp(mob.getHealth() / oldMaxHealth, 0.0F, 1.0F) : 1.0F;
 
 		replaceModifier(mob.getAttribute(Attributes.MAX_HEALTH), ENEMY_HEALTH_ID,
-				"SLR enemy health setting", enemyAmount, AttributeModifier.Operation.MULTIPLY_TOTAL);
+				"SLR enemy health setting", enemyAmount, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		replaceModifier(mob.getAttribute(Attributes.ATTACK_DAMAGE), ENEMY_DAMAGE_ID,
-				"SLR enemy damage setting", enemyAmount, AttributeModifier.Operation.MULTIPLY_TOTAL);
+				"SLR enemy damage setting", enemyAmount, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		replaceModifier(mob.getAttribute(Attributes.MAX_HEALTH), BOSS_HEALTH_ID,
-				"SLR boss health setting", bossAmount, AttributeModifier.Operation.MULTIPLY_TOTAL);
+				"SLR boss health setting", bossAmount, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		replaceModifier(mob.getAttribute(Attributes.ATTACK_DAMAGE), BOSS_DAMAGE_ID,
-				"SLR boss damage setting", bossAmount, AttributeModifier.Operation.MULTIPLY_TOTAL);
+				"SLR boss damage setting", bossAmount, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		replaceModifier(mob.getAttribute(Attributes.ARMOR), BOSS_ARMOR_ID,
-				"SLR boss armor setting", bossAmount * 8.0D, AttributeModifier.Operation.ADDITION);
+				"SLR boss armor setting", bossAmount * 8.0D, AttributeModifier.Operation.ADD_VALUE);
 		replaceModifier(mob.getAttribute(Attributes.ARMOR_TOUGHNESS), BOSS_TOUGHNESS_ID,
 				"SLR boss armor toughness setting", bossAmount * 4.0D,
-				AttributeModifier.Operation.ADDITION);
+				AttributeModifier.Operation.ADD_VALUE);
 		replaceModifier(mob.getAttribute(Attributes.KNOCKBACK_RESISTANCE), BOSS_KNOCKBACK_ID,
 				"SLR boss knockback resistance setting", bossAmount * 0.2D,
-				AttributeModifier.Operation.ADDITION);
+				AttributeModifier.Operation.ADD_VALUE);
 
 		if (mob.isAlive())
 			mob.setHealth(Math.max(1.0F, mob.getMaxHealth() * healthRatio));
@@ -256,14 +256,18 @@ public final class SoloLevelingWorldRulesManager {
 				? 0.0D : safePercent / 100.0D - 1.0D;
 	}
 
-	private static void replaceModifier(@Nullable AttributeInstance instance, UUID id,
+	private static void replaceModifier(@Nullable AttributeInstance instance, ResourceLocation id,
 			String name, double amount, AttributeModifier.Operation operation) {
 		if (instance == null)
 			return;
 		if (instance.getModifier(id) != null)
 			instance.removeModifier(id);
 		if (Double.isFinite(amount) && amount != 0.0D)
-			instance.addPermanentModifier(new AttributeModifier(
-					id, name, amount, operation));
+			instance.addPermanentModifier(new AttributeModifier(id, amount, operation));
+	}
+
+	private static ResourceLocation modifierId(String statistic) {
+		return ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID,
+				"attribute/world_rules_" + statistic);
 	}
 }

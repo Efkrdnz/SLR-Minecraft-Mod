@@ -4,12 +4,20 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.SystemNotifications;
 import net.solocraft.util.SystemPlayerAccess;
 import net.solocraft.util.RangerCombatManager;
+import net.solocraft.util.LevelCapRules;
+import net.solocraft.util.LevelRewardRules;
+import net.solocraft.util.HunterEvaluationRules;
+import net.solocraft.init.SololevelingModGameRules;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -26,12 +34,12 @@ import net.minecraft.ChatFormatting;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class LevelUpProcedure {
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player.level(), event.player.getX(), event.player.getY(), event.player.getZ(), event.player);
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true) {
+			execute(event, event.getEntity().level(), event.getEntity().getX(), event.getEntity().getY(), event.getEntity().getZ(), event.getEntity());
 		}
 	}
 
@@ -48,10 +56,17 @@ public class LevelUpProcedure {
 			int initialLevel = (int) playerVars.Level;
 			double initialRank = playerVars.HunterRank;
 			// Calculate potential level ups
+			int levelCap = LevelCapRules.resolveCap(world.getLevelData().getGameRules()
+					.getInt(SololevelingModGameRules.SOLO_LEVELING_LEVEL_CAP));
 			int newLevel = initialLevel;
 			double remainingXp = initialXp;
 			double requiredXP;
 			while (true) {
+				// The cap is the summit of the run, not a discard. XP earned past it
+				// stays banked on the variable so lifting the cap later -- or setting
+				// it to unlimited -- resumes exactly where the player actually was.
+				if (LevelCapRules.isCapped(newLevel, levelCap))
+					break;
 				requiredXP = (newLevel * 16) + 8;
 				if (remainingXp < requiredXP || newLevel >= Integer.MAX_VALUE - 1)
 					break;
@@ -59,14 +74,20 @@ public class LevelUpProcedure {
 				newLevel++;
 			}
 			int levelsGained = newLevel - initialLevel;
+			if (levelsGained > 0 && LevelCapRules.isCapped(newLevel, levelCap))
+				announcePeak(entity, playerVars);
 			if (levelsGained > 0) {
 				// Update all player stats atomically
 				playerVars.Level = newLevel;
 				playerVars.Xp = remainingXp;
 				playerVars.Fatigue = 0;
-				// Handle rank promotion (every 25 levels)
-				if (newLevel / 25 > initialLevel / 25) {
-					playerVars.HunterRank = Math.min(6, initialRank + (newLevel / 25 - initialLevel / 25));
+				// Once evaluated, level progression establishes a consistent minimum
+				// rank without erasing a higher awakening result. Unranked players still
+				// receive their first roll from the Hunter Evaluator.
+				if (initialRank > 0.0D) {
+					int levelFloor = HunterEvaluationRules.rankFloorForLevel(newLevel);
+					playerVars.HunterRank = Math.min(HunterEvaluationRules.RANK_COUNT,
+							Math.max(initialRank, levelFloor));
 				}
 				int rankPromotions = Math.max(0,
 						(int) Math.round(playerVars.HunterRank - initialRank));
@@ -77,6 +98,7 @@ public class LevelUpProcedure {
 				playerVars.perception += levelsGained;
 				playerVars.Speed += levelsGained;
 				playerVars.Durability += levelsGained;
+				playerVars.SkillPoints += LevelRewardRules.skillPointsForLevels(levelsGained);
 				// Sync all changes at once
 				playerVars.syncPlayerVariables(entity);
 				// Client-side effects
@@ -89,7 +111,7 @@ public class LevelUpProcedure {
 								Component.literal("Lv " + initialLevel + " -> " + newLevel).withStyle(ChatFormatting.YELLOW));
 					}
 					// Play sound
-					((Level) world).playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 2, 1);
+					((Level) world).playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 2, 1);
 					// If rank increased, show additional message
 					if (playerVars.HunterRank > initialRank) {
 						if (entity instanceof ServerPlayer player) {
@@ -107,6 +129,24 @@ public class LevelUpProcedure {
 				}
 			}
 		});
+	}
+
+	private static final String PEAK_ANNOUNCED_TAG = "slr_level_peak_announced";
+
+	/**
+	 * Announces the summit once. The marker lives in persistent data rather than
+	 * PlayerVariables because it is purely cosmetic -- nothing reads it back and
+	 * it never needs to reach the client.
+	 */
+	private static void announcePeak(Entity entity, SololevelingModVariables.PlayerVariables playerVars) {
+		if (!(entity instanceof ServerPlayer player)
+				|| player.getPersistentData().getBoolean(PEAK_ANNOUNCED_TAG))
+			return;
+		player.getPersistentData().putBoolean(PEAK_ANNOUNCED_TAG, true);
+		SystemNotifications.showTitleUnder(player, 0xFF9B5CFF, 140,
+				Component.literal("THE PEAK").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
+				Component.literal("There is nothing left to climb. Return to where it began.")
+						.withStyle(ChatFormatting.WHITE));
 	}
 
 	private static void grantRankSkills(Entity entity, int playerClass, int promotions) {

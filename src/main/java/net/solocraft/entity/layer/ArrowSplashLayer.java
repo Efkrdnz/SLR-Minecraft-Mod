@@ -15,7 +15,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 public class ArrowSplashLayer extends GeoRenderLayer<ArrowSplashEntity> {
-	private static final ResourceLocation LAYER = new ResourceLocation("sololeveling", "textures/entities/arrowsplashglow.png");
+	private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/arrowsplashglow.png");
 
 	public ArrowSplashLayer(GeoRenderer<ArrowSplashEntity> entityRenderer) {
 		super(entityRenderer);
@@ -24,6 +24,6 @@ public class ArrowSplashLayer extends GeoRenderLayer<ArrowSplashEntity> {
 	@Override
 	public void render(PoseStack poseStack, ArrowSplashEntity animatable, BakedGeoModel bakedModel, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
 		RenderType glowRenderType = RenderType.eyes(LAYER);
-		getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, glowRenderType, bufferSource.getBuffer(glowRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+		getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, glowRenderType, bufferSource.getBuffer(glowRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
 	}
 }

@@ -3,8 +3,8 @@ package net.solocraft.item;
 
 import net.solocraft.procedures.RunestoneShadowExchangeRightclickedProcedure;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.TooltipFlag;
@@ -30,9 +30,10 @@ public class RunestoneShadowExchangeItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("\u00A76Right click this rune to obtain \u00A7d\"Shadow Exchange\""));
+		list.add(Component.literal("\u00A75A Baran-exclusive survival reward usable only by the Shadow Monarch."));
 		list.add(Component.literal("\u00A76The caster may assign shadow soldiers into spots and later switch locations with them!"));
 	}
 

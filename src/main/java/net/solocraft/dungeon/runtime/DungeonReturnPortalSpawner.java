@@ -49,7 +49,7 @@ public final class DungeonReturnPortalSpawner {
 				0.0F, 0.0F);
 		if (portal instanceof Mob mob)
 			mob.finalizeSpawn(level, level.getCurrentDifficultyAt(position),
-					MobSpawnType.MOB_SUMMONED, null, null);
+					MobSpawnType.MOB_SUMMONED, null);
 		if (facing != null && facing.getAxis().isHorizontal()) {
 			float yaw = facing.toYRot();
 			portal.setYRot(yaw);

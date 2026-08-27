@@ -5,10 +5,14 @@ import net.solocraft.world.dimension.rift.DimensionalRiftDimension;
 import net.solocraft.world.dimension.rift.RiftGeometry;
 import net.solocraft.world.dimension.rift.RiftTerritory;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -40,7 +44,7 @@ import java.util.UUID;
  * octagonal curtain and eightfold ice details deliberately echo the shape of
  * the Dimensional Rift's central Monarch star.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class FrostMonarchCastleGenerator {
 	private static final int HALF_WIDTH = 64;
 	private static final int MIN_Z = -18;
@@ -131,8 +135,8 @@ public final class FrostMonarchCastleGenerator {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || ACTIVE_BUILDS.isEmpty())
+	public static void onServerTick(ServerTickEvent.Post event) {
+		if (false || ACTIVE_BUILDS.isEmpty())
 			return;
 		int count = Math.max(1, ACTIVE_BUILDS.size());
 		int checks = Math.max(2_500, CHECKS_PER_TICK / count);

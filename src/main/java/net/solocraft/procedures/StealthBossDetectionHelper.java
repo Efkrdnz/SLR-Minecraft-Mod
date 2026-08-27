@@ -11,7 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.core.registries.Registries;
 
 public class StealthBossDetectionHelper {
-	private static final TagKey<net.minecraft.world.entity.EntityType<?>> SOLO_BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("soloboss"));
+	private static final TagKey<net.minecraft.world.entity.EntityType<?>> SOLO_BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("soloboss"));
 
 	public static boolean seesThroughStealth(Entity entity) {
 		if (entity == null || entity instanceof GoblinKingEntity)

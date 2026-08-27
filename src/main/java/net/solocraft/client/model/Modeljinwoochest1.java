@@ -22,7 +22,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 public class Modeljinwoochest1<T extends Entity> extends EntityModel<T> {
 	// This layer location should be baked with EntityRendererProvider.Context in
 	// the entity renderer and passed into this model's constructor
-	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation("sololeveling", "modeljinwoochest_1"), "main");
+	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath("sololeveling", "modeljinwoochest_1"), "main");
 	public final ModelPart Body;
 	public final ModelPart RightArm;
 	public final ModelPart LeftArm;
@@ -49,10 +49,10 @@ public class Modeljinwoochest1<T extends Entity> extends EntityModel<T> {
 	}
 
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-		Body.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		RightArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		LeftArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
+		Body.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		RightArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		LeftArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
 	}
 
 	public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {

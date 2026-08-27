@@ -1,8 +1,9 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.DemonCastleBossDamageRules;
 import net.solocraft.entity.BaranEntity;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
@@ -24,7 +25,7 @@ import net.minecraft.sounds.SoundSource;
  *   10  – first bolt cluster (3 bolts around target)
  *   20  – second bolt cluster (3 bolts, tighter)
  *   30  – third bolt cluster (4 bolts in a ring) — phase 2: 6 bolts
- *   40  – direct strike on target position (deals 8 damage separately)
+ *   40  – direct strike on target position with extra lightning damage
  *   Phase 2 extra: MF=50 → fourth bolt cluster (5 bolts)
  *   ≥65 – reset to idle  (phase 2: ≥80)
  *
@@ -52,7 +53,7 @@ public class BaranLightningStormProcedure {
 			if (world instanceof ServerLevel sl) {
 				sl.sendParticles(ParticleTypes.FLASH, target.getX(), target.getY() + 2, target.getZ(), 5, 0.5, 0.5, 0.5, 0);
 				sl.playSound(null, BlockPos.containing(target.getX(), target.getY(), target.getZ()),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.lightning_bolt.thunder")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.lightning_bolt.thunder")),
 						SoundSource.HOSTILE, 1.2f, 1.5f);
 			}
 		}
@@ -77,7 +78,8 @@ public class BaranLightningStormProcedure {
 				// Extra magic damage from the concentrated strike
 				target.hurt(new net.minecraft.world.damagesource.DamageSource(
 						world.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE)
-								.getHolderOrThrow(net.minecraft.world.damagesource.DamageTypes.LIGHTNING_BOLT), baran), 8f);
+								.getHolderOrThrow(net.minecraft.world.damagesource.DamageTypes.LIGHTNING_BOLT), baran),
+						DemonCastleBossDamageRules.BARAN_LIGHTNING_DIRECT);
 			}
 		}
 

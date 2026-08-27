@@ -2,8 +2,10 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.util.ManaRules;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -31,8 +33,11 @@ public class HasteBuffCastProcedure {
 		String found_entity_name = "";
 		boolean entity_found = false;
 		if (!CooldownManager.isOnCooldown(entity, "Haste Buff")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 200
-					+ (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10) {
+			// Intelligence already raises maximum mana, so the cost band scales
+			// once through it. The old direct "+ INT * 10" term taxed the stat a
+			// second time and made improving Intelligence a downgrade.
+			if (ManaRules.canAfford(entity,
+					ManaRules.cost(entity, ManaRules.Band.MEDIUM))) {
 				if (!entity.isShiftKeyDown()) {
 					raytrace_distance = 0;
 					entity_found = false;
@@ -277,11 +282,11 @@ public class HasteBuffCastProcedure {
 											(entity.level().clip(new ClipContext(entity.getEyePosition(1f), entity.getEyePosition(1f).add(entity.getViewVector(1f).scale(raytrace_distance)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity))
 													.getBlockPos().getZ())))
 									.findFirst().orElse(null)) instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.HASTE_BUFF.get(),
-										(int) (600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10), 0, false, false));
+								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.HASTE_BUFF,
+										(int) (600 + TemporaryStatBonusManager.effectiveIntelligence(entity) * 10), 0, false, false));
 							{
 								double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP
-										- (200 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10);
+										- ManaRules.cost(entity, ManaRules.Band.MEDIUM);
 								entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 									capability.MP = _setval;
 									capability.syncPlayerVariables(entity);
@@ -289,12 +294,12 @@ public class HasteBuffCastProcedure {
 							}
 							CooldownManager.set(entity, "mana_refresh", 100);
 							CooldownManager.set(entity, "Haste Buff",
-									(int) ((600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10) * 1.5));
+									(int) ((600 + TemporaryStatBonusManager.effectiveIntelligence(entity) * 10) * 1.5));
 							if (world instanceof Level _level) {
 								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.ambient")), SoundSource.NEUTRAL, 1, 2);
+									_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.ambient")), SoundSource.NEUTRAL, 1, 2);
 								} else {
-									_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.ambient")), SoundSource.NEUTRAL, 1, 2, false);
+									_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.ambient")), SoundSource.NEUTRAL, 1, 2, false);
 								}
 							}
 						}
@@ -302,7 +307,7 @@ public class HasteBuffCastProcedure {
 				} else {
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP
-								- (200 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10);
+								- ManaRules.cost(entity, ManaRules.Band.MEDIUM);
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 							capability.MP = _setval;
 							capability.syncPlayerVariables(entity);
@@ -310,15 +315,15 @@ public class HasteBuffCastProcedure {
 					}
 					CooldownManager.set(entity, "mana_refresh", 100);
 					CooldownManager.set(entity, "Haste Buff",
-							(int) ((600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10) * 1.5));
+							(int) ((600 + TemporaryStatBonusManager.effectiveIntelligence(entity) * 10) * 1.5));
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.HASTE_BUFF.get(),
-								(int) (600 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence * 10), 0, false, false));
+						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.HASTE_BUFF,
+								(int) (600 + TemporaryStatBonusManager.effectiveIntelligence(entity) * 10), 0, false, false));
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
-							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.ambient")), SoundSource.NEUTRAL, 1, 2);
+							_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.ambient")), SoundSource.NEUTRAL, 1, 2);
 						} else {
-							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.ambient")), SoundSource.NEUTRAL, 1, 2, false);
+							_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.ambient")), SoundSource.NEUTRAL, 1, 2, false);
 						}
 					}
 				}
@@ -327,9 +332,9 @@ public class HasteBuffCastProcedure {
 					_player.displayClientMessage(Component.literal("Not Enough Mana!"), true);
 				if (world instanceof Level _level) {
 					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
+						_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
 					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
 					}
 				}
 			}
@@ -338,9 +343,9 @@ public class HasteBuffCastProcedure {
 				_player.displayClientMessage(Component.literal("Ability on Cooldown!"), true);
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
+					_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
 				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
 				}
 			}
 		}

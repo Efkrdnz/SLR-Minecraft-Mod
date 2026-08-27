@@ -4,9 +4,10 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.SkillSlotHelper;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -20,12 +21,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class MageSpellProgression {
 	public static final String FIRE = "fire";
 	public static final String BARRIER = "barrier";
 	public static final String ARCANE = "arcane";
 	public static final String STORM = "storm";
+	public static final String CURSE = "curse";
 
 	private static final Set<String> LEGACY_FIRE_SKILLS = Set.of(
 			"Fireball", "Fire Rain", "Heavy Flame", "Flame Tornado", "Flame Vortex");
@@ -39,16 +41,16 @@ public final class MageSpellProgression {
 	private static final String RUNESTONE_SKILL_PREFIX = "slr_runestone_skill_";
 
 	private static final List<List<String>> FIRE_SPELL_TIERS = List.of(
-			List.of(),
-			List.of(FireMageSpellManager.FLAME_WEAVING, FireMageSpellManager.IGNITION_ORB),
+			List.of(FireMageSpellManager.FLAME_WEAVING),
+			List.of(FireMageSpellManager.IGNITION_ORB),
 			List.of(FireMageSpellManager.INFERNO_LANCE, FireMageSpellManager.FLASHFIRE),
 			List.of(FireMageSpellManager.CREMATION),
 			List.of(FireMageSpellManager.FURNACE_DOMINION),
 			List.of(FireMageSpellManager.HEAVENFALL));
 
 	private static final List<List<String>> FIRE_EVALUATION_UNLOCKS = List.of(
-			List.of(),
-			List.of(FireMageSpellManager.FLAME_WEAVING, FireMageSpellManager.IGNITION_ORB),
+			List.of(FireMageSpellManager.FLAME_WEAVING),
+			List.of(FireMageSpellManager.IGNITION_ORB),
 			List.of(FireMageSpellManager.INFERNO_LANCE),
 			List.of(FireMageSpellManager.CREMATION),
 			List.of(FireMageSpellManager.FURNACE_DOMINION),
@@ -89,6 +91,16 @@ public final class MageSpellProgression {
 			List.of(StormMageSpellManager.THUNDERHEAD),
 			List.of(StormMageSpellManager.SKYBREAKER));
 
+	// Curse Mage learns one delivery per tier. The wheel's curse roster unlocks
+	// on the same rank ladder, in CurseType order.
+	private static final List<List<String>> CURSE_SPELL_TIERS = List.of(
+			List.of(CurseMageSpellManager.HEX_BOLT),
+			List.of(),
+			List.of(CurseMageSpellManager.MALEFIC_BURST),
+			List.of(CurseMageSpellManager.CREEPING_MIASMA),
+			List.of(CurseMageSpellManager.VECTOR_OF_RUIN),
+			List.of(CurseMageSpellManager.CULLING));
+
 	private MageSpellProgression() {
 	}
 
@@ -107,8 +119,13 @@ public final class MageSpellProgression {
 			return;
 		removeInvalidMageSkills(entity);
 		if (variables(entity).Classes == 2.0D) {
-			if (specialization(entity).isBlank())
-				setSpecialization(entity, FIRE, false);
+			String type = specialization(entity);
+			if (type.isBlank())
+				type = FIRE;
+			SololevelingModVariables.PlayerVariables vars = variables(entity);
+			if (!type.equals(normalizeStyle(vars.classStyle))
+					|| !type.equals(normalizeStyle(vars.mageSpecialization)))
+				setSpecialization(entity, type, false);
 			grantEvaluationSpells(entity);
 		}
 		grantBaranStormInheritance(entity);
@@ -180,8 +197,14 @@ public final class MageSpellProgression {
 	}
 
 	public static String specialization(Entity entity) {
-		String value = variables(entity).mageSpecialization;
-		return value == null ? "" : value.trim().toLowerCase();
+		SololevelingModVariables.PlayerVariables vars = variables(entity);
+		String generic = normalizeStyle(vars.classStyle);
+		if (ClassStyleRules.styleId(ClassStyleRules.MAGE_CLASS_ID,
+				generic) > 0)
+			return generic;
+		String legacy = normalizeStyle(vars.mageSpecialization);
+		return ClassStyleRules.styleId(ClassStyleRules.MAGE_CLASS_ID,
+				legacy) > 0 ? legacy : "";
 	}
 
 	public static boolean isBarrierMage(Entity entity) {
@@ -196,6 +219,10 @@ public final class MageSpellProgression {
 		return STORM.equals(specialization(entity));
 	}
 
+	public static boolean isCurseMage(Entity entity) {
+		return CURSE.equals(specialization(entity));
+	}
+
 	public static String requiredSpecialization(String skill) {
 		if (FireMageSpellManager.isFireSkill(skill))
 			return FIRE;
@@ -205,6 +232,8 @@ public final class MageSpellProgression {
 			return ARCANE;
 		if (StormMageSpellManager.isStormSkill(skill))
 			return STORM;
+		if (CurseMageSpellManager.isCurseSkill(skill))
+			return CURSE;
 		return null;
 	}
 
@@ -238,6 +267,7 @@ public final class MageSpellProgression {
 			case BARRIER -> "Barrier Mage";
 			case ARCANE -> "Arcane Mage";
 			case STORM -> "Storm Mage";
+			case CURSE -> "Curse Mage";
 			default -> "Fire Mage";
 		};
 	}
@@ -245,12 +275,13 @@ public final class MageSpellProgression {
 	public static String assignRandomSpecialization(Entity entity) {
 		String current = specialization(entity);
 		if (FIRE.equals(current) || BARRIER.equals(current) || ARCANE.equals(current)
-				|| STORM.equals(current))
+				|| STORM.equals(current) || CURSE.equals(current))
 			return current;
-		String selected = switch (entity.level().getRandom().nextInt(4)) {
+		String selected = switch (entity.level().getRandom().nextInt(5)) {
 			case 1 -> BARRIER;
 			case 2 -> ARCANE;
 			case 3 -> STORM;
+			case 4 -> CURSE;
 			default -> FIRE;
 		};
 		setSpecialization(entity, selected, true);
@@ -258,17 +289,19 @@ public final class MageSpellProgression {
 	}
 
 	public static void setSpecialization(Entity entity, String specialization, boolean notify) {
-		if (entity == null || (!FIRE.equals(specialization) && !BARRIER.equals(specialization)
-				&& !ARCANE.equals(specialization) && !STORM.equals(specialization)))
+		String selected = normalizeStyle(specialization);
+		if (entity == null || ClassStyleRules.styleId(
+				ClassStyleRules.MAGE_CLASS_ID, selected) == 0)
 			return;
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-			capability.mageSpecialization = specialization;
+			capability.classStyle = selected;
+			capability.mageSpecialization = selected;
 			capability.syncPlayerVariables(entity);
 		});
 		if (notify && entity instanceof ServerPlayer player) {
-			boolean barrier = BARRIER.equals(specialization);
-			boolean arcane = ARCANE.equals(specialization);
-			boolean storm = STORM.equals(specialization);
+			boolean barrier = BARRIER.equals(selected);
+			boolean arcane = ARCANE.equals(selected);
+			boolean storm = STORM.equals(selected);
 			SystemNotifications.showTitleUnder(player,
 					barrier ? 0xFF5CE8FF : arcane ? 0xFF8A5CFF : storm ? 0xFFFFD45A : 0xFFFF5A2A, 120,
 					Component.literal("MAGE SPECIALIZATION")
@@ -280,6 +313,10 @@ public final class MageSpellProgression {
 									: storm ? ChatFormatting.YELLOW : ChatFormatting.RED,
 									ChatFormatting.BOLD));
 		}
+	}
+
+	private static String normalizeStyle(String value) {
+		return value == null ? "" : value.trim().toLowerCase();
 	}
 
 	public static int tierForRank(double hunterRank) {
@@ -295,6 +332,7 @@ public final class MageSpellProgression {
 			case BARRIER -> BarrierMageSpellManager.FRACTURE_BOLT;
 			case ARCANE -> ArcaneMageSpellManager.AETHER_BOLT;
 			case STORM -> StormMageSpellManager.STATIC_NEEDLE;
+			case CURSE -> CurseMageSpellManager.HEX_BOLT;
 			default -> FireMageSpellManager.FLAME_WEAVING;
 		};
 		unlockSkill(entity, starter, false);
@@ -328,7 +366,14 @@ public final class MageSpellProgression {
 			}
 			return;
 		}
-		for (int currentTier = 1; currentTier <= tier; currentTier++) {
+		if (CURSE.equals(type)) {
+			for (int currentTier = 0; currentTier <= tier; currentTier++) {
+				for (String skill : CURSE_SPELL_TIERS.get(currentTier))
+					unlockSkill(entity, skill, false);
+			}
+			return;
+		}
+		for (int currentTier = 0; currentTier <= tier; currentTier++) {
 			for (String skill : FIRE_EVALUATION_UNLOCKS.get(currentTier))
 				unlockSkill(entity, skill, false);
 		}
@@ -363,8 +408,15 @@ public final class MageSpellProgression {
 						missing.add(skill);
 				}
 			}
+		} else if (CURSE.equals(type)) {
+			for (int currentTier = 0; currentTier <= tier; currentTier++) {
+				for (String skill : CURSE_SPELL_TIERS.get(currentTier)) {
+					if (!hasSkill(entity, skill))
+						missing.add(skill);
+				}
+			}
 		} else {
-			for (int currentTier = 1; currentTier <= tier; currentTier++) {
+			for (int currentTier = 0; currentTier <= tier; currentTier++) {
 				for (String skill : FIRE_SPELL_TIERS.get(currentTier)) {
 					if (!hasSkill(entity, skill))
 						missing.add(skill);
@@ -396,9 +448,26 @@ public final class MageSpellProgression {
 			capability.Plist = capability.Plist + skill + ",";
 			capability.syncPlayerVariables(entity);
 		});
+		grantCurseWheelCompanion(entity, skill);
 		if (notify && entity instanceof Player player && !player.level().isClientSide())
 			player.displayClientMessage(Component.literal("Gained skill: " + skill), false);
 		return true;
+	}
+
+	/**
+	 * Curse Weave is infrastructure, not a reward.
+	 *
+	 * <p>Every Curse Mage delivery casts whatever the wheel has armed, so owning a
+	 * delivery without the wheel would leave a player permanently stuck on the
+	 * starter curse. It arrives automatically with the first curse ability from
+	 * any source -- starter grant, evaluation, mastery roll or runestone -- and is
+	 * therefore deliberately not obtainable on its own.
+	 */
+	private static void grantCurseWheelCompanion(Entity entity, String skill) {
+		if (!CurseMageSpellManager.isCurseSkill(skill)
+				|| CurseMageSpellManager.CURSE_WEAVE.equals(skill))
+			return;
+		unlockSkill(entity, CurseMageSpellManager.CURSE_WEAVE, false);
 	}
 
 	/**
@@ -409,6 +478,13 @@ public final class MageSpellProgression {
 		if (!unlockSkill(entity, skill, false))
 			return false;
 		runestoneData(entity).putBoolean(runestoneSkillKey(skill), true);
+		// The companion wheel has to inherit the same permanence, or a non-Curse
+		// Mage who learned a delivery from a runestone would keep the delivery and
+		// lose the wheel on their next login.
+		if (CurseMageSpellManager.isCurseSkill(skill)
+				&& !CurseMageSpellManager.CURSE_WEAVE.equals(skill))
+			runestoneData(entity).putBoolean(
+					runestoneSkillKey(CurseMageSpellManager.CURSE_WEAVE), true);
 		return true;
 	}
 

@@ -1,17 +1,17 @@
 package net.solocraft.block.display;
 
 import software.bernie.geckolib.util.GeckoLibUtil;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.GeoItem;
 
 import net.solocraft.block.renderer.DungeonWallDisplayItemRenderer;
 
-import net.minecraftforge.common.property.Properties;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.common.property.Properties;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.item.BlockItem;

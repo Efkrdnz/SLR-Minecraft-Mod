@@ -4,7 +4,7 @@ import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.entity.QuickSlashesEntity;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -62,22 +62,22 @@ public class QuickSlashesProcedure {
 						_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.CLEAVE.get()), (entityiterator.getX()), (entityiterator.getY()), (entityiterator.getZ()), 6, 0.5, 1, 0.5, 0);
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.DISMANTLE.get()), (entityiterator.getX()), (entityiterator.getY()), (entityiterator.getZ()), 6, 0.5, 1, 0.5, 0);
-					entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
+					entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"))), entity),
 							(float) (6 + TemporaryStatBonusManager.effectiveStrength(entity) / 20.0D));
 					if (entity instanceof LivingEntity _entity)
 						_entity.swing(InteractionHand.MAIN_HAND, true);
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
-							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3, 1);
+							_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3, 1);
 						} else {
-							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3, 1, false);
+							_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.3, 1, false);
 						}
 					}
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
-							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL, (float) 0.5, 1);
+							_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.player.attack.sweep")), SoundSource.NEUTRAL, (float) 0.5, 1);
 						} else {
-							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.player.attack.sweep")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
+							_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.player.attack.sweep")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
 						}
 					}
 				}

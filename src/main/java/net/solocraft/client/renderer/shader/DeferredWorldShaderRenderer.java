@@ -2,26 +2,24 @@ package net.solocraft.client.renderer.shader;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexSorting;
 
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -30,11 +28,11 @@ import java.util.Deque;
 import java.util.List;
 
 /**
- * Replays custom world quad shaders after an Iris/Oculus shader pack finishes
+ * Replays custom world quad shaders after an Iris shader pack finishes
  * its world pipeline. GUI, HUD, tooltip, and fullscreen shaders do not use this
  * path.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class DeferredWorldShaderRenderer {
 	private static final int MAX_BATCHES = 4096;
 	private static final int MAX_VERTICES = 1_000_000;
@@ -45,16 +43,10 @@ public final class DeferredWorldShaderRenderer {
 	private static final Deque<CapturedBatch> BATCH_POOL = new ArrayDeque<>();
 	private static final VertexConsumer DISCARDING_CONSUMER = new DiscardingVertexConsumer();
 
-	private static TextureTarget finalDepthSnapshot;
 	private static Matrix4f worldModelView;
-	private static Matrix4f worldPose;
-	private static Matrix3f worldNormal;
 	private static Matrix4f previousProjection;
 	private static VertexSorting previousVertexSorting;
 	private static boolean modelViewPushed;
-	private static boolean depthRequested;
-	private static boolean depthCapturedThisFrame;
-	private static boolean depthRestoredThisFrame;
 	private static int capturedVertexCount;
 
 	private DeferredWorldShaderRenderer() {
@@ -98,8 +90,6 @@ public final class DeferredWorldShaderRenderer {
 		} else {
 			batch.consumer.prepareForWrite();
 		}
-		if (requiresDepth)
-			depthRequested = true;
 		return batch.consumer;
 	}
 
@@ -113,15 +103,15 @@ public final class DeferredWorldShaderRenderer {
 				: null;
 	}
 
-	/** Requests final world depth for a stage-owned effect that will render late. */
+	/**
+	 * Compatibility hook retained for existing stage renderers. Iris 1.21.1 uses
+	 * Minecraft's main depth attachment directly, so no depth copy is needed.
+	 */
 	public static void requestDepthAtStage(RenderLevelStageEvent event,
 			RenderLevelStageEvent.Stage normalStage) {
-		if (event.getStage() == normalStage && IrisCompat.isShaderPackInUse()
-				&& !IrisCompat.isRenderingShadowPass())
-			depthRequested = true;
 	}
 
-	/** Selects a normal Forge stage or AFTER_LEVEL while a shader pack is active. */
+	/** Selects a normal NeoForge stage or AFTER_LEVEL while a shader pack is active. */
 	public static boolean isRenderStage(RenderLevelStageEvent event,
 			RenderLevelStageEvent.Stage normalStage) {
 		RenderLevelStageEvent.Stage expected = IrisCompat.isShaderPackInUse()
@@ -132,7 +122,7 @@ public final class DeferredWorldShaderRenderer {
 
 	/**
 	 * Starts a direct late world pass for stage-owned geometry. Returns false only
-	 * when rendering should be skipped, such as during an Oculus shadow pass.
+	 * when rendering should be skipped, such as during an Iris shadow pass.
 	 */
 	public static boolean beginWorldPass(RenderLevelStageEvent event) {
 		if (!IrisCompat.isShaderPackInUse())
@@ -143,13 +133,13 @@ public final class DeferredWorldShaderRenderer {
 		bindFinalTarget();
 		previousProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
 		previousVertexSorting = RenderSystem.getVertexSorting();
-		PoseStack modelView = RenderSystem.getModelViewStack();
-		modelView.pushPose();
+		Matrix4fStack modelView = RenderSystem.getModelViewStack();
+		modelView.pushMatrix();
 		modelViewPushed = true;
 		try {
-			modelView.setIdentity();
-			if (worldModelView != null)
-				modelView.mulPoseMatrix(worldModelView);
+			modelView.identity();
+			modelView.mul(worldModelView != null
+					? worldModelView : event.getModelViewMatrix());
 			RenderSystem.applyModelViewMatrix();
 			RenderSystem.setProjectionMatrix(new Matrix4f(event.getProjectionMatrix()),
 					VertexSorting.DISTANCE_TO_ORIGIN);
@@ -161,20 +151,15 @@ public final class DeferredWorldShaderRenderer {
 	}
 
 	/**
-	 * Forge 1.20.1 supplies its projection PoseStack to AFTER_LEVEL, unlike the
-	 * ordinary in-world stages. Recreate the camera/world stack captured earlier
-	 * in the same frame so direct late effects keep their normal orientation.
+	 * NeoForge 1.21.1 supplies an identity pose at AFTER_LEVEL. That is the same
+	 * pose convention used by ordinary stage renderers: camera rotation belongs in
+	 * RenderSystem's model-view stack and must not also be baked into vertices.
 	 */
 	public static PoseStack worldPoseStack(RenderLevelStageEvent event) {
 		if (!IrisCompat.isShaderPackInUse()
-				|| event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL
-				|| worldPose == null)
+				|| event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL)
 			return event.getPoseStack();
-		PoseStack copy = new PoseStack();
-		copy.last().pose().set(worldPose);
-		if (worldNormal != null)
-			copy.last().normal().set(worldNormal);
-		return copy;
+		return new PoseStack();
 	}
 
 	public static void endWorldPass() {
@@ -182,8 +167,8 @@ public final class DeferredWorldShaderRenderer {
 			return;
 		if (previousProjection != null && previousVertexSorting != null)
 			RenderSystem.setProjectionMatrix(previousProjection, previousVertexSorting);
-		PoseStack modelView = RenderSystem.getModelViewStack();
-		modelView.popPose();
+		Matrix4fStack modelView = RenderSystem.getModelViewStack();
+		modelView.popMatrix();
 		RenderSystem.applyModelViewMatrix();
 		previousProjection = null;
 		previousVertexSorting = null;
@@ -195,104 +180,51 @@ public final class DeferredWorldShaderRenderer {
 		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY
 				|| !IrisCompat.isShaderPackInUse() || IrisCompat.isRenderingShadowPass())
 			return;
-		worldModelView = new Matrix4f(RenderSystem.getModelViewMatrix());
-		worldPose = new Matrix4f(event.getPoseStack().last().pose());
-		worldNormal = new Matrix3f(event.getPoseStack().last().normal());
-		depthCapturedThisFrame = false;
-		depthRestoredThisFrame = false;
-	}
-
-	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void captureFinalDepth(RenderLevelStageEvent event) {
-		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL
-				|| !depthRequested || !IrisCompat.isShaderPackInUse()
-				|| IrisCompat.isRenderingShadowPass())
-			return;
-		Minecraft minecraft = Minecraft.getInstance();
-		RenderTarget mainTarget = minecraft.getMainRenderTarget();
-		if (mainTarget == null || !mainTarget.useDepth)
-			return;
-		if (finalDepthSnapshot == null || finalDepthSnapshot.width != mainTarget.width
-				|| finalDepthSnapshot.height != mainTarget.height) {
-			releaseDepthSnapshot();
-			finalDepthSnapshot = new TextureTarget(mainTarget.width, mainTarget.height, true,
-					Minecraft.ON_OSX);
-		}
-		finalDepthSnapshot.copyDepthFrom(mainTarget);
-		mainTarget.bindWrite(false);
-		depthCapturedThisFrame = true;
+		worldModelView = new Matrix4f(event.getModelViewMatrix());
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void flushCapturedWorldQuads(RenderLevelStageEvent event) {
 		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL)
 			return;
+		if (!IrisCompat.isShaderPackInUse()) {
+			clearCapturedBatches();
+			return;
+		}
+		if (CAPTURED_BATCHES.isEmpty() || IrisCompat.isRenderingShadowPass())
+			return;
+		if (!beginWorldPass(event)) {
+			clearCapturedBatches();
+			return;
+		}
+		MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
 		try {
-			if (!IrisCompat.isShaderPackInUse()) {
-				clearCapturedBatches();
-				return;
-			}
-			if (CAPTURED_BATCHES.isEmpty() || IrisCompat.isRenderingShadowPass())
-				return;
-			if (!beginWorldPass(event)) {
-				clearCapturedBatches();
-				return;
-			}
-			MultiBufferSource.BufferSource buffers = Minecraft.getInstance().renderBuffers().bufferSource();
-			try {
-				for (CapturedBatch batch : CAPTURED_BATCHES) {
-					if (batch.setupUniforms != null)
-						batch.setupUniforms.run();
-					VertexConsumer output = buffers.getBuffer(batch.renderType);
-					batch.replay(output);
-					buffers.endBatch(batch.renderType);
-				}
-			} finally {
-				clearCapturedBatches();
-				endWorldPass();
+			for (CapturedBatch batch : CAPTURED_BATCHES) {
+				if (batch.setupUniforms != null)
+					batch.setupUniforms.run();
+				VertexConsumer output = buffers.getBuffer(batch.renderType);
+				batch.replay(output);
+				buffers.endBatch(batch.renderType);
 			}
 		} finally {
-			depthRequested = false;
-			depthCapturedThisFrame = false;
-			depthRestoredThisFrame = false;
+			clearCapturedBatches();
+			endWorldPass();
 		}
 	}
 
 	@SubscribeEvent
-	public static void clearWhenWorldCloses(TickEvent.ClientTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
+	public static void clearWhenWorldCloses(ClientTickEvent.Post event) {
 		if (Minecraft.getInstance().level == null || !IrisCompat.isShaderPackInUse()) {
 			clearCapturedBatches();
-			releaseDepthSnapshot();
-			depthRequested = false;
-			depthCapturedThisFrame = false;
-			depthRestoredThisFrame = false;
 			worldModelView = null;
-			worldPose = null;
-			worldNormal = null;
 		}
 	}
 
 	private static void bindFinalTarget() {
-		RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
+		var mainTarget = Minecraft.getInstance().getMainRenderTarget();
 		if (mainTarget == null)
 			return;
-		if (depthCapturedThisFrame && !depthRestoredThisFrame
-				&& finalDepthSnapshot != null
-				&& finalDepthSnapshot.width == mainTarget.width
-				&& finalDepthSnapshot.height == mainTarget.height) {
-			mainTarget.copyDepthFrom(finalDepthSnapshot);
-			depthRestoredThisFrame = true;
-		}
 		mainTarget.bindWrite(false);
-	}
-
-	private static void releaseDepthSnapshot() {
-		if (finalDepthSnapshot != null) {
-			finalDepthSnapshot.destroyBuffers();
-			finalDepthSnapshot = null;
-		}
 	}
 
 	private static void clearCapturedBatches() {
@@ -303,11 +235,8 @@ public final class DeferredWorldShaderRenderer {
 		}
 		CAPTURED_BATCHES.clear();
 		capturedVertexCount = 0;
-		if (Minecraft.getInstance().level == null || !IrisCompat.isShaderPackInUse()) {
+		if (Minecraft.getInstance().level == null || !IrisCompat.isShaderPackInUse())
 			worldModelView = null;
-			worldPose = null;
-			worldNormal = null;
-		}
 	}
 
 	private static final class CapturedBatch {
@@ -367,16 +296,15 @@ public final class DeferredWorldShaderRenderer {
 				int color = colors[index];
 				int overlay = overlays[index];
 				int light = lights[index];
-				output.vertex(positions[positionOffset], positions[positionOffset + 1],
+				output.addVertex(positions[positionOffset], positions[positionOffset + 1],
 						positions[positionOffset + 2])
-						.color((color >>> 24) & 0xFF, (color >>> 16) & 0xFF,
+						.setColor((color >>> 24) & 0xFF, (color >>> 16) & 0xFF,
 								(color >>> 8) & 0xFF, color & 0xFF)
-						.uv(uvs[uvOffset], uvs[uvOffset + 1])
-						.overlayCoords(unpackLow(overlay), unpackHigh(overlay))
-						.uv2(unpackLow(light), unpackHigh(light))
-						.normal(normals[positionOffset], normals[positionOffset + 1],
-								normals[positionOffset + 2])
-						.endVertex();
+						.setUv(uvs[uvOffset], uvs[uvOffset + 1])
+						.setUv1(unpackLow(overlay), unpackHigh(overlay))
+						.setUv2(unpackLow(light), unpackHigh(light))
+						.setNormal(normals[positionOffset], normals[positionOffset + 1],
+								normals[positionOffset + 2]);
 			}
 		}
 
@@ -399,11 +327,6 @@ public final class DeferredWorldShaderRenderer {
 	private static final class CapturingVertexConsumer implements VertexConsumer {
 		private final CapturedBatch batch;
 		private int currentIndex = -1;
-		private boolean hasDefaultColor;
-		private int defaultRed = 255;
-		private int defaultGreen = 255;
-		private int defaultBlue = 255;
-		private int defaultAlpha = 255;
 
 		private CapturingVertexConsumer(CapturedBatch batch) {
 			this.batch = batch;
@@ -411,38 +334,28 @@ public final class DeferredWorldShaderRenderer {
 
 		private void prepareForWrite() {
 			currentIndex = -1;
-			hasDefaultColor = false;
-			defaultRed = 255;
-			defaultGreen = 255;
-			defaultBlue = 255;
-			defaultAlpha = 255;
 		}
 
 		@Override
-		public VertexConsumer vertex(double x, double y, double z) {
+		public VertexConsumer addVertex(float x, float y, float z) {
 			if (capturedVertexCount >= MAX_VERTICES) {
 				currentIndex = -1;
 				return this;
 			}
-			int color = packColor(
-					hasDefaultColor ? defaultRed : 255,
-					hasDefaultColor ? defaultGreen : 255,
-					hasDefaultColor ? defaultBlue : 255,
-					hasDefaultColor ? defaultAlpha : 255);
-			currentIndex = batch.add((float) x, (float) y, (float) z, color);
+			currentIndex = batch.add(x, y, z, packColor(255, 255, 255, 255));
 			capturedVertexCount++;
 			return this;
 		}
 
 		@Override
-		public VertexConsumer color(int red, int green, int blue, int alpha) {
+		public VertexConsumer setColor(int red, int green, int blue, int alpha) {
 			if (currentIndex >= 0)
 				batch.colors[currentIndex] = packColor(red, green, blue, alpha);
 			return this;
 		}
 
 		@Override
-		public VertexConsumer uv(float u, float v) {
+		public VertexConsumer setUv(float u, float v) {
 			if (currentIndex >= 0) {
 				int offset = currentIndex * 2;
 				batch.uvs[offset] = u;
@@ -452,21 +365,21 @@ public final class DeferredWorldShaderRenderer {
 		}
 
 		@Override
-		public VertexConsumer overlayCoords(int u, int v) {
+		public VertexConsumer setUv1(int u, int v) {
 			if (currentIndex >= 0)
 				batch.overlays[currentIndex] = packPair(u, v);
 			return this;
 		}
 
 		@Override
-		public VertexConsumer uv2(int u, int v) {
+		public VertexConsumer setUv2(int u, int v) {
 			if (currentIndex >= 0)
 				batch.lights[currentIndex] = packPair(u, v);
 			return this;
 		}
 
 		@Override
-		public VertexConsumer normal(float x, float y, float z) {
+		public VertexConsumer setNormal(float x, float y, float z) {
 			if (currentIndex >= 0) {
 				int offset = currentIndex * 3;
 				batch.normals[offset] = x;
@@ -475,68 +388,37 @@ public final class DeferredWorldShaderRenderer {
 			}
 			return this;
 		}
-
-		@Override
-		public void endVertex() {
-			currentIndex = -1;
-		}
-
-		@Override
-		public void defaultColor(int red, int green, int blue, int alpha) {
-			hasDefaultColor = true;
-			defaultRed = red;
-			defaultGreen = green;
-			defaultBlue = blue;
-			defaultAlpha = alpha;
-		}
-
-		@Override
-		public void unsetDefaultColor() {
-			hasDefaultColor = false;
-		}
 	}
 
 	private static final class DiscardingVertexConsumer implements VertexConsumer {
 		@Override
-		public VertexConsumer vertex(double x, double y, double z) {
+		public VertexConsumer addVertex(float x, float y, float z) {
 			return this;
 		}
 
 		@Override
-		public VertexConsumer color(int red, int green, int blue, int alpha) {
+		public VertexConsumer setColor(int red, int green, int blue, int alpha) {
 			return this;
 		}
 
 		@Override
-		public VertexConsumer uv(float u, float v) {
+		public VertexConsumer setUv(float u, float v) {
 			return this;
 		}
 
 		@Override
-		public VertexConsumer overlayCoords(int u, int v) {
+		public VertexConsumer setUv1(int u, int v) {
 			return this;
 		}
 
 		@Override
-		public VertexConsumer uv2(int u, int v) {
+		public VertexConsumer setUv2(int u, int v) {
 			return this;
 		}
 
 		@Override
-		public VertexConsumer normal(float x, float y, float z) {
+		public VertexConsumer setNormal(float x, float y, float z) {
 			return this;
-		}
-
-		@Override
-		public void endVertex() {
-		}
-
-		@Override
-		public void defaultColor(int red, int green, int blue, int alpha) {
-		}
-
-		@Override
-		public void unsetDefaultColor() {
 		}
 	}
 

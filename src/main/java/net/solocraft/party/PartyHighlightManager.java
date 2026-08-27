@@ -2,12 +2,16 @@ package net.solocraft.party;
 
 import net.solocraft.util.EntityHighlightSystem;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -25,7 +29,7 @@ import java.util.UUID;
  * Maintains private party-member outlines without broadcasting entity glow state.
  * Membership and visual preferences are always resolved by the server.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class PartyHighlightManager {
 	private static final int MAX_TARGETS = 7;
 	private static final Map<UUID, ViewerState> VIEWERS = new HashMap<>();
@@ -34,8 +38,8 @@ public final class PartyHighlightManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer viewer)
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer viewer)
 				|| viewer.tickCount % 20 != 0)
 			return;
 		sync(viewer);

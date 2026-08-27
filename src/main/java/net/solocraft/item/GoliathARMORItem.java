@@ -5,11 +5,12 @@ import net.solocraft.client.model.Modelgoliathfeet;
 import net.solocraft.client.model.Modelgoliathhelm;
 import net.solocraft.client.model.Modelgoliathlegs;
 import net.solocraft.procedures.GoliathArmorTickProcedure;
+import net.solocraft.init.SololevelingModArmorMaterials;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -38,52 +39,12 @@ import com.google.common.collect.Iterables;
 
 public abstract class GoliathARMORItem extends ArmorItem {
 	public GoliathARMORItem(ArmorItem.Type type, Item.Properties properties) {
-		super(new ArmorMaterial() {
-			@Override
-			public int getDurabilityForType(ArmorItem.Type type) {
-				return new int[] { 13, 15, 16, 11 }[type.getSlot().getIndex()] * 80;
-			}
-
-			@Override
-			public int getDefenseForType(ArmorItem.Type type) {
-				return new int[] { 3, 14, 18, 7 }[type.getSlot().getIndex()];
-			}
-
-			@Override
-			public int getEnchantmentValue() {
-				return 0;
-			}
-
-			@Override
-			public SoundEvent getEquipSound() {
-				return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("item.armor.equip_netherite"));
-			}
-
-			@Override
-			public Ingredient getRepairIngredient() {
-				return Ingredient.of();
-			}
-
-			@Override
-			public String getName() {
-				return "goliath_armor";
-			}
-
-			@Override
-			public float getToughness() {
-				return 5.0f;
-			}
-
-			@Override
-			public float getKnockbackResistance() {
-				return 1.0f;
-			}
-		}, type, properties);
+		super(SololevelingModArmorMaterials.goliath(type), type, properties);
 	}
 
 	public static class Helmet extends GoliathARMORItem {
 		public Helmet() {
-			super(ArmorItem.Type.HELMET, new Item.Properties());
+			super(ArmorItem.Type.HELMET, new Item.Properties().durability(880));
 		}
 
 		@Override
@@ -101,13 +62,8 @@ public abstract class GoliathARMORItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/models/armor/goliath_helm.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override
@@ -120,7 +76,7 @@ public abstract class GoliathARMORItem extends ArmorItem {
 
 	public static class Chestplate extends GoliathARMORItem {
 		public Chestplate() {
-			super(ArmorItem.Type.CHESTPLATE, new Item.Properties());
+			super(ArmorItem.Type.CHESTPLATE, new Item.Properties().durability(1280));
 		}
 
 		@Override
@@ -139,13 +95,8 @@ public abstract class GoliathARMORItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/models/armor/goliath_chest.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override
@@ -158,7 +109,7 @@ public abstract class GoliathARMORItem extends ArmorItem {
 
 	public static class Leggings extends GoliathARMORItem {
 		public Leggings() {
-			super(ArmorItem.Type.LEGGINGS, new Item.Properties());
+			super(ArmorItem.Type.LEGGINGS, new Item.Properties().durability(1200));
 		}
 
 		@Override
@@ -177,13 +128,8 @@ public abstract class GoliathARMORItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/models/armor/goliath_legs.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override
@@ -196,7 +142,7 @@ public abstract class GoliathARMORItem extends ArmorItem {
 
 	public static class Boots extends GoliathARMORItem {
 		public Boots() {
-			super(ArmorItem.Type.BOOTS, new Item.Properties());
+			super(ArmorItem.Type.BOOTS, new Item.Properties().durability(1040));
 		}
 
 		@Override
@@ -215,13 +161,8 @@ public abstract class GoliathARMORItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/models/armor/goliath_feet.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override

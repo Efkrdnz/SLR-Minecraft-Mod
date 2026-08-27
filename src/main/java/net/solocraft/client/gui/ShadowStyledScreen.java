@@ -19,6 +19,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -41,6 +42,7 @@ public abstract class ShadowStyledScreen<T extends AbstractContainerMenu> extend
 	private long animStart;
 	private boolean closed;
 	private float reveal;
+	private boolean suppressNestedBackground;
 
 	protected ShadowStyledScreen(T container, Inventory inventory, Component title, int imageWidth, int imageHeight) {
 		super(container, inventory, title);
@@ -77,7 +79,7 @@ public abstract class ShadowStyledScreen<T extends AbstractContainerMenu> extend
 		ResponsiveGuiScale.Transform transform = responsiveTransform();
 		int logicalMouseX = transform.logicalMouseX(mouseX);
 		int logicalMouseY = transform.logicalMouseY(mouseY);
-		this.renderBackground(guiGraphics);
+		this.renderTransparentBackground(guiGraphics);
 		guiGraphics.flush();
 		ResponsiveGuiScale.push(guiGraphics, transform);
 		int centerY = topPos + imageHeight / 2;
@@ -87,7 +89,12 @@ public abstract class ShadowStyledScreen<T extends AbstractContainerMenu> extend
 		int sx0 = leftPos - 3;
 		int sx1 = leftPos + imageWidth + 3;
 		ResponsiveGuiScale.enableScissor(guiGraphics, transform, sx0, top, sx1, bottom);
-		super.render(guiGraphics, logicalMouseX, logicalMouseY, partialTicks);
+		suppressNestedBackground = true;
+		try {
+			super.render(guiGraphics, logicalMouseX, logicalMouseY, partialTicks);
+		} finally {
+			suppressNestedBackground = false;
+		}
 		guiGraphics.disableScissor();
 		if (reveal < 1.0f) {
 			guiGraphics.fill(sx0, top, sx1, top + 1, ACCENT);
@@ -101,6 +108,15 @@ public abstract class ShadowStyledScreen<T extends AbstractContainerMenu> extend
 		ResponsiveGuiScale.pop(guiGraphics);
 		if (state == State.OPEN)
 			this.renderTooltip(guiGraphics, mouseX, mouseY);
+	}
+
+	@Override
+	public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY,
+			float partialTick) {
+		if (suppressNestedBackground)
+			renderBg(graphics, partialTick, mouseX, mouseY);
+		else
+			super.renderBackground(graphics, mouseX, mouseY, partialTick);
 	}
 
 	@Override
@@ -141,8 +157,8 @@ public abstract class ShadowStyledScreen<T extends AbstractContainerMenu> extend
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-		return super.mouseScrolled(logicalMouseX(mouseX), logicalMouseY(mouseY), delta);
+	public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
+		return super.mouseScrolled(logicalMouseX(mouseX), logicalMouseY(mouseY), deltaX, deltaY);
 	}
 
 	@Override
@@ -248,13 +264,12 @@ public abstract class ShadowStyledScreen<T extends AbstractContainerMenu> extend
 		AbstractUniform mouse = shader.safeGetUniform("MousePos");
 		mouse.set(localX, localY);
 		Matrix4f matrix = g.pose().last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-		buffer.vertex(matrix, leftPos, topPos + imageHeight, 0).uv(0f, 1f).endVertex();
-		buffer.vertex(matrix, leftPos + imageWidth, topPos + imageHeight, 0).uv(1f, 1f).endVertex();
-		buffer.vertex(matrix, leftPos + imageWidth, topPos, 0).uv(1f, 0f).endVertex();
-		buffer.vertex(matrix, leftPos, topPos, 0).uv(0f, 0f).endVertex();
-		Tesselator.getInstance().end();
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		buffer.addVertex(matrix, leftPos, topPos + imageHeight, 0).setUv(0f, 1f);
+		buffer.addVertex(matrix, leftPos + imageWidth, topPos + imageHeight, 0).setUv(1f, 1f);
+		buffer.addVertex(matrix, leftPos + imageWidth, topPos, 0).setUv(1f, 0f);
+		buffer.addVertex(matrix, leftPos, topPos, 0).setUv(0f, 0f);
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 		RenderSystem.enableCull();
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 	}

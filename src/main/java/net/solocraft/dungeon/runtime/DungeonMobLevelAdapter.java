@@ -3,7 +3,7 @@ package net.solocraft.dungeon.runtime;
 import net.solocraft.dungeon.DungeonMobVariantScaler;
 import net.solocraft.procedures.EntityLoadedLevelPresetProcedure;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.ChatFormatting;
@@ -23,7 +23,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import javax.annotation.Nullable;
 
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Creates deterministic dungeon mobs without using {@link EntityType#spawn}.
@@ -47,10 +46,10 @@ public final class DungeonMobLevelAdapter {
 	private static final int MINIMUM_LEVEL = 1;
 	private static final int MAXIMUM_LEVEL = 1000;
 
-	private static final UUID HEALTH_MODIFIER_ID = UUID.fromString("06ba80bb-933e-495a-96fd-2867b97c74e1");
-	private static final UUID DAMAGE_MODIFIER_ID = UUID.fromString("5248394a-1300-4402-9949-cbb004cf0d7f");
-	private static final UUID ARMOR_MODIFIER_ID = UUID.fromString("f37c3550-cf1d-4883-88f5-889e07f9f135");
-	private static final UUID KNOCKBACK_MODIFIER_ID = UUID.fromString("9500ef61-c8f4-449f-a512-9b6b29094a47");
+	private static final ResourceLocation HEALTH_MODIFIER_ID = modifierId("health");
+	private static final ResourceLocation DAMAGE_MODIFIER_ID = modifierId("damage");
+	private static final ResourceLocation ARMOR_MODIFIER_ID = modifierId("armor");
+	private static final ResourceLocation KNOCKBACK_MODIFIER_ID = modifierId("knockback_resistance");
 
 	private DungeonMobLevelAdapter() {
 	}
@@ -59,7 +58,7 @@ public final class DungeonMobLevelAdapter {
 			float yaw, SpawnSpec spec) {
 		if (level == null || entityTypeId == null || position == null || spec == null)
 			return SpawnResult.failure(SpawnFailure.INVALID_ARGUMENT, "Level, entity type, position, and spawn specification are required.");
-		EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(entityTypeId);
+		EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(entityTypeId);
 		if (entityType == null)
 			return SpawnResult.failure(SpawnFailure.UNKNOWN_ENTITY_TYPE, "Unknown entity type: " + entityTypeId);
 		return spawnExact(level, entityType, entityTypeId, position, yaw, spec);
@@ -67,7 +66,7 @@ public final class DungeonMobLevelAdapter {
 
 	public static SpawnResult spawnExact(ServerLevel level, EntityType<?> entityType, BlockPos position,
 			float yaw, SpawnSpec spec) {
-		ResourceLocation entityTypeId = entityType == null ? null : ForgeRegistries.ENTITY_TYPES.getKey(entityType);
+		ResourceLocation entityTypeId = entityType == null ? null : BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
 		if (level == null || entityType == null || position == null || spec == null)
 			return SpawnResult.failure(SpawnFailure.INVALID_ARGUMENT, "Level, entity type, position, and spawn specification are required.");
 		return spawnExact(level, entityType, entityTypeId, position, yaw, spec);
@@ -106,7 +105,7 @@ public final class DungeonMobLevelAdapter {
 		}
 
 		try {
-			mob.finalizeSpawn(level, level.getCurrentDifficultyAt(position), MobSpawnType.MOB_SUMMONED, null, null);
+			mob.finalizeSpawn(level, level.getCurrentDifficultyAt(position), MobSpawnType.MOB_SUMMONED, null);
 		} catch (RuntimeException exception) {
 			mob.discard();
 			return SpawnResult.failure(SpawnFailure.FINALIZE_FAILED,
@@ -142,6 +141,7 @@ public final class DungeonMobLevelAdapter {
 			return SpawnResult.failure(SpawnFailure.ADD_FAILED,
 					"The level rejected " + displayId(entityTypeId) + " at " + position.toShortString() + ".");
 		}
+		net.solocraft.dungeon.DungeonMobHealthCompatibilityGuard.stabilize(mob);
 		return SpawnResult.success(mob, scaling.level());
 	}
 
@@ -213,7 +213,7 @@ public final class DungeonMobLevelAdapter {
 		data.putString(LEGACY_DUNGEON_TAG, dungeonTag);
 	}
 
-	private static double attributeValueWithout(@Nullable AttributeInstance attribute, UUID modifierId) {
+	private static double attributeValueWithout(@Nullable AttributeInstance attribute, ResourceLocation modifierId) {
 		if (attribute == null)
 			return 0.0D;
 		if (attribute.getModifier(modifierId) != null)
@@ -221,12 +221,18 @@ public final class DungeonMobLevelAdapter {
 		return attribute.getValue();
 	}
 
-	private static void addPermanent(@Nullable AttributeInstance attribute, UUID modifierId, String name, double amount) {
+	private static void addPermanent(@Nullable AttributeInstance attribute, ResourceLocation modifierId, String name, double amount) {
 		if (attribute == null || !Double.isFinite(amount) || amount <= 0.0D)
 			return;
 		if (attribute.getModifier(modifierId) != null)
 			attribute.removeModifier(modifierId);
-		attribute.addPermanentModifier(new AttributeModifier(modifierId, name, amount, AttributeModifier.Operation.ADDITION));
+		attribute.addPermanentModifier(new AttributeModifier(modifierId, amount,
+				AttributeModifier.Operation.ADD_VALUE));
+	}
+
+	private static ResourceLocation modifierId(String statistic) {
+		return ResourceLocation.fromNamespaceAndPath("sololeveling",
+				"attribute/dungeon_level_" + statistic);
 	}
 
 	private static String displayId(@Nullable ResourceLocation entityTypeId) {

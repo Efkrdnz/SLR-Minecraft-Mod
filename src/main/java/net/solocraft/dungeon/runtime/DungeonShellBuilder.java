@@ -2,7 +2,7 @@ package net.solocraft.dungeon.runtime;
 
 import net.solocraft.dungeon.runtime.DungeonTemplatePlacer.WorldBounds;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -56,7 +56,7 @@ public final class DungeonShellBuilder {
 			int maxChangedBlocks) {
 		if (shellBlockId == null)
 			return ShellResult.failure(ErrorCode.INVALID_ARGUMENT, "A shell block ID is required.");
-		Block block = ForgeRegistries.BLOCKS.getValue(shellBlockId);
+		Block block = BuiltInRegistries.BLOCK.get(shellBlockId);
 		if (block == null)
 			return ShellResult.failure(ErrorCode.UNKNOWN_BLOCK, "Unknown shell block " + shellBlockId + ".");
 		return buildShell(level, rooms, carvedConnections, block.defaultBlockState(), thickness,

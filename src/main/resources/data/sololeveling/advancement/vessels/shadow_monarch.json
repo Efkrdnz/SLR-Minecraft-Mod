@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "sololeveling:shadow_monarch"
+    },
+    "title": {
+      "translate": "advancements.vessels.shadow_monarch.title"
+    },
+    "description": {
+      "translate": "advancements.vessels.shadow_monarch.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "vessel": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:system/vessel"
+}

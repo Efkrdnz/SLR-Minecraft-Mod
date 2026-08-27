@@ -9,7 +9,7 @@ public class ScreenShakeProcedureProcedure {
 	public static boolean execute(Entity entity) {
 		if (entity == null)
 			return false;
-		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SCREEN_SHAKE.get())) {
+		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SCREEN_SHAKE)) {
 			return true;
 		}
 		return false;

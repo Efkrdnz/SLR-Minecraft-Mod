@@ -63,16 +63,16 @@ void main() {
     color += SecondaryColor * innerRing * innerGlyphs * 0.34;
 
     // The petrified-blood shell has radial mineral seams and a light-swallowing core.
-    float shellMask = smoothstep(0.255, 0.225, radius)
+    float shellMask = (1.0 - smoothstep(0.225, 0.255, radius))
             * smoothstep(0.035, 0.075, radius);
     float strata = sin(angle * 9.0 + log(max(radius, 0.018)) * 28.0
             - time * 0.014 + sin(angle * 3.0 - time * 0.019) * 2.4);
     float mineralSeam = narrowLine(strata, 9.5) * shellMask;
-    float shellLight = smoothstep(0.26, 0.07, radius)
+    float shellLight = (1.0 - smoothstep(0.07, 0.26, radius))
             * (0.38 + 0.62 * max(0.0, dot(normalize(lens + vec2(0.0001)), normalize(vec2(-0.8, -0.6)))));
     color += SecondaryColor * shellMask * (0.10 + shellLight * 0.22);
     color += mix(SecondaryColor, vec3(0.88, 0.15, 0.24), 0.55) * mineralSeam * 0.30;
-    color *= 1.0 - smoothstep(0.105, 0.0, radius) * 0.72;
+    color *= 1.0 - (1.0 - smoothstep(0.0, 0.105, radius)) * 0.72;
 
     // Sparse sparks accelerate toward the focus, making the effect feel hungry
     // rather than like the embers, lightning, or ribbons used by other weapons.
@@ -91,7 +91,7 @@ void main() {
     float borderFlow = 0.55 + 0.45 * sin(time * 0.048 + uv.x * 25.0 - uv.y * 17.0);
     color += mix(SecondaryColor, PrimaryColor, borderFlow) * border * 0.16;
 
-    float vignette = smoothstep(0.86, 0.20, length((uv - 0.5) * vec2(0.92, 0.80)));
+    float vignette = 1.0 - smoothstep(0.20, 0.86, length((uv - 0.5) * vec2(0.92, 0.80)));
     color *= 0.72 + vignette * 0.28;
     fragColor = vec4(color, 0.989);
 }

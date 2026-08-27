@@ -3,7 +3,7 @@ package net.solocraft.util;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.RewardCollectProcedure;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -17,6 +17,7 @@ import java.util.List;
 public final class RewardManager {
 	private static final String DELIMITER = "\\|";
 	private static final String JOIN_DELIMITER = "|";
+	private static final String FULL_RECOVERY_REWARD = "FR";
 
 	private RewardManager() {
 	}
@@ -57,6 +58,11 @@ public final class RewardManager {
 		if (entity == null || isEmptyReward(reward))
 			return;
 		String cleanReward = clean(reward);
+		reconcileFullRecoveryRewards(entity);
+		if (isFullRecovery(cleanReward) && hasPendingFullRecovery(entity)) {
+			applyFullRecovery(entity);
+			return;
+		}
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(vars -> {
 			if (isEmptyReward(vars.reward_1)) {
 				vars.reward_1 = cleanReward;
@@ -73,17 +79,86 @@ public final class RewardManager {
 		});
 	}
 
+	public static boolean hasPendingFullRecovery(Entity entity) {
+		if (entity == null)
+			return false;
+		return allRewards(entity).stream().anyMatch(RewardManager::isFullRecovery);
+	}
+
+	/**
+	 * Assigns a Full Recovery to one of the three legacy command slots while
+	 * enforcing the same single-pending-reward rule as {@link #appendReward}.
+	 */
+	public static void setFullRecoveryReward(Entity entity, int slot,
+			boolean preservePreviousReward) {
+		if (entity == null || slot < 1 || slot > 3)
+			return;
+		reconcileFullRecoveryRewards(entity);
+		if (hasPendingFullRecovery(entity)) {
+			applyFullRecovery(entity);
+			return;
+		}
+
+		String previous = rewardAt(entity, slot);
+		if (preservePreviousReward && !isEmptyReward(previous))
+			appendReward(entity, previous);
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(vars -> {
+			if (slot == 1)
+				vars.reward_1 = FULL_RECOVERY_REWARD;
+			else if (slot == 2)
+				vars.reward_2 = FULL_RECOVERY_REWARD;
+			else
+				vars.reward_3 = FULL_RECOVERY_REWARD;
+			vars.syncPlayerVariables(entity);
+		});
+	}
+
+	/**
+	 * Migrates an inbox that already contains duplicate Full Recoveries. The
+	 * first remains pending and the overflow is immediately used once, which is
+	 * sufficient because Full Recovery restores every affected value to max.
+	 */
+	public static boolean reconcileFullRecoveryRewards(Entity entity) {
+		if (entity == null || entity.level().isClientSide())
+			return false;
+		List<String> rewards = allRewards(entity);
+		boolean found = false;
+		boolean duplicate = false;
+		List<String> normalized = new ArrayList<>(rewards.size());
+		for (String reward : rewards) {
+			if (isFullRecovery(reward)) {
+				if (found) {
+					duplicate = true;
+					continue;
+				}
+				found = true;
+			}
+			normalized.add(reward);
+		}
+		if (!duplicate)
+			return false;
+		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(vars -> {
+			writeRewards(vars, normalized);
+			vars.syncPlayerVariables(entity);
+		});
+		applyFullRecovery(entity);
+		return true;
+	}
+
 	public static boolean claimReward(Entity entity, int slot) {
-		String reward = rewardAt(entity, slot);
+		// The label the player sees is rendered from the cleaned value, so the
+		// collector has to receive the same string. Comparing the raw one made a
+		// stored reward with stray whitespace display correctly and then match no
+		// branch at all when claimed.
+		String reward = clean(rewardAt(entity, slot));
 		if (isEmptyReward(reward))
 			return false;
 		if (reward.startsWith(DaggerThrowManager.RECOVERY_PREFIX)) {
 			if (!(entity instanceof net.minecraft.server.level.ServerPlayer player)
 					|| !DaggerThrowManager.claimRecovery(player, reward))
 				return false;
-		} else {
-			RewardCollectProcedure.execute(entity, reward);
-		}
+		} else if (!RewardCollectProcedure.execute(entity, reward))
+			return false;
 		entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(vars -> {
 			if (slot == 1) {
 				vars.reward_1 = "";
@@ -139,7 +214,7 @@ public final class RewardManager {
 		if (cleanReward.startsWith("ITEM:")) {
 			String itemResourceLocation = cleanReward.substring(5);
 			try {
-				Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemResourceLocation));
+				Item item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemResourceLocation));
 				if (item != null && item != Items.AIR)
 					return "\u00A7lItem: " + new ItemStack(item).getDisplayName().getString();
 				return "\u00A7lUnknown Item";
@@ -147,7 +222,7 @@ public final class RewardManager {
 				return "\u00A7lInvalid Item";
 			}
 		}
-		if ("FR".equals(cleanReward))
+		if (isFullRecovery(cleanReward))
 			return "\u00A7lFull Recovery";
 		if ("ITEMBOX".equals(cleanReward))
 			return "\u00A7lRandom Item";
@@ -183,10 +258,24 @@ public final class RewardManager {
 		addIfPresent(rewards, vars.reward_2);
 		addIfPresent(rewards, vars.reward_3);
 		rewards.addAll(parseExtra(vars.reward_extra));
+		writeRewards(vars, rewards);
+	}
+
+	private static void writeRewards(SololevelingModVariables.PlayerVariables vars,
+			List<String> rewards) {
 		vars.reward_1 = rewards.size() > 0 ? rewards.get(0) : "";
 		vars.reward_2 = rewards.size() > 1 ? rewards.get(1) : "";
 		vars.reward_3 = rewards.size() > 2 ? rewards.get(2) : "";
 		vars.reward_extra = rewards.size() > 3 ? String.join(JOIN_DELIMITER, rewards.subList(3, rewards.size())) : "";
+	}
+
+	private static boolean isFullRecovery(String reward) {
+		return FULL_RECOVERY_REWARD.equals(clean(reward));
+	}
+
+	private static void applyFullRecovery(Entity entity) {
+		if (entity != null && !entity.level().isClientSide())
+			RewardCollectProcedure.execute(entity, FULL_RECOVERY_REWARD);
 	}
 
 	/** Removes one exact pending reward, used when an escrowed dagger returns normally. */
@@ -202,10 +291,7 @@ public final class RewardManager {
 			rewards.addAll(parseExtra(vars.reward_extra));
 			if (!rewards.remove(target))
 				return;
-			vars.reward_1 = rewards.size() > 0 ? rewards.get(0) : "";
-			vars.reward_2 = rewards.size() > 1 ? rewards.get(1) : "";
-			vars.reward_3 = rewards.size() > 2 ? rewards.get(2) : "";
-			vars.reward_extra = rewards.size() > 3 ? String.join(JOIN_DELIMITER, rewards.subList(3, rewards.size())) : "";
+			writeRewards(vars, rewards);
 			vars.syncPlayerVariables(entity);
 		});
 	}

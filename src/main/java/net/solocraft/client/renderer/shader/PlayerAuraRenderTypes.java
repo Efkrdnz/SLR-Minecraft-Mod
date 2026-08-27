@@ -3,10 +3,11 @@ package net.solocraft.client.renderer.shader;
 import net.solocraft.SololevelingMod;
 import net.solocraft.client.aura.PlayerAuraDefinition;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -20,9 +21,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-@Mod.EventBusSubscriber(
+@EventBusSubscriber(
 		modid = SololevelingMod.MODID,
-		bus = Mod.EventBusSubscriber.Bus.MOD,
+		bus = EventBusSubscriber.Bus.MOD,
 		value = Dist.CLIENT
 )
 public final class PlayerAuraRenderTypes extends RenderStateShard {
@@ -40,7 +41,7 @@ public final class PlayerAuraRenderTypes extends RenderStateShard {
 		event.registerShader(
 				new ShaderInstance(
 						event.getResourceProvider(),
-						new ResourceLocation(SololevelingMod.MODID, "rendertype_player_aura"),
+						ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rendertype_player_aura"),
 						WorldShaderVertexFormat.NEW_ENTITY
 				),
 				shader -> {

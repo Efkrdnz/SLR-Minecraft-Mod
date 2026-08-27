@@ -4,12 +4,16 @@ package net.solocraft.world.inventory;
 import net.solocraft.procedures.StorePotionNewFillProcedure;
 import net.solocraft.init.SololevelingModMenus;
 
-import net.minecraftforge.items.SlotItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.Level;
@@ -33,7 +37,7 @@ import java.util.HashMap;
  * {@link StorePotionNewFillProcedure}, plus the player inventory. Buying is
  * handled by the screen (click a shop slot → StorePotionNewButtonMessage).
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class StorePotionNewMenu extends AbstractContainerMenu implements Supplier<Map<Integer, Slot>> {
 	public final static HashMap<String, Object> guistate = new HashMap<>();
 
@@ -103,9 +107,9 @@ public class StorePotionNewMenu extends AbstractContainerMenu implements Supplie
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		Player entity = event.player;
-		if (event.phase == TickEvent.Phase.END && entity.containerMenu instanceof StorePotionNewMenu) {
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		Player entity = event.getEntity();
+		if (true && entity.containerMenu instanceof StorePotionNewMenu) {
 			StorePotionNewFillProcedure.execute(entity);
 		}
 	}

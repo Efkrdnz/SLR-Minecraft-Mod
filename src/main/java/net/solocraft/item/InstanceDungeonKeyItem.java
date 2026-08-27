@@ -4,8 +4,8 @@ package net.solocraft.item;
 import net.solocraft.procedures.InstanceDungeonKeyRightclickedOnBlockProcedure;
 import net.solocraft.procedures.InstanceDungeonKeyEntitySwingsItemProcedure;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.context.UseOnContext;
@@ -31,8 +31,8 @@ public class InstanceDungeonKeyItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("Teleports player to a dungeon."));
 		list.add(Component.literal("Find the enterance of the subway station to enter the dungeon."));
 	}

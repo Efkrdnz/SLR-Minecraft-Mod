@@ -4,7 +4,7 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -68,7 +68,7 @@ public class TripleJumpOnKeyPressedProcedure {
 						entity.fallDistance = 0;
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.end_portal_frame.fill")), SoundSource.NEUTRAL, (float) 0.5, 1);
+								_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.end_portal_frame.fill")), SoundSource.NEUTRAL, (float) 0.5, 1);
 							}
 						}
 						if (world instanceof ServerLevel _level)

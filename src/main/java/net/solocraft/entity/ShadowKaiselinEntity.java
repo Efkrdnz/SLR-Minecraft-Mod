@@ -4,7 +4,6 @@ import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.ShadowMonarchManager;
 
-import net.minecraftforge.network.PlayMessages;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -37,12 +36,8 @@ import java.util.UUID;
 public class ShadowKaiselinEntity extends KaiselinEntity implements OwnableEntity {
 	private static final String OWNER_TAG = "sl_shadow_owner";
 	private static final String COMMAND_TAG = "sl_shadow_command";
-	private static final TagKey<EntityType<?>> SHADOWS = TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows"));
+	private static final TagKey<EntityType<?>> SHADOWS = TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows"));
 	private static final EntityDimensions SHADOW_KAISEL_BODY_DIMENSIONS = EntityDimensions.scalable(2.25F, 1.85F);
-
-	public ShadowKaiselinEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.SHADOW_KAISELIN.get(), world);
-	}
 
 	public ShadowKaiselinEntity(EntityType<ShadowKaiselinEntity> type, Level world) {
 		super(type, world);
@@ -55,6 +50,11 @@ public class ShadowKaiselinEntity extends KaiselinEntity implements OwnableEntit
 		if (this.isVehicle())
 			return null;
 		Player owner = getOwnerPlayer();
+		LivingEntity ownerPriority = ShadowMonarchManager.findOwnerCombatPriorityTarget(this, owner);
+		if (ownerPriority != null) {
+			this.setTarget(ownerPriority);
+			return ownerPriority;
+		}
 		String command = this.getPersistentData().getString(COMMAND_TAG);
 		boolean clearDungeon = ShadowMonarchManager.COMMAND_CLEAR_DUNGEON.equals(command);
 		if (command.isEmpty() || ShadowMonarchManager.COMMAND_DEFAULT.equals(command)) {
@@ -183,14 +183,14 @@ public class ShadowKaiselinEntity extends KaiselinEntity implements OwnableEntit
 	}
 
 	@Override
-	public double getPassengersRidingOffset() {
-		return 2.15D;
+	protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scaleFactor) {
+		Vec3 attachment = super.getPassengerAttachmentPoint(passenger, dimensions, scaleFactor);
+		return new Vec3(attachment.x, 2.15D, attachment.z);
 	}
 
 	@Override
 	protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
-		if (this.hasPassenger(passenger))
-			moveFunction.accept(passenger, this.getX(), this.getY() + this.getPassengersRidingOffset() + passenger.getMyRidingOffset(), this.getZ());
+		super.positionRider(passenger, moveFunction);
 	}
 
 	@Override
@@ -219,6 +219,14 @@ public class ShadowKaiselinEntity extends KaiselinEntity implements OwnableEntit
 			this.setDeltaMovement(next);
 			this.move(MoverType.SELF, this.getDeltaMovement());
 			this.hasImpulse = true;
+			// Flying under its own power, so a descent is not a fall. Without this
+			// the distance accrued on the way down was still owed on landing, and
+			// the rider paid it the moment the mount touched the ground.
+			//
+			// Only while ridden: someone who dismounts in mid-air is genuinely
+			// falling from there and should land like it.
+			this.resetFallDistance();
+			rider.resetFallDistance();
 			return;
 		}
 		super.travel(travelVector);
@@ -257,7 +265,7 @@ public class ShadowKaiselinEntity extends KaiselinEntity implements OwnableEntit
 	}
 
 	@Override
-	public EntityDimensions getDimensions(Pose pose) {
+	public EntityDimensions getDefaultDimensions(Pose pose) {
 		return SHADOW_KAISEL_BODY_DIMENSIONS;
 	}
 

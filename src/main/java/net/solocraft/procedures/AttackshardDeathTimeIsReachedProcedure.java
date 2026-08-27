@@ -2,7 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.init.SololevelingModParticleTypes;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -16,9 +16,9 @@ public class AttackshardDeathTimeIsReachedProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z) {
 		if (world instanceof Level _level) {
 			if (!_level.isClientSide()) {
-				_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.glass.break")), SoundSource.NEUTRAL, 1, 1);
+				_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.glass.break")), SoundSource.NEUTRAL, 1, 1);
 			} else {
-				_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.glass.break")), SoundSource.NEUTRAL, 1, 1, false);
+				_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.glass.break")), SoundSource.NEUTRAL, 1, 1, false);
 			}
 		}
 		if (world instanceof ServerLevel _level)

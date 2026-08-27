@@ -3,7 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.RewardManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.Entity;
@@ -28,7 +28,7 @@ public class SLRRewardSetItemProcedure {
 		collect_prev_reward = BoolArgumentType.getBool(arguments, "AutoCollect");
 		itemname = (ItemArgument.getItem(arguments, "item").getItem().getDefaultInstance());
 		ItemStack itemstack = ItemArgument.getItem(arguments, "item").getItem().getDefaultInstance();
-		String itemResourceLocation = ForgeRegistries.ITEMS.getKey(itemstack.getItem()).toString();
+		String itemResourceLocation = BuiltInRegistries.ITEM.getKey(itemstack.getItem()).toString();
 		reward_to_assign = "ITEM:" + itemResourceLocation;
 		try {
 			for (Entity entityiterator : EntityArgument.getEntities(arguments, "name")) {

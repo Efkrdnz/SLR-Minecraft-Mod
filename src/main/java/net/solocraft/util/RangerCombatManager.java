@@ -7,18 +7,22 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.BackStepProcedure;
 import net.solocraft.procedures.SkillSlotHelper;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.ArrowLooseEvent;
-import net.minecraftforge.event.entity.player.ArrowNockEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
+import net.neoforged.neoforge.event.entity.player.ArrowNockEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -38,9 +42,9 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
@@ -69,7 +73,7 @@ import java.util.UUID;
  * sequence per player, one Fivefold state per player, five pulses per Arrow
  * Shower, and at most five ordinary Mana Arrows per player.</p>
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class RangerCombatManager {
 	public static final String MANA_QUIVER = "Mana Quiver";
 	public static final String BACK_STEP = "Back Step";
@@ -82,14 +86,14 @@ public final class RangerCombatManager {
 	public static final String HYPER_FOCUS = "Hyper Focus";
 
 	private static final ResourceKey<net.minecraft.world.damagesource.DamageType> RANGER_DAMAGE =
-			ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling", "ranger"));
+			ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath("sololeveling", "ranger"));
 	private static final List<String> CORE_SKILLS = List.of(
 			MANA_QUIVER, BACK_STEP, HAWKEYE, RAPID_FIRE, HIGH_VALUE_TARGET,
 			SHARPSHOOTER, ARROW_SHOWER, HYPER_FOCUS);
 
 	private static final String QUIVER_ACTIVE = "slr_ranger_quiver_active";
-	private static final String CORE_RECONCILED = "slr_ranger_core_reconciled_v4";
-	private static final String CORE_RECONCILED_RANK = "slr_ranger_core_rank_v4";
+	private static final String CORE_RECONCILED = "slr_ranger_core_reconciled_v6";
+	private static final String CORE_RECONCILED_RANK = "slr_ranger_core_rank_v6";
 	private static final String LOCK_TARGET = "slr_ranger_lock_target";
 	private static final String HAWKEYE_UNTIL = "slr_ranger_hawkeye_until";
 	private static final String HYPER_UNTIL = "slr_ranger_hyper_until";
@@ -164,20 +168,21 @@ public final class RangerCombatManager {
 	}
 
 	/**
-	 * Grants and migrates Ranger skills without rank-gating Mana Quiver.
-	 * This is safe to call after any class assignment path and on old saves.
+	 * Grants and migrates deterministic Ranger skills. Mana Quiver is a base
+	 * Ranger skill at every Hunter rank; the remaining combat skills retain
+	 * their Hunter-rank progression.
 	 */
 	public static void reconcileRanger(ServerPlayer player) {
 		if (!isRanger(player))
 			return;
 		CompoundTag data = player.getPersistentData();
 		int currentRank = rangerRankTier(variables(player));
-		if (data.getBoolean(CORE_RECONCILED) && hasSkill(player, MANA_QUIVER)
+		if (data.getBoolean(CORE_RECONCILED)
 				&& data.getInt(CORE_RECONCILED_RANK) == currentRank)
 			return;
 
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(vars -> {
-			boolean changed = ensureSkill(vars, MANA_QUIVER);
+			boolean changed = false;
 
 			// The old trap slot is the safest migration path for Arrow Shower.
 			if (hasExactToken(vars.Plist, LEGACY_PROXIMITY_TRAP)) {
@@ -191,9 +196,10 @@ public final class RangerCombatManager {
 				changed = true;
 			}
 
-			// Ordinary Ranger skill unlocks remain Hunter-rank based. System
-			// Level affects only Mana Quiver's charging stages.
+			// Mana Quiver is the Ranger's baseline combat mechanic. System Level
+			// still controls its charging stages, while the rest progress by rank.
 			int rank = rangerRankTier(vars);
+			changed |= ensureSkill(vars, MANA_QUIVER);
 			changed |= ensureSkill(vars, BACK_STEP);
 			if (rank >= 2)
 				changed |= ensureSkill(vars, HAWKEYE);
@@ -227,7 +233,7 @@ public final class RangerCombatManager {
 		return granted[0];
 	}
 
-	/** Shared, token-safe server path for universal Ranger runestone items. */
+	/** Shared, token-safe server path for Ranger-themed runestone items. */
 	public static void learnFromRunestone(Entity entity, ItemStack stack, String skill) {
 		if (!(entity instanceof ServerPlayer player) || stack == null || stack.isEmpty())
 			return;
@@ -241,7 +247,28 @@ public final class RangerCombatManager {
 		if (!player.isCreative())
 			stack.shrink(1);
 		player.displayClientMessage(Component.translatable(
-				"message.sololeveling.ranger.skill_gained", skill), false);
+				"message.sololeveling.skill_gained", skill), false);
+	}
+
+	/**
+	 * Mana Quiver is a universal runestone unlock. Its bow handling is already
+	 * skill-driven, so a player who learns it does not need to be a Ranger.
+	 * Ranger-only passives and rank progression remain gated elsewhere.
+	 */
+	public static void learnManaQuiverFromRunestone(Entity entity, ItemStack stack) {
+		if (!(entity instanceof ServerPlayer player) || stack == null || stack.isEmpty())
+			return;
+		if (hasSkill(player, MANA_QUIVER)) {
+			player.displayClientMessage(Component.translatable(
+					"message.sololeveling.ranger.skill_known"), false);
+			return;
+		}
+		if (!grantSkill(player, MANA_QUIVER))
+			return;
+		if (!player.isCreative())
+			stack.shrink(1);
+		player.displayClientMessage(Component.translatable(
+				"message.sololeveling.skill_gained", MANA_QUIVER), false);
 	}
 
 	public static boolean activateSkill(ServerPlayer player, String skill) {
@@ -306,8 +333,8 @@ public final class RangerCombatManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		if (!hasRangerAccess(player)) {
 			player.getPersistentData().remove(CORE_RECONCILED);
@@ -324,7 +351,6 @@ public final class RangerCombatManager {
 		player.getPersistentData().putBoolean(CLIENT_STATE_ACTIVE, true);
 
 		if (isRanger(player) && (!player.getPersistentData().getBoolean(CORE_RECONCILED)
-				|| !hasSkill(player, MANA_QUIVER)
 				|| player.getPersistentData().getInt(CORE_RECONCILED_RANK)
 						!= rangerRankTier(variables(player))))
 			reconcileRanger(player);
@@ -340,9 +366,7 @@ public final class RangerCombatManager {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
+	public static void onServerTick(ServerTickEvent.Post event) {
 		tickArrowShowers();
 	}
 
@@ -356,10 +380,20 @@ public final class RangerCombatManager {
 		event.setAction(InteractionResultHolder.consume(event.getBow()));
 	}
 
-	@SubscribeEvent
-	public static void onArrowLoose(ArrowLooseEvent event) {
-		Player player = event.getEntity();
-		ItemStack bow = event.getBow();
+	/**
+	 * Handles Mana Quiver before the bow sees the release.
+	 *
+	 * <p>In 1.21.1, {@link BowItem#releaseUsing} posts ArrowLooseEvent only after
+	 * {@link Player#getProjectile} finds physical ammunition. Mana Quiver is the
+	 * ammunition, so an empty inventory would otherwise finish the draw without
+	 * ever reaching the old ArrowLooseEvent handler. The use-item stop event is
+	 * fired for every completed draw and lets us bypass the vanilla ammo gate.</p>
+	 */
+	@SubscribeEvent(priority = EventPriority.HIGHEST)
+	public static void onBowUseStopped(LivingEntityUseItemEvent.Stop event) {
+		if (!(event.getEntity() instanceof Player player))
+			return;
+		ItemStack bow = event.getItem();
 		if (!hasSkill(player, MANA_QUIVER) || !isSupportedBow(bow)
 				|| !shouldInterceptBow(player))
 			return;
@@ -367,13 +401,17 @@ public final class RangerCombatManager {
 		event.setCanceled(true);
 		if (!(player instanceof ServerPlayer serverPlayer))
 			return;
+		int charge = Math.max(0, bow.getUseDuration(serverPlayer) - event.getDuration());
+		releaseManaArrow(serverPlayer, bow, charge);
+	}
 
+	private static void releaseManaArrow(ServerPlayer serverPlayer, ItemStack bow, int charge) {
 		if (isFivefoldActive(serverPlayer)) {
-			fireFivefoldArrow(serverPlayer, bow, event.getCharge());
+			fireFivefoldArrow(serverPlayer, bow, charge);
 			return;
 		}
 
-		int previewStage = chargeStage(serverPlayer, event.getCharge());
+		int previewStage = chargeStage(serverPlayer, charge);
 		if (previewStage <= 0) {
 			serverPlayer.displayClientMessage(Component.translatable("message.sololeveling.ranger.mana_arrow_forming"), true);
 			clearLock(serverPlayer);
@@ -396,7 +434,7 @@ public final class RangerCombatManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public static void onRangerProjectileDamage(LivingHurtEvent event) {
+	public static void onRangerProjectileDamage(LivingIncomingDamageEvent event) {
 		if (event.isCanceled())
 			return;
 		if (!(event.getSource().getEntity() instanceof ServerPlayer ranger)
@@ -446,7 +484,7 @@ public final class RangerCombatManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public static void onRangerDamaged(LivingHurtEvent event) {
+	public static void onRangerDamaged(LivingIncomingDamageEvent event) {
 		if (event.isCanceled())
 			return;
 		if (!(event.getEntity() instanceof ServerPlayer ranger) || !isRanger(ranger))
@@ -792,7 +830,7 @@ public final class RangerCombatManager {
 				28, 2.2D, 1.2D, 2.2D, 0.16D);
 		level.sendParticles(ParticleTypes.END_ROD, center.x, center.y, center.z,
 				16, 1.8D, 1.0D, 1.8D, 0.08D);
-		level.playSound(null, primary.blockPosition(), SoundEvents.GENERIC_EXPLODE,
+		level.playSound(null, primary.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(),
 				SoundSource.PLAYERS, 0.75F, 1.65F);
 		float splashDamage = Math.max(1.0F, primaryDamage * 0.42F);
 		List<LivingEntity> nearby = level.getEntitiesOfClass(LivingEntity.class,
@@ -852,11 +890,11 @@ public final class RangerCombatManager {
 		arrow.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F,
 				(float) speed, stage >= 2 ? 0.0F : 0.35F);
 		arrow.setBaseDamage(Math.max(0.25D, damage));
-		int punch = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.PUNCH_ARROWS, bow);
+		int punch = ItemStackData.enchantmentLevel(bow, Enchantments.PUNCH);
 		if (punch > 0)
-			arrow.setKnockback(punch);
-		if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FLAMING_ARROWS, bow) > 0)
-			arrow.setSecondsOnFire(100);
+			net.solocraft.entity.LegacyProjectileCompat.setKnockback(arrow, punch);
+		if (ItemStackData.enchantmentLevel(bow, Enchantments.FLAME) > 0)
+			arrow.igniteForSeconds(100);
 		arrow.setCritArrow(stage >= 2);
 		if (sunder)
 			arrow.setPierceLevel((byte) 3);
@@ -885,8 +923,9 @@ public final class RangerCombatManager {
 
 	private static double manaBaseDamage(ServerPlayer player, ItemStack bow) {
 		SololevelingModVariables.PlayerVariables vars = variables(player);
-		double statBonus = Math.min(8.0D, vars.perception / 55.0D + vars.Intelligence / 120.0D);
-		int power = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, bow);
+		double statBonus = Math.min(8.0D, vars.perception / 55.0D
+				+ TemporaryStatBonusManager.effectiveIntelligence(player) / 120.0D);
+		int power = ItemStackData.enchantmentLevel(bow, Enchantments.POWER);
 		double enchantment = power > 0 ? 0.5D + power * 0.5D : 0.0D;
 		return 3.0D + statBonus + enchantment;
 	}
@@ -1113,7 +1152,8 @@ public final class RangerCombatManager {
 			return;
 		InteractionHand hand = player.getOffhandItem() == bow
 				? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
-		bow.hurtAndBreak(1, player, owner -> owner.broadcastBreakEvent(hand));
+		bow.hurtAndBreak(1, player,
+				hand == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
 	}
 
 	private static ItemStack heldBow(Player player) {

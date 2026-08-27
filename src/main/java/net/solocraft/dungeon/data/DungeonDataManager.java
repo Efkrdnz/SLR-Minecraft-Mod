@@ -6,14 +6,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.mojang.serialization.JsonOps;
 
 import net.solocraft.SololevelingMod;
 import net.solocraft.dungeon.ProceduralDungeonRank;
 
-import net.minecraftforge.common.crafting.CraftingHelper;
-import net.minecraftforge.common.crafting.conditions.ICondition;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.common.conditions.ICondition;
+import net.neoforged.neoforge.common.conditions.ConditionalOps;
+import net.neoforged.fml.ModList;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -59,7 +60,7 @@ public final class DungeonDataManager {
 	private static final String POOL_DIRECTORY = "slr/mob_pools";
 	private static final String MODIFIER_DIRECTORY = "slr/pool_modifiers";
 	private static final String LEGACY_MODIFIER_DIRECTORY = "slr/mob_pool_modifiers";
-	private static final ResourceLocation BEDROCK_ID = new ResourceLocation("minecraft", "bedrock");
+	private static final ResourceLocation BEDROCK_ID = ResourceLocation.fromNamespaceAndPath("minecraft", "bedrock");
 	private static volatile DungeonDataSnapshot current = DungeonDataSnapshot.empty();
 
 	private DungeonDataManager() {
@@ -264,13 +265,13 @@ public final class DungeonDataManager {
 				return Optional.empty();
 		}
 		EntitySelector selector = parseSelector(json, owner.getNamespace());
-		if (selector.kind() == SelectorKind.ENTITY && !ForgeRegistries.ENTITY_TYPES.containsKey(selector.id())) {
+		if (selector.kind() == SelectorKind.ENTITY && !BuiltInRegistries.ENTITY_TYPE.containsKey(selector.id())) {
 			issues.add(warning(owner, "Skipped missing entity " + selector.id()
 					+ requiredMod.map(mod -> " although required_mod " + mod + " is loaded").orElse("") + "."));
 			return Optional.empty();
 		}
 		if (selector.kind() == SelectorKind.ENTITY
-				&& ForgeRegistries.ENTITY_TYPES.getValue(selector.id()) == EntityType.PLAYER) {
+				&& BuiltInRegistries.ENTITY_TYPE.get(selector.id()) == EntityType.PLAYER) {
 			issues.add(warning(owner, "Skipped minecraft:player because it cannot be spawned as a dungeon mob."));
 			return Optional.empty();
 		}
@@ -645,7 +646,7 @@ public final class DungeonDataManager {
 		JsonObject json = object(element, "shell");
 		boolean enabled = bool(json, "enabled", true);
 		ResourceLocation block = minecraftId(string(json, "block", BEDROCK_ID.toString()));
-		if (!ForgeRegistries.BLOCKS.containsKey(block) || ForgeRegistries.BLOCKS.getValue(block) == Blocks.AIR)
+		if (!BuiltInRegistries.BLOCK.containsKey(block) || BuiltInRegistries.BLOCK.get(block) == Blocks.AIR)
 			throw new JsonParseException("Unknown or invalid shell block " + block + " in " + owner);
 		int thickness = enabled ? boundedInt(json, "thickness", 1, 1, 4) : 0;
 		return new ShellSettings(enabled, block, thickness,
@@ -1018,7 +1019,15 @@ public final class DungeonDataManager {
 	}
 
 	private static boolean conditionsApply(JsonObject json, ICondition.IContext context) {
-		return CraftingHelper.processConditions(json, "conditions", context);
+		JsonElement encoded = json.has(ConditionalOps.DEFAULT_CONDITIONS_KEY)
+				? json.get(ConditionalOps.DEFAULT_CONDITIONS_KEY)
+				: json.get("conditions");
+		if (encoded == null) {
+			return true;
+		}
+		List<ICondition> conditions = ICondition.LIST_CODEC.parse(JsonOps.INSTANCE, encoded)
+				.getOrThrow(JsonParseException::new);
+		return conditions.stream().allMatch(condition -> condition.test(context));
 	}
 
 	private static int formatVersion(JsonObject json) {

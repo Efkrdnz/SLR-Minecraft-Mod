@@ -5,11 +5,12 @@ import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.world.inventory.ShadowDismissMenu;
 import net.solocraft.world.inventory.ShadowSummonGUIMenu;
 
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkHooks;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.solocraft.network.compat.NetworkEvent;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -25,7 +26,7 @@ import io.netty.buffer.Unpooled;
 
 import java.util.function.Supplier;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class ShadowDismissButtonMessage {
 	private final int buttonID, x, y, z;
 

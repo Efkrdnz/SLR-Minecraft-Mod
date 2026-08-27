@@ -29,10 +29,10 @@ public class CartenonGateRenderer extends GeoEntityRenderer<CartenonGateEntity> 
 	@Override
 	public void preRender(PoseStack poseStack, CartenonGateEntity entity, BakedGeoModel model,
 			MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick,
-			int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
+			int packedLight, int packedOverlay, int colour) {
 		this.scaleWidth = 1.2F;
 		this.scaleHeight = 1.2F;
 		super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick,
-				packedLight, packedOverlay, red, green, blue, alpha);
+				packedLight, packedOverlay, colour);
 	}
 }

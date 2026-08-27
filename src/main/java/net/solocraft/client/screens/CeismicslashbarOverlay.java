@@ -15,11 +15,12 @@ import net.solocraft.procedures.Kamishcharge1Procedure;
 import net.solocraft.procedures.Kamishcharge0Procedure;
 import net.solocraft.procedures.CeismicslashbarDisplayOverlayIngameProcedure;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
@@ -30,12 +31,12 @@ import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.platform.GlStateManager;
 
-@Mod.EventBusSubscriber({Dist.CLIENT})
+@EventBusSubscriber({Dist.CLIENT})
 public class CeismicslashbarOverlay {
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public static void eventHandler(RenderGuiEvent.Pre event) {
-		int w = event.getWindow().getGuiScaledWidth();
-		int h = event.getWindow().getGuiScaledHeight();
+		int w = event.getGuiGraphics().guiWidth();
+		int h = event.getGuiGraphics().guiHeight();
 		Level world = null;
 		double x = 0;
 		double y = 0;
@@ -58,34 +59,34 @@ public class CeismicslashbarOverlay {
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		if (visible) {
 			if (Kamishcharge0Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_1.png"), w / 2 + -31, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_1.png"), w / 2 + -31, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 			if (Kamishcharge1Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_2.png"), w / 2 + -31, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_2.png"), w / 2 + -31, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 			if (Kamishcharge2Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_3.png"), w / 2 + -31, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_3.png"), w / 2 + -31, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 			if (Kamishcharge3Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_4.png"), w / 2 + -32, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_4.png"), w / 2 + -32, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 			if (Kamishcharge4Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_5.png"), w / 2 + -32, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_5.png"), w / 2 + -32, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 			if (Kamishcharge5Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_6.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_6.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 			if (Kamishcharge6Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_7.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_7.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 			if (Kamishcharge7Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_8.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_8.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 			if (Kamishcharge8Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_9.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_9.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 			if (Kamishcharge9Procedure.execute(entity)) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/progress_10.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/progress_10.png"), w / 2 + -33, h / 2 + -115, 0, 0, 63, 8, 63, 8);
 			}
 		}
 		RenderSystem.depthMask(true);

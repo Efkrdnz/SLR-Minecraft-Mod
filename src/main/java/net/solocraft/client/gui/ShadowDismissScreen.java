@@ -91,18 +91,18 @@ public class ShadowDismissScreen extends ShadowStyledScreen<ShadowDismissMenu> {
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+	public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
 		if (!isOpeningOrOpen())
 			return true;
 		double logicalMouseX = logicalMouseX(mouseX);
 		double logicalMouseY = logicalMouseY(mouseY);
 		if (isOverBox(logicalMouseX, logicalMouseY, leftPos + LIST_X, topPos + LIST_Y, LIST_W, LIST_H)) {
 			int max = maxScroll(visibleEntries().size(), visibleRows());
-			scroll = clamp(scroll - (int) Math.signum(delta), 0, max);
+			scroll = clamp(scroll - (int) Math.signum(deltaY), 0, max);
 			layoutDismissButtons();
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, delta);
+		return super.mouseScrolled(mouseX, mouseY, deltaX, deltaY);
 	}
 
 	private void addEntries() {

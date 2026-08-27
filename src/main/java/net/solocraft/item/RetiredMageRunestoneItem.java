@@ -24,7 +24,7 @@ public final class RetiredMageRunestoneItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip,
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip,
 			TooltipFlag flag) {
 		tooltip.add(Component.literal("Retired Mage runestone")
 				.withStyle(ChatFormatting.DARK_GRAY));

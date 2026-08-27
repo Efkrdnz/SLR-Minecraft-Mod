@@ -4,12 +4,16 @@ import net.solocraft.init.SololevelingModBlocks;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.SkillSlotHelper;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -45,7 +49,7 @@ import java.util.UUID;
  * manifests it in small batches. Every block delegates to Frozen Path's
  * protected temporary-block placement and therefore restores itself.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class FrostArchitectureManager {
 	public static final String SKILL = "Frozen Architecture";
 	private static final int NORMAL_MANA = 340;
@@ -139,9 +143,9 @@ public final class FrostArchitectureManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()
-				|| !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || event.getEntity().level().isClientSide()
+				|| !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		BuildTask task = BUILD_TASKS.get(player.getUUID());
 		if (task == null)

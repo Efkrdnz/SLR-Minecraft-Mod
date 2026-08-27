@@ -16,6 +16,7 @@ import net.solocraft.client.renderer.TuskShadowRenderer;
 import net.solocraft.client.renderer.TrainingBotRenderer;
 import net.solocraft.client.renderer.ThomasAndreRenderer;
 import net.solocraft.client.renderer.SungJinWooRenderer;
+import net.solocraft.client.renderer.SilladBossRenderer;
 import net.solocraft.client.renderer.StoneGolemRenderer;
 import net.solocraft.client.renderer.SteelFangedLycanRenderer;
 import net.solocraft.client.renderer.SteelFangWolfShadowRenderer;
@@ -44,6 +45,7 @@ import net.solocraft.client.renderer.ShadowSold1Renderer;
 import net.solocraft.client.renderer.ShadowPolarBearRenderer;
 import net.solocraft.client.renderer.ShadowIgrisRenderer;
 import net.solocraft.client.renderer.ShadowHighOrcRenderer;
+import net.solocraft.client.renderer.ShadowIronRenderer;
 import net.solocraft.client.renderer.ShadowGreenOrcRenderer;
 import net.solocraft.client.renderer.SecretaryRenderer;
 import net.solocraft.client.renderer.RedGateRenderer;
@@ -147,14 +149,15 @@ import net.solocraft.client.renderer.AfterImage2Renderer;
 import net.solocraft.client.renderer.AfterImage1Renderer;
 import net.solocraft.client.renderer.BasicAttackSlashRenderer;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class SololevelingModEntityRenderers {
 	@SubscribeEvent
 	public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -266,6 +269,7 @@ public class SololevelingModEntityRenderers {
 		event.registerEntityRenderer(SololevelingModEntities.SHADOW_GREEN_ORC.get(), ShadowGreenOrcRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SHADOW_HIGH_ORC.get(), ShadowHighOrcRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.TUSK_SHADOW.get(), TuskShadowRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.SHADOW_IRON.get(), ShadowIronRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SKELETON_SUMMONER.get(), SkeletonSummonerRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.MAGICAL_SKULL.get(), MagicalSkullRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.MANA_ARROW.get(), ManaArrowRenderer::new);
@@ -287,6 +291,7 @@ public class SololevelingModEntityRenderers {
 		event.registerEntityRenderer(SololevelingModEntities.GLACIAL_PURSUIT.get(), GlacialPursuitRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.WHITE_FLAME_VFX.get(), WhiteFlameVfxRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.FIRE_MAGE_VFX.get(), FireMageVfxRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.HEALER_VFX.get(), net.solocraft.client.renderer.HealerVfxRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.BARRIER_VFX.get(), BarrierVfxRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.ARCANE_VFX.get(), ArcaneVfxRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.RADIRU_BLOOD_SPEAR.get(), RadiruBloodSpearRenderer::new);
@@ -311,6 +316,7 @@ public class SololevelingModEntityRenderers {
 		event.registerEntityRenderer(SololevelingModEntities.CERBERUS.get(), CerberusRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.VULCAN.get(), VulcanRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.BARAN.get(), BaranRenderer::new);
+		event.registerEntityRenderer(SololevelingModEntities.SILLAD_BOSS.get(), SilladBossRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.KAISELIN.get(), KaiselinRenderer::new);
 		event.registerEntityRenderer(SololevelingModEntities.SHADOW_KAISELIN.get(), KaiselinRenderer::new);
 	}

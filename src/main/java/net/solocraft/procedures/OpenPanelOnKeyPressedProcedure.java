@@ -4,8 +4,8 @@ import net.solocraft.world.inventory.PanelRework2Menu;
 import net.solocraft.world.inventory.AbilitiesGUIMenu;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -44,7 +44,7 @@ public class OpenPanelOnKeyPressedProcedure {
 			}
 			if (world instanceof Level _level) {
 				if (_level.isClientSide()) {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:panelopen")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:panelopen")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
 				}
 			}
 		} else {

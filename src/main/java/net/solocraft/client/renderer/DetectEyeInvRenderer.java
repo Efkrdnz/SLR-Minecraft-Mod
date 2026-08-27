@@ -22,6 +22,6 @@ public class DetectEyeInvRenderer extends MobRenderer<DetectEyeInvEntity, Modeli
 
 	@Override
 	public ResourceLocation getTextureLocation(DetectEyeInvEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/invistext.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/invistext.png");
 	}
 }

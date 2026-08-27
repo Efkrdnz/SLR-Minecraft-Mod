@@ -2,7 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;

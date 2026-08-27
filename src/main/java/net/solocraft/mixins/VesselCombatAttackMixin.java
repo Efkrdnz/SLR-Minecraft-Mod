@@ -1,6 +1,7 @@
 package net.solocraft.mixins;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.api.vessel.VesselMelee;
 import net.solocraft.network.BeastCombatMessage;
 import net.solocraft.network.GoliathCombatMessage;
 import net.solocraft.util.BeastMonarchManager;
@@ -29,6 +30,10 @@ public abstract class VesselCombatAttackMixin {
 		} else if (BeastMonarchManager.isFangStance(player)) {
 			SololevelingMod.PACKET_HANDLER.sendToServer(new BeastCombatMessage());
 			callback.setReturnValue(false);
+		} else if (VesselMelee.fire(player)) {
+			// Checked last on purpose: a contributed claim can never displace a
+			// built-in stance, so Goliath and the Beast Monarch behave exactly as before.
+			callback.setReturnValue(false);
 		}
 	}
 
@@ -37,7 +42,8 @@ public abstract class VesselCombatAttackMixin {
 		Minecraft minecraft = (Minecraft) (Object) this;
 		LocalPlayer player = minecraft.player;
 		if (attackHeld && player != null && (GoliathCombatManager.isCombatStance(player)
-				|| BeastMonarchManager.isFangStance(player)))
+				|| BeastMonarchManager.isFangStance(player)
+				|| VesselMelee.isClaimed(player)))
 			callback.cancel();
 	}
 }

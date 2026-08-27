@@ -24,7 +24,7 @@ public class WillPowerGiveProcedure {
 					});
 				}
 				if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.WILL_POWER.get(), 200, 1, false, false));
+					_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.WILL_POWER, 200, 1, false, false));
 				CooldownManager.set(entity, "Willpower", 400);
 				CooldownManager.set(entity, "mana_refresh", 40);
 			}

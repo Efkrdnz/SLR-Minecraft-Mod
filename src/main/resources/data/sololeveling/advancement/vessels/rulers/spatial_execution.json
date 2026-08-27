@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:ender_eye"
+    },
+    "title": {
+      "translate": "advancements.vessels.rulers.spatial_execution.title"
+    },
+    "description": {
+      "translate": "advancements.vessels.rulers.spatial_execution.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:vessels/rulers/assassin_stance"
+}

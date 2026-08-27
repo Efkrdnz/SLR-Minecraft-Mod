@@ -3,10 +3,11 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModGameRules;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.GameType;
@@ -24,10 +25,10 @@ import net.minecraft.client.Minecraft;
 import javax.annotation.Nullable;
 import net.solocraft.util.CooldownManager;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class FatigueProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity.level(), event.getSource(), entity);
@@ -55,7 +56,7 @@ public class FatigueProcedure {
 					}
 				}.checkGamemode(entity)) {
 					if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Player == true && !((damagesource).is(DamageTypes.IN_FIRE)
-							|| (damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:bleeding"))) || (damagesource).is(DamageTypes.LAVA) || (damagesource).is(DamageTypes.IN_WALL)
+							|| (damagesource).is(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:bleeding"))) || (damagesource).is(DamageTypes.LAVA) || (damagesource).is(DamageTypes.IN_WALL)
 							|| (damagesource).is(DamageTypes.CACTUS) || (damagesource).is(DamageTypes.ON_FIRE) || (damagesource).is(DamageTypes.GENERIC) || (damagesource).is(DamageTypes.GENERIC_KILL))) {
 						{
 							double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Fatigue + 2;

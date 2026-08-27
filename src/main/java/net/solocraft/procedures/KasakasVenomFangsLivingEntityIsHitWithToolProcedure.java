@@ -20,7 +20,7 @@ public class KasakasVenomFangsLivingEntityIsHitWithToolProcedure {
 	public static void execute(LevelAccessor world, Entity entity, Entity sourceentity, int maximumTargetRank) {
 		if (entity == null || sourceentity == null)
 			return;
-		if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get())) {
+		if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE)) {
 			if (world.isClientSide())
 				return;
 			boolean paralysisApplied = CombatRankHelper.isAtMost(entity, maximumTargetRank);
@@ -32,7 +32,7 @@ public class KasakasVenomFangsLivingEntityIsHitWithToolProcedure {
 			}
 			CooldownManager.set(sourceentity, "paralyze", 200);
 			if (sourceentity instanceof LivingEntity _entity)
-				_entity.removeEffect(SololevelingModMobEffects.SWORD_ENHANCE.get());
+				_entity.removeEffect(SololevelingModMobEffects.SWORD_ENHANCE);
 			if (paralysisApplied) {
 				boolean notificationVisible = true;
 				sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {

@@ -16,6 +16,7 @@ public final class PlayerResetRegression {
 	}
 
 	public static void main(String[] args) throws IOException {
+		abilityDrivenHudBarsRetireOnReset();
 		persistentKeyPolicyIsPlayerScoped();
 		resetUsesTheCompleteCapabilitySchema();
 		jobChangeReceiptsAreActuallyRemoved();
@@ -25,6 +26,32 @@ public final class PlayerResetRegression {
 		advancementAndVanillaStateStayInScope();
 		commandDelegatesToTheResetManager();
 		PlayerEntryGenerationRegression.main(args);
+	}
+
+	/**
+	 * Ability-driven HUD bars appear when the server first syncs them, so they
+	 * must be explicitly retired. Without the sentinel a bar stayed on screen
+	 * for the rest of the session after a reset or class change, because the
+	 * client had no way to learn the resource was gone.
+	 */
+	private static void abilityDrivenHudBarsRetireOnReset() throws IOException {
+		for (String manager : new String[] { "AssassinSkillManager.java",
+				"FighterSkillManager.java", "JuggernautSkillManager.java" }) {
+			String source = read("util", manager);
+			expectTrue(source.contains("ClassPassiveClientState.UNAVAILABLE"),
+					manager + " must retire its HUD bars with the unavailable sentinel");
+		}
+
+		// The client must honour the sentinel rather than latching on forever.
+		String clientState = read("util", "ClassPassiveClientState.java");
+		expectTrue(clientState.contains("boolean available = value >= 0.0D"),
+				"ClassPassiveClientState must treat a negative value as unavailable");
+		for (String channel : new String[] { "assassinVeilAvailable = available",
+				"fighterTempoAvailable = available", "fighterFeralAvailable = available",
+				"tankerPoiseAvailable = available" }) {
+			expectTrue(clientState.contains(channel),
+					"Availability must follow the sentinel: " + channel);
+		}
 	}
 
 	private static void persistentKeyPolicyIsPlayerScoped() {
@@ -97,8 +124,9 @@ public final class PlayerResetRegression {
 	private static void resetUsesTheCompleteCapabilitySchema()
 			throws IOException {
 		String source = read("util", "PlayerProgressResetManager.java");
-		expectTrue(source.contains(
-				"capability.readNBT(new SololevelingModVariables.PlayerVariables().writeNBT())"),
+		expectTrue(source.contains("capability.readNBT(player.registryAccess(),")
+						&& source.contains("new SololevelingModVariables.PlayerVariables()")
+						&& source.contains(".writeNBT(player.registryAccess())"),
 				"Reset must use the complete PlayerVariables serialization schema");
 		for (String retained : new String[] {
 				"variables.Player = systemPlayer",
@@ -199,6 +227,9 @@ public final class PlayerResetRegression {
 		String source = read("util", "PlayerProgressResetManager.java");
 		for (String call : new String[] {
 				"AssassinSkillManager.resetPlayerState(player)",
+				"FighterSkillManager.resetPlayerState(player)",
+				"HealerSkillManager.resetPlayerState(player)",
+				"JuggernautSkillManager.resetPlayerState(player)",
 				"UrgentQuestManager.resetForPlayerReset(player)",
 				"JobChangeQuestManager.resetForPlayerReset(player)",
 				"DkcRadiruManager.resetPlayerState(player)",
@@ -324,10 +355,10 @@ public final class PlayerResetRegression {
 			throws IOException {
 		String source = read("util", "PlayerProgressResetManager.java");
 		expectTrue(source.contains(
-				"SololevelingMod.MODID.equals(advancement.getId().getNamespace())"),
+				"SololevelingMod.MODID.equals(advancement.id().getNamespace())"),
 				"Only this mod's progression advancements may be revoked");
 		expectTrue(source.contains(
-				"\"awakened\".equals(advancement.getId().getPath())"),
+				"\"awakened\".equals(advancement.id().getPath())"),
 				"System awakening eligibility must survive reset");
 		expectTrue(source.contains(
 				"SololevelingMod.MODID.equals(effectId.getNamespace())"),

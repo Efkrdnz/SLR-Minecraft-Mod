@@ -6,8 +6,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 /**
- * Reconciles deterministic Ranger rank skills. Mana Quiver is deliberately
- * granted before and independently of every Hunter-rank threshold.
+ * Reconciles deterministic Ranger skills, including the always-unlocked
+ * Mana Quiver baseline.
  */
 public final class PowerAppendRangerProcedure {
 	private PowerAppendRangerProcedure() {

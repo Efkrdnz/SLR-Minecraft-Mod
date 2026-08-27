@@ -85,6 +85,33 @@ public final class TemporaryArmorSessionManager {
 		return canEquip(entity, generation, 5);
 	}
 
+	/**
+	 * Cancels a queued manifestation equip and restores armor that was already
+	 * replaced before a vessel assignment changes.
+	 */
+	public static void endForVesselChange(Entity entity) {
+		if (!(entity instanceof LivingEntity living)
+				|| entity.level().isClientSide() || !hasActiveEscrow(entity))
+			return;
+		boolean restoreArmor = hasEquippedEscrow(entity);
+		invalidatePendingEquip(entity);
+		if (restoreArmor) {
+			entity.getCapability(
+					SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+					.ifPresent(variables -> {
+						living.setItemSlot(EquipmentSlot.HEAD,
+								variables.overridehead.copy());
+						living.setItemSlot(EquipmentSlot.CHEST,
+								variables.overridetorso.copy());
+						living.setItemSlot(EquipmentSlot.LEGS,
+								variables.overridelegs.copy());
+						living.setItemSlot(EquipmentSlot.FEET,
+								variables.overridefeet.copy());
+					});
+		}
+		finishAfterRestore(entity);
+	}
+
 	private static boolean canEquip(Entity entity, long generation,
 			int requiredJob) {
 		if (!(entity instanceof LivingEntity living) || entity.isRemoved()
@@ -97,9 +124,7 @@ public final class TemporaryArmorSessionManager {
 				.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY,
 						null)
 				.orElse(new SololevelingModVariables.PlayerVariables());
-		boolean hasRequiredJob = requiredJob == 1
-				? variables.JOB == 1 || variables.ShadowBody
-				: variables.JOB == requiredJob;
+		boolean hasRequiredJob = variables.JOB == requiredJob;
 		return hasRequiredJob
 				&& ItemStack.matches(living.getItemBySlot(EquipmentSlot.HEAD),
 						variables.overridehead)

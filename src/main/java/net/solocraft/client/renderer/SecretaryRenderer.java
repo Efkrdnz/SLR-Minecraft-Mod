@@ -18,6 +18,6 @@ public class SecretaryRenderer extends HumanoidMobRenderer<SecretaryEntity, Huma
 
 	@Override
 	public ResourceLocation getTextureLocation(SecretaryEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/secretary_ivory.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/secretary_ivory.png");
 	}
 }

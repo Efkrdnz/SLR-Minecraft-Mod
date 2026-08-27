@@ -2,11 +2,9 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -26,25 +24,16 @@ public class QuickSlashesEntity extends Entity {
 	private static final EntityDataAccessor<Integer> SEED = SynchedEntityData.defineId(QuickSlashesEntity.class, EntityDataSerializers.INT);
 	private static final int LIFETIME = 12;
 
-	public QuickSlashesEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.QUICK_SLASHES.get(), world);
-	}
-
 	public QuickSlashesEntity(EntityType<? extends QuickSlashesEntity> type, Level world) {
 		super(type, world);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(YAW, 0.0F);
-		this.entityData.define(SCALE, 1.0F);
-		this.entityData.define(SEED, 0);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(YAW, 0.0F);
+		builder.define(SCALE, 1.0F);
+		builder.define(SEED, 0);
 	}
 
 	public static void spawn(LevelAccessor world, LivingEntity owner, Entity target) {

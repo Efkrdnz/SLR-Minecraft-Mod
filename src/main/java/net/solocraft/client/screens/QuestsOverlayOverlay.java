@@ -8,11 +8,12 @@ import net.solocraft.procedures.DungeoningProcedure;
 import net.solocraft.client.gui.DkcQuestProgressClientState;
 import net.solocraft.client.gui.UrgentQuestClientState;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.chat.Component;
@@ -27,12 +28,12 @@ import java.util.List;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.platform.GlStateManager;
 
-@Mod.EventBusSubscriber({Dist.CLIENT})
+@EventBusSubscriber({Dist.CLIENT})
 public class QuestsOverlayOverlay {
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public static void eventHandler(RenderGuiEvent.Pre event) {
-		int w = event.getWindow().getGuiScaledWidth();
-		int h = event.getWindow().getGuiScaledHeight();
+		int w = event.getGuiGraphics().guiWidth();
+		int h = event.getGuiGraphics().guiHeight();
 		Player entity = Minecraft.getInstance().player;
 		boolean visible = QuestInfoGetProcedure.execute(entity);
 		if (!visible)
@@ -44,6 +45,8 @@ public class QuestsOverlayOverlay {
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		if (visible) {
+			net.solocraft.client.gui.OverlayTransform.push(event.getGuiGraphics(),
+					net.solocraft.util.OverlayLayoutConfig.QUESTS);
 			if (DkcQuestProgressClientState.isActive(entity)) {
 				renderDkcQuest(event.getGuiGraphics(), w, h);
 			} else if (UrgentQuestClientState.isActive()) {
@@ -51,6 +54,7 @@ public class QuestsOverlayOverlay {
 			} else {
 				renderStoryQuest(event.getGuiGraphics(), entity, w);
 			}
+			net.solocraft.client.gui.OverlayTransform.pop(event.getGuiGraphics());
 		}
 		RenderSystem.depthMask(true);
 		RenderSystem.defaultBlendFunc();

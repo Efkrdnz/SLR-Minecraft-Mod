@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.ShaderInstance;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -99,13 +100,12 @@ public final class SystemTooltip {
 		shader.safeGetUniform("MouseGlitch").set(0.0f);
 
 		Matrix4f matrix = g.pose().last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-		buffer.vertex(matrix, bx, by + boxH, 0).uv(0f, 1f).endVertex();
-		buffer.vertex(matrix, bx + boxW, by + boxH, 0).uv(1f, 1f).endVertex();
-		buffer.vertex(matrix, bx + boxW, by, 0).uv(1f, 0f).endVertex();
-		buffer.vertex(matrix, bx, by, 0).uv(0f, 0f).endVertex();
-		Tesselator.getInstance().end();
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		buffer.addVertex(matrix, bx, by + boxH, 0).setUv(0f, 1f);
+		buffer.addVertex(matrix, bx + boxW, by + boxH, 0).setUv(1f, 1f);
+		buffer.addVertex(matrix, bx + boxW, by, 0).setUv(1f, 0f);
+		buffer.addVertex(matrix, bx, by, 0).setUv(0f, 0f);
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 
 		RenderSystem.enableCull();
 		RenderSystem.disableBlend();

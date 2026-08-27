@@ -3,13 +3,14 @@ package net.solocraft.network;
 import net.solocraft.SololevelingMod;
 import net.solocraft.client.highlight.ClientEntityHighlightManager;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.solocraft.network.compat.DistExecutor;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.solocraft.network.compat.NetworkDirection;
+import net.solocraft.network.compat.NetworkEvent;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 /** Server-to-client control message for player-scoped vanilla entity outlines. */
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public final class EntityHighlightMessage {
 	public static final byte SET = 0;
 	public static final byte REMOVE = 1;
@@ -39,7 +40,7 @@ public final class EntityHighlightMessage {
 			int color, int durationTicks, int priority) {
 		this.action = action;
 		this.targetId = targetId == null ? NO_TARGET : targetId;
-		this.dimension = dimension == null ? new ResourceLocation("minecraft", "overworld") : dimension;
+		this.dimension = dimension == null ? ResourceLocation.fromNamespaceAndPath("minecraft", "overworld") : dimension;
 		String safeSource = source == null ? "" : source;
 		this.source = safeSource.length() <= MAX_SOURCE_LENGTH ? safeSource
 				: safeSource.substring(0, MAX_SOURCE_LENGTH);

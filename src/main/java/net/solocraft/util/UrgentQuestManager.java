@@ -3,21 +3,26 @@ package net.solocraft.util;
 import net.solocraft.SololevelingMod;
 import net.solocraft.entity.KangTaeshikEntity;
 import net.solocraft.guild.GuildData;
+import net.solocraft.util.SkillPointRules;
 import net.solocraft.guild.GuildSavedData;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.network.UrgentQuestStatusMessage;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.CriticalHitEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -30,6 +35,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -47,7 +53,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class UrgentQuestManager {
 	private static final int ACCENT = 0xFFFF3D3D;
 	private static final double START_CHANCE = 0.35D;
@@ -56,6 +62,10 @@ public final class UrgentQuestManager {
 	private static final int WEAPON_HITS_REQUIRED = 3;
 	private static final long WEAPON_HIT_WINDOW_TICKS = 8L * 20L;
 	private static final long PVP_RETRIGGER_COOLDOWN_TICKS = 60L * 20L;
+	private static final int MIN_KILL_TARGET = 6;
+	private static final int MIN_KILL_HEADROOM = 2;
+	private static final int KILL_HEADROOM_DIVISOR = 5;
+	private static final double UNTAGGED_DUNGEON_RADIUS_SQR = 192.0D * 192.0D;
 
 	private static final String ACTIVE = "sl_urgent_active";
 	private static final String ID = "sl_urgent_id";
@@ -87,6 +97,12 @@ public final class UrgentQuestManager {
 	private static final String KIND_NO_SKILLS = "no_skills";
 	private static final String KIND_PVP = "pvp";
 	private static final String KIND_KANG = "kang";
+	/**
+	 * The Cartenon return. Its own kind because KIND_KANG fails on player death
+	 * and is swept by the Kang ambush bookkeeping -- dying to the Statue of God
+	 * would otherwise cancel the arc's quest and leave the run unfinishable.
+	 */
+	private static final String KIND_FINALE = "cartenon_finale";
 
 	private static final Map<AttackPair, Long> RECENT_CRITICALS = new HashMap<>();
 	private static final Map<AttackPair, HitWindow> WEAPON_HITS = new HashMap<>();
@@ -131,7 +147,8 @@ public final class UrgentQuestManager {
 	}
 
 	public static boolean startKangAmbushQuest(ServerPlayer player, KangTaeshikEntity kang) {
-		if (player == null || kang == null || hasActiveQuest(player) || !SystemPlayerAccess.hasSystem(player))
+		if (player == null || kang == null || hasActiveQuest(player) || !SystemPlayerAccess.hasSystem(player)
+				|| SystemAuthorityManager.isReleased(player))
 			return false;
 		player.getPersistentData().putBoolean(ACTIVE, true);
 		player.getPersistentData().putString(ID, "kang_taeshik_ambush");
@@ -154,6 +171,96 @@ public final class UrgentQuestManager {
 		return true;
 	}
 
+	/**
+	 * The two quests of the Cartenon return.
+	 *
+	 * <p>Deliberately not gated on {@link SystemAuthorityManager#isReleased} like
+	 * the other starts: these are the quests that lead <em>to</em> the release, so
+	 * they are always issued while the System is still attended. Progress is
+	 * driven by {@link CartenonFinaleManager} rather than by the kill tracker,
+	 * because what counts is how many guardians are still standing.
+	 */
+	public static void startCartenonFinaleQuest(ServerPlayer player, boolean godPhase,
+			int targetCount) {
+		if (player == null || !SystemPlayerAccess.hasSystem(player))
+			return;
+		int target = Math.max(1, targetCount);
+		clearActive(player);
+		player.getPersistentData().putBoolean(ACTIVE, true);
+		player.getPersistentData().putString(ID,
+				godPhase ? "cartenon_statue_of_god" : "cartenon_guardians");
+		player.getPersistentData().putString(KIND, KIND_FINALE);
+		player.getPersistentData().putString(TITLE,
+				godPhase ? "The One Who Measured You" : "The Temple Wakes");
+		player.getPersistentData().putString(OBJECTIVE, godPhase
+				? "Destroy the Statue of God"
+				: "Destroy the temple guardians");
+		player.getPersistentData().putInt(PROGRESS, 0);
+		player.getPersistentData().putInt(TARGET, target);
+		player.getPersistentData().putInt(TIME_LIMIT, 0);
+		player.getPersistentData().putInt(XP_REWARD, 0);
+		player.getPersistentData().putLong(START_TICK, player.level().getGameTime());
+		syncQuestStatus(player);
+	}
+
+	/**
+	 * The standing summons back to the Cartenon Temple, issued at the level cap.
+	 *
+	 * <p>Replaces a gate that used to appear beside the player unbidden. The
+	 * System asks; the player decides when to answer, and the objective text is
+	 * how they learn to open the way.
+	 */
+	public static void startCartenonSummons(ServerPlayer player) {
+		if (player == null || !SystemPlayerAccess.hasSystem(player) || hasActiveQuest(player))
+			return;
+		player.getPersistentData().putBoolean(ACTIVE, true);
+		player.getPersistentData().putString(ID, "cartenon_summons");
+		player.getPersistentData().putString(KIND, KIND_FINALE);
+		player.getPersistentData().putString(TITLE, "The Way Back");
+		player.getPersistentData().putString(OBJECTIVE,
+				"Kneel to open the way to the Cartenon Temple (hold sneak)");
+		player.getPersistentData().putInt(PROGRESS, 0);
+		player.getPersistentData().putInt(TARGET, 1);
+		player.getPersistentData().putInt(TIME_LIMIT, 0);
+		player.getPersistentData().putInt(XP_REWARD, 0);
+		player.getPersistentData().putLong(START_TICK, player.level().getGameTime());
+		syncQuestStatus(player);
+		SystemNotifications.showTitleUnder(player, 0xFF9B5CFF, 140,
+				Component.literal("QUEST").withStyle(ChatFormatting.LIGHT_PURPLE, ChatFormatting.BOLD),
+				Component.literal("The temple that measured you is calling.\n")
+						.withStyle(ChatFormatting.GRAY)
+						.append(Component.literal("Kneel to open the way.")
+								.withStyle(ChatFormatting.LIGHT_PURPLE)));
+	}
+
+	public static boolean hasCartenonSummons(ServerPlayer player) {
+		return player != null && player.getPersistentData().getBoolean(ACTIVE)
+				&& "cartenon_summons".equals(player.getPersistentData().getString(ID));
+	}
+
+	public static void clearCartenonSummons(ServerPlayer player) {
+		if (hasCartenonSummons(player))
+			clearActive(player);
+	}
+
+	/** Reports how many targets are still standing. Zero completes the quest. */
+	public static void updateCartenonFinaleProgress(ServerPlayer player, int remaining) {
+		if (player == null || !player.getPersistentData().getBoolean(ACTIVE))
+			return;
+		String id = player.getPersistentData().getString(ID);
+		if (!id.startsWith("cartenon_"))
+			return;
+		int target = Math.max(1, player.getPersistentData().getInt(TARGET));
+		player.getPersistentData().putInt(PROGRESS,
+				Math.max(0, target - Math.max(0, remaining)));
+		if (remaining > 0) {
+			syncQuestStatus(player);
+			return;
+		}
+		clearActive(player);
+		syncQuestStatus(player);
+	}
+
 	public static void onSkillUsed(Entity entity, String skillName) {
 		if (!(entity instanceof ServerPlayer player) || skillName == null || skillName.isBlank())
 			return;
@@ -171,13 +278,13 @@ public final class UrgentQuestManager {
 			return;
 		if (!pvpUrgentQuestsEnabled(victim) || sameParty(attacker, victim) || sameGuild(attacker, victim))
 			return;
-		if (!event.isVanillaCritical() && event.getDamageModifier() <= 1.0F)
+		if (!event.isVanillaCritical() && event.getDamageMultiplier() <= 1.0F)
 			return;
 		RECENT_CRITICALS.put(new AttackPair(attacker.getUUID(), victim.getUUID()), attacker.level().getGameTime());
 	}
 
 	@SubscribeEvent
-	public static void onLivingHurt(LivingHurtEvent event) {
+	public static void onLivingHurt(LivingIncomingDamageEvent event) {
 		if (!(event.getEntity() instanceof ServerPlayer victim) || victim.level().isClientSide() || event.getAmount() <= 0.0F)
 			return;
 		ServerPlayer attacker = attackingPlayer(event.getSource());
@@ -237,8 +344,8 @@ public final class UrgentQuestManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide() || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || event.getEntity().level().isClientSide() || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		if (player.tickCount % 20 != 0)
 			return;
@@ -246,7 +353,12 @@ public final class UrgentQuestManager {
 		if (urgentActive)
 			syncQuestStatus(player);
 		String urgentKind = player.getPersistentData().getString(KIND);
-		if (urgentActive && (KIND_PVP.equals(urgentKind) || KIND_KANG.equals(urgentKind)))
+		// These kinds are not tied to a dungeon run, so the "left the dungeon"
+		// sweep below must not touch them. The Cartenon return happens in the
+		// temple, which is not a dungeon dimension -- without this exemption its
+		// quest fails within a second of being issued.
+		if (urgentActive && (KIND_PVP.equals(urgentKind) || KIND_KANG.equals(urgentKind)
+				|| KIND_FINALE.equals(urgentKind)))
 			return;
 		if (!isDungeonDimension(player.level())) {
 			if (player.getPersistentData().getBoolean(ACTIVE))
@@ -296,7 +408,9 @@ public final class UrgentQuestManager {
 		String kind = player.getPersistentData().getString(KIND);
 		if (KIND_KILL.equals(kind)) {
 			String family = player.getPersistentData().getString(FAMILY);
-			if (!matchesFamily(killed, family))
+			String activeTag = player.getPersistentData().getString(ACTIVE_TAG);
+			if (!isEligibleDungeonKillTarget(player, killed, activeTag)
+					|| !matchesFamily(killed, family))
 				return;
 			int progress = player.getPersistentData().getInt(PROGRESS) + 1;
 			player.getPersistentData().putInt(PROGRESS, progress);
@@ -365,7 +479,8 @@ public final class UrgentQuestManager {
 	}
 
 	private static void startPvpQuest(ServerPlayer victim, ServerPlayer attacker) {
-		if (victim.getPersistentData().getBoolean(ACTIVE))
+		if (victim.getPersistentData().getBoolean(ACTIVE)
+				|| SystemAuthorityManager.isReleased(victim))
 			return;
 		List<ServerPlayer> targetPlayers = attackerPartyTargets(attacker, victim);
 		if (targetPlayers.isEmpty())
@@ -477,7 +592,11 @@ public final class UrgentQuestManager {
 	}
 
 	private static String fallbackPvpReward(ServerPlayer player) {
-		return player.getRandom().nextBoolean() ? "SP" + (5 + player.getRandom().nextInt(6)) : "GOLD" + (150 + player.getRandom().nextInt(151));
+		if (!player.getRandom().nextBoolean())
+			return "GOLD" + (150 + player.getRandom().nextInt(151));
+		int span = SkillPointRules.URGENT_QUEST_MAX - SkillPointRules.URGENT_QUEST_MIN + 1;
+		return "SP" + (SkillPointRules.URGENT_QUEST_MIN
+				+ player.getRandom().nextInt(span));
 	}
 
 	private static String runestoneForSkill(String skill) {
@@ -489,7 +608,7 @@ public final class UrgentQuestManager {
 		String registryId = RUNESTONE_ALIASES.getOrDefault(normalized, "runestone_" + normalized);
 		if (MageSpellProgression.isRetiredRunestoneId(registryId))
 			return null;
-		Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation("sololeveling", registryId));
+		Item item = BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("sololeveling", registryId));
 		return item != null && item != Items.AIR ? registryId : null;
 	}
 
@@ -501,7 +620,7 @@ public final class UrgentQuestManager {
 				registryId.contains(":") ? registryId : "sololeveling:" + registryId);
 		if (location == null)
 			return false;
-		Item item = ForgeRegistries.ITEMS.getValue(location);
+		Item item = BuiltInRegistries.ITEM.get(location);
 		return item != null && item != Items.AIR;
 	}
 
@@ -536,7 +655,18 @@ public final class UrgentQuestManager {
 	}
 
 	private static void startRandomQuest(ServerPlayer player, String dungeonId, String tag) {
-		List<QuestDefinition> pool = questPool(dungeonId);
+		if (SystemAuthorityManager.isReleased(player))
+			return;
+		List<QuestDefinition> pool = new ArrayList<>();
+		for (QuestDefinition candidate : questPool(dungeonId)) {
+			if (!KIND_KILL.equals(candidate.kind)) {
+				pool.add(candidate);
+				continue;
+			}
+			QuestDefinition feasible = feasibleKillQuest(player, candidate, tag);
+			if (feasible != null)
+				pool.add(feasible);
+		}
 		if (pool.isEmpty())
 			return;
 		QuestDefinition quest = pool.get(player.getRandom().nextInt(pool.size()));
@@ -555,6 +685,73 @@ public final class UrgentQuestManager {
 		player.getPersistentData().putString(ACTIVE_TAG, tag);
 		syncQuestStatus(player);
 		SystemNotifications.showTitleUnder(player, ACCENT, 120, Component.literal("§4§lURGENT QUEST"), Component.literal("§c" + quest.objective));
+	}
+
+	/**
+	 * Derives a target from enemies that exist now instead of trusting a static
+	 * dungeon estimate. At least twenty percent (and never fewer than two mobs)
+	 * stay outside the requirement as headroom for environmental deaths, parties,
+	 * or another system removing an encounter.
+	 */
+	private static QuestDefinition feasibleKillQuest(ServerPlayer player,
+			QuestDefinition quest, String dungeonTag) {
+		int alive = aliveMatchingDungeonMobs(player, quest.family, dungeonTag);
+		int headroom = Math.max(MIN_KILL_HEADROOM,
+				(alive + KILL_HEADROOM_DIVISOR - 1) / KILL_HEADROOM_DIVISOR);
+		int target = Math.min(quest.target, Math.max(0, alive - headroom));
+		if (target < MIN_KILL_TARGET)
+			return null;
+		String objective = "Kill " + target + " " + killFamilyLabel(quest.family)
+				+ " in " + quest.timeLimitSeconds + " seconds";
+		return new QuestDefinition(quest.id, quest.kind, quest.family, quest.title,
+				objective, target, quest.timeLimitSeconds, quest.xpReward);
+	}
+
+	private static int aliveMatchingDungeonMobs(ServerPlayer player, String family,
+			String dungeonTag) {
+		int alive = 0;
+		for (Entity candidate : player.serverLevel().getAllEntities()) {
+			if (candidate.isAlive()
+					&& isEligibleDungeonKillTarget(player, candidate, dungeonTag)
+					&& matchesFamily(candidate, family))
+				alive++;
+		}
+		return alive;
+	}
+
+	private static boolean isEligibleDungeonKillTarget(ServerPlayer player,
+			Entity candidate, String dungeonTag) {
+		if (!(candidate instanceof LivingEntity) || candidate instanceof Player
+				|| isBoss(candidate) || dungeonTag == null || dungeonTag.isBlank())
+			return false;
+		String candidateTag = candidate.getPersistentData().getString("dungeon_tag");
+		if (!candidateTag.isBlank() && !dungeonTag.equals(candidateTag))
+			return false;
+		// Legacy authored rooms do not tag every ordinary structure mob. Their
+		// instances are far apart, so a bounded same-level radius is the safe
+		// compatibility fallback; tagged procedural/datapack mobs remain exact.
+		if (candidateTag.isBlank() && candidate.distanceToSqr(player)
+				> UNTAGGED_DUNGEON_RADIUS_SQR)
+			return false;
+		if (candidate instanceof TamableAnimal tame && tame.isTame())
+			return false;
+		if (ShadowMonarchManager.isShadowEntity(candidate)
+				|| ShadowMonarchManager.getShadowOwnerUUID(candidate) != null)
+			return false;
+		return !candidate.isAlliedTo(player) && !player.isAlliedTo(candidate);
+	}
+
+	private static String killFamilyLabel(String family) {
+		return switch (family) {
+			case "goblin" -> "goblins";
+			case "skeleton" -> "skeletons";
+			case "lab" -> "lab monsters";
+			case "beast" -> "beasts";
+			case "golem" -> "golems";
+			case "orc" -> "orcs";
+			case "ant" -> "ants";
+			default -> "dungeon monsters";
+		};
 	}
 
 	private static List<QuestDefinition> questPool(String dungeonId) {

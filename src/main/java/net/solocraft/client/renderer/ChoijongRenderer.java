@@ -18,6 +18,6 @@ public class ChoijongRenderer extends HumanoidMobRenderer<ChoijongEntity, Humano
 
 	@Override
 	public ResourceLocation getTextureLocation(ChoijongEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/choijong.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/choijong.png");
 	}
 }

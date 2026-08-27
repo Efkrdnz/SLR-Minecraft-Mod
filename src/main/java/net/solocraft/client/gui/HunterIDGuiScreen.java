@@ -34,11 +34,10 @@ public class HunterIDGuiScreen extends AbstractContainerScreen<HunterIDGuiMenu> 
 		this.imageHeight = 0;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/hunter_id_gui.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/hunter_id_gui.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 		if (mouseX > leftPos + 41 && mouseX < leftPos + 65 && mouseY > topPos + 25 && mouseY < topPos + 42)
@@ -52,7 +51,7 @@ public class HunterIDGuiScreen extends AbstractContainerScreen<HunterIDGuiMenu> 
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/idcard1.png"), this.leftPos + -88, this.topPos + -55, 0, 0, 176, 110, 176, 110);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/idcard1.png"), this.leftPos + -88, this.topPos + -55, 0, 0, 176, 110, 176, 110);
 
 		RenderSystem.disableBlend();
 	}

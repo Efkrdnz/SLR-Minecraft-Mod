@@ -3,11 +3,15 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -28,12 +32,12 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Comparator;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class TankLeapLandProcedure {
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player.level(), event.player.getX(), event.player.getY(), event.player.getZ(), event.player);
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true) {
+			execute(event, event.getEntity().level(), event.getEntity().getX(), event.getEntity().getY(), event.getEntity().getZ(), event.getEntity());
 		}
 	}
 
@@ -51,15 +55,15 @@ public class TankLeapLandProcedure {
 					List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(8 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 					for (Entity entityiterator : _entfound) {
 						if (!(entity == entityiterator)) {
-							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:tanker"))), entity), 10);
+							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:tanker"))), entity), 10);
 						}
 					}
 				}
 				if (world instanceof Level _level) {
 					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 2, 1);
+						_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 2, 1);
 					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 2, 1, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 2, 1, false);
 					}
 				}
 				if (world instanceof ServerLevel _level)

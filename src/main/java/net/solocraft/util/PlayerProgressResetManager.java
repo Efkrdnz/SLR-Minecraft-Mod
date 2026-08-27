@@ -13,7 +13,7 @@ import net.solocraft.procedures.DungeonDimensionPlayerLeavesDimensionProcedure;
 import net.solocraft.procedures.JobChangeCleanupProcedure;
 import net.solocraft.util.daily.DailyQuestLifecycleManager;
 
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -29,7 +29,6 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 
-import net.minecraftforge.registries.ForgeRegistries;
 
 /**
  * Server-authoritative, player-scoped implementation of {@code /slr reset}.
@@ -68,10 +67,14 @@ public final class PlayerProgressResetManager {
 		detachFromActiveDungeon(player, current);
 		DaggerThrowManager.recoverEscrowForReset(player);
 		AssassinSkillManager.resetPlayerState(player);
+		FighterSkillManager.resetPlayerState(player);
+		HealerSkillManager.resetPlayerState(player);
+		JuggernautSkillManager.resetPlayerState(player);
 		ArcaneMageSpellManager.resetPlayerState(player);
 		BarrierMageSpellManager.resetPlayerState(player);
 		FireMageSpellManager.resetPlayerState(player);
 		StormMageSpellManager.resetPlayerState(player);
+		CurseMageSpellManager.resetPlayerState(player);
 		RangerCombatManager.resetPlayerState(player);
 		ClassPassiveManager.resetPlayerState(player);
 		TankerSkillManager.resetPlayerState(player);
@@ -80,7 +83,9 @@ public final class PlayerProgressResetManager {
 		RulersAuthorityManager.resetPlayerState(player);
 		GoliathCombatManager.resetPlayerState(player);
 		LiuZhigangCombatManager.resetPlayerState(player);
+		SungIlHwanCombatManager.resetPlayerState(player);
 		BeastMonarchManager.resetPlayerState(player);
+		AntaresCombatManager.resetPlayerState(player);
 		WhiteFlameMonarchManager.resetPlayerState(player);
 		ShadowMonarchManager.resetPlayerProgress(player);
 		UrgentQuestManager.resetForPlayerReset(player);
@@ -101,7 +106,9 @@ public final class PlayerProgressResetManager {
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			// Using the capability's own complete NBT schema makes newly-added
 			// fields reset automatically instead of relying on a partial field list.
-			capability.readNBT(new SololevelingModVariables.PlayerVariables().writeNBT());
+			capability.readNBT(player.registryAccess(),
+					new SololevelingModVariables.PlayerVariables()
+							.writeNBT(player.registryAccess()));
 			preserved.restore(capability);
 			capability.syncPlayerVariables(player);
 		});
@@ -155,10 +162,10 @@ public final class PlayerProgressResetManager {
 	}
 
 	private static void revokeModProgressAdvancements(ServerPlayer player) {
-		for (Advancement advancement : player.server.getAdvancements().getAllAdvancements()) {
-			if (!SololevelingMod.MODID.equals(advancement.getId().getNamespace()))
+		for (AdvancementHolder advancement : player.server.getAdvancements().getAllAdvancements()) {
+			if (!SololevelingMod.MODID.equals(advancement.id().getNamespace()))
 				continue;
-			if ("awakened".equals(advancement.getId().getPath()))
+			if ("awakened".equals(advancement.id().getPath()))
 				continue;
 			AdvancementProgress progress = player.getAdvancements()
 					.getOrStartProgress(advancement);
@@ -172,8 +179,8 @@ public final class PlayerProgressResetManager {
 
 	private static void removeModEffects(ServerPlayer player) {
 		for (MobEffectInstance active : new ArrayList<>(player.getActiveEffects())) {
-			ResourceLocation effectId = ForgeRegistries.MOB_EFFECTS
-					.getKey(active.getEffect());
+			ResourceLocation effectId = active.getEffect().unwrapKey()
+					.map(key -> key.location()).orElse(null);
 			if (effectId != null
 					&& SololevelingMod.MODID.equals(effectId.getNamespace()))
 				player.removeEffect(active.getEffect());

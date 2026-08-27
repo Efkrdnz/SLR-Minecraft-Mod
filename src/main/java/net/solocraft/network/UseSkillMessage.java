@@ -5,14 +5,17 @@ import net.solocraft.procedures.SkillSlotHelper;
 import net.solocraft.procedures.UseSkillOnKeyReleasedProcedure;
 import net.solocraft.procedures.UseSkillOnKeyPressedProcedure;
 import net.solocraft.util.MageQTEHelper;
+import net.solocraft.util.CurseMageSpellManager;
 import net.solocraft.util.FrostArchitectureManager;
+import net.solocraft.client.gui.CurseWheelClientState;
 import net.solocraft.client.gui.FrostArchitectureClientState;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.solocraft.network.compat.NetworkEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
@@ -20,7 +23,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.function.Supplier;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class UseSkillMessage {
 	int type, pressedms;
 
@@ -93,6 +96,13 @@ public class UseSkillMessage {
 			return;
 		if (world.isClientSide() && FrostArchitectureManager.SKILL.equals(vars.PselectedPower)) {
 			FrostArchitectureClientState.begin(hotbarSlot);
+			return;
+		}
+		// Curse Weave arms a curse through its own validated packet on release, the
+		// same way Frozen Architecture commits a blueprint. It never casts here.
+		if (world.isClientSide()
+				&& CurseMageSpellManager.CURSE_WEAVE.equals(vars.PselectedPower)) {
+			CurseWheelClientState.begin(hotbarSlot);
 			return;
 		}
 		if (world.isClientSide() && !MageQTEHelper.MAGE_SKILLS.contains(vars.PselectedPower))

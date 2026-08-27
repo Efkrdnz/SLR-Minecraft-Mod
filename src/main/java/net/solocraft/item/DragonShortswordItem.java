@@ -14,7 +14,7 @@ import net.minecraft.world.level.Level;
 import java.util.List;
 
 /** A fast National Rank weapon forged from a sovereign dragon's fang. */
-public class DragonShortswordItem extends SwordItem {
+public class DragonShortswordItem extends LegacySwordItem {
 	private static final Tier NATIONAL_RANK_TIER = new Tier() {
 		@Override
 		public int getUses() {
@@ -32,8 +32,8 @@ public class DragonShortswordItem extends SwordItem {
 		}
 
 		@Override
-		public int getLevel() {
-			return 4;
+		public net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> getIncorrectBlocksForDrops() {
+			return net.minecraft.tags.BlockTags.INCORRECT_FOR_NETHERITE_TOOL;
 		}
 
 		@Override
@@ -53,8 +53,8 @@ public class DragonShortswordItem extends SwordItem {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, Level level, List<Component> lines, TooltipFlag flag) {
-		super.appendHoverText(stack, level, lines, flag);
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> lines, TooltipFlag flag) {
+		super.appendHoverText(stack, context, lines, flag);
 		lines.add(Component.literal("NATIONAL RANK WEAPON")
 				.withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD));
 		lines.add(Component.literal("DRAGON SHORTSWORD")

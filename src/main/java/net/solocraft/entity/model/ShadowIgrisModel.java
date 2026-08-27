@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class ShadowIgrisModel extends GeoModel<ShadowIgrisEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(ShadowIgrisEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/igris_prev.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/igris_prev.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(ShadowIgrisEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/igris_prev.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/igris_prev.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(ShadowIgrisEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

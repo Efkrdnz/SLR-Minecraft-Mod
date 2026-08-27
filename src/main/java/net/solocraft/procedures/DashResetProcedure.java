@@ -1,11 +1,16 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
@@ -13,12 +18,12 @@ import net.minecraft.world.entity.Entity;
 import javax.annotation.Nullable;
 import net.solocraft.util.CooldownManager;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class DashResetProcedure {
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player);
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true) {
+			execute(event, event.getEntity());
 		}
 	}
 
@@ -38,11 +43,11 @@ public class DashResetProcedure {
 			capability.syncPlayerVariables(entity);
 		}
 		if (capability.dash == 1.3) {
-			capability.MP -= Math.round(2 + capability.Intelligence / 30);
+			capability.MP -= Math.round(2 + TemporaryStatBonusManager.effectiveIntelligence(entity) / 30);
 			capability.syncPlayerVariables(entity);
 			CooldownManager.set(entity, "mana_refresh", 20);
 		} else if (capability.dash == 1.5) {
-			capability.MP -= Math.round(4 + capability.Intelligence / 30);
+			capability.MP -= Math.round(4 + TemporaryStatBonusManager.effectiveIntelligence(entity) / 30);
 			capability.syncPlayerVariables(entity);
 			CooldownManager.set(entity, "mana_refresh", 20);
 		}

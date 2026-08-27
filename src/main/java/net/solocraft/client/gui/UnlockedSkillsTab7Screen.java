@@ -44,11 +44,10 @@ public class UnlockedSkillsTab7Screen extends AbstractContainerScreen<UnlockedSk
 		this.imageHeight = 0;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/unlocked_skills_tab_7.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/unlocked_skills_tab_7.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
@@ -60,7 +59,7 @@ public class UnlockedSkillsTab7Screen extends AbstractContainerScreen<UnlockedSk
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/big_frame2.png"), this.leftPos + -75, this.topPos + -108, 0, 0, 150, 200, 150, 200);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/big_frame2.png"), this.leftPos + -75, this.topPos + -108, 0, 0, 150, 200, 150, 200);
 
 		RenderSystem.disableBlend();
 	}
@@ -117,9 +116,9 @@ public class UnlockedSkillsTab7Screen extends AbstractContainerScreen<UnlockedSk
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -95, 51, 20).build(builder -> new Button(builder) {
 			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
+			public void renderWidget(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
 				if (PlistButtonConProcedure.execute(entity, 49))
-					super.render(guiGraphics, gx, gy, ticks);
+					super.renderWidget(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip", button_equip);
@@ -131,9 +130,9 @@ public class UnlockedSkillsTab7Screen extends AbstractContainerScreen<UnlockedSk
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -76, 51, 20).build(builder -> new Button(builder) {
 			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
+			public void renderWidget(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
 				if (PlistButtonConProcedure.execute(entity, 50))
-					super.render(guiGraphics, gx, gy, ticks);
+					super.renderWidget(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip1", button_equip1);
@@ -145,9 +144,9 @@ public class UnlockedSkillsTab7Screen extends AbstractContainerScreen<UnlockedSk
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -57, 51, 20).build(builder -> new Button(builder) {
 			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
+			public void renderWidget(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
 				if (PlistButtonConProcedure.execute(entity, 51))
-					super.render(guiGraphics, gx, gy, ticks);
+					super.renderWidget(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip2", button_equip2);
@@ -159,9 +158,9 @@ public class UnlockedSkillsTab7Screen extends AbstractContainerScreen<UnlockedSk
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -38, 51, 20).build(builder -> new Button(builder) {
 			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
+			public void renderWidget(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
 				if (PlistButtonConProcedure.execute(entity, 52))
-					super.render(guiGraphics, gx, gy, ticks);
+					super.renderWidget(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip3", button_equip3);
@@ -173,9 +172,9 @@ public class UnlockedSkillsTab7Screen extends AbstractContainerScreen<UnlockedSk
 			}
 		}).bounds(this.leftPos + 18, this.topPos + -19, 51, 20).build(builder -> new Button(builder) {
 			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
+			public void renderWidget(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
 				if (PlistButtonConProcedure.execute(entity, 53))
-					super.render(guiGraphics, gx, gy, ticks);
+					super.renderWidget(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip4", button_equip4);
@@ -187,14 +186,14 @@ public class UnlockedSkillsTab7Screen extends AbstractContainerScreen<UnlockedSk
 			}
 		}).bounds(this.leftPos + 18, this.topPos + 0, 51, 20).build(builder -> new Button(builder) {
 			@Override
-			public void render(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
+			public void renderWidget(GuiGraphics guiGraphics, int gx, int gy, float ticks) {
 				if (PlistButtonConProcedure.execute(entity, 54))
-					super.render(guiGraphics, gx, gy, ticks);
+					super.renderWidget(guiGraphics, gx, gy, ticks);
 			}
 		});
 		guistate.put("button:button_equip5", button_equip5);
 		this.addRenderableWidget(button_equip5);
-		imagebutton_button1 = new ImageButton(this.leftPos + -127, this.topPos + -27, 48, 22, 0, 0, 22, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_button1.png"), 48, 44, e -> {
+		imagebutton_button1 = new LegacyAtlasImageButton(this.leftPos + -127, this.topPos + -27, 48, 22, 0, 0, 22, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_button1.png"), 48, 44, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab7ButtonMessage(6, x, y, z));
 				UnlockedSkillsTab7ButtonMessage.handleButtonAction(entity, 6, x, y, z);

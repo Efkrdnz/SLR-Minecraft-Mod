@@ -26,10 +26,10 @@ public class GgRightclickedProcedure {
 			}
 		} else {
 			if (world instanceof ServerLevel _serverworld) {
-				StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "lobotomy"));
+				StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "lobotomy"));
 				if (template != null) {
 					template.placeInWorld(_serverworld, BlockPos.containing(x - 4, y + 2, z - 4), BlockPos.containing(x - 4, y + 2, z - 4), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-							_serverworld.random, 3);
+							_serverworld.random, 2);
 				}
 			}
 		}

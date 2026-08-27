@@ -2,6 +2,7 @@ package net.solocraft.dungeon.runtime;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -35,6 +36,8 @@ import java.util.UUID;
  */
 public final class DungeonInstanceSavedData extends SavedData {
 	private static final String DATA_NAME = "sololeveling_dungeon_instances";
+	private static final SavedData.Factory<DungeonInstanceSavedData> FACTORY =
+			new SavedData.Factory<>(DungeonInstanceSavedData::new, DungeonInstanceSavedData::load);
 	private static final int SCHEMA_VERSION = 5;
 
 	public static final int MAX_INSTANCES = 256;
@@ -77,8 +80,7 @@ public final class DungeonInstanceSavedData extends SavedData {
 		if (server == null)
 			throw new IllegalArgumentException("A Minecraft server is required.");
 		ServerLevel overworld = server.overworld();
-		return overworld.getDataStorage().computeIfAbsent(
-				DungeonInstanceSavedData::load, DungeonInstanceSavedData::new, DATA_NAME);
+		return overworld.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 	}
 
 	/** Creates an instance with a generated UUID. */
@@ -152,7 +154,7 @@ public final class DungeonInstanceSavedData extends SavedData {
 
 	@Override
 	@Nonnull
-	public CompoundTag save(@Nonnull CompoundTag tag) {
+	public CompoundTag save(@Nonnull CompoundTag tag, HolderLookup.Provider registries) {
 		tag.putInt("SchemaVersion", SCHEMA_VERSION);
 		ListTag list = new ListTag();
 		for (Instance instance : instances.values())
@@ -161,7 +163,7 @@ public final class DungeonInstanceSavedData extends SavedData {
 		return tag;
 	}
 
-	private static DungeonInstanceSavedData load(CompoundTag root) {
+	private static DungeonInstanceSavedData load(CompoundTag root, HolderLookup.Provider registries) {
 		DungeonInstanceSavedData data = new DungeonInstanceSavedData();
 		LoadBudget budget = new LoadBudget();
 		if (!root.contains("Instances", Tag.TAG_LIST))
@@ -232,7 +234,7 @@ public final class DungeonInstanceSavedData extends SavedData {
 	private static BlockPos readPosition(CompoundTag owner, String key, LoadBudget budget) {
 		if (!owner.contains(key, Tag.TAG_COMPOUND))
 			return null;
-		BlockPos position = NbtUtils.readBlockPos(owner.getCompound(key));
+		BlockPos position = NbtUtils.readBlockPos(owner, key).orElse(null);
 		if (!safePosition(position)) {
 			budget.sanitized = true;
 			return null;

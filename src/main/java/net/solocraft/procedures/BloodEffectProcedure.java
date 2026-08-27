@@ -3,10 +3,11 @@ package net.solocraft.procedures;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModGameRules;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.TamableAnimal;
@@ -20,10 +21,10 @@ import net.minecraft.core.particles.SimpleParticleType;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class BloodEffectProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity.level(), entity, event.getSource().getEntity(), event.getAmount());
@@ -42,7 +43,7 @@ public class BloodEffectProcedure {
 			can_initiate = world.getLevelData().getGameRules().getBoolean(SololevelingModGameRules.SOLO_BLOOD_EFFECTS);
 			if (can_initiate) {
 				if (!entity.isInvulnerable()) {
-					if (!entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+					if (!entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 						if (!(entity instanceof TamableAnimal _tamIsTamedBy && sourceentity instanceof LivingEntity _livEnt ? _tamIsTamedBy.isOwnedBy(_livEnt) : false)) {
 							if (amount >= 2) {
 								if (world instanceof ServerLevel _level)

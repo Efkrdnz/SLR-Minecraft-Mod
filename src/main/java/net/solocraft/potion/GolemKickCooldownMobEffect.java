@@ -1,7 +1,7 @@
 
 package net.solocraft.potion;
 
-import net.minecraftforge.client.extensions.common.IClientMobEffectExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientMobEffectExtensions;
 
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -20,7 +20,7 @@ public class GolemKickCooldownMobEffect extends MobEffect {
 	}
 
 	@Override
-	public boolean isDurationEffectTick(int duration, int amplifier) {
+	public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
 		return true;
 	}
 

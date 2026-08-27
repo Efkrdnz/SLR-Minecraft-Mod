@@ -1,13 +1,19 @@
 package net.solocraft.procedures;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.api.CastSource;
+import net.solocraft.entity.BeruDeadBodyEntity;
+import net.solocraft.entity.IgrisDeadBodyEntity;
 import net.solocraft.entity.ShadowSoulEntity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.init.SololevelingModParticleTypes;
 import net.solocraft.init.SololevelingModSounds;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.AriseExtractionRules;
 import net.solocraft.util.CooldownManager;
+import net.solocraft.util.ManaRules;
 import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.TrueMonarchRules;
 import net.solocraft.util.SystemNotifications;
 
 import net.minecraft.core.BlockPos;
@@ -29,23 +35,32 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
 public class AriseSkillProcedure {
 	private static final double RANGE = 18.0D;
-	private static final int MANA_PER_SOUL = 500;
 	private static final int COOLDOWN_TICKS = 40;
 	private static final int ARISE_DELAY_TICKS = 12;
 
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
+		execute(world, x, y, z, entity, CastSource.MANUAL);
+	}
+
+	/** @param source presentation only; every gameplay check below is unchanged by it. */
+	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, CastSource source) {
+		CastSource castSource = source == null ? CastSource.MANUAL : source;
 		if (!(entity instanceof Player player) || !(world instanceof ServerLevel level))
 			return;
 		SololevelingModVariables.PlayerVariables vars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		if (vars.JOB != 1)
 			return;
-		if (player.isShiftKeyDown()) {
+		// Sneak+key is a keybind modifier, so it means nothing for a spoken cast.
+		// Crouching is an ordinary movement state, and letting it swallow a voice
+		// Arise would silently scan instead of casting.
+		if (!castSource.isSpokenAloud() && player.isShiftKeyDown()) {
 			showExtractionScan(player, level, x, y, z, vars);
 			return;
 		}
@@ -53,21 +68,31 @@ public class AriseSkillProcedure {
 			negativePopup(player, "ARISE UNAVAILABLE", "Skill is on cooldown.");
 			return;
 		}
-		int freeStorage = Math.max(0, (int) Math.floor(vars.shadowstorage - vars.shadowstorageusage));
+		int freeStorage = TrueMonarchRules.freeShadowStorage(vars.trueMonarchHeart,
+				vars.shadowstorage, vars.shadowstorageusage);
 		if (freeStorage <= 0) {
 			negativePopup(player, "ARISE FAILED", "Shadow storage is full.");
 			return;
 		}
-		List<ShadowSoulEntity> souls = findExtractableSouls(level, x, y, z);
-		if (souls.isEmpty()) {
+		List<Entity> targets = findExtractableTargets(level, x, y, z, player);
+		if (targets.isEmpty()) {
 			negativePopup(player, "ARISE FAILED", "No extractable shadows nearby.");
 			return;
 		}
-		souls.sort(Comparator.comparingInt(AriseSkillProcedure::soulPriority).reversed().thenComparingDouble(soul -> soul.distanceToSqr(player)));
-		int attempts = Math.min(freeStorage, souls.size());
-		int affordable = Math.min(attempts, (int) Math.floor(vars.MP / MANA_PER_SOUL));
+		targets.sort(Comparator.comparingInt(AriseSkillProcedure::soulPriority).reversed()
+				.thenComparingDouble(target -> target.distanceToSqr(player)));
+		int attempts = Math.min(freeStorage, targets.size());
+		int affordable = AriseExtractionRules.affordableSouls(vars.MP,
+				ManaRules.costBasis(player), attempts);
 		if (affordable <= 0) {
 			negativePopup(player, "ARISE FAILED", "Not enough mana.");
+			return;
+		}
+		if (castSource.isSpokenAloud()) {
+			// The player already shouted the word. The recording would talk over them,
+			// and the delay exists only so the effect lands on that recording.
+			CooldownManager.set(player, "arise", COOLDOWN_TICKS);
+			completeArise(player, x, y, z);
 			return;
 		}
 		playAriseSound(level, player.blockPosition(), player.getX(), player.getY(), player.getZ());
@@ -79,9 +104,12 @@ public class AriseSkillProcedure {
 		if (!(player instanceof ServerPlayer serverPlayer))
 			return;
 		boolean possible = !CooldownManager.isOnCooldown(player, "arise")
-				&& Math.max(0, (int) Math.floor(vars.shadowstorage - vars.shadowstorageusage)) > 0
-				&& vars.MP >= MANA_PER_SOUL
-				&& !findExtractableSouls(level, x, y, z).isEmpty();
+				&& TrueMonarchRules.freeShadowStorage(vars.trueMonarchHeart,
+						vars.shadowstorage, vars.shadowstorageusage) > 0
+				&& vars.MP >= AriseExtractionRules.manaCostForSouls(
+						ManaRules.costBasis(player), 1)
+				&& findExtractableTargets(level, x, y, z, player).stream()
+						.anyMatch(target -> !isTargetOverwhelming(player, target));
 		Component title = Component.literal("\u00A76\u00A7lSystem");
 		Component under = Component.literal(possible ? "\u00A75[Shadow Extraction]\n \u00A72is possible" : "\u00A75[Shadow Extraction]\n \u00A74is NOT possible");
 		if (possible)
@@ -96,73 +124,205 @@ public class AriseSkillProcedure {
 		SololevelingModVariables.PlayerVariables vars = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables());
 		if (vars.JOB != 1)
 			return;
-		int freeStorage = Math.max(0, (int) Math.floor(vars.shadowstorage - vars.shadowstorageusage));
+		int freeStorage = TrueMonarchRules.freeShadowStorage(vars.trueMonarchHeart,
+				vars.shadowstorage, vars.shadowstorageusage);
 		if (freeStorage <= 0) {
 			negativePopup(player, "ARISE FAILED", "Shadow storage is full.");
 			return;
 		}
-		List<ShadowSoulEntity> souls = findExtractableSouls(level, x, y, z);
-		if (souls.isEmpty()) {
+		List<Entity> targets = findExtractableTargets(level, x, y, z, player);
+		if (targets.isEmpty()) {
 			negativePopup(player, "ARISE FAILED", "No extractable shadows nearby.");
 			return;
 		}
-		souls.sort(Comparator.comparingInt(AriseSkillProcedure::soulPriority).reversed().thenComparingDouble(soul -> soul.distanceToSqr(player)));
-		int attempts = Math.min(freeStorage, souls.size());
-		int affordable = Math.min(attempts, (int) Math.floor(vars.MP / MANA_PER_SOUL));
+		targets.sort(Comparator.comparingInt(AriseSkillProcedure::soulPriority).reversed()
+				.thenComparingDouble(target -> target.distanceToSqr(player)));
+		int attempts = Math.min(freeStorage, targets.size());
+		int affordable = AriseExtractionRules.affordableSouls(vars.MP,
+				ManaRules.costBasis(player), attempts);
 		if (affordable <= 0) {
 			negativePopup(player, "ARISE FAILED", "Not enough mana.");
 			return;
 		}
+		// A cast that cannot take every corpse has to say which limit stopped it.
+		// Silently raising a subset is what made a mana-starved monarch read this
+		// as "Arise only ever raises one".
+		int leftBehind = targets.size() - affordable;
+		String limit = attempts < targets.size() ? "shadow storage full" : "not enough mana";
+		int attempted = 0;
 		int revived = 0;
-		for (ShadowSoulEntity soul : souls) {
-			if (revived >= affordable)
+		int overwhelming = 0;
+		for (Entity target : targets) {
+			if (attempted >= affordable)
 				break;
-			if (reviveSoul(level, soul, player))
+			ExtractionResult result = reviveTarget(level, target, player);
+			if (result == ExtractionResult.INVALID)
+				continue;
+			attempted++;
+			if (result == ExtractionResult.SUCCESS)
 				revived++;
+			else if (result == ExtractionResult.TOO_STRONG)
+				overwhelming++;
 		}
 		if (revived <= 0) {
-			negativePopup(player, "ARISE FAILED", "The shadows resisted extraction.");
+			negativePopup(player, "ARISE FAILED",
+					attempted > 0 && overwhelming == attempted
+							? "The target is too strong to extract."
+							: "The shadows resisted extraction.");
 			CooldownManager.set(player, "arise", 10);
 			return;
 		}
-		int count = revived;
+		double cost = AriseExtractionRules.manaCostForSouls(
+				ManaRules.costBasis(player), revived);
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-			capability.MP = Math.max(0, capability.MP - MANA_PER_SOUL * count);
+			capability.MP = Math.max(0, capability.MP - cost);
 			capability.syncPlayerVariables(player);
 		});
-		player.displayClientMessage(Component.literal("\u00A75ARISE x" + revived), true);
+		player.displayClientMessage(Component.literal("\u00A75ARISE x" + revived
+				+ (leftBehind > 0
+						? " \u00A77(" + leftBehind + " left - " + limit + ")"
+						: "")), true);
 	}
 
-	private static boolean reviveSoul(ServerLevel level, ShadowSoulEntity soul, Player player) {
-		String soulType = soul.getPersistentData().getString("soultype");
+	private static ExtractionResult reviveTarget(ServerLevel level, Entity target,
+			Player player) {
+		String soulType = soulType(target);
 		if (soulType == null || soulType.isBlank())
-			return false;
-		double chance = successChance(player, soulType);
-		if (level.random.nextDouble() >= chance) {
-			soul.getPersistentData().putDouble("ariset", soul.getPersistentData().getDouble("ariset") + 1);
-			return false;
-		}
+			return ExtractionResult.INVALID;
 		String shadowType = shadowType(soulType);
-		if (shadowType.isEmpty())
-			return false;
+		if (shadowType.isEmpty() || alreadyOwnsUniqueBoss(player, shadowType))
+			return ExtractionResult.INVALID;
+		if (isTargetOverwhelming(player, target)) {
+			recordFailedExtraction(target);
+			return ExtractionResult.TOO_STRONG;
+		}
+		double chance = successChance(player, target, soulType);
+		int previousFailures = failedExtractionCount(target);
+		if (!AriseExtractionRules.isGuaranteedAttempt(previousFailures)
+				&& level.random.nextDouble() >= chance) {
+			recordFailedExtraction(target);
+			return ExtractionResult.RESISTED;
+		}
+		Vec3 pos = target.position();
+		Entity summoned = createSummonedShadow(level, shadowType, pos);
+		if (summoned == null)
+			return ExtractionResult.INVALID;
 		incrementOwnedAndUsage(player, shadowType);
-		Vec3 pos = soul.position();
 		level.sendParticles((SimpleParticleType) SololevelingModParticleTypes.SHADOW_REVIVE.get(), pos.x, pos.y + 2.0D, pos.z, 1, 0, 0, 0, 0);
 		spawnLightning(level, pos);
-		Entity summoned = createSummonedShadow(level, shadowType, pos);
-		if (summoned != null) {
-			if (summoned instanceof TamableAnimal tame)
-				tame.tame(player);
-			level.addFreshEntity(summoned);
-			ShadowMonarchManager.tagExistingSummon(player, summoned, shadowType);
-		}
-		soul.discard();
-		return true;
+		if (summoned instanceof TamableAnimal tame)
+			tame.tame(player);
+		level.addFreshEntity(summoned);
+		ShadowMonarchManager.tagExistingSummon(player, summoned, shadowType);
+		target.discard();
+		return ExtractionResult.SUCCESS;
 	}
 
-	private static List<ShadowSoulEntity> findExtractableSouls(ServerLevel level, double x, double y, double z) {
-		return level.getEntitiesOfClass(ShadowSoulEntity.class, new AABB(x - RANGE, y - RANGE, z - RANGE, x + RANGE, y + RANGE, z + RANGE),
-				soul -> soul.isAlive() && !soul.getPersistentData().getString("soultype").isBlank());
+	private static List<Entity> findExtractableTargets(ServerLevel level, double x, double y, double z, Player player) {
+		AABB area = new AABB(x - RANGE, y - RANGE, z - RANGE, x + RANGE, y + RANGE, z + RANGE);
+		ArrayList<Entity> targets = new ArrayList<>();
+		targets.addAll(level.getEntitiesOfClass(ShadowSoulEntity.class, area,
+				target -> isExtractableTarget(player, target)));
+		targets.addAll(level.getEntitiesOfClass(IgrisDeadBodyEntity.class, area,
+				target -> isExtractableTarget(player, target)));
+		targets.addAll(level.getEntitiesOfClass(BeruDeadBodyEntity.class, area,
+				target -> isExtractableTarget(player, target)));
+		return targets;
+	}
+
+	private static boolean isExtractableTarget(Player player, Entity target) {
+		if (target == null || !target.isAlive())
+			return false;
+		if (!hasExtractionRights(player, target))
+			return false;
+		String owner = target.getPersistentData().getString("dkc_spawned_by");
+		if (!owner.isBlank() && !owner.equals(player.getStringUUID()))
+			return false;
+		String type = shadowType(soulType(target));
+		return !type.isEmpty() && !alreadyOwnsUniqueBoss(player, type)
+				&& !AriseExtractionRules.failuresExhausted(
+						failedExtractionCount(target));
+	}
+
+	private static boolean hasExtractionRights(Player player, Entity target) {
+		if (player == null || target == null)
+			return false;
+		if (!target.getPersistentData().hasUUID(
+				AriseExtractionRules.EXTRACTION_OWNER_TAG))
+			return true; // Preserve extraction for corpses created before owner tracking.
+		return player.getUUID().equals(target.getPersistentData().getUUID(
+				AriseExtractionRules.EXTRACTION_OWNER_TAG));
+	}
+
+	private static String soulType(Entity target) {
+		if (target instanceof IgrisDeadBodyEntity)
+			return "igris";
+		if (target instanceof BeruDeadBodyEntity)
+			return "beru";
+		return target instanceof ShadowSoulEntity
+				? target.getPersistentData().getString("soultype")
+				: "";
+	}
+
+	private static boolean alreadyOwnsUniqueBoss(Player player, String shadowType) {
+		SololevelingModVariables.PlayerVariables vars = player.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables());
+		return switch (shadowType) {
+			case "igris" -> vars.igris > 0;
+			case "beru" -> vars.berumax > 0;
+			case "tusk" -> vars.tuskmax > 0;
+			case "kaisel" -> vars.Kaisel > 0;
+			default -> false;
+		};
+	}
+
+	private static void recordFailedExtraction(Entity target) {
+		if (target instanceof IgrisDeadBodyEntity igris) {
+			int failures = AriseExtractionRules.nextFailureCount(
+					failedExtractionCount(igris));
+			igris.getPersistentData().putInt(
+					AriseExtractionRules.FAILURE_COUNT_TAG, failures);
+			igris.getEntityData().set(IgrisDeadBodyEntity.DATA_arise, failures);
+			if (AriseExtractionRules.failuresExhausted(failures))
+				igris.discard();
+			return;
+		}
+		if (target instanceof BeruDeadBodyEntity beru) {
+			int remaining = Math.max(0,
+					beru.getEntityData().get(BeruDeadBodyEntity.DATA_tries) - 1);
+			beru.getEntityData().set(BeruDeadBodyEntity.DATA_tries, remaining);
+			if (remaining <= 0)
+				beru.discard();
+			return;
+		}
+		int failures = AriseExtractionRules.nextFailureCount(
+				failedExtractionCount(target));
+		target.getPersistentData().putInt(
+				AriseExtractionRules.FAILURE_COUNT_TAG, failures);
+		target.getPersistentData().putDouble("ariset", failures);
+		if (AriseExtractionRules.failuresExhausted(failures))
+			target.discard();
+	}
+
+	private static int failedExtractionCount(Entity target) {
+		if (target == null)
+			return AriseExtractionRules.MAX_BOSS_EXTRACTION_FAILURES;
+		if (target.getPersistentData().contains(
+				AriseExtractionRules.FAILURE_COUNT_TAG))
+			return Math.max(0, target.getPersistentData().getInt(
+					AriseExtractionRules.FAILURE_COUNT_TAG));
+		if (target instanceof IgrisDeadBodyEntity igris)
+			// Legacy corpses started at one before any extraction was attempted.
+			return Math.max(0,
+					igris.getEntityData().get(IgrisDeadBodyEntity.DATA_arise)
+							- 1);
+		if (target instanceof BeruDeadBodyEntity beru)
+			return Math.max(0,
+					AriseExtractionRules.MAX_BOSS_EXTRACTION_FAILURES
+							- beru.getEntityData().get(BeruDeadBodyEntity.DATA_tries));
+		return Math.max(0,
+				(int) Math.floor(target.getPersistentData().getDouble("ariset")));
 	}
 
 	private static Entity createSummonedShadow(ServerLevel level, String shadowType, Vec3 pos) {
@@ -175,6 +335,8 @@ public class AriseSkillProcedure {
 			case "orc" -> SololevelingModEntities.SHADOW_GREEN_ORC.get().create(level);
 			case "polar_bear" -> SololevelingModEntities.SHADOW_POLAR_BEAR.get().create(level);
 			case "high_orc" -> SololevelingModEntities.SHADOW_HIGH_ORC.get().create(level);
+			case "igris" -> SololevelingModEntities.IGRIS_SHADOW.get().create(level);
+			case "beru" -> SololevelingModEntities.BERU_SHADOW.get().create(level);
 			case "tusk" -> SololevelingModEntities.TUSK_SHADOW.get().create(level);
 			case "kaisel" -> SololevelingModEntities.SHADOW_KAISELIN.get().create(level);
 			default -> null;
@@ -183,7 +345,7 @@ public class AriseSkillProcedure {
 			return null;
 		entity.moveTo(pos.x, pos.y, pos.z, level.random.nextFloat() * 360.0F, 0.0F);
 		if (entity instanceof Mob mob)
-			mob.finalizeSpawn(level, level.getCurrentDifficultyAt(entity.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+			mob.finalizeSpawn(level, level.getCurrentDifficultyAt(entity.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 		return entity;
 	}
 
@@ -226,6 +388,14 @@ public class AriseSkillProcedure {
 					capability.highorcspawned += 1;
 					capability.summonlimitusage += 1;
 				}
+				case "igris" -> {
+					capability.igris = Math.max(1, capability.igris);
+					capability.IgrisSpawned = Math.max(1, capability.IgrisSpawned);
+				}
+				case "beru" -> {
+					capability.berumax = Math.max(1, capability.berumax);
+					capability.beru = Math.max(1, capability.beru);
+				}
 				case "tusk" -> {
 					capability.tuskmax = Math.max(1, capability.tuskmax);
 					capability.tuskspawned = Math.max(1, capability.tuskspawned);
@@ -241,14 +411,29 @@ public class AriseSkillProcedure {
 		});
 	}
 
-	private static double successChance(Player player, String soulType) {
+	private static double successChance(Player player, Entity target, String soulType) {
 		double level = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).Level;
-		return switch (normalizeSoulType(soulType)) {
-			case "orc", "bear" -> Math.min(1.0D, level / 40.0D);
-			case "highorc" -> Math.min(1.0D, level / 50.0D);
-			case "tusk", "kaisel" -> Math.min(1.0D, level / 70.0D);
-			default -> 1.0D;
-		};
+		return AriseExtractionRules.successChance(level,
+				targetLevel(target, soulType),
+				player.getAbilities().instabuild);
+	}
+
+	private static boolean isTargetOverwhelming(Player player, Entity target) {
+		if (player == null || target == null)
+			return true;
+		double playerLevel = player.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables()).Level;
+		return AriseExtractionRules.isOverwhelming(playerLevel,
+				targetLevel(target, soulType(target)),
+				player.getAbilities().instabuild);
+	}
+
+	private static double targetLevel(Entity target, String soulType) {
+		double stored = target == null ? 0.0D
+				: target.getPersistentData().getDouble(
+						AriseExtractionRules.TARGET_LEVEL_TAG);
+		return AriseExtractionRules.effectiveTargetLevel(soulType, stored);
 	}
 
 	private static String shadowType(String soulType) {
@@ -261,15 +446,19 @@ public class AriseSkillProcedure {
 			case "orc" -> "orc";
 			case "bear" -> "polar_bear";
 			case "highorc" -> "high_orc";
+			case "igris" -> "igris";
+			case "beru" -> "beru";
 			case "tusk" -> "tusk";
 			case "kaisel" -> "kaisel";
 			default -> "";
 		};
 	}
 
-	private static int soulPriority(ShadowSoulEntity soul) {
-		return switch (normalizeSoulType(soul.getPersistentData().getString("soultype"))) {
-			case "kaisel" -> 1000;
+	private static int soulPriority(Entity target) {
+		return switch (normalizeSoulType(soulType(target))) {
+			case "beru" -> 1200;
+			case "kaisel" -> 1100;
+			case "igris" -> 1000;
 			case "tusk" -> 900;
 			case "highorc" -> 700;
 			case "bear" -> 550;
@@ -309,5 +498,12 @@ public class AriseSkillProcedure {
 					Component.literal("§4§l" + title),
 					Component.literal("§c" + undertext));
 		}
+	}
+
+	private enum ExtractionResult {
+		SUCCESS,
+		RESISTED,
+		TOO_STRONG,
+		INVALID
 	}
 }

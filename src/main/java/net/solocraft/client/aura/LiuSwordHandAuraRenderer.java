@@ -6,10 +6,11 @@ import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.client.renderer.shader.LiuSwordRenderTypes;
 import net.solocraft.util.LiuManifestationManager;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderPlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -22,9 +23,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
 public final class LiuSwordHandAuraRenderer {
-	private static final ResourceLocation FALLBACK = new ResourceLocation("sololeveling", "textures/particle/slashgood1.png");
+	private static final ResourceLocation FALLBACK = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/slashgood1.png");
 
 	private LiuSwordHandAuraRenderer() {
 	}

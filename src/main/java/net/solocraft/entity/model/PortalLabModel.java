@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class PortalLabModel extends GeoModel<PortalLabEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(PortalLabEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/portalgate.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/portalgate.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(PortalLabEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/portalgate.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/portalgate.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(PortalLabEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

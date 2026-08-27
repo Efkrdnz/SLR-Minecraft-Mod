@@ -4,12 +4,13 @@ package net.solocraft.world.dimension;
 import net.solocraft.procedures.SystemVoidDimensionPlayerLeavesDimensionProcedure;
 import net.solocraft.procedures.SystemVoidDimensionPlayerEntersDimensionProcedure;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
@@ -19,9 +20,9 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class SystemVoidDimensionDimension {
-	@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+	@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 	public static class DimensionSpecialEffectsHandler {
 		@SubscribeEvent
 		@OnlyIn(Dist.CLIENT)
@@ -37,7 +38,7 @@ public class SystemVoidDimensionDimension {
 					return false;
 				}
 			};
-			event.register(new ResourceLocation("sololeveling:system_void_dimension"), customEffect);
+			event.register(ResourceLocation.parse("sololeveling:system_void_dimension"), customEffect);
 		}
 	}
 
@@ -48,10 +49,10 @@ public class SystemVoidDimensionDimension {
 		double x = entity.getX();
 		double y = entity.getY();
 		double z = entity.getZ();
-		if (event.getFrom() == ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:system_void_dimension"))) {
+		if (event.getFrom() == ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:system_void_dimension"))) {
 			SystemVoidDimensionPlayerLeavesDimensionProcedure.execute(entity);
 		}
-		if (event.getTo() == ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:system_void_dimension"))) {
+		if (event.getTo() == ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:system_void_dimension"))) {
 			SystemVoidDimensionPlayerEntersDimensionProcedure.execute(entity);
 		}
 	}

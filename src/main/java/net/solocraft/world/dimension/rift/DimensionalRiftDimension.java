@@ -2,12 +2,13 @@ package net.solocraft.world.dimension.rift;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.core.registries.Registries;
@@ -18,9 +19,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DimensionalRiftDimension {
-	public static final ResourceLocation ID = new ResourceLocation(SololevelingMod.MODID, "dimensional_rift");
+	public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "dimensional_rift");
 	public static final ResourceKey<Level> LEVEL_KEY = ResourceKey.create(Registries.DIMENSION, ID);
 
 	private DimensionalRiftDimension() {
@@ -37,7 +38,7 @@ public final class DimensionalRiftDimension {
 			DimensionalRiftEntry.teleportToCenter(player, level);
 	}
 
-	@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+	@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 	public static final class Effects {
 		private Effects() {
 		}

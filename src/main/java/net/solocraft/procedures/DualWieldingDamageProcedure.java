@@ -5,10 +5,13 @@ import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.SololevelingMod;
 import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -31,9 +34,9 @@ import java.util.Comparator;
 
 public class DualWieldingDamageProcedure {
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player.level(), event.player);
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true) {
+			execute(event, event.getEntity().level(), event.getEntity());
 		}
 	}
 
@@ -44,7 +47,7 @@ public class DualWieldingDamageProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity) {
 		if (entity == null)
 			return;
-		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.DUAL_WIELDING.get())) {
+		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.DUAL_WIELDING)) {
 			{
 				final Vec3 _center = new Vec3((entity.getX()), (entity.getY()), (entity.getZ()));
 				List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(5 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();

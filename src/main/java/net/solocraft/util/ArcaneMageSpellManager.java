@@ -4,10 +4,14 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.entity.ArcaneVfxEntity;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -48,7 +52,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Server-authoritative mechanics for the five-stage Arcane Mage spell set. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class ArcaneMageSpellManager {
 	public static final String AETHER_BOLT = "Aether Bolt";
 	public static final String VECTOR_STEP = "Vector Step";
@@ -73,7 +77,7 @@ public final class ArcaneMageSpellManager {
 	private static final double[] COST_MULTIPLIER = {0.0D, 1.0D, 1.10D, 1.20D, 1.30D, 1.40D};
 	private static final int[] FORMULA_DURATION = {0, 200, 230, 260, 290, 320};
 	private static final TagKey<EntityType<?>> BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("soloboss"));
+			ResourceLocation.parse("soloboss"));
 
 	private static final Map<UUID, FormulaState> FORMULAS = new HashMap<>();
 	private static final Map<UUID, AnchorState> ANCHORS = new HashMap<>();
@@ -310,7 +314,7 @@ public final class ArcaneMageSpellManager {
 			default -> 0.0D;
 		};
 		double intelligence = Math.max(0.0D, MageCombatHelper.intelligence(caster));
-		double maximumMana = 1000.0D + intelligence * 100.0D;
+		double maximumMana = ManaRules.maximumManaFor(intelligence);
 		double qte = isQteSkill(skill)
 				? MageQTEHelper.getManaCostMultiplier(result == null ? QTEResult.MISS : result,
 						intelligence) : 1.0D;
@@ -524,7 +528,7 @@ public final class ArcaneMageSpellManager {
 						width * 0.76F, length * 0.92F, range * 0.92D, speed,
 						damage * 0.58F, true, 4);
 		}
-		play(level, origin, SoundEvents.TRIDENT_THROW, 1.0F, overcast ? 0.72F : 1.25F);
+		play(level, origin, SoundEvents.TRIDENT_THROW.value(), 1.0F, overcast ? 0.72F : 1.25F);
 		return true;
 	}
 
@@ -538,6 +542,12 @@ public final class ArcaneMageSpellManager {
 		ACTIVE_RENDS.add(new RendCast(level, caster.getUUID(), effect.getUUID(), stage,
 				origin, safeDirection(direction), range, speed, width, damage, delay, orb,
 				overcast));
+		if (delay == 0 && caster instanceof ServerPlayer player)
+			AbilityDestructionManager.line(player,
+					AbilityDestructionManager.Profile.ARCANE_IMPACT, origin,
+					origin.add(safeDirection(direction).scale(Math.min(24.0D, range))),
+					TemporaryStatBonusManager.effectiveIntelligence(player),
+					overcast || stage >= 5);
 	}
 
 	private static boolean startConvergence(ServerLevel level, Entity caster, int stage,
@@ -674,9 +684,7 @@ public final class ArcaneMageSpellManager {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
+	public static void onServerTick(ServerTickEvent.Post event) {
 		tickList(ACTIVE_BOLTS);
 		tickList(ACTIVE_POLARITIES);
 		tickList(ACTIVE_RENDS);
@@ -1288,10 +1296,15 @@ public final class ArcaneMageSpellManager {
 			if (age >= duration) {
 				damageArea(level, caster, center, radius * 1.08D,
 						damage * (overcast ? 0.92F : 0.72F), 0.18D);
+				if (caster instanceof ServerPlayer player)
+					AbilityDestructionManager.impact(player,
+							AbilityDestructionManager.Profile.ARCANE_CONVERGENCE,
+							center, TemporaryStatBonusManager.effectiveIntelligence(player),
+							overcast || stage >= 5);
 				spawn(level, center.add(0.0D, 0.35D, 0.0D), ArcaneVfxEntity.ZERO_POINT,
 						stage, radius * 0.92F, radius, 28, 0.0F, 0.0F, caster, null,
 						orb, overcast);
-				play(level, center, SoundEvents.GENERIC_EXPLODE, 1.2F, 0.72F);
+				play(level, center, SoundEvents.GENERIC_EXPLODE.value(), 1.2F, 0.72F);
 				ground.discard();
 				if (skyEffectId != null) {
 					Entity sky = level.getEntity(skyEffectId);

@@ -3,6 +3,7 @@ package net.solocraft.party;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -19,6 +20,8 @@ import java.util.UUID;
 /** Overworld-owned persistent storage for multiplayer parties and viewer preferences. */
 public final class PartySavedData extends SavedData {
 	private static final String DATA_NAME = "solocraft_parties";
+	private static final SavedData.Factory<PartySavedData> FACTORY =
+			new SavedData.Factory<>(PartySavedData::new, PartySavedData::load);
 
 	private final Map<UUID, Party> parties = new LinkedHashMap<>();
 	private final Map<UUID, UUID> playerParties = new LinkedHashMap<>();
@@ -30,8 +33,7 @@ public final class PartySavedData extends SavedData {
 	private final Set<String> retiredLegacyKeys = new LinkedHashSet<>();
 
 	public static PartySavedData get(ServerLevel level) {
-		return level.getServer().overworld().getDataStorage().computeIfAbsent(
-				PartySavedData::load, PartySavedData::new, DATA_NAME);
+		return level.getServer().overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 	}
 
 	Party party(UUID id) {
@@ -224,7 +226,7 @@ public final class PartySavedData extends SavedData {
 
 	@Nonnull
 	@Override
-	public CompoundTag save(@Nonnull CompoundTag root) {
+	public CompoundTag save(@Nonnull CompoundTag root, HolderLookup.Provider registries) {
 		ListTag partyTags = new ListTag();
 		for (Party party : parties.values())
 			partyTags.add(party.save());
@@ -258,7 +260,7 @@ public final class PartySavedData extends SavedData {
 		return root;
 	}
 
-	private static PartySavedData load(CompoundTag root) {
+	private static PartySavedData load(CompoundTag root, HolderLookup.Provider registries) {
 		PartySavedData data = new PartySavedData();
 		ListTag partyTags = root.getList("Parties", Tag.TAG_COMPOUND);
 		for (int index = 0; index < partyTags.size(); index++) {

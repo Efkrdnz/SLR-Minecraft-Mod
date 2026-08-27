@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class FlagOfProtectionModel extends GeoModel<FlagOfProtectionEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(FlagOfProtectionEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/flagofprotection.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/flagofprotection.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(FlagOfProtectionEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/flagofprotection.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/flagofprotection.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(FlagOfProtectionEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

@@ -29,9 +29,9 @@ public class DaggerRushActProcedure {
 			return;
 		CooldownManager.discardIfRemainingExceeds(entity, "dagger_rush", 40);
 		ItemStack mainHand = entity instanceof LivingEntity livingEntity ? livingEntity.getMainHandItem() : ItemStack.EMPTY;
-		if (mainHand.is(ItemTags.create(new ResourceLocation("dagger")))) {
+		if (mainHand.is(ItemTags.create(ResourceLocation.parse("dagger")))) {
 			runDaggerCombo(world, entity);
-		} else if (mainHand.is(ItemTags.create(new ResourceLocation("nsword"))) || mainHand.getItem() instanceof SwordItem || mainHand.getItem() instanceof AxeItem) {
+		} else if (mainHand.is(ItemTags.create(ResourceLocation.parse("nsword"))) || mainHand.getItem() instanceof SwordItem || mainHand.getItem() instanceof AxeItem) {
 			runSingleSlash(world, x, y, z, entity, BasicAttackSlashEntity.STYLE_SWORD, 100, 40, 4, 1);
 		} else if (mainHand.isEmpty()) {
 			runFistSlash(world, x, y, z, entity);
@@ -107,7 +107,7 @@ public class DaggerRushActProcedure {
 
 	private static void shake(Entity entity, int ticks, int power) {
 		if (entity instanceof LivingEntity livingEntity && !livingEntity.level().isClientSide()) {
-			livingEntity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SCREEN_SHAKE.get(), ticks, power, false, false));
+			livingEntity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SCREEN_SHAKE, ticks, power, false, false));
 		}
 	}
 

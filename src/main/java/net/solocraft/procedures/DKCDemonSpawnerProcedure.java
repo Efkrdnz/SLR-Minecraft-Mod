@@ -13,6 +13,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -28,8 +29,6 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.AABB;
 
-import java.util.UUID;
-
 /** Bounded, staged DKC waves with at most 7-12 active enemies per player. */
 public class DKCDemonSpawnerProcedure {
 	public static final String ROLE_TAG = "dkc_encounter_role";
@@ -41,12 +40,12 @@ public class DKCDemonSpawnerProcedure {
 	private static final String SPAWN_RETRY_AFTER_SUFFIX = "_spawn_retry_after";
 	private static final int MAX_BATCH_SPAWNS = 6;
 	private static final long FAILED_SPAWN_RETRY_TICKS = 200L;
-	private static final UUID MINIBOSS_HEALTH_MODIFIER = UUID.fromString("57db3b42-3261-4f38-b7d3-a1e22c6b5121");
-	private static final UUID MINIBOSS_DAMAGE_MODIFIER = UUID.fromString("985172a6-dfd7-44c8-a8b0-5a9890754bb4");
-	private static final UUID MINIBOSS_ARMOR_MODIFIER = UUID.fromString("416b7192-62a7-40d6-9915-e3909c53c7d4");
-	private static final UUID MINIBOSS_TOUGHNESS_MODIFIER = UUID.fromString("70a486fd-b2a7-4991-888d-3e36ec339d5e");
-	private static final UUID MINIBOSS_KNOCKBACK_MODIFIER = UUID.fromString("8be9d98b-dd89-42ec-9a4a-fac668bc18f8");
-	private static final UUID MINIBOSS_SPEED_MODIFIER = UUID.fromString("a72b269f-3bfa-4b9f-b1b8-e68c2cab179b");
+	private static final ResourceLocation MINIBOSS_HEALTH_MODIFIER = modifierId("health");
+	private static final ResourceLocation MINIBOSS_DAMAGE_MODIFIER = modifierId("damage");
+	private static final ResourceLocation MINIBOSS_ARMOR_MODIFIER = modifierId("armor");
+	private static final ResourceLocation MINIBOSS_TOUGHNESS_MODIFIER = modifierId("armor_toughness");
+	private static final ResourceLocation MINIBOSS_KNOCKBACK_MODIFIER = modifierId("knockback_resistance");
+	private static final ResourceLocation MINIBOSS_SPEED_MODIFIER = modifierId("movement_speed");
 
 	public static void execute(LevelAccessor world, Entity entity) {
 		if (!(world instanceof ServerLevel level) || !(entity instanceof ServerPlayer player))
@@ -147,7 +146,7 @@ public class DKCDemonSpawnerProcedure {
 			enemy.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0.0F);
 			try {
 				enemy.finalizeSpawn(level, level.getCurrentDifficultyAt(player.blockPosition()),
-						MobSpawnType.SPAWNER, null, null);
+						MobSpawnType.SPAWNER, null);
 			} catch (RuntimeException exception) {
 				enemy.discard();
 				SololevelingMod.LOGGER.warn("Failed to finalize a DKC floor-wave mob", exception);
@@ -226,17 +225,17 @@ public class DKCDemonSpawnerProcedure {
 		double healthMultiplier = Math.min(3.0D, 2.35D + floor * 0.0325D);
 		double damageMultiplier = Math.min(1.70D, 1.40D + floor * 0.015D);
 		addPermanent(demon.getAttribute(Attributes.MAX_HEALTH), MINIBOSS_HEALTH_MODIFIER,
-				"DKC miniboss health", healthMultiplier - 1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL);
+				"DKC miniboss health", healthMultiplier - 1.0D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		addPermanent(demon.getAttribute(Attributes.ATTACK_DAMAGE), MINIBOSS_DAMAGE_MODIFIER,
-				"DKC miniboss damage", damageMultiplier - 1.0D, AttributeModifier.Operation.MULTIPLY_TOTAL);
+				"DKC miniboss damage", damageMultiplier - 1.0D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		addPermanent(demon.getAttribute(Attributes.ARMOR), MINIBOSS_ARMOR_MODIFIER,
-				"DKC miniboss armor", Math.min(14.0D, 7.0D + floor * 0.35D), AttributeModifier.Operation.ADDITION);
+				"DKC miniboss armor", Math.min(14.0D, 7.0D + floor * 0.35D), AttributeModifier.Operation.ADD_VALUE);
 		addPermanent(demon.getAttribute(Attributes.ARMOR_TOUGHNESS), MINIBOSS_TOUGHNESS_MODIFIER,
-				"DKC miniboss armor toughness", Math.min(4.0D, 2.0D + floor * 0.10D), AttributeModifier.Operation.ADDITION);
+				"DKC miniboss armor toughness", Math.min(4.0D, 2.0D + floor * 0.10D), AttributeModifier.Operation.ADD_VALUE);
 		AttributeInstance knockback = demon.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
 		if (knockback != null)
 			addPermanent(knockback, MINIBOSS_KNOCKBACK_MODIFIER, "DKC miniboss knockback resistance",
-					Math.max(0.0D, 0.85D - knockback.getValue()), AttributeModifier.Operation.ADDITION);
+					Math.max(0.0D, 0.85D - knockback.getValue()), AttributeModifier.Operation.ADD_VALUE);
 		demon.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE,
 				0, false, false, true));
 		demon.setHealth(demon.getMaxHealth());
@@ -294,37 +293,42 @@ public class DKCDemonSpawnerProcedure {
 		knight.setCustomNameVisible(true);
 		addPermanent(knight.getAttribute(Attributes.MAX_HEALTH), MINIBOSS_HEALTH_MODIFIER,
 				"DKC knight miniboss health", healthMultiplier - 1.0D,
-				AttributeModifier.Operation.MULTIPLY_TOTAL);
+				AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		addPermanent(knight.getAttribute(Attributes.ATTACK_DAMAGE), MINIBOSS_DAMAGE_MODIFIER,
 				"DKC knight miniboss damage", damageMultiplier - 1.0D,
-				AttributeModifier.Operation.MULTIPLY_TOTAL);
+				AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		addPermanent(knight.getAttribute(Attributes.ARMOR), MINIBOSS_ARMOR_MODIFIER,
-				"DKC knight miniboss armor", armorBonus, AttributeModifier.Operation.ADDITION);
+				"DKC knight miniboss armor", armorBonus, AttributeModifier.Operation.ADD_VALUE);
 		addPermanent(knight.getAttribute(Attributes.ARMOR_TOUGHNESS), MINIBOSS_TOUGHNESS_MODIFIER,
 				"DKC knight miniboss armor toughness", toughnessBonus,
-				AttributeModifier.Operation.ADDITION);
+				AttributeModifier.Operation.ADD_VALUE);
 		AttributeInstance knockback = knight.getAttribute(Attributes.KNOCKBACK_RESISTANCE);
 		if (knockback != null)
 			addPermanent(knockback, MINIBOSS_KNOCKBACK_MODIFIER,
 					"DKC knight miniboss knockback resistance",
 					Math.max(0.0D, targetKnockbackResistance - knockback.getValue()),
-					AttributeModifier.Operation.ADDITION);
+					AttributeModifier.Operation.ADD_VALUE);
 		if (variant == 2)
 			addPermanent(knight.getAttribute(Attributes.MOVEMENT_SPEED), MINIBOSS_SPEED_MODIFIER,
 					"DKC knight executioner speed", 0.10D,
-					AttributeModifier.Operation.MULTIPLY_TOTAL);
+					AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
 		knight.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, Integer.MAX_VALUE,
 				0, false, false, true));
 		knight.setHealth(knight.getMaxHealth());
 	}
 
-	private static void addPermanent(AttributeInstance attribute, UUID id, String name,
+	private static void addPermanent(AttributeInstance attribute, ResourceLocation id, String name,
 			double amount, AttributeModifier.Operation operation) {
 		if (attribute == null || !Double.isFinite(amount) || amount <= 0.0D)
 			return;
 		if (attribute.getModifier(id) != null)
 			attribute.removeModifier(id);
-		attribute.addPermanentModifier(new AttributeModifier(id, name, amount, operation));
+		attribute.addPermanentModifier(new AttributeModifier(id, amount, operation));
+	}
+
+	private static ResourceLocation modifierId(String statistic) {
+		return ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID,
+				"attribute/dkc_miniboss_" + statistic);
 	}
 
 	public static int aliveCount(ServerLevel level, Player player, int floor) {

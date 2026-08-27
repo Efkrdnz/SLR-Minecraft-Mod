@@ -1,14 +1,19 @@
 package net.solocraft.util;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,11 +24,11 @@ import java.util.List;
 
 /**
  * Server-authoritative bridge between System progression, vessel skill access,
- * and the advancement UI. Advancement JSON remains presentation-only; every
+ * and the advancement UI. AdvancementHolder JSON remains presentation-only; every
  * unlock condition is checked here so commands or stale client state cannot
  * equip a skill early.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class VesselProgressionManager {
 	private static final int SYNC_INTERVAL = 40;
 
@@ -31,8 +36,8 @@ public final class VesselProgressionManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer player)
 				|| player.tickCount % SYNC_INTERVAL != Math.floorMod(player.getId(), SYNC_INTERVAL))
 			return;
 		sync(player);
@@ -90,18 +95,13 @@ public final class VesselProgressionManager {
 		if (definition != null) {
 			syncVesselIdentity(player, definition);
 			// Explicit vessel identity is authoritative over stale legacy JOB data.
-			// Advancement grants are irreversible, so never dispatch them from a
+			// AdvancementHolder grants are irreversible, so never dispatch them from a
 			// mismatched numeric job if a canonical definition is available.
 			resolvedJob = definition.jobId();
 		}
 
 		boolean changed = false;
 		if (resolvedJob == 1) {
-			if (!vars.ShadowExchange && VesselProgressionRules.canUnlockShadowExchange(
-					resolvedJob, vars.ShadowExchange, vars.shadowstorageusage)) {
-				vars.ShadowExchange = true;
-				changed = true;
-			}
 			if (!vars.ShadowBody && VesselProgressionRules.canUnlockShadowManifestation(
 					resolvedJob, vars.ShadowBody, vars.Level, vars.shadowstorageusage,
 					vars.ShadowExchange, vars.dkc_cleared)) {
@@ -190,6 +190,18 @@ public final class VesselProgressionManager {
 				if (level >= 95)
 					skills.add(JobSkillManager.LIU_SOVEREIGN_SWORD_DOMAIN);
 			}
+			case 7 -> {
+				// Sung Il-Hwan receives safe Stage I Spiritualization at
+				// selection. Stage II is the committed sneak-recast of this
+				// same skill and never consumes a second skill slot.
+				skills.add(JobSkillManager.SUNG_SPIRITUALIZATION);
+				if (level >= 55)
+					skills.add(JobSkillManager.SUNG_PREDATORS_PRESENCE);
+				if (level >= 70)
+					skills.add(JobSkillManager.SUNG_ASSASSIN_STANCE);
+				if (level >= 90)
+					skills.add(JobSkillManager.SUNG_SPATIAL_EXECUTION);
+			}
 			case 9 -> {
 				skills.add(JobSkillManager.BEAST_CLAW_RIFT);
 				if (level >= 60)
@@ -201,16 +213,34 @@ public final class VesselProgressionManager {
 				if (level >= 120)
 					skills.add(JobSkillManager.BEAST_WHITE_FANG);
 			}
+			case 10 -> {
+				skills.add(JobSkillManager.ANTARES_DESTRUCTION_CLAW);
+				if (level >= AntaresCombatRules.BREATH_LEVEL)
+					skills.add(JobSkillManager.ANTARES_BREATH);
+				if (level >= AntaresCombatRules.DESCENT_LEVEL)
+					skills.add(JobSkillManager.ANTARES_DESCENT);
+				if (level >= AntaresCombatRules.ROAR_LEVEL)
+					skills.add(JobSkillManager.ANTARES_ROAR);
+				if (level >= AntaresCombatRules.EXTINCTION_LEVEL)
+					skills.add(JobSkillManager.ANTARES_EXTINCTION);
+				if (level >= AntaresCombatRules.MANIFESTATION_LEVEL)
+					skills.add(JobSkillManager.ANTARES_MANIFESTATION);
+			}
 			default -> {
 			}
 		}
 		return List.copyOf(skills);
 	}
 
-	public static boolean canUnlockShadowExchange(Entity entity) {
+	public static boolean isShadowMonarch(Entity entity) {
 		SololevelingModVariables.PlayerVariables vars = variables(entity);
-		return VesselProgressionRules.canUnlockShadowExchange(
-				resolvedJob(entity, vars), vars.ShadowExchange, vars.shadowstorageusage);
+		return VesselProgressionRules.isShadowMonarch(resolvedJob(entity, vars));
+	}
+
+	public static boolean canUseShadowExchangeRunestone(Entity entity) {
+		SololevelingModVariables.PlayerVariables vars = variables(entity);
+		return VesselProgressionRules.canUseShadowExchangeRunestone(
+				resolvedJob(entity, vars), vars.ShadowExchange);
 	}
 
 	public static boolean canUnlockShadowManifestation(Entity entity) {
@@ -240,6 +270,8 @@ public final class VesselProgressionManager {
 		}
 		if (vars.dkc_cleared >= 20)
 			award(player, "system/dkc_conquered");
+		if (vars.dkc_cleared >= DkcFloorRegistry.LAST_FLOOR)
+			BaranVictoryRewards.grantIfNeeded(player);
 	}
 
 	private static void syncVesselIdentity(ServerPlayer player, VesselManager.VesselDefinition definition) {
@@ -249,6 +281,7 @@ public final class VesselProgressionManager {
 			case "sillad" -> award(player, "coldest_monarch");
 			case "baran" -> award(player, "monarch_of_blue_flames");
 			case "rakan" -> award(player, "vessels/monarch_of_fangs");
+			case "antares" -> award(player, "vessels/monarch_of_destruction");
 			case "christopher_reed" -> {
 				award(player, "scorching_mage");
 				award(player, "vessels/rulers/flame_manifestation");
@@ -327,12 +360,37 @@ public final class VesselProgressionManager {
 				awardIfUnlocked(player, unlocked, JobSkillManager.LIU_GOLDEN_DRAGON_DANCE, "vessels/rulers/golden_dragon_dance");
 				awardIfUnlocked(player, unlocked, JobSkillManager.LIU_SOVEREIGN_SWORD_DOMAIN, "vessels/rulers/sword_domain");
 			}
+			case 7 -> {
+				award(player, "vessels/rulers/silent_manifestation");
+				awardIfUnlocked(player, unlocked,
+						JobSkillManager.SUNG_PREDATORS_PRESENCE,
+						"vessels/rulers/predators_presence");
+				awardIfUnlocked(player, unlocked,
+						JobSkillManager.SUNG_ASSASSIN_STANCE,
+						"vessels/rulers/assassin_stance");
+				awardIfUnlocked(player, unlocked,
+						JobSkillManager.SUNG_SPATIAL_EXECUTION,
+						"vessels/rulers/spatial_execution");
+			}
 			case 9 -> {
 				award(player, "vessels/fangs/claw_rift");
 				awardIfUnlocked(player, unlocked, JobSkillManager.BEAST_RUBBLE_JAW, "vessels/fangs/rubble_jaw");
 				awardIfUnlocked(player, unlocked, JobSkillManager.BEAST_KINGS_MAUL, "vessels/fangs/kings_maul");
 				awardIfUnlocked(player, unlocked, JobSkillManager.BEAST_RECONSTITUTION, "vessels/fangs/reconstitution");
 				awardIfUnlocked(player, unlocked, JobSkillManager.BEAST_WHITE_FANG, "vessels/fangs/spiritual_body");
+			}
+			case 10 -> {
+				award(player, "vessels/destruction/destruction_claw");
+				awardIfUnlocked(player, unlocked, JobSkillManager.ANTARES_BREATH,
+						"vessels/destruction/breath_of_destruction");
+				awardIfUnlocked(player, unlocked, JobSkillManager.ANTARES_DESCENT,
+						"vessels/destruction/monarchs_descent");
+				awardIfUnlocked(player, unlocked, JobSkillManager.ANTARES_ROAR,
+						"vessels/destruction/sovereign_roar");
+				awardIfUnlocked(player, unlocked, JobSkillManager.ANTARES_EXTINCTION,
+						"vessels/destruction/extinction");
+				awardIfUnlocked(player, unlocked, JobSkillManager.ANTARES_MANIFESTATION,
+						"vessels/destruction/monarch_manifestation");
 			}
 			default -> {
 			}
@@ -345,8 +403,8 @@ public final class VesselProgressionManager {
 	}
 
 	private static boolean award(ServerPlayer player, String path) {
-		Advancement advancement = player.server.getAdvancements()
-				.getAdvancement(new ResourceLocation(SololevelingMod.MODID, path));
+		AdvancementHolder advancement = player.server.getAdvancements()
+				.get(ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, path));
 		if (advancement == null)
 			return false;
 		AdvancementProgress progress = player.getAdvancements().getOrStartProgress(advancement);

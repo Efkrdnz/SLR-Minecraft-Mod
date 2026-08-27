@@ -8,10 +8,11 @@ import net.solocraft.client.renderer.shader.DeferredWorldShaderRenderer;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.util.LiuManifestationManager;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderPlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderPlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -25,8 +26,6 @@ import net.minecraft.world.phys.Vec3;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 import java.util.List;
 
@@ -37,7 +36,7 @@ import java.util.List;
  * - a dark rear mantle during RenderPlayerEvent.Pre
  * - bright additive energy during RenderPlayerEvent.Post
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
 public final class PlayerAuraRenderer {
 	private static final int SHELL_SEGMENTS = 16;
 	private static final int RING_SEGMENTS = 24;
@@ -1311,21 +1310,17 @@ public final class PlayerAuraRenderer {
 			int color,
 			int alpha
 	) {
-		Matrix4f matrix = pose.pose();
-		Matrix3f normal = pose.normal();
-
-		vertices.vertex(matrix, x, y, z)
-				.color(
+		vertices.addVertex(pose, x, y, z)
+				.setColor(
 						(color >> 16) & 255,
 						(color >> 8) & 255,
 						color & 255,
 						Math.max(0, Math.min(255, alpha))
 				)
-				.uv(u, v)
-				.overlayCoords(OverlayTexture.NO_OVERLAY)
-				.uv2(240)
-				.normal(normal, 0.0F, 1.0F, 0.0F)
-				.endVertex();
+				.setUv(u, v)
+				.setOverlay(OverlayTexture.NO_OVERLAY)
+				.setLight(240)
+				.setNormal(pose, 0.0F, 1.0F, 0.0F);
 	}
 
 	private static int alpha(float value) {

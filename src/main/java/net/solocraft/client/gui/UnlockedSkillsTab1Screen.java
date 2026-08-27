@@ -179,13 +179,16 @@ public class UnlockedSkillsTab1Screen extends SystemContainerScreen<UnlockedSkil
 	}
 
 	private void openSlotScreen() {
+		SkillScreenCursorRestore.preserveForSlots();
 		SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(101, x, y, z, 0));
 	}
 
 	private void equip(int row) {
 		int index = page * ROWS + row + 1;
-		if (!"empty".equals(SkillListHelper.rawSkillAt(entity, index)))
+		if (!"empty".equals(SkillListHelper.rawSkillAt(entity, index))) {
+			SkillScreenCursorRestore.preserveForSlots();
 			SololevelingMod.PACKET_HANDLER.sendToServer(new UnlockedSkillsTab1ButtonMessage(row, x, y, z, index));
+		}
 	}
 
 	private void removeFormation(int row) {

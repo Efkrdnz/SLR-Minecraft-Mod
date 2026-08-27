@@ -10,21 +10,25 @@ import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.init.SololevelingModGameRules;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.common.util.ITeleporter;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.advancements.Advancement;
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -46,7 +50,7 @@ import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-import net.minecraft.world.level.portal.PortalInfo;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -58,7 +62,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 
 /**
  * Server-authoritative Story Mode prologue.
@@ -66,7 +69,7 @@ import java.util.function.Function;
  * <p>The normal Cartenon flow calls the public hooks in this class. Keeping those
  * hooks here avoids special-case state in the gate entity or the temple builder.</p>
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class StoryModeIntroManager {
 	public static final int ASSASSIN_CLASS_ID = 1;
 	public static final int FIGHTER_CLASS_ID = 3;
@@ -74,14 +77,14 @@ public final class StoryModeIntroManager {
 	public static final int TEAM_SIZE = 6;
 
 	public static final ResourceKey<Level> ANCIENT_GOLEM_DIMENSION = ResourceKey.create(
-			Registries.DIMENSION, new ResourceLocation(SololevelingMod.MODID, "dungeon_dimension_c"));
+			Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "dungeon_dimension_c"));
 	public static final BlockPos ANCIENT_GOLEM_ORIGIN = new BlockPos(0, 64, 0);
 	public static final Vec3 ANCIENT_GOLEM_ENTRY = new Vec3(10.5D, 2.0D, 25.5D);
 
 	private static final ResourceLocation ANCIENT_GOLEM_STRUCTURE =
-			new ResourceLocation(SololevelingMod.MODID, "dungeon_ancientgolem");
+			ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "dungeon_ancientgolem");
 	private static final ResourceLocation AWAKENED_ADVANCEMENT =
-			new ResourceLocation(SololevelingMod.MODID, "awakened");
+			ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "awakened");
 	private static final String OWNER_MARKER = "slr_story_intro_owner";
 	private static final String OWNER_UUID = "slr_story_intro_owner_uuid";
 	private static final String BOSS_MARKER = "slr_story_intro_boss";
@@ -199,8 +202,8 @@ public final class StoryModeIntroManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		StoryModeIntroSavedData data = StoryModeIntroSavedData.get(player.server);
 		if (!data.isOwner(player.getUUID()) || !data.isActive())
@@ -383,8 +386,8 @@ public final class StoryModeIntroManager {
 	}
 
 	private static void grantAwakenedAdvancement(ServerPlayer player) {
-		Advancement advancement = player.server.getAdvancements()
-				.getAdvancement(AWAKENED_ADVANCEMENT);
+		AdvancementHolder advancement = player.server.getAdvancements()
+				.get(AWAKENED_ADVANCEMENT);
 		if (advancement == null)
 			return;
 		AdvancementProgress progress = player.getAdvancements()
@@ -483,7 +486,7 @@ public final class StoryModeIntroManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void protectStoryHunters(LivingAttackEvent event) {
+	public static void protectStoryHunters(LivingIncomingDamageEvent event) {
 		if (!(event.getEntity().level() instanceof ServerLevel level))
 			return;
 		StoryModeIntroSavedData data = StoryModeIntroSavedData.get(level);
@@ -766,7 +769,7 @@ public final class StoryModeIntroManager {
 		Map<UUID, StatueOfGodEntity> found = new LinkedHashMap<>();
 		BlockPos origin = cartenonInstanceOrigin(data.cartenonInstanceId());
 		collectStoryGods(temple, owner, data,
-				new AABB(origin.offset(-24, -8, -8),
+				AABB.encapsulatingFullBlocks(origin.offset(-24, -8, -8),
 						origin.offset(24, 48, 170)), found);
 		if (data.godStatuePosition() != null)
 			collectStoryGods(temple, owner, data,
@@ -1132,7 +1135,7 @@ public final class StoryModeIntroManager {
 				.add(98.86D, 2.0D, 24.69D);
 		boss.moveTo(spawn.x, spawn.y, spawn.z, 90.0F, 0.0F);
 		boss.finalizeSpawn(dungeon, dungeon.getCurrentDifficultyAt(
-				BlockPos.containing(spawn)), MobSpawnType.EVENT, null, null);
+				BlockPos.containing(spawn)), MobSpawnType.EVENT, null);
 		tagOwned(boss, BOSS_MARKER, owner.getUUID());
 		boss.getPersistentData().putString(DUNGEON_TAG_KEY,
 				STORY_DUNGEON_TAG);
@@ -1217,7 +1220,7 @@ public final class StoryModeIntroManager {
 					ANCIENT_GOLEM_ORIGIN,
 					new StructurePlaceSettings().setRotation(Rotation.NONE)
 							.setMirror(Mirror.NONE).setIgnoreEntities(false),
-					dungeon.random, 3);
+					dungeon.random, 2);
 			if (!placed) {
 				SololevelingMod.LOGGER.error(
 						"Story Mode could not place {} at {}.",
@@ -1262,7 +1265,7 @@ public final class StoryModeIntroManager {
 				ANCIENT_GOLEM_ORIGIN,
 				new StructurePlaceSettings().setRotation(Rotation.NONE)
 						.setMirror(Mirror.NONE).setIgnoreEntities(true),
-				dungeon.random, 3);
+				dungeon.random, 2);
 	}
 
 	private static void tagStoryReturnPortals(ServerLevel dungeon) {
@@ -1382,7 +1385,7 @@ public final class StoryModeIntroManager {
 			return null;
 		hunter.moveTo(spawn.x, spawn.y, spawn.z, -90.0F, 0.0F);
 		hunter.finalizeSpawn(level, level.getCurrentDifficultyAt(
-				BlockPos.containing(spawn)), MobSpawnType.EVENT, null, null);
+				BlockPos.containing(spawn)), MobSpawnType.EVENT, null);
 		applyProfile(hunter, HUNTER_PROFILES.get(profileIndex));
 		hunter.tame(owner);
 		hunter.setPersistenceRequired();
@@ -1507,7 +1510,7 @@ public final class StoryModeIntroManager {
 			if (temple != null) {
 				BlockPos origin = cartenonInstanceOrigin(
 						data.cartenonInstanceId());
-				AABB partyBounds = new AABB(origin.offset(-24, -8, -8),
+				AABB partyBounds = AABB.encapsulatingFullBlocks(origin.offset(-24, -8, -8),
 						origin.offset(24, 24, 32));
 				for (HunterEntity hunter : temple.getEntitiesOfClass(
 						HunterEntity.class, partyBounds,
@@ -1540,7 +1543,7 @@ public final class StoryModeIntroManager {
 			ServerLevel temple, int instanceId) {
 		BlockPos origin = cartenonInstanceOrigin(instanceId);
 		BlockPos expected = origin.relative(Direction.SOUTH, 145).above(6);
-		AABB bounds = new AABB(origin.offset(-18, -3, 128),
+		AABB bounds = AABB.encapsulatingFullBlocks(origin.offset(-18, -3, 128),
 				origin.offset(18, 40, 155));
 		StatueOfGodEntity god = temple.getEntitiesOfClass(StatueOfGodEntity.class,
 				bounds, Entity::isAlive).stream()
@@ -1571,7 +1574,7 @@ public final class StoryModeIntroManager {
 		god.moveTo(expected.getX() + 0.5D, expected.getY(),
 				expected.getZ() + 0.5D, yaw, 0.0F);
 		god.finalizeSpawn(temple, temple.getCurrentDifficultyAt(expected),
-				MobSpawnType.STRUCTURE, null, null);
+				MobSpawnType.STRUCTURE, null);
 		god.setYRot(yaw);
 		god.setYBodyRot(yaw);
 		god.setYHeadRot(yaw);
@@ -1603,31 +1606,10 @@ public final class StoryModeIntroManager {
 					hunter.getYRot(), hunter.getXRot());
 			return hunter;
 		}
-		ITeleporter teleporter = new ITeleporter() {
-			@Override
-			public PortalInfo getPortalInfo(Entity entity, ServerLevel destWorld,
-					Function<ServerLevel, PortalInfo> defaultPortalInfo) {
-				return new PortalInfo(destination, Vec3.ZERO, entity.getYRot(),
-						entity.getXRot());
-			}
-
-			@Override
-			public Entity placeEntity(Entity entity, ServerLevel currentWorld,
-					ServerLevel destWorld, float yaw,
-					Function<Boolean, Entity> repositionEntity) {
-				Entity moved = repositionEntity.apply(false);
-				moved.moveTo(destination.x, destination.y, destination.z,
-						yaw, entity.getXRot());
-				return moved;
-			}
-
-			@Override
-			public boolean playTeleportSound(ServerPlayer player,
-					ServerLevel sourceWorld, ServerLevel destWorld) {
-				return false;
-			}
-		};
-		Entity moved = hunter.changeDimension(destinationLevel, teleporter);
+		DimensionTransition transition = new DimensionTransition(destinationLevel,
+				destination, Vec3.ZERO, hunter.getYRot(), hunter.getXRot(),
+				DimensionTransition.DO_NOTHING);
+		Entity moved = hunter.changeDimension(transition);
 		return moved instanceof HunterEntity movedHunter ? movedHunter : null;
 	}
 
@@ -1711,7 +1693,7 @@ public final class StoryModeIntroManager {
 					data.cartenonInstanceId());
 			for (StatueOfGodEntity candidate : temple.getEntitiesOfClass(
 					StatueOfGodEntity.class,
-					new AABB(origin.offset(-24, -8, -8),
+					AABB.encapsulatingFullBlocks(origin.offset(-24, -8, -8),
 							origin.offset(24, 48, 170)),
 					Entity::isAlive)) {
 				if (candidate.getPersistentData().getInt(INSTANCE_ID)
@@ -1785,7 +1767,7 @@ public final class StoryModeIntroManager {
 	}
 
 	private static AABB dungeonBounds() {
-		return new AABB(ANCIENT_GOLEM_ORIGIN,
+		return AABB.encapsulatingFullBlocks(ANCIENT_GOLEM_ORIGIN,
 				ANCIENT_GOLEM_ORIGIN.offset(126, 22, 51));
 	}
 
@@ -1835,11 +1817,11 @@ public final class StoryModeIntroManager {
 	}
 
 	private static ItemStack stack(String id) {
-		Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
+		Item item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(id));
 		return new ItemStack(item == null ? Items.AIR : item);
 	}
 
-	private static void setBaseAttribute(LivingEntity entity, Attribute attribute,
+	private static void setBaseAttribute(LivingEntity entity, Holder<Attribute> attribute,
 			double value) {
 		var instance = entity.getAttribute(attribute);
 		if (instance != null)

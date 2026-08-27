@@ -49,7 +49,6 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
@@ -60,7 +59,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/basewide.png"), this.leftPos + -149, this.topPos + -115, 0, 0, 300, 225, 300, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/basewide.png"), this.leftPos + -149, this.topPos + -115, 0, 0, 300, 225, 300, 225);
 
 		RenderSystem.disableBlend();
 	}
@@ -130,7 +129,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_potionmana = new ImageButton(this.leftPos + -125, this.topPos + -83, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_potionmana.png"), 33, 66, e -> {
+		imagebutton_potionmana = new LegacyAtlasImageButton(this.leftPos + -125, this.topPos + -83, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_potionmana.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorepotionButtonMessage(0, x, y, z));
 				StorepotionButtonMessage.handleButtonAction(entity, 0, x, y, z);
@@ -138,7 +137,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 		});
 		guistate.put("button:imagebutton_potionmana", imagebutton_potionmana);
 		this.addRenderableWidget(imagebutton_potionmana);
-		imagebutton_potionhealth = new ImageButton(this.leftPos + -125, this.topPos + -16, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_potionhealth.png"), 33, 66, e -> {
+		imagebutton_potionhealth = new LegacyAtlasImageButton(this.leftPos + -125, this.topPos + -16, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_potionhealth.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorepotionButtonMessage(1, x, y, z));
 				StorepotionButtonMessage.handleButtonAction(entity, 1, x, y, z);
@@ -146,7 +145,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 		});
 		guistate.put("button:imagebutton_potionhealth", imagebutton_potionhealth);
 		this.addRenderableWidget(imagebutton_potionhealth);
-		imagebutton_potionfatigue = new ImageButton(this.leftPos + -125, this.topPos + 51, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_potionfatigue.png"), 33, 66, e -> {
+		imagebutton_potionfatigue = new LegacyAtlasImageButton(this.leftPos + -125, this.topPos + 51, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_potionfatigue.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorepotionButtonMessage(2, x, y, z));
 				StorepotionButtonMessage.handleButtonAction(entity, 2, x, y, z);
@@ -154,7 +153,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 		});
 		guistate.put("button:imagebutton_potionfatigue", imagebutton_potionfatigue);
 		this.addRenderableWidget(imagebutton_potionfatigue);
-		imagebutton_potionmana1 = new ImageButton(this.leftPos + -41, this.topPos + -83, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_potionmana1.png"), 33, 66, e -> {
+		imagebutton_potionmana1 = new LegacyAtlasImageButton(this.leftPos + -41, this.topPos + -83, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_potionmana1.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorepotionButtonMessage(3, x, y, z));
 				StorepotionButtonMessage.handleButtonAction(entity, 3, x, y, z);
@@ -162,7 +161,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 		});
 		guistate.put("button:imagebutton_potionmana1", imagebutton_potionmana1);
 		this.addRenderableWidget(imagebutton_potionmana1);
-		imagebutton_potionmana2 = new ImageButton(this.leftPos + 50, this.topPos + -83, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_potionmana2.png"), 33, 66, e -> {
+		imagebutton_potionmana2 = new LegacyAtlasImageButton(this.leftPos + 50, this.topPos + -83, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_potionmana2.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorepotionButtonMessage(4, x, y, z));
 				StorepotionButtonMessage.handleButtonAction(entity, 4, x, y, z);
@@ -170,7 +169,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 		});
 		guistate.put("button:imagebutton_potionmana2", imagebutton_potionmana2);
 		this.addRenderableWidget(imagebutton_potionmana2);
-		imagebutton_potionhealth1 = new ImageButton(this.leftPos + -41, this.topPos + -16, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_potionhealth1.png"), 33, 66, e -> {
+		imagebutton_potionhealth1 = new LegacyAtlasImageButton(this.leftPos + -41, this.topPos + -16, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_potionhealth1.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorepotionButtonMessage(5, x, y, z));
 				StorepotionButtonMessage.handleButtonAction(entity, 5, x, y, z);
@@ -178,7 +177,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 		});
 		guistate.put("button:imagebutton_potionhealth1", imagebutton_potionhealth1);
 		this.addRenderableWidget(imagebutton_potionhealth1);
-		imagebutton_potionfatigue1 = new ImageButton(this.leftPos + -41, this.topPos + 51, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_potionfatigue1.png"), 33, 66, e -> {
+		imagebutton_potionfatigue1 = new LegacyAtlasImageButton(this.leftPos + -41, this.topPos + 51, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_potionfatigue1.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorepotionButtonMessage(6, x, y, z));
 				StorepotionButtonMessage.handleButtonAction(entity, 6, x, y, z);
@@ -186,7 +185,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 		});
 		guistate.put("button:imagebutton_potionfatigue1", imagebutton_potionfatigue1);
 		this.addRenderableWidget(imagebutton_potionfatigue1);
-		imagebutton_potionhealth2 = new ImageButton(this.leftPos + 50, this.topPos + -16, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_potionhealth2.png"), 33, 66, e -> {
+		imagebutton_potionhealth2 = new LegacyAtlasImageButton(this.leftPos + 50, this.topPos + -16, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_potionhealth2.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorepotionButtonMessage(7, x, y, z));
 				StorepotionButtonMessage.handleButtonAction(entity, 7, x, y, z);
@@ -194,7 +193,7 @@ public class StorepotionScreen extends AbstractContainerScreen<StorepotionMenu> 
 		});
 		guistate.put("button:imagebutton_potionhealth2", imagebutton_potionhealth2);
 		this.addRenderableWidget(imagebutton_potionhealth2);
-		imagebutton_potionfatigue2 = new ImageButton(this.leftPos + 50, this.topPos + 51, 33, 33, 0, 0, 33, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_potionfatigue2.png"), 33, 66, e -> {
+		imagebutton_potionfatigue2 = new LegacyAtlasImageButton(this.leftPos + 50, this.topPos + 51, 33, 33, 0, 0, 33, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_potionfatigue2.png"), 33, 66, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new StorepotionButtonMessage(8, x, y, z));
 				StorepotionButtonMessage.handleButtonAction(entity, 8, x, y, z);

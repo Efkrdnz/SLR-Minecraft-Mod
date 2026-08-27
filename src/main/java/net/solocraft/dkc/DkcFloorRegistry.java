@@ -17,7 +17,7 @@ public final class DkcFloorRegistry {
 	public static final int BUILD_Y = 29;
 	public static final int SURFACE_Y = BUILD_Y + 2;
 	public static final ResourceLocation SHARED_DIMENSION_ID =
-			new ResourceLocation("sololeveling", "dungeon_dimension_dkc");
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "dungeon_dimension_dkc");
 	public static final ResourceKey<Level> SHARED_DIMENSION =
 			ResourceKey.create(Registries.DIMENSION, SHARED_DIMENSION_ID);
 
@@ -60,14 +60,14 @@ public final class DkcFloorRegistry {
 	public static ResourceLocation legacyDimensionId(int floor) {
 		validateFloor(floor);
 		return floor == 1 ? SHARED_DIMENSION_ID
-				: new ResourceLocation("sololeveling", String.format("dungeon_dimension_dkc_f%02d", floor));
+				: ResourceLocation.fromNamespaceAndPath("sololeveling", String.format("dungeon_dimension_dkc_f%02d", floor));
 	}
 
 	public static ResourceLocation biomeId(int floor) {
 		validateFloor(floor);
 		return floor == 1
-				? new ResourceLocation("sololeveling", "dungeon_biome_dkc")
-				: new ResourceLocation("sololeveling", String.format("dungeon_biome_dkc_f%02d", floor));
+				? ResourceLocation.fromNamespaceAndPath("sololeveling", "dungeon_biome_dkc")
+				: ResourceLocation.fromNamespaceAndPath("sololeveling", String.format("dungeon_biome_dkc_f%02d", floor));
 	}
 
 	public static ResourceKey<Level> dimension(int floor) {

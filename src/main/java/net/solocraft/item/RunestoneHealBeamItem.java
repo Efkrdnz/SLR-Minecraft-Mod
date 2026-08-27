@@ -3,8 +3,8 @@ package net.solocraft.item;
 
 import net.solocraft.procedures.RunestoneHealBeamRCProcedure;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.TooltipFlag;
@@ -30,8 +30,8 @@ public class RunestoneHealBeamItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("Right click this rune to obtain \"Heal Beam\""));
 		list.add(Component.literal("User can cast \"Heal Beam\" which will shoot a beam that heals allies and damages undead."));
 	}

@@ -21,7 +21,7 @@ public class PortalSpawnProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
 		if (entity == null)
 			return;
-		if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:survival_dimension")))) {
+		if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:survival_dimension")))) {
 			if (!entity.level().isClientSide())
 				entity.discard();
 		}

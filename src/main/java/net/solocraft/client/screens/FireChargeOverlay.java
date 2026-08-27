@@ -7,11 +7,12 @@ import net.solocraft.procedures.FireCharge3Procedure;
 import net.solocraft.procedures.FireCharge1Procedure;
 import net.solocraft.procedures.FireCharg2Procedure;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
@@ -22,12 +23,12 @@ import net.minecraft.client.Minecraft;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.platform.GlStateManager;
 
-@Mod.EventBusSubscriber({Dist.CLIENT})
+@EventBusSubscriber({Dist.CLIENT})
 public class FireChargeOverlay {
 	@SubscribeEvent(priority = EventPriority.NORMAL)
 	public static void eventHandler(RenderGuiEvent.Pre event) {
-		int w = event.getWindow().getGuiScaledWidth();
-		int h = event.getWindow().getGuiScaledHeight();
+		int w = event.getGuiGraphics().guiWidth();
+		int h = event.getGuiGraphics().guiHeight();
 		Level world = null;
 		double x = 0;
 		double y = 0;
@@ -52,22 +53,22 @@ public class FireChargeOverlay {
 		RenderSystem.setShaderColor(1, 1, 1, 1);
 		if (true) {
 			if (firstCharge) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge1.png"), w / 2 + -16, h / 2 + -10, 0, 0, 32, 32, 32, 32);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/firecharge1.png"), w / 2 + -16, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
 			if (firstCharge) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge1.png"), w / 2 + -15, h / 2 + -10, 0, 0, 32, 32, 32, 32);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/firecharge1.png"), w / 2 + -15, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
 			if (secondCharge) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge2.png"), w / 2 + -16, h / 2 + -10, 0, 0, 32, 32, 32, 32);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/firecharge2.png"), w / 2 + -16, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
 			if (secondCharge) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge2.png"), w / 2 + -15, h / 2 + -10, 0, 0, 32, 32, 32, 32);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/firecharge2.png"), w / 2 + -15, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
 			if (thirdCharge) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge3.png"), w / 2 + -16, h / 2 + -10, 0, 0, 32, 32, 32, 32);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/firecharge3.png"), w / 2 + -16, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
 			if (thirdCharge) {
-				event.getGuiGraphics().blit(new ResourceLocation("sololeveling:textures/screens/firecharge3.png"), w / 2 + -15, h / 2 + -10, 0, 0, 32, 32, 32, 32);
+				event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/firecharge3.png"), w / 2 + -15, h / 2 + -10, 0, 0, 32, 32, 32, 32);
 			}
 		}
 		RenderSystem.depthMask(true);

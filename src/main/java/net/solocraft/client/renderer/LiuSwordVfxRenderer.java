@@ -14,8 +14,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
 public class LiuSwordVfxRenderer extends EntityRenderer<LiuSwordVfxEntity> {
-	private static final ResourceLocation FALLBACK = new ResourceLocation("sololeveling", "textures/particle/slashgood1.png");
-	private static final ResourceLocation FIRE_FALLBACK = new ResourceLocation("sololeveling", "textures/particle/fire_particle.png");
+	private static final ResourceLocation FALLBACK = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/slashgood1.png");
+	private static final ResourceLocation FIRE_FALLBACK = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/fire_particle.png");
 
 	public LiuSwordVfxRenderer(EntityRendererProvider.Context context) {
 		super(context);

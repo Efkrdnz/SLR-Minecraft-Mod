@@ -6,15 +6,20 @@ import net.solocraft.entity.Portal1Entity;
 import net.solocraft.entity.RedGateEntity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.UrgentQuestManager;
 import net.solocraft.world.dimension.rift.RiftTerritory;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -26,11 +31,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -56,21 +59,21 @@ import java.util.UUID;
  * procedural red gates. The historical class name is retained so generated
  * procedures and existing integrations do not need a migration.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class SnowRedGateArenaManager {
-	public static final ResourceLocation ARENA_ID = new ResourceLocation("sololeveling", "red_gate_monarch_arena");
-	private static final ResourceLocation LEGACY_ARENA_ID = new ResourceLocation("sololeveling", "red_gate_snow_arena");
+	public static final ResourceLocation ARENA_ID = ResourceLocation.fromNamespaceAndPath("sololeveling", "red_gate_monarch_arena");
+	private static final ResourceLocation LEGACY_ARENA_ID = ResourceLocation.fromNamespaceAndPath("sololeveling", "red_gate_snow_arena");
 	/** Shared realm used by every Monarch Red Gate territory. */
 	public static final ResourceKey<Level> SNOW_DIMENSION = ResourceKey.create(Registries.DIMENSION,
-			new ResourceLocation("sololeveling", "dungeon_dimension_snow"));
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "dungeon_dimension_snow"));
 	public static final String TERRITORY_TAG = "slr_red_gate_territory";
 	/** Removed dimension keys are retained only for active-save recovery. */
 	private static final Map<RiftTerritory, ResourceKey<Level>> LEGACY_TERRITORY_DIMENSIONS =
 			createLegacyTerritoryDimensions();
 
-	private static final ResourceLocation BEAR_POOL = new ResourceLocation("sololeveling", "red_gate_ice_bears");
-	private static final ResourceLocation ELF_POOL = new ResourceLocation("sololeveling", "red_gate_ice_elves");
-	private static final ResourceLocation BARUKA_POOL = new ResourceLocation("sololeveling", "red_gate_baruka");
+	private static final ResourceLocation BEAR_POOL = ResourceLocation.fromNamespaceAndPath("sololeveling", "red_gate_ice_bears");
+	private static final ResourceLocation ELF_POOL = ResourceLocation.fromNamespaceAndPath("sololeveling", "red_gate_ice_elves");
+	private static final ResourceLocation BARUKA_POOL = ResourceLocation.fromNamespaceAndPath("sololeveling", "red_gate_baruka");
 	private static final List<ResourceLocation> REQUIRED_POOLS = List.of(BEAR_POOL, ELF_POOL, BARUKA_POOL);
 
 	private static final String SEQUENCE_KEY = "red_gate_monarch";
@@ -107,7 +110,7 @@ public final class SnowRedGateArenaManager {
 		Map<RiftTerritory, ResourceKey<Level>> dimensions = new EnumMap<>(RiftTerritory.class);
 		for (RiftTerritory territory : RiftTerritory.values())
 			dimensions.put(territory, ResourceKey.create(Registries.DIMENSION,
-					new ResourceLocation("sololeveling", "monarch_territory_" + territory.id())));
+					ResourceLocation.fromNamespaceAndPath("sololeveling", "monarch_territory_" + territory.id())));
 		return Map.copyOf(dimensions);
 	}
 
@@ -145,6 +148,11 @@ public final class SnowRedGateArenaManager {
 
 	private static boolean isArenaDimension(ResourceKey<Level> dimension) {
 		return SNOW_DIMENSION.equals(dimension) || legacyTerritoryForDimension(dimension).isPresent();
+	}
+
+	/** True for every current or recoverable Red Gate realm dimension. */
+	public static boolean isRedGateDimension(ResourceKey<Level> dimension) {
+		return isArenaDimension(dimension);
 	}
 
 	public static boolean isArenaInstance(DungeonInstanceSavedData.Instance instance) {
@@ -309,7 +317,7 @@ public final class SnowRedGateArenaManager {
 		// Only a procedural gate that rolled red shows its return portal from the
 		// beginning. DungeonDimensionPlayerLeavesDimensionProcedure keeps that
 		// visible portal locked until this exact instance is complete. The original
-		// dedicated RedGateEntity retains its legacy boss-created exit.
+		// dedicated RedGateEntity reveals the same authored exit after completion.
 		instance.setReturnPortalDeferred(markLegacyUsed);
 		for (ServerPlayer entrant : entrants) {
 			if (!instance.addParticipant(entrant.getUUID())) {
@@ -707,11 +715,24 @@ public final class SnowRedGateArenaManager {
 		}
 		PREPARATIONS.remove(job.instanceId());
 		List<ServerPlayer> entrants = onlineBoundParticipants(server, instance);
-		for (ServerPlayer entrant : entrants)
-			entrant.setNoGravity(true);
-		if (!entrants.isEmpty())
+		for (ServerPlayer entrant : entrants) {
+			entrant.setNoGravity(false);
+			entrant.setDeltaMovement(Vec3.ZERO);
+			entrant.fallDistance = 0.0F;
+		}
+		if (!entrants.isEmpty()) {
 			SololevelingMod.queueServerWork(server, 1,
-					() -> teleportEntrants(level, job.center(), entrants, instance));
+					() -> {
+						try {
+							teleportEntrants(level, job.center(), entrants,
+									instance);
+						} catch (RuntimeException exception) {
+							failPreparation(server, registry, instance,
+									"the final teleport handoff failed",
+									exception);
+						}
+					});
+		}
 		SololevelingMod.LOGGER.info("Prepared {} Monarch red-gate arena {} at {} in staged server ticks",
 				job.territory().id(), instance.id(), job.center());
 	}
@@ -792,8 +813,12 @@ public final class SnowRedGateArenaManager {
 		DungeonInstanceSavedData registry = DungeonInstanceSavedData.get(level);
 		Optional<DungeonInstanceSavedData.Instance> current = registry.getInstance(instance.id())
 				.filter(SnowRedGateArenaManager::isArenaInstance);
-		if (current.isEmpty())
+		if (current.isEmpty()) {
+			recoverLostHandoffEntrants(entrants, instance.id(),
+					"The Red Gate closed during entry. "
+							+ "Your dungeon binding was recovered.");
 			return;
+		}
 		DungeonInstanceSavedData.Instance activeInstance = current.get();
 		RiftTerritory territory = territoryForInstance(activeInstance).orElse(RiftTerritory.FROST);
 		boolean removedStaleBinding = false;
@@ -804,8 +829,17 @@ public final class SnowRedGateArenaManager {
 			if (!activeInstance.participants().contains(entrant.getUUID())
 					|| !activeInstance.id().toString().equals(entrant.getPersistentData()
 							.getString(DungeonMobLevelAdapter.INSTANCE_TAG))) {
+				entrant.setNoGravity(false);
+				entrant.setDeltaMovement(Vec3.ZERO);
+				entrant.fallDistance = 0.0F;
 				DungeonEncounterRuntime.clearHighlightsFor(entrant, activeInstance);
 				removedStaleBinding |= activeInstance.removeParticipant(entrant.getUUID());
+				if (activeInstance.id().toString().equals(
+						entrant.getPersistentData().getString(
+								DungeonMobLevelAdapter.INSTANCE_TAG)))
+					recoverLostHandoffEntrant(entrant, activeInstance.id(),
+							"The Red Gate no longer recognized this entry. "
+									+ "Your dungeon binding was recovered.");
 				continue;
 			}
 			double angle = Math.PI * 2.0D * index / Math.max(1, entrants.size());
@@ -814,9 +848,14 @@ public final class SnowRedGateArenaManager {
 			BlockPos arrival = center.offset(Mth.floor(Math.cos(angle) * 3.0D), 0,
 					Mth.floor(Math.sin(angle) * 3.0D));
 			prepareLanding(level, arrival, territory);
+			level.getChunk(arrival.getX() >> 4, arrival.getZ() >> 4);
+			entrant.setNoGravity(false);
+			entrant.setDeltaMovement(Vec3.ZERO);
+			entrant.fallDistance = 0.0F;
 			entrant.teleportTo(level, arrival.getX() + 0.5D, arrival.getY(), arrival.getZ() + 0.5D,
 					entrant.getYRot(), entrant.getXRot());
 			entrant.setNoGravity(false);
+			entrant.setDeltaMovement(Vec3.ZERO);
 			entrant.fallDistance = 0.0F;
 			entrant.getPersistentData().remove(REVEAL_READY_TIME_TAG);
 			DungeonEncounterRuntime.restoreCompletionFor(entrant, activeInstance);
@@ -830,6 +869,33 @@ public final class SnowRedGateArenaManager {
 			} else {
 				failAbandonedInstance(level.getServer(), registry, activeInstance);
 			}
+		}
+	}
+
+	private static void recoverLostHandoffEntrants(
+			List<ServerPlayer> entrants, UUID instanceId, String message) {
+		for (ServerPlayer entrant : entrants)
+			recoverLostHandoffEntrant(entrant, instanceId, message);
+	}
+
+	private static void recoverLostHandoffEntrant(ServerPlayer entrant,
+			UUID instanceId, String message) {
+		if (entrant == null)
+			return;
+		entrant.setNoGravity(false);
+		entrant.setDeltaMovement(Vec3.ZERO);
+		entrant.fallDistance = 0.0F;
+		if (instanceId == null || !instanceId.toString().equals(
+				entrant.getPersistentData().getString(
+						DungeonMobLevelAdapter.INSTANCE_TAG)))
+			return;
+		if (isArenaDimension(entrant.level().dimension()))
+			recoverEntrant(entrant, message);
+		else {
+			clearEntrantState(entrant);
+			if (!entrant.hasDisconnected())
+				entrant.sendSystemMessage(Component.literal(message)
+						.withStyle(ChatFormatting.YELLOW));
 		}
 	}
 
@@ -858,13 +924,8 @@ public final class SnowRedGateArenaManager {
 	}
 
 	private static void discardOwnedShadows(ServerLevel level, Entity gate, ServerPlayer owner) {
-		TagKey<net.minecraft.world.entity.EntityType<?>> shadows = TagKey.create(Registries.ENTITY_TYPE,
-				new ResourceLocation("shadows"));
-		for (Entity candidate : level.getEntitiesOfClass(Entity.class, gate.getBoundingBox().inflate(250.0D),
-				entity -> entity.getType().is(shadows))) {
-			if (candidate instanceof TamableAnimal tame && tame.isOwnedBy(owner))
-				candidate.discard();
-		}
+		ShadowMonarchManager.dismissLoadedOwnedShadows(owner,
+				level.dimension());
 	}
 
 	private static List<ServerPlayer> nearbyPartyMembers(LevelAccessor world, Entity gate, ServerPlayer initiator) {
@@ -912,9 +973,7 @@ public final class SnowRedGateArenaManager {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
+	public static void onServerTick(ServerTickEvent.Post event) {
 		MinecraftServer server = event.getServer();
 		processPreparationJobs(server);
 		if (++tickCounter % 20 != 0)
@@ -1181,6 +1240,7 @@ public final class SnowRedGateArenaManager {
 				return;
 			player.teleportTo(overworld, returnX, returnY, returnZ, player.getYRot(), player.getXRot());
 			player.setNoGravity(false);
+			player.setDeltaMovement(Vec3.ZERO);
 			player.fallDistance = 0.0F;
 		});
 	}
@@ -1194,6 +1254,8 @@ public final class SnowRedGateArenaManager {
 		player.getPersistentData().putBoolean(PROCEDURAL_RED_TAG, false);
 		player.getPersistentData().remove(TERRITORY_TAG);
 		player.setNoGravity(false);
+		player.setDeltaMovement(Vec3.ZERO);
+		player.fallDistance = 0.0F;
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 			capability.BossKilled = false;
 			capability.dungeoning = false;
@@ -1326,7 +1388,7 @@ public final class SnowRedGateArenaManager {
 			return;
 		}
 		if (!instance.completed() && instance.returnPortalDeferred()) {
-			// Dedicated legacy Red Gates still create their portal at completion.
+			// Dedicated legacy Red Gates reveal their authored portal at completion.
 			discardReturnPortals(level, instance);
 			return;
 		}

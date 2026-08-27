@@ -11,16 +11,19 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.BloodLustProcedure;
 import net.solocraft.procedures.SkillSlotHelper;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -35,6 +38,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.AreaEffectCloud;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
@@ -67,7 +74,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Server-authoritative combat implementation for the reworked Assassin kit.
  * Dagger Throw and Dagger Rush remain owned by {@link DaggerThrowManager}.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class AssassinSkillManager {
 	public static final String GHOST_STEP = "Ghost Step";
 	public static final String NIGHT_REND = "Night Rend";
@@ -77,19 +84,48 @@ public final class AssassinSkillManager {
 	public static final String CRITICAL_ATTACK = "Critical Attack";
 	public static final String MUTILATION = "Mutilation";
 	public static final String MURDERIOUS_INTENT = "Murderious Intent";
+	public static final String SHADOW_FEINT = "Shadow Feint";
+	public static final String SILENT_DOMAIN = "Silent Domain";
+	public static final String ZERO_PRESENCE = "Zero Presence";
 
 	private static final ResourceKey<DamageType> ASSASSIN_DAMAGE = ResourceKey.create(
-			Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"));
+			Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"));
+	private static final TagKey<EntityType<?>> BOSS_TAG = TagKey.create(
+			Registries.ENTITY_TYPE, ResourceLocation.parse("soloboss"));
 	private static final Map<String, String> LEGACY_NAMES = Map.of(
 			"Shadowstep", GHOST_STEP,
 			"Backstab", NIGHT_REND,
 			"Quickslashes", FLASH_CUT);
 	private static final List<String> REWORKED_SKILLS = List.of(
 			GHOST_STEP, NIGHT_REND, STEALTH, FLASH_CUT, DUALWIELD,
-			CRITICAL_ATTACK, MUTILATION, MURDERIOUS_INTENT);
+			CRITICAL_ATTACK, MUTILATION, MURDERIOUS_INTENT,
+			SHADOW_FEINT, SILENT_DOMAIN, ZERO_PRESENCE);
 	private static final Map<UUID, CombatState> STATES = new ConcurrentHashMap<>();
 
 	private static final int MAX_TEMPO = 5;
+
+	/** Infiltrator style key, mirroring {@link ClassStyleRules}. */
+	private static final String INFILTRATION_STYLE = "infiltration";
+	private static final double VEIL_MAX = 100.0D;
+	/** Veil needed before a melee hit converts into an ambush. */
+	private static final double VEIL_STRIKE_THRESHOLD = 60.0D;
+	private static final int VEIL_TICK_INTERVAL = 5;
+	private static final double VEIL_OBSERVER_RANGE = 24.0D;
+	/** Cosine of the view half-angle a hostile is considered to be watching. */
+	private static final double VEIL_OBSERVER_COS = 0.34D;
+	private static final long VEIL_AMBUSH_EXPOSE_TICKS = 120L;
+	private static final float VEIL_AMBUSH_MAX_MULTIPLIER = 2.2F;
+
+	private static final String FEINT_OWNER_TAG = "slr_feint_owner";
+	private static final long FEINT_DURATION_TICKS = 60L;
+	private static final double FEINT_BLAST_RADIUS = 4.0D;
+	private static final int DOMAIN_DURATION_TICKS = 160;
+	private static final int DOMAIN_TARGET_CAP = 8;
+	private static final int ZERO_PRESENCE_CHARGES = 3;
+	private static final int FLASH_CUT_TARGET_CAP = 5;
+	/** Perfect Cut scales an ability's computed budget; it adds no new hit. */
+	private static final float PERFECT_CUT_MULTIPLIER = 1.3F;
+
 	private static final int GHOST_MAX_CHARGES = 2;
 	private static final int GHOST_RECHARGE_TICKS = 90;
 	private static final String GHOST_CHARGES_TAG = "slr_assassin_ghost_charges";
@@ -131,6 +167,9 @@ public final class AssassinSkillManager {
 			case CRITICAL_ATTACK -> castCriticalAttack(player, state);
 			case MUTILATION -> castMutilation(player, state);
 			case MURDERIOUS_INTENT -> castMurderiousIntent(player);
+			case SHADOW_FEINT -> castShadowFeint(player, state);
+			case SILENT_DOMAIN -> castSilentDomain(player, state);
+			case ZERO_PRESENCE -> castZeroPresence(player, state);
 			default -> false;
 		};
 		return cast;
@@ -148,8 +187,14 @@ public final class AssassinSkillManager {
 		removed.tempo = 0;
 		removed.nextTempoDecay = Long.MAX_VALUE;
 		removed.lastTempoActions.clear();
+		removed.veil = 0.0D;
+		removed.lastVeilSync = -1.0D;
+		discardFeint(player, removed);
+		discardDomain(player, removed);
+		endZeroPresence(player, removed);
 		syncTempo(player, removed);
-		player.removeEffect(SololevelingModMobEffects.DUAL_WIELDING.get());
+		hideVeilBar(player);
+		player.removeEffect(SololevelingModMobEffects.DUAL_WIELDING);
 	}
 
 	private static boolean castGhostStep(ServerPlayer player, CombatState state) {
@@ -164,7 +209,7 @@ public final class AssassinSkillManager {
 				return false;
 			}
 		}
-		if (!consumeMana(player, 80.0D))
+		if (!consumeMana(player, ManaRules.cost(player, ManaRules.Band.LOW)))
 			return false;
 
 		Vec3 start = player.position();
@@ -203,14 +248,23 @@ public final class AssassinSkillManager {
 			addTempo(player, state, "ghost-cross");
 		spawnSlash(player, destination.add(0.0D, 0.9D, 0.0D), -18.0F, 0.8F, 100);
 		play(player, SoundEvents.ENDER_PEARL_THROW, 0.65F, 1.65F);
-		message(player, "Ghost Step  " + state.ghostCharges + "/2");
 		return true;
+	}
+
+	/**
+	 * Night Rend is shared by both styles and branches on data, not on a second
+	 * code path. Infiltrator trades damage tempo for a longer Exposed window;
+	 * Cutthroat keeps the shorter utility and leans on the follow-up.
+	 */
+	private static long nightRendExposeTicks(ServerPlayer player) {
+		return prefersInfiltratorTiming(player) ? 120L : 60L;
 	}
 
 	private static boolean castNightRend(ServerPlayer player, CombatState state) {
 		if (!hasHeldDagger(player))
 			return requiresDagger(player, false);
-		if (!ready(player, NIGHT_REND) || !consumeMana(player, 220.0D))
+		if (!ready(player, NIGHT_REND)
+				|| !consumeMana(player, ManaRules.cost(player, ManaRules.Band.MEDIUM)))
 			return false;
 
 		LivingEntity target = findLookTarget(player, 14.0D);
@@ -230,7 +284,8 @@ public final class AssassinSkillManager {
 				multiplier *= consumePerfectCut(player, state);
 				struck = dealAssassinDamage(player, state, target, assassinPower(player) * multiplier);
 				if (struck) {
-					expose(state, target, player.level().getGameTime() + 60L);
+					expose(state, target, player.level().getGameTime()
+							+ nightRendExposeTicks(player));
 					recordMutilationCut(player, state, target, "night-rend");
 					addTempo(player, state, "night-rend");
 					spawnCross(player, target.getBoundingBox().getCenter(), 1.05F, 102);
@@ -246,7 +301,8 @@ public final class AssassinSkillManager {
 				float multiplier = 1.35F * consumePerfectCut(player, state);
 				struck = dealAssassinDamage(player, state, close, assassinPower(player) * multiplier);
 				if (struck) {
-					expose(state, close, player.level().getGameTime() + 60L);
+					expose(state, close, player.level().getGameTime()
+							+ nightRendExposeTicks(player));
 					recordMutilationCut(player, state, close, "night-rend");
 					addTempo(player, state, "night-rend");
 					spawnCross(player, close.getBoundingBox().getCenter(), 0.9F, 102);
@@ -279,7 +335,8 @@ public final class AssassinSkillManager {
 			message(player, "Stealth swap");
 			return true;
 		}
-		if (!ready(player, STEALTH) || !consumeMana(player, 300.0D))
+		if (!ready(player, STEALTH)
+				|| !consumeMana(player, ManaRules.cost(player, ManaRules.Band.MEDIUM)))
 			return false;
 
 		AfterImageEntity decoy = new AfterImageEntity(SololevelingModEntities.AFTER_IMAGE.get(), player.serverLevel());
@@ -290,25 +347,52 @@ public final class AssassinSkillManager {
 		decoy.setInvulnerable(true);
 		player.serverLevel().addFreshEntity(decoy);
 
-		state.stealthUntil = now + 80L;
+		// Concealment length is an Agility payoff rather than a flat 4 seconds.
+		int duration = stealthDurationTicks(player);
+		state.stealthUntil = now + duration;
 		state.decoyId = decoy.getUUID();
-		player.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 80, 0, false, false, false));
+		player.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, duration, 0, false, false, false));
+		applyVeilShroud(player, duration);
+
+		// Ordinary mobs commit to the decoy. Bosses only lose certainty for a
+		// moment: they drop the player as a target but re-acquire on their own,
+		// so concealment never fully disables a boss encounter.
 		for (Mob mob : player.serverLevel().getEntitiesOfClass(Mob.class,
-				player.getBoundingBox().inflate(12.0D), candidate -> candidate.getTarget() == player))
-			mob.setTarget(decoy);
+				player.getBoundingBox().inflate(12.0D), candidate -> candidate.getTarget() == player)) {
+			if (isBoss(mob))
+				mob.setTarget(null);
+			else
+				mob.setTarget(decoy);
+		}
 
 		setAssassinCooldown(player, STEALTH, 300);
 		CooldownManager.set(player, "mana_refresh", 40);
 		spawnCross(player, player.getBoundingBox().getCenter(), 0.7F, 101);
 		play(player, SoundEvents.ILLUSIONER_MIRROR_MOVE, 0.65F, 1.15F);
-		message(player, "Stealth  4s");
 		return true;
+	}
+
+	/** Base four seconds, extended by Agility and hard-capped at seven. */
+	private static int stealthDurationTicks(ServerPlayer player) {
+		double agility = Math.max(0.0D, TemporaryStatBonusManager.effectiveAgility(player));
+		return (int) Mth.clamp(80.0D + agility * 0.4D, 80.0D, 140.0D);
+	}
+
+	private static void applyVeilShroud(ServerPlayer player, int duration) {
+		player.addEffect(new MobEffectInstance(SololevelingModMobEffects.VEIL_SHROUD,
+				duration, 0, false, false, false));
+	}
+
+	private static boolean isBoss(LivingEntity target) {
+		return !(target instanceof Player)
+				&& (target.getType().is(BOSS_TAG) || target.getMaxHealth() >= 250.0F);
 	}
 
 	private static boolean castFlashCut(ServerPlayer player, CombatState state) {
 		if (!hasHeldDagger(player))
 			return requiresDagger(player, false);
-		if (!ready(player, FLASH_CUT) || !consumeMana(player, 120.0D))
+		if (!ready(player, FLASH_CUT)
+				|| !consumeMana(player, ManaRules.cost(player, ManaRules.Band.MEDIUM)))
 			return false;
 
 		Vec3 forward = horizontalDirection(player.getLookAngle());
@@ -317,15 +401,18 @@ public final class AssassinSkillManager {
 				LivingEntity.class, player.getBoundingBox().inflate(5.0D),
 				candidate -> validTarget(player, candidate)));
 		targets.sort((a, b) -> Double.compare(a.distanceToSqr(player), b.distanceToSqr(player)));
+		// One shared budget for the fan, resolved once so Perfect Cut multiplies
+		// the ability rather than every individual cut.
+		float budget = assassinPower(player) * 0.9F * consumePerfectCut(player, state);
 		int hits = 0;
 		for (LivingEntity target : targets) {
-			if (hits >= 12)
+			if (hits >= FLASH_CUT_TARGET_CAP)
 				break;
 			Vec3 toTarget = target.getBoundingBox().getCenter().subtract(origin);
 			if (toTarget.lengthSqr() > 27.0D || horizontalDirection(toTarget).dot(forward) < 0.42D
 					|| !player.hasLineOfSight(target))
 				continue;
-			if (dealAssassinDamage(player, state, target, assassinPower(player) * 0.9F)) {
+			if (dealAssassinDamage(player, state, target, budget)) {
 				recordMutilationCut(player, state, target, "flash-cut");
 				hits++;
 			}
@@ -337,7 +424,6 @@ public final class AssassinSkillManager {
 		setAssassinCooldown(player, FLASH_CUT, 80);
 		CooldownManager.set(player, "mana_refresh", 30);
 		play(player, SoundEvents.PLAYER_ATTACK_SWEEP, 0.9F, 1.6F);
-		message(player, FLASH_CUT);
 		return true;
 	}
 
@@ -352,7 +438,7 @@ public final class AssassinSkillManager {
 		state.dualwieldHits = 0;
 		setAssassinCooldown(player, DUALWIELD, 360);
 		CooldownManager.set(player, "mana_refresh", 50);
-		play(player, SoundEvents.ARMOR_EQUIP_CHAIN, 0.7F, 1.65F);
+		play(player, SoundEvents.ARMOR_EQUIP_CHAIN.value(), 0.7F, 1.65F);
 		message(player, "Dualwield  7s");
 		return true;
 	}
@@ -415,7 +501,7 @@ public final class AssassinSkillManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void onLivingAttack(LivingAttackEvent event) {
+	public static void onLivingAttack(LivingIncomingDamageEvent event) {
 		if (!(event.getEntity() instanceof ServerPlayer player))
 			return;
 		CombatState state = STATES.get(player.getUUID());
@@ -456,12 +542,15 @@ public final class AssassinSkillManager {
 				return;
 			}
 		}
+		// Reached only when the hit was not evaded or countered, so a successful
+		// Ghost Step evade preserves the Veil the player built.
+		breakVeil(player, state);
 		if (state.stealthUntil >= now)
 			endStealth(player, state);
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onLivingHurt(LivingHurtEvent event) {
+	public static void onLivingHurt(LivingIncomingDamageEvent event) {
 		if (!(event.getSource().getEntity() instanceof ServerPlayer attacker))
 			return;
 		LivingEntity target = event.getEntity();
@@ -487,6 +576,40 @@ public final class AssassinSkillManager {
 			play(attacker, SoundEvents.PLAYER_ATTACK_CRIT, 0.9F, 1.55F);
 		}
 
+		// A Veiled approach is spent on contact: it either converts into an
+		// ambush or collapses, so it can never be carried through a fight.
+		if (hasVeilAccess(attacker)) {
+			if (daggerMelee) {
+				float ambush = consumeVeilAmbush(attacker, state);
+				if (ambush > 1.0F) {
+					event.setAmount(event.getAmount() * ambush);
+					expose(state, target, now + VEIL_AMBUSH_EXPOSE_TICKS);
+					addTempo(attacker, state, "veil-ambush");
+					spawnCross(attacker, target.getBoundingBox().getCenter(),
+							0.9F, 100);
+					play(attacker, SoundEvents.PLAYER_ATTACK_SWEEP, 0.7F, 1.8F);
+				}
+			}
+			breakVeil(attacker, state);
+		}
+
+		// Zero Presence spends a charge only on a confirmed hit, never a swing.
+		if (daggerMelee && state.zeroPresenceUntil >= now
+				&& state.vanishCharges > 0
+				&& state.vanishRecoveryUntil < now) {
+			state.vanishCharges--;
+			state.vanishRecoveryUntil = now + 6L;
+			expose(state, target, now + VEIL_AMBUSH_EXPOSE_TICKS);
+			// Freeing the attack cadence is what opens the next angle; it does
+			// not add damage of its own.
+			attacker.resetAttackStrengthTicker();
+			spawnCross(attacker, target.getBoundingBox().getCenter(), 1.0F, 101);
+			play(attacker, SoundEvents.AMETHYST_BLOCK_CHIME, 0.8F,
+					1.2F + 0.2F * (ZERO_PRESENCE_CHARGES - state.vanishCharges));
+			if (state.vanishCharges <= 0)
+				endZeroPresence(attacker, state);
+		}
+
 		if (daggerMelee || thrownDagger) {
 			addTempo(attacker, state, thrownDagger ? "thrown-dagger" : "dagger-melee");
 			recordMutilationCut(attacker, state, target,
@@ -502,11 +625,20 @@ public final class AssassinSkillManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		CombatState state = state(player);
 		long now = player.level().getGameTime();
+		if (hasVeilAccess(player))
+			tickVeil(player, state, now);
+		// Losing every concealment ability retires the bar rather than leaving
+		// it latched on the client.
+		else if (now % 40L == 0L && state.lastVeilSync >= 0.0D) {
+			state.veil = 0.0D;
+			state.lastVeilSync = -1.0D;
+			hideVeilBar(player);
+		}
 		rechargeGhostStep(player, state, now);
 		state.exposed.entrySet().removeIf(entry -> entry.getValue() < now);
 		if (state.tempo > 0 && state.nextTempoDecay <= now) {
@@ -518,6 +650,26 @@ public final class AssassinSkillManager {
 			endStealth(player, state);
 		if (state.mutilationTarget != null && state.mutilationUntil < now)
 			detonateMutilation(player, state, false);
+		// An unused feint dissolves and refunds half, so a wasted setup is
+		// cheap rather than a full-price mistake.
+		if (state.feintId != null && state.feintUntil < now) {
+			discardFeint(player, state);
+			refundMana(player,
+					ManaRules.cost(player, ManaRules.Band.MEDIUM) / 2);
+		}
+		tickDomain(player, state, now);
+		if (state.zeroPresenceUntil > 0L && state.zeroPresenceUntil < now)
+			endZeroPresence(player, state);
+	}
+
+	private static void refundMana(ServerPlayer player, double amount) {
+		if (amount <= 0.0D || player.isCreative())
+			return;
+		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.ifPresent(vars -> {
+					vars.MP = Math.min(ManaRules.maximumMana(player), vars.MP + amount);
+					vars.syncPlayerVariables(player);
+				});
 	}
 
 	@SubscribeEvent
@@ -590,7 +742,7 @@ public final class AssassinSkillManager {
 		player.getPersistentData().remove("CriticalAttackTarget");
 		player.getPersistentData().remove("Mutilation_Targetting");
 		player.getPersistentData().remove("MutilationTarget");
-		player.removeEffect(SololevelingModMobEffects.DUAL_WIELDING.get());
+		player.removeEffect(SololevelingModMobEffects.DUAL_WIELDING);
 		for (Map.Entry<String, String> entry : LEGACY_NAMES.entrySet()) {
 			int remaining = CooldownManager.getRemainingTicks(player, entry.getKey());
 			if (remaining > 0) {
@@ -631,7 +783,10 @@ public final class AssassinSkillManager {
 			return;
 
 		boolean cross = hitIndex % 4 == 0;
-		float damage = assassinPower(player) * (cross ? 0.65F : 0.45F);
+		// The cross beat is the Dualwield finisher, so it is the hit that
+		// qualifies for Perfect Cut.
+		float damage = assassinPower(player) * (cross ? 0.65F : 0.45F)
+				* (cross ? consumePerfectCut(player, state) : 1.0F);
 		primary.invulnerableTime = 0;
 		if (dealAssassinDamage(player, state, primary, damage))
 			recordMutilationCut(player, state, primary, cross ? "dual-cross" : "dual-followup");
@@ -721,7 +876,7 @@ public final class AssassinSkillManager {
 	}
 
 	private static void addTempo(ServerPlayer player, CombatState state, String action) {
-		if (playerClass(player) != 1)
+		if (!hasTempoAccess(player))
 			return;
 		long now = player.level().getGameTime();
 		long last = state.lastTempoActions.getOrDefault(action, Long.MIN_VALUE);
@@ -744,9 +899,10 @@ public final class AssassinSkillManager {
 		if (state.ghostCharges >= GHOST_MAX_CHARGES)
 			state.nextGhostRecharge = 0L;
 		updateGhostStepCooldown(player, state, player.level().getGameTime());
+		// The Tempo HUD emptying is the feedback; chat would duplicate it.
 		syncTempo(player, state);
-		message(player, "Perfect Cut");
-		return 1.3F;
+		play(player, SoundEvents.PLAYER_ATTACK_STRONG, 0.7F, 1.5F);
+		return PERFECT_CUT_MULTIPLIER;
 	}
 
 	private static void rechargeGhostStep(ServerPlayer player, CombatState state, long now) {
@@ -979,6 +1135,433 @@ public final class AssassinSkillManager {
 				new ClassPassiveMessage(0, state.tempo));
 	}
 
+	// ── Shadow Feint (B) ──────────────────────────────────────────────────────
+
+	/**
+	 * Leaves an attackable afterimage. If something hits it the player is pulled
+	 * to a safe flank of the attacker with one empowered follow-up ready; a
+	 * deliberate recast instead shatters it into a blind and slow. Letting it
+	 * expire refunds half, so a wasted feint is cheap rather than punishing.
+	 */
+	private static boolean castShadowFeint(ServerPlayer player, CombatState state) {
+		long now = player.level().getGameTime();
+		if (state.feintId != null && state.feintUntil >= now) {
+			detonateFeint(player, state, true);
+			return true;
+		}
+		if (!ready(player, SHADOW_FEINT)
+				|| !consumeMana(player, ManaRules.cost(player, ManaRules.Band.MEDIUM)))
+			return false;
+
+		AfterImageEntity feint = new AfterImageEntity(
+				SololevelingModEntities.AFTER_IMAGE.get(), player.serverLevel());
+		feint.moveTo(player.getX(), player.getY(), player.getZ(),
+				player.getYRot(), player.getXRot());
+		feint.setYHeadRot(player.getYHeadRot());
+		feint.setTexture("ghost");
+		feint.setSilent(true);
+		feint.getPersistentData().putUUID(FEINT_OWNER_TAG, player.getUUID());
+		player.serverLevel().addFreshEntity(feint);
+
+		state.feintId = feint.getUUID();
+		state.feintUntil = now + FEINT_DURATION_TICKS;
+		setAssassinCooldown(player, SHADOW_FEINT, 180);
+		CooldownManager.set(player, "mana_refresh", 40);
+		spawnSlash(player, player.getBoundingBox().getCenter(), 0.0F, 0.85F, 101);
+		play(player, SoundEvents.ILLUSIONER_PREPARE_MIRROR, 0.6F, 1.3F);
+		return true;
+	}
+
+	private static void detonateFeint(ServerPlayer player, CombatState state,
+			boolean manual) {
+		Entity feint = resolveFeint(player, state);
+		Vec3 center = feint == null ? player.position() : feint.position();
+		if (feint != null)
+			feint.discard();
+		if (manual) {
+			// The deliberate shatter is the only part that costs extra.
+			consumeMana(player, ManaRules.cost(player, ManaRules.Band.LOW));
+			for (LivingEntity target : player.serverLevel().getEntitiesOfClass(
+					LivingEntity.class, new AABB(center, center).inflate(FEINT_BLAST_RADIUS),
+					candidate -> validTarget(player, candidate))) {
+				target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 60, 0, false, true));
+				target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 60, 1, false, true));
+			}
+			play(player, SoundEvents.GLASS_BREAK, 0.7F, 1.45F);
+			spawnCross(player, center, 0.9F, 101);
+		}
+		clearFeint(state);
+	}
+
+	private static Entity resolveFeint(ServerPlayer player, CombatState state) {
+		return state.feintId == null
+				? null : player.serverLevel().getEntity(state.feintId);
+	}
+
+	private static void clearFeint(CombatState state) {
+		state.feintId = null;
+		state.feintUntil = 0L;
+	}
+
+	/** Discards an owned feint without resolving any of its effects. */
+	private static void discardFeint(ServerPlayer player, CombatState state) {
+		Entity feint = resolveFeint(player, state);
+		if (feint != null)
+			feint.discard();
+		clearFeint(state);
+	}
+
+	@SubscribeEvent
+	public static void onFeintDamaged(LivingIncomingDamageEvent event) {
+		if (!(event.getEntity() instanceof AfterImageEntity feint)
+				|| feint.level().isClientSide())
+			return;
+		CompoundTag data = feint.getPersistentData();
+		if (!data.hasUUID(FEINT_OWNER_TAG) || feint.getServer() == null)
+			return;
+		ServerPlayer owner = feint.getServer().getPlayerList()
+				.getPlayer(data.getUUID(FEINT_OWNER_TAG));
+		CombatState state = owner == null ? null : STATES.get(owner.getUUID());
+		if (owner == null || state == null
+				|| !feint.getUUID().equals(state.feintId))
+			return;
+
+		event.setCanceled(true);
+		long now = owner.level().getGameTime();
+		Entity attackerEntity = event.getSource().getEntity();
+		if (attackerEntity instanceof LivingEntity attacker) {
+			Vec3 forward = horizontalDirection(attacker.getLookAngle());
+			Vec3 side = new Vec3(-forward.z, 0.0D, forward.x).scale(1.35D);
+			Vec3 behind = attacker.position().subtract(forward.scale(1.3D));
+			Vec3 destination = firstSafePosition(owner, List.of(
+					behind, behind.add(side), behind.subtract(side),
+					attacker.position().add(side)));
+			if (destination != null) {
+				owner.teleportTo(destination.x, destination.y, destination.z);
+				owner.setDeltaMovement(Vec3.ZERO);
+				owner.hurtMarked = true;
+			}
+			expose(state, attacker, now + 60L);
+			// Reuses the existing empowered-follow-up window rather than
+			// introducing a second parallel mechanic.
+			state.riposteUntil = now + 40L;
+			addTempo(owner, state, "shadow-feint");
+		}
+		spawnCross(owner, feint.position(), 0.85F, 101);
+		play(owner, SoundEvents.GLASS_BREAK, 0.75F, 1.6F);
+		discardFeint(owner, state);
+	}
+
+	// ── Silent Domain (A) ─────────────────────────────────────────────────────
+
+	/**
+	 * A bounded dim zone. Ordinary mobs inside lose target certainty while they
+	 * remain in it; bosses are only delayed. Attacking from inside is not free —
+	 * the attacker is revealed by the strike itself.
+	 */
+	private static boolean castSilentDomain(ServerPlayer player, CombatState state) {
+		long now = player.level().getGameTime();
+		if (state.domainId != null && state.domainUntil >= now) {
+			// A second cast cancels rather than stacking, and stops all drain.
+			discardDomain(player, state);
+			play(player, SoundEvents.AMETHYST_BLOCK_BREAK, 0.55F, 0.9F);
+			return true;
+		}
+		if (!ready(player, SILENT_DOMAIN)
+				|| !consumeMana(player, ManaRules.cost(player, ManaRules.Band.HIGH)))
+			return false;
+
+		AreaEffectCloud zone = new AreaEffectCloud(player.level(),
+				player.getX(), player.getY(), player.getZ());
+		zone.setRadius((float) domainRadius(player));
+		zone.setDuration(DOMAIN_DURATION_TICKS);
+		zone.setWaitTime(0);
+		zone.setRadiusOnUse(0.0F);
+		zone.setRadiusPerTick(0.0F);
+		zone.setParticle(ParticleTypes.SMOKE);
+		zone.setOwner(player);
+		player.serverLevel().addFreshEntity(zone);
+
+		state.domainId = zone.getUUID();
+		state.domainUntil = now + DOMAIN_DURATION_TICKS;
+		state.domainNextDrain = now + 20L;
+		setAssassinCooldown(player, SILENT_DOMAIN, 400);
+		CooldownManager.set(player, "mana_refresh", 40);
+		play(player, SoundEvents.AMBIENT_CAVE.value(), 0.7F, 0.65F);
+		return true;
+	}
+
+	private static double domainRadius(ServerPlayer player) {
+		double perception = Math.max(0.0D,
+				TemporaryStatBonusManager.effectivePerception(player));
+		return Mth.clamp(7.0D + perception * 0.012D, 7.0D, 10.0D);
+	}
+
+	/**
+	 * Suppresses target acquisition inside an owned domain and charges the
+	 * maintained portion of its cost. Running out of mana ends the zone rather
+	 * than letting it run free.
+	 */
+	private static void tickDomain(ServerPlayer player, CombatState state, long now) {
+		if (state.domainId == null)
+			return;
+		Entity zone = player.serverLevel().getEntity(state.domainId);
+		if (zone == null || state.domainUntil < now) {
+			discardDomain(player, state);
+			return;
+		}
+		if (state.domainNextDrain <= now) {
+			state.domainNextDrain = now + 20L;
+			int upkeep = Math.max(1,
+					ManaRules.cost(player, ManaRules.Band.HIGH) / 40);
+			if (!consumeMana(player, upkeep)) {
+				discardDomain(player, state);
+				return;
+			}
+		}
+
+		double radius = domainRadius(player);
+		emitDomainBoundary(player, zone.position(), radius, now);
+		AABB bounds = new AABB(zone.position(), zone.position()).inflate(radius);
+		int affected = 0;
+		for (Mob mob : player.serverLevel().getEntitiesOfClass(Mob.class, bounds,
+				candidate -> candidate.isAlive() && candidate.getTarget() != null)) {
+			if (affected >= DOMAIN_TARGET_CAP)
+				break;
+			if (!validTarget(player, mob))
+				continue;
+			// Bosses lose the player for a beat but re-acquire on their own.
+			if (isBoss(mob)) {
+				if (now % 40L == 0L && mob.getTarget() == player)
+					mob.setTarget(null);
+			} else {
+				mob.setTarget(null);
+			}
+			affected++;
+		}
+	}
+
+	/**
+	 * Draws a readable perimeter with a nearly empty interior. A filled dark
+	 * volume would hide the combat happening inside it, which is the opposite
+	 * of what a concealment zone should do to its own owner.
+	 */
+	private static void emitDomainBoundary(ServerPlayer player, Vec3 center,
+			double radius, long now) {
+		if (now % 4L != 0L)
+			return;
+		ServerLevel level = player.serverLevel();
+		int points = 28;
+		double spin = (now % 360L) * 0.0175D;
+		for (int index = 0; index < points; index++) {
+			double angle = spin + index * (Math.PI * 2.0D / points);
+			double x = center.x + Math.cos(angle) * radius;
+			double z = center.z + Math.sin(angle) * radius;
+			level.sendParticles(ParticleTypes.SMOKE, x, center.y + 0.15D, z,
+					1, 0.0D, 0.02D, 0.0D, 0.0D);
+		}
+		// Sparse interior motes only, well under the perimeter's density.
+		if (now % 12L == 0L)
+			level.sendParticles(ParticleTypes.SMOKE, center.x, center.y + 1.0D,
+					center.z, 3, radius * 0.35D, 0.6D, radius * 0.35D, 0.0D);
+	}
+
+	private static void discardDomain(ServerPlayer player, CombatState state) {
+		if (state.domainId != null) {
+			Entity zone = player.serverLevel().getEntity(state.domainId);
+			if (zone != null)
+				zone.discard();
+		}
+		state.domainId = null;
+		state.domainUntil = 0L;
+		state.domainNextDrain = 0L;
+	}
+
+	// ── Zero Presence (S) ─────────────────────────────────────────────────────
+
+	/**
+	 * Short apex state with three Vanish charges. A charge is spent only on a
+	 * confirmed hit against a valid target, never on a swing, and the state
+	 * grants no damage immunity — incoming hits still land.
+	 */
+	private static boolean castZeroPresence(ServerPlayer player, CombatState state) {
+		long now = player.level().getGameTime();
+		if (state.zeroPresenceUntil >= now)
+			return false;
+		if (!ready(player, ZERO_PRESENCE)
+				|| !consumeMana(player, ManaRules.cost(player, ManaRules.Band.APEX)))
+			return false;
+
+		double agility = Math.max(0.0D, TemporaryStatBonusManager.effectiveAgility(player));
+		int duration = (int) Mth.clamp(160.0D + agility * 0.35D, 160.0D, 220.0D);
+		state.zeroPresenceUntil = now + duration;
+		state.vanishCharges = ZERO_PRESENCE_CHARGES;
+		state.veil = VEIL_MAX;
+		syncVeil(player, state);
+		applyVeilShroud(player, duration);
+
+		setAssassinCooldown(player, ZERO_PRESENCE, 1200);
+		CooldownManager.set(player, "mana_refresh", 40);
+		play(player, SoundEvents.ELDER_GUARDIAN_CURSE, 0.6F, 1.8F);
+		return true;
+	}
+
+	/** Ends the apex state and leaves the documented reveal window. */
+	private static void endZeroPresence(ServerPlayer player, CombatState state) {
+		state.zeroPresenceUntil = 0L;
+		state.vanishCharges = 0;
+		state.vanishRecoveryUntil = 0L;
+		player.removeEffect(SololevelingModMobEffects.VEIL_SHROUD);
+	}
+
+	// ── Veil (Infiltrator passive) ────────────────────────────────────────────
+
+	/** Exact-token ownership check against the learned skill list. */
+	private static boolean ownsSkill(ServerPlayer player, String skill) {
+		String list = player.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(vars -> vars.Plist).orElse("");
+		if (list == null || list.isBlank())
+			return false;
+		for (String entry : list.split(",")) {
+			String token = entry.trim();
+			while (token.startsWith("."))
+				token = token.substring(1).trim();
+			if (skill.equals(token))
+				return true;
+		}
+		return false;
+	}
+
+	private static boolean ownsAny(ServerPlayer player, String... skills) {
+		for (String skill : skills) {
+			if (ownsSkill(player, skill))
+				return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Veil is the concealment setup resource. It is not stealth and grants no
+	 * mitigation: it only decides whether the next melee hit lands as an ambush.
+	 *
+	 * <p>Access is driven by the abilities a player owns, never by their class
+	 * or style. Anyone who learns a concealment ability — including from a
+	 * runestone — builds Veil and can spend it.</p>
+	 */
+	private static boolean hasVeilAccess(ServerPlayer player) {
+		return ownsAny(player, STEALTH, SHADOW_FEINT, SILENT_DOMAIN,
+				ZERO_PRESENCE);
+	}
+
+	/**
+	 * Tempo builds for anyone owning an ability that can spend it. Without this
+	 * the resource would silently do nothing for a rune-taught dagger user.
+	 */
+	private static boolean hasTempoAccess(ServerPlayer player) {
+		return ownsAny(player, NIGHT_REND, FLASH_CUT, CRITICAL_ATTACK,
+				MUTILATION, DUALWIELD);
+	}
+
+	/**
+	 * Style flavour, not access control. Every hunter may cast Night Rend; an
+	 * Infiltrator simply gets a longer Exposed window out of it.
+	 */
+	private static boolean prefersInfiltratorTiming(ServerPlayer player) {
+		return player.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.map(vars -> INFILTRATION_STYLE.equalsIgnoreCase(
+						vars.classStyle == null ? "" : vars.classStyle.trim()))
+				.orElse(false);
+	}
+
+	/**
+	 * Builds Veil while the player is moving and no hostile is watching them.
+	 * Standing still earns nothing, so the resource rewards repositioning rather
+	 * than camping a corner.
+	 */
+	private static void tickVeil(ServerPlayer player, CombatState state, long now) {
+		if (now % VEIL_TICK_INTERVAL != 0L)
+			return;
+		if (state.veil < VEIL_MAX) {
+			Vec3 movement = player.getDeltaMovement();
+			boolean moving = movement.horizontalDistanceSqr() > 0.0016D;
+			if (moving && !isObserved(player)) {
+				double agility = Math.max(0.0D,
+						TemporaryStatBonusManager.effectiveAgility(player));
+				double perception = Math.max(0.0D,
+						TemporaryStatBonusManager.effectivePerception(player));
+				state.veil = Math.min(VEIL_MAX,
+						state.veil + 3.0D + agility * 0.045D + perception * 0.045D);
+			}
+		}
+		// Synced unconditionally, deduplicated inside syncVeil. The first packet
+		// is what tells the client the meter exists, so a player who never moves
+		// still gets the HUD.
+		syncVeil(player, state);
+	}
+
+	/** True when any hostile mob is targeting the player or facing them nearby. */
+	private static boolean isObserved(ServerPlayer player) {
+		AABB range = player.getBoundingBox().inflate(VEIL_OBSERVER_RANGE);
+		for (Mob mob : player.serverLevel().getEntitiesOfClass(Mob.class, range,
+				candidate -> candidate.isAlive() && validTarget(player, candidate))) {
+			if (mob.getTarget() == player)
+				return true;
+			Vec3 toPlayer = player.getEyePosition().subtract(mob.getEyePosition());
+			if (toPlayer.lengthSqr() < 1.0E-4D)
+				return true;
+			Vec3 facing = mob.getLookAngle().normalize();
+			if (facing.dot(toPlayer.normalize()) >= VEIL_OBSERVER_COS
+					&& mob.hasLineOfSight(player))
+				return true;
+		}
+		return false;
+	}
+
+	/** Any damage dealt or taken outside an ambush collapses the whole meter. */
+	private static void breakVeil(ServerPlayer player, CombatState state) {
+		if (state.veil <= 0.0D)
+			return;
+		state.veil = 0.0D;
+		syncVeil(player, state);
+	}
+
+	/**
+	 * Consumes a full Veil into an ambush multiplier. The bonus uses `AGI` and
+	 * `PER` and is hard-capped; it never reads current mana.
+	 */
+	private static float consumeVeilAmbush(ServerPlayer player, CombatState state) {
+		if (state.veil < VEIL_STRIKE_THRESHOLD)
+			return 1.0F;
+		double agility = Math.max(0.0D, TemporaryStatBonusManager.effectiveAgility(player));
+		double perception = Math.max(0.0D, TemporaryStatBonusManager.effectivePerception(player));
+		float multiplier = (float) Math.min(VEIL_AMBUSH_MAX_MULTIPLIER,
+				1.35D + agility * 0.004D + perception * 0.004D);
+		state.veil = 0.0D;
+		syncVeil(player, state);
+		return multiplier;
+	}
+
+	private static void syncVeil(ServerPlayer player, CombatState state) {
+		double rounded = Math.floor(state.veil);
+		if (rounded == state.lastVeilSync)
+			return;
+		state.lastVeilSync = rounded;
+		SololevelingMod.PACKET_HANDLER.send(PacketDistributor.PLAYER.with(() -> player),
+				new ClassPassiveMessage(5, state.veil));
+	}
+
+	/**
+	 * Tells the client to hide the Veil bar. Sent unconditionally on reset,
+	 * because an ability-driven bar would otherwise stay latched on for the
+	 * rest of the session after a class change or progress reset.
+	 */
+	private static void hideVeilBar(ServerPlayer player) {
+		SololevelingMod.PACKET_HANDLER.send(PacketDistributor.PLAYER.with(() -> player),
+				new ClassPassiveMessage(5, ClassPassiveClientState.UNAVAILABLE));
+	}
+
 	private static void endStealth(ServerPlayer player, CombatState state) {
 		if (state.decoyId != null) {
 			if (player.getServer() != null) {
@@ -994,6 +1577,7 @@ public final class AssassinSkillManager {
 		state.decoyId = null;
 		state.stealthUntil = 0L;
 		player.removeEffect(MobEffects.INVISIBILITY);
+		player.removeEffect(SololevelingModMobEffects.VEIL_SHROUD);
 	}
 
 	private static void clearMutilation(CombatState state) {
@@ -1012,6 +1596,16 @@ public final class AssassinSkillManager {
 
 	private static final class CombatState {
 		private int tempo;
+		private double veil;
+		private double lastVeilSync = -1.0D;
+		private UUID feintId;
+		private long feintUntil;
+		private UUID domainId;
+		private long domainUntil;
+		private long domainNextDrain;
+		private long zeroPresenceUntil;
+		private int vanishCharges;
+		private long vanishRecoveryUntil;
 		private long nextTempoDecay = Long.MAX_VALUE;
 		private final Map<String, Long> lastTempoActions = new LinkedHashMap<>();
 		private final Map<UUID, Long> exposed = new ConcurrentHashMap<>();

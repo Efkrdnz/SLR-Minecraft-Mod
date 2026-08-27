@@ -1,0 +1,20 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:bedrock",
+    "minecraft:reinforced_deepslate",
+    "minecraft:barrier",
+    "minecraft:structure_void",
+    "minecraft:structure_block",
+    "minecraft:jigsaw",
+    "minecraft:command_block",
+    "minecraft:chain_command_block",
+    "minecraft:repeating_command_block",
+    "minecraft:spawner",
+    "minecraft:end_portal",
+    "minecraft:end_portal_frame",
+    "minecraft:end_gateway",
+    "minecraft:nether_portal",
+    "minecraft:moving_piston"
+  ]
+}

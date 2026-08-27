@@ -1,0 +1,201 @@
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BaranEntity.java:108: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BarukaEntity.java:104: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BarukaEntity.java:89: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BarukaEntity.java:98: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DemonEntity.java:114: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\FxspikEntity.java:85: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HighOrcEntity.java:80: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:129: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:146: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:195: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:281: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:283: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IcecleEntity.java:57: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IceElfEntity.java:101: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IceElfEntity.java:90: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IgrisEntity.java:84: error: m
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IgrisEntity.java:94: error: m
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KamishEntity.java:166: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KamishEntity.java:87: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KamishEntity.java:96: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KasakaEntity.java:161: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KasakaEntity.java:85: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KasakaEntity.java:94: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\MutatedEntity.java:81: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\OrcEntity.java:78: error: met
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\OrcEntity.java:80: error: can
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\OrcEntity.java:87: error: met
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\RedAntsEntity.java:90: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\RedGateEntity.java:91: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:166: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:311: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:360: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:365: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:402: error:
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:99: error: 
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\ScrollDisable.java:24: error: cannot
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\util\TitleManager.java:147: error: i
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\util\TitleManager.java:149: error: n
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\util\TitleManager.java:153: error: c
+  E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\utils\AnimUtils.java:19: error: no s
+.java:14: error: cannot find symbol
+.java:220: error: incompatible types: UUID cannot be converted to ResourceLocation
+.java:221: error: no suitable method found for removeModifier(UUID)
+.java:228: error: incompatible types: UUID cannot be converted to ResourceLocation
+.java:229: error: no suitable method found for removeModifier(UUID)
+.java:230: error: cannot find symbol
+.java:37: error: cannot find symbol
+.java:41: error: cannot find symbol
+.java:49: error: cannot find symbol
+.java:57: error: cannot find symbol
+.java:67: error: cannot find symbol
+.java:75: error: cannot find symbol
+.java:83: error: cannot find symbol
+awnProcedure.java:20: error: cannot find symbol
+awnProcedure.java:30: error: cannot find symbol
+awnProcedure.java:7: error: cannot find symbol
+ClickedProcedure.java:66: error: cannot find symbol
+ctor.java:194: error: no suitable constructor found for PoolElementStructurePiece(StructureTemplateManager,StructurePoo
+ctory.java:108: error: cannot find symbol
+dure.java:16: error: cannot find symbol
+dure.java:66: error: cannot find symbol
+dure.java:85: error: cannot find symbol
+e.java:147: error: cannot find symbol
+e.java:89: error: cannot find symbol
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BaranEntity.java:108: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BarukaEntity.java:104: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BarukaEntity.java:89: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BarukaEntity.java:98: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BearTrapEntity.java:184: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BearTrapEntity.java:186: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BeruBossEntity.java:104: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BeruBossEntity.java:113: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BeruBossEntity.java:131: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\BeruBossEntity.java:133: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\CentipedeEntity.java:90: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\CerberusEntity.java:103: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\CerberusEntity.java:355: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\CerberusEntity.java:370: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\ChaHaeInEntity.java:90: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\ChoijongEntity.java:151: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\ChoijongEntity.java:83: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DemonEntity.java:114: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight1Entity.java:100: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight1Entity.java:109: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight1Entity.java:52: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight1Entity.java:74: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight2Entity.java:101: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight2Entity.java:51: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight2Entity.java:69: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight3Entity.java:101: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight3Entity.java:51: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\DKnight3Entity.java:69: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\FireFlyEntity.java:169: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\FireFlyEntity.java:171: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\FireFlyEntity.java:226: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\FireFlyEntity.java:228: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\FxspikEntity.java:85: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\GemGolemEntity.java:104: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\GemGolemEntity.java:181: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\GemGolemEntity.java:89: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\GemGolemEntity.java:98: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\GreenOrcEntity.java:93: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HighOrcEntity.java:80: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:129: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:146: error: c
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:195: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:281: error: c
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\HunterEntity.java:283: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IceBallEntity.java:109: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IceBallEntity.java:111: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IcecleEntity.java:57: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IceElfEntity.java:101: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IceElfEntity.java:90: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IgrisEntity.java:84: error: met
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\IgrisEntity.java:94: error: met
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KaiselinEntity.java:377: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KamishEntity.java:166: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KamishEntity.java:87: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KamishEntity.java:96: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KasakaEntity.java:161: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KasakaEntity.java:85: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\KasakaEntity.java:94: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\MagicEyeEntity.java:78: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\MutatedEntity.java:81: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\OrcEntity.java:78: error: metho
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\OrcEntity.java:80: error: canno
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\OrcEntity.java:87: error: metho
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\OrcShadowEntity.java:97: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\PolarBearEntity.java:89: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\Portal12Entity.java:81: error: 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\RedAntsEntity.java:90: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\RedGateEntity.java:91: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\SecretaryEntity.java:43: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\StatueaxeEntity.java:99: error:
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:166: error: m
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:311: error: n
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:360: error: n
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:365: error: c
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:402: error: c
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\entity\VulcanEntity.java:99: error: me
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\ScrollDisable.java:24: error: cannot f
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\util\TitleManager.java:147: error: inc
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\util\TitleManager.java:149: error: no 
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\util\TitleManager.java:153: error: can
+E:\minecraft mods\Solo Leveling\slbc-neoforge-1.21.1\src\main\java\net\solocraft\utils\AnimUtils.java:19: error: no sui
+edure.java:413: error: incompatible types: Attribute cannot be converted to Holder<Attribute>
+edure.java:415: error: incompatible types: Attribute cannot be converted to Holder<Attribute>
+edure.java:422: error: incompatible types: Holder<Attribute> cannot be converted to Attribute
+edure.java:423: error: incompatible types: Holder<Attribute> cannot be converted to Attribute
+edure.java:79: error: incompatible types: Holder<Attribute> cannot be converted to Attribute
+edure.java:80: error: incompatible types: Holder<Attribute> cannot be converted to Attribute
+edure.java:87: error: cannot find symbol
+er.java:220: error: incompatible types: UUID cannot be converted to ResourceLocation
+er.java:221: error: no suitable method found for removeModifier(UUID)
+er.java:228: error: incompatible types: UUID cannot be converted to ResourceLocation
+er.java:229: error: no suitable method found for removeModifier(UUID)
+er.java:230: error: cannot find symbol
+ickedProcedure.java:66: error: cannot find symbol
+iomeSnowFruitDecorator.java:30: error: no suitable method found for register(String,TreeDecoratorType<DungeonBiomeSnowF
+iomeSnowLeaveDecorator.java:26: error: no suitable method found for register(String,TreeDecoratorType<DungeonBiomeSnowL
+iomeSnowTrunkDecorator.java:26: error: no suitable method found for register(String,TreeDecoratorType<DungeonBiomeSnowT
+ity.java:91: error: method does not override or implement a method from a supertype
+nBiomeSnowFruitDecorator.java:30: error: no suitable method found for register(String,TreeDecoratorType<DungeonBiomeSno
+nBiomeSnowLeaveDecorator.java:26: error: no suitable method found for register(String,TreeDecoratorType<DungeonBiomeSno
+nBiomeSnowTrunkDecorator.java:26: error: no suitable method found for register(String,TreeDecoratorType<DungeonBiomeSno
+nderer.java:48: error: cannot find symbol
+nderer.java:53: error: cannot find symbol
+ocedure.java:14: error: cannot find symbol
+ocedure.java:28: error: cannot find symbol
+ocedure.java:413: error: incompatible types: Attribute cannot be converted to Holder<Attribute>
+ocedure.java:415: error: incompatible types: Attribute cannot be converted to Holder<Attribute>
+ocedure.java:422: error: incompatible types: Holder<Attribute> cannot be converted to Attribute
+ocedure.java:423: error: incompatible types: Holder<Attribute> cannot be converted to Attribute
+ocedure.java:79: error: incompatible types: Holder<Attribute> cannot be converted to Attribute
+ocedure.java:80: error: incompatible types: Holder<Attribute> cannot be converted to Attribute
+ocedure.java:87: error: cannot find symbol
+or.java:194: error: no suitable constructor found for PoolElementStructurePiece(StructureTemplateManager,StructurePoolE
+Procedure.java:14: error: cannot find symbol
+Procedure.java:28: error: cannot find symbol
+re.java:16: error: cannot find symbol
+re.java:37: error: cannot find symbol
+re.java:66: error: cannot find symbol
+re.java:85: error: cannot find symbol
+Renderer.java:48: error: cannot find symbol
+Renderer.java:53: error: cannot find symbol
+SpawnProcedure.java:20: error: cannot find symbol
+SpawnProcedure.java:30: error: cannot find symbol
+SpawnProcedure.java:44: error: cannot find symbol
+SpawnProcedure.java:7: error: cannot find symbol
+tySpawnProcedure.java:44: error: cannot find symbol
+uard.java:118: error: cannot find symbol
+uard.java:120: error: cannot find symbol
+uard.java:121: error: cannot find symbol
+uard.java:124: error: cannot find symbol
+uard.java:85: error: cannot find symbol
+y.java:91: error: method does not override or implement a method from a supertype
+yGuard.java:118: error: cannot find symbol
+yGuard.java:120: error: cannot find symbol
+yGuard.java:121: error: cannot find symbol
+yGuard.java:124: error: cannot find symbol
+yGuard.java:85: error: cannot find symbol

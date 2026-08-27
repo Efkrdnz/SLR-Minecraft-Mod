@@ -63,7 +63,7 @@ public class RandomHunterRangerTickProcedure {
 										AbstractArrow entityToSpawn = new RangerProjectileEntity(SololevelingModEntities.RANGER_PROJECTILE.get(), level);
 										entityToSpawn.setOwner(shooter);
 										entityToSpawn.setBaseDamage(damage);
-										entityToSpawn.setKnockback(knockback);
+										net.solocraft.entity.LegacyProjectileCompat.setKnockback(entityToSpawn, knockback);
 										entityToSpawn.setSilent(true);
 										return entityToSpawn;
 									}
@@ -85,7 +85,7 @@ public class RandomHunterRangerTickProcedure {
 										AbstractArrow entityToSpawn = new RangerProjectileEntity(SololevelingModEntities.RANGER_PROJECTILE.get(), level);
 										entityToSpawn.setOwner(shooter);
 										entityToSpawn.setBaseDamage(damage);
-										entityToSpawn.setKnockback(knockback);
+										net.solocraft.entity.LegacyProjectileCompat.setKnockback(entityToSpawn, knockback);
 										entityToSpawn.setSilent(true);
 										return entityToSpawn;
 									}

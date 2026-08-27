@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:end_crystal"
+    },
+    "title": {
+      "translate": "advancements.vessels.destruction.extinction.title"
+    },
+    "description": {
+      "translate": "advancements.vessels.destruction.extinction.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:vessels/destruction/sovereign_roar"
+}

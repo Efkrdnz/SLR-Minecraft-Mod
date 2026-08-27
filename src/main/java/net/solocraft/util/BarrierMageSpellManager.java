@@ -4,12 +4,16 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.entity.BarrierVfxEntity;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -50,7 +54,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Server-authoritative mechanics for the staged Barrier Mage spell set. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class BarrierMageSpellManager {
 	public static final String FRACTURE_BOLT = "Fracture Bolt";
 	public static final String PRISM_RAMPART = "Prism Rampart";
@@ -76,7 +80,7 @@ public final class BarrierMageSpellManager {
 	private static final String FRACTURE_UNTIL_SUFFIX = "_until";
 	private static final double[] COST_MULTIPLIER = {0.0D, 1.0D, 1.10D, 1.20D, 1.30D, 1.40D};
 	private static final TagKey<EntityType<?>> BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("soloboss"));
+			ResourceLocation.parse("soloboss"));
 
 	private static final List<BoltCast> ACTIVE_BOLTS = new ArrayList<>();
 	private static final List<RepulsionCast> ACTIVE_REPULSIONS = new ArrayList<>();
@@ -302,7 +306,7 @@ public final class BarrierMageSpellManager {
 			default -> 0.0D;
 		};
 		double intelligence = Math.max(0.0D, MageCombatHelper.intelligence(caster));
-		double maximumMana = 1000.0D + intelligence * 100.0D;
+		double maximumMana = ManaRules.maximumManaFor(intelligence);
 		double qte = MageQTEHelper.getManaCostMultiplier(result == null ? QTEResult.MISS : result,
 				intelligence);
 		return Math.max(0, OrbOfAvariceManager.adjustManaCost(caster, maximumMana * basePercent
@@ -314,7 +318,7 @@ public final class BarrierMageSpellManager {
 		if (caster instanceof Player player && player.isCreative())
 			return 0;
 		double intelligence = Math.max(0.0D, MageCombatHelper.intelligence(caster));
-		double maximumMana = 1000.0D + intelligence * 100.0D;
+		double maximumMana = ManaRules.maximumManaFor(intelligence);
 		double baseDamage = 3.0D + intelligence * 0.05D;
 		double stackDamage = 0.75D + intelligence * 0.0125D;
 		double projectedDamage = context.targetIds.size() * baseDamage;
@@ -454,9 +458,7 @@ public final class BarrierMageSpellManager {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
+	public static void onServerTick(ServerTickEvent.Post event) {
 		tick(ACTIVE_BOLTS);
 		tick(ACTIVE_REPULSIONS);
 		tick(ACTIVE_PRISONS);
@@ -484,7 +486,7 @@ public final class BarrierMageSpellManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void onLivingHurt(LivingHurtEvent event) {
+	public static void onLivingHurt(LivingIncomingDamageEvent event) {
 		LivingEntity victim = event.getEntity();
 		if (!(victim.level() instanceof ServerLevel level) || event.getAmount() <= 0.0F)
 			return;
@@ -539,7 +541,7 @@ public final class BarrierMageSpellManager {
 		}
 	}
 
-	private static void applyBlockedAmount(LivingHurtEvent event, float blocked) {
+	private static void applyBlockedAmount(LivingIncomingDamageEvent event, float blocked) {
 		if (blocked <= 0.0F)
 			return;
 		float remaining = Math.max(0.0F, event.getAmount() - blocked);
@@ -978,6 +980,19 @@ public final class BarrierMageSpellManager {
 				clearFracture(caster, target);
 			}
 			boolean orb = OrbOfAvariceManager.isHeldBy(caster);
+			if (caster instanceof ServerPlayer player) {
+				if (stage >= 5) {
+					AbilityDestructionManager.impact(player,
+							AbilityDestructionManager.Profile.BARRIER_CATASTROPHE,
+							centers.isEmpty() ? caster.position() : average(centers),
+							intelligence, true);
+				} else {
+					for (int i = 0; i < Math.min(3, centers.size()); i++)
+						AbilityDestructionManager.impact(player,
+								AbilityDestructionManager.Profile.BARRIER_COLLAPSE,
+								centers.get(i), intelligence, false);
+				}
+			}
 			if (stage >= 5) {
 				Vec3 origin = centers.isEmpty() ? caster.position() : average(centers);
 				spawn(level, origin, BarrierVfxEntity.RESONANT_COLLAPSE, stage, 18.0F,
@@ -989,7 +1004,7 @@ public final class BarrierMageSpellManager {
 						3.0F + stage * 0.75F, 3.0F + stage, 18, caster.getYRot(), 0.0F,
 						caster, null, orb, 0.0F, false);
 			play(level, centers.isEmpty() ? caster.position() : centers.get(0),
-					SoundEvents.GENERIC_EXPLODE, stage >= 5 ? 1.6F : 0.9F,
+					SoundEvents.GENERIC_EXPLODE.value(), stage >= 5 ? 1.6F : 0.9F,
 					stage >= 5 ? 0.55F : 1.15F);
 		}
 
@@ -1110,7 +1125,7 @@ public final class BarrierMageSpellManager {
 					radius, effect.getLength(), 28, effect.getYRot(), 0.0F, caster, null,
 					effect.isOrbAmplified(), 0.0F, false);
 			effect.dissolve();
-			play(level, effect.position(), SoundEvents.GENERIC_EXPLODE, 1.3F, 0.68F);
+			play(level, effect.position(), SoundEvents.GENERIC_EXPLODE.value(), 1.3F, 0.68F);
 		}
 	}
 

@@ -12,7 +12,7 @@ public class NoFallDamageOnEffectActiveTickProcedure {
 		entity.fallDistance = 0;
 		if (entity.onGround()) {
 			if (entity instanceof LivingEntity _entity)
-				_entity.removeEffect(SololevelingModMobEffects.NO_FALL_DAMAGE.get());
+				_entity.removeEffect(SololevelingModMobEffects.NO_FALL_DAMAGE);
 		}
 	}
 }

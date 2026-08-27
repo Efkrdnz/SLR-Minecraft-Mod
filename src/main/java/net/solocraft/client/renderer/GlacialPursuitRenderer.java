@@ -16,7 +16,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
 public class GlacialPursuitRenderer extends EntityRenderer<GlacialPursuitEntity> {
-	private static final ResourceLocation FALLBACK = new ResourceLocation("sololeveling", "textures/particle/mana_blue.png");
+	private static final ResourceLocation FALLBACK = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/mana_blue.png");
 
 	public GlacialPursuitRenderer(EntityRendererProvider.Context context) {
 		super(context);
@@ -95,9 +95,9 @@ public class GlacialPursuitRenderer extends EntityRenderer<GlacialPursuitEntity>
 
 	private static void vertex(VertexConsumer out, PoseStack.Pose pose, float x, float y, float z,
 			float u, float v, int alpha) {
-		out.vertex(pose.pose(), x, y, z).color(185, 238, 255, alpha).uv(u, v)
-				.overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240)
-				.normal(pose.normal(), 0.0F, 1.0F, 0.0F).endVertex();
+		out.addVertex(pose, x, y, z).setColor(185, 238, 255, alpha).setUv(u, v)
+				.setOverlay(OverlayTexture.NO_OVERLAY).setLight(240)
+				.setNormal(pose, 0.0F, 1.0F, 0.0F);
 	}
 
 	@Override

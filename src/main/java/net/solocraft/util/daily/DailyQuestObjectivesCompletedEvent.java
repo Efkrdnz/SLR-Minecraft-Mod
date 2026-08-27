@@ -1,6 +1,6 @@
 package net.solocraft.util.daily;
 
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
 
 import net.minecraft.server.level.ServerPlayer;
 

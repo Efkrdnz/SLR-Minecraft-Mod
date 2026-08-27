@@ -5,12 +5,13 @@ import net.solocraft.network.DkcQuestProgressMessage;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.DkcQuestManager;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -27,7 +28,7 @@ import java.util.WeakHashMap;
  * Produces the compact server-authoritative objective shown while Tab is held.
  * It samples at 2 Hz only for a visible DKC tracker and sends only on change.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DkcQuestProgressTracker {
 	private static final int SYNC_INTERVAL_TICKS = 10;
 	private static final int MIN_PRESS_INTERVAL_TICKS = 1;

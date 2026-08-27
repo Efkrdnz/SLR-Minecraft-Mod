@@ -4,12 +4,16 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.network.PartyStateMessage;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -28,7 +32,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Server-authoritative operations and snapshots for the party interface. */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class PartyService {
 	public static final int DEFAULT_GLOW_COLOR = 0x55D8FF;
 
@@ -54,8 +58,8 @@ public final class PartyService {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || event.getServer().overworld().getGameTime() % 20L != 0L)
+	public static void onServerTick(ServerTickEvent.Post event) {
+		if (false || event.getServer().overworld().getGameTime() % 20L != 0L)
 			return;
 		long gameTime = event.getServer().overworld().getGameTime();
 		REQUEST_MUTATION_TICKS.values().removeIf(tick ->

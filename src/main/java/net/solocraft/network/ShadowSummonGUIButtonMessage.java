@@ -7,17 +7,19 @@ import net.solocraft.world.inventory.ShadowSummonGUIMenu;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.solocraft.network.compat.NetworkEvent;
+import net.solocraft.network.compat.NetworkHooks;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -28,9 +30,12 @@ import io.netty.buffer.Unpooled;
 import java.util.function.Supplier;
 import java.util.HashMap;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class ShadowSummonGUIButtonMessage {
+	public static final int HEAL_BOSS_SHADOWS_BUTTON_ID = 102;
+	public static final int HEAL_ALL_SHADOWS_BUTTON_ID = 103;
 	private static final int CUSTOMIZE_BUTTON_OFFSET = 200;
+	private static final int GRAND_MARSHAL_BUTTON_OFFSET = 300;
 	private final int buttonID, x, y, z;
 	private final String payload;
 
@@ -87,8 +92,14 @@ public class ShadowSummonGUIButtonMessage {
 		// security measure to prevent arbitrary chunk generation
 		if (!world.hasChunkAt(new BlockPos(x, y, z)))
 			return;
+		if (buttonID >= GRAND_MARSHAL_BUTTON_OFFSET
+				&& buttonID < GRAND_MARSHAL_BUTTON_OFFSET + 14) {
+			assignGrandMarshal(entity,
+					buttonID - GRAND_MARSHAL_BUTTON_OFFSET, x, y, z);
+			return;
+		}
 		if (buttonID >= CUSTOMIZE_BUTTON_OFFSET
-				&& buttonID < CUSTOMIZE_BUTTON_OFFSET + 13) {
+				&& buttonID < CUSTOMIZE_BUTTON_OFFSET + 14) {
 			openCustomization(entity, buttonID - CUSTOMIZE_BUTTON_OFFSET, x, y, z);
 			return;
 		}
@@ -102,28 +113,51 @@ public class ShadowSummonGUIButtonMessage {
 			openDismiss(entity, x, y, z);
 			return;
 		}
-		String type = switch (buttonID) {
-			case 0 -> "goblin_club";
-			case 1 -> "goblin_archer";
-			case 2 -> "goblin_mage";
-			case 3 -> "wolf";
-			case 4 -> "knight";
-			case 5 -> "polar_bear";
-			case 6 -> "orc";
-			case 7 -> "igris";
-			case 8 -> "beru";
-			case 9 -> "kamish";
-			case 10 -> "high_orc";
-			case 11 -> "tusk";
-			case 12 -> "kaisel";
-			default -> "";
-		};
+		if (buttonID == HEAL_BOSS_SHADOWS_BUTTON_ID
+				|| buttonID == HEAL_ALL_SHADOWS_BUTTON_ID) {
+			healSummonedShadows(entity,
+					buttonID == HEAL_BOSS_SHADOWS_BUTTON_ID, x, y, z);
+			return;
+		}
+		String type = ShadowMonarchManager.typeForSummonButton(buttonID);
 		if (!type.isEmpty()) {
 			if ("all".equalsIgnoreCase(payload))
 				ShadowMonarchManager.summonAllOfType(world, x, y, z, entity, type);
 			else
 				ShadowMonarchManager.summonType(world, x, y, z, entity, type);
 		}
+	}
+
+	private static void healSummonedShadows(Player entity, boolean bossesOnly,
+			int x, int y, int z) {
+		if (!(entity instanceof ServerPlayer serverPlayer)
+				|| !(entity.containerMenu instanceof ShadowSummonGUIMenu summonMenu)
+				|| summonMenu.x != x || summonMenu.y != y
+				|| summonMenu.z != z)
+			return;
+		ShadowMonarchManager.ShadowHealingResult result =
+				ShadowMonarchManager.healSummonedShadows(serverPlayer,
+						bossesOnly);
+		serverPlayer.displayClientMessage(Component.literal(result.message())
+				.withStyle(result.success() ? ChatFormatting.AQUA
+						: ChatFormatting.RED), true);
+	}
+
+	private static void assignGrandMarshal(Player entity, int summonButtonId,
+			int x, int y, int z) {
+		if (!(entity instanceof ServerPlayer serverPlayer)
+				|| !(entity.containerMenu instanceof ShadowSummonGUIMenu summonMenu)
+				|| summonMenu.x != x || summonMenu.y != y
+				|| summonMenu.z != z)
+			return;
+		String type = ShadowMonarchManager.typeForSummonButton(
+				summonButtonId);
+		if (!ShadowMonarchManager.hasShadowForDisplay(serverPlayer, type))
+			return;
+		ShadowMonarchManager.GrandMarshalAssignmentResult result =
+				ShadowMonarchManager.assignGrandMarshal(serverPlayer, type);
+		serverPlayer.displayClientMessage(Component.literal(result.message()),
+				!result.success());
 	}
 
 	private static void openDismiss(Player entity, int x, int y, int z) {
@@ -150,10 +184,21 @@ public class ShadowSummonGUIButtonMessage {
 				|| summonMenu.x != x || summonMenu.y != y || summonMenu.z != z)
 			return;
 		String type = ShadowMonarchManager.typeForSummonButton(summonButtonId);
-		if (!ShadowMonarchManager.isCustomizableBoss(type)
+		if (type.isEmpty()
 				|| !ShadowMonarchManager.hasShadowForDisplay(serverPlayer, type))
 			return;
 		BlockPos pos = new BlockPos(x, y, z);
+		// Outline colours live in the owner's persistent data, which never reaches
+		// the client on its own, so the whole set travels with the menu.
+		java.util.function.Consumer<FriendlyByteBuf> writer = data -> {
+			data.writeBlockPos(pos);
+			data.writeUtf(type, 24);
+			for (String candidate : ShadowMonarchManager.customizableTypes()) {
+				data.writeBoolean(ShadowMonarchManager.hasShadowForDisplay(
+						serverPlayer, candidate));
+				data.writeInt(ShadowMonarchManager.glowColor(serverPlayer, candidate));
+			}
+		};
 		NetworkHooks.openScreen(serverPlayer, new MenuProvider() {
 			@Override
 			public Component getDisplayName() {
@@ -164,14 +209,10 @@ public class ShadowSummonGUIButtonMessage {
 			public AbstractContainerMenu createMenu(int id, Inventory inventory,
 					Player player) {
 				FriendlyByteBuf data = new FriendlyByteBuf(Unpooled.buffer());
-				data.writeBlockPos(pos);
-				data.writeUtf(type, 24);
+				writer.accept(data);
 				return new ShadowCustomizationMenu(id, inventory, data);
 			}
-		}, data -> {
-			data.writeBlockPos(pos);
-			data.writeUtf(type, 24);
-		});
+		}, writer::accept);
 	}
 
 	@SubscribeEvent

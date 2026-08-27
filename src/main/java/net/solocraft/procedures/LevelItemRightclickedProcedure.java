@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.LevelRewardRules;
 
 import net.minecraft.world.entity.Entity;
 
@@ -60,7 +61,8 @@ public class LevelItemRightclickedProcedure {
 			});
 		}
 		{
-			double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).SkillPoints + 3;
+			double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).SkillPoints
+					+ LevelRewardRules.skillPointsForLevels(1);
 			entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
 				capability.SkillPoints = _setval;
 				capability.syncPlayerVariables(entity);

@@ -33,8 +33,8 @@ public class KatanaStierRightclickedProcedure {
 		double z = 0;
 		double yaw = 0;
 		if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).getItem() == SololevelingModItems.KATANA_STIER.get()) {
-			if (entity instanceof Player _player)
-				_player.getCooldowns().addCooldown(itemstack.getItem(), _player.isCreative() ? 10 : 100);
+			if (entity instanceof Player _player && !_player.isCreative())
+				_player.getCooldowns().addCooldown(itemstack.getItem(), 100);
 			entity.setDeltaMovement(new Vec3(0, 0, 0));
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10, 99, false, false));
@@ -54,7 +54,7 @@ public class KatanaStierRightclickedProcedure {
 				final Vec3 _center = new Vec3((entity.getX() + 2 * entity.getLookAngle().x), (entity.getY()), (entity.getZ() + 2 * entity.getLookAngle().z));
 				List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(5 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 				for (Entity entityiterator : _entfound) {
-					if (!(entityiterator == entity) && entityiterator instanceof LivingEntity && !entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("side")))) {
+					if (!(entityiterator == entity) && entityiterator instanceof LivingEntity && !entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("side")))) {
 						entityiterator.setDeltaMovement(new Vec3((2 * entity.getLookAngle().x), 0, (2 * entity.getLookAngle().z)));
 						entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.PLAYER_ATTACK), entity),
 								(float) (((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getBaseValue()

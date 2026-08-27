@@ -2,7 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -27,7 +27,7 @@ public class IceSpearToolInHandTickProcedure {
 				_player.displayClientMessage(Component.literal("Ice Spear melted in your hands..."), true);
 			if (world instanceof Level _level) {
 				if (_level.isClientSide()) {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.glass.break")), SoundSource.NEUTRAL, 1, 1, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.glass.break")), SoundSource.NEUTRAL, 1, 1, false);
 				}
 			}
 		}

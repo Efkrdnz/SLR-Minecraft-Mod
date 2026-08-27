@@ -4,10 +4,14 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -31,12 +35,12 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Comparator;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class IceDashDamageProcedure {
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player.level(), event.player.getX(), event.player.getY(), event.player.getZ(), event.player);
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true) {
+			execute(event, event.getEntity().level(), event.getEntity().getX(), event.getEntity().getY(), event.getEntity().getZ(), event.getEntity());
 		}
 	}
 
@@ -67,9 +71,9 @@ public class IceDashDamageProcedure {
 											: "").equals(""))) {
 						entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.PLAYER_ATTACK), entity),
 								(float) (6 + (TemporaryStatBonusManager.effectiveStrength(entity)
-										+ (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence) / 8));
+										+ TemporaryStatBonusManager.effectiveIntelligence(entity)) / 8));
 						if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE.get(), 40, 1, false, false));
+							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE, 40, 1, false, false));
 						entity.getPersistentData().putString("icedash", "");
 						entity.setDeltaMovement(new Vec3(0, 0, 0));
 					}

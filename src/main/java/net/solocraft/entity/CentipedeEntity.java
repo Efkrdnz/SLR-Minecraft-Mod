@@ -2,21 +2,20 @@
 package net.solocraft.entity;
 
 import software.bernie.geckolib.util.GeckoLibUtil;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.GeoEntity;
 
 import net.solocraft.procedures.CentipedeOnInitialEntitySpawnProcedure;
 import net.solocraft.procedures.CentipedeOnEntityTickUpdateProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
@@ -27,13 +26,12 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.solocraft.entity.ai.LegacyMeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
@@ -47,7 +45,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.nbt.CompoundTag;
 
 import javax.annotation.Nullable;
@@ -63,10 +60,6 @@ public class CentipedeEntity extends Monster implements GeoEntity {
 	private long lastSwing;
 	public String animationprocedure = "empty";
 
-	public CentipedeEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.CENTIPEDE.get(), world);
-	}
-
 	public CentipedeEntity(EntityType<CentipedeEntity> type, Level world) {
 		super(type, world);
 		xpReward = 0;
@@ -74,12 +67,12 @@ public class CentipedeEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(SHOOT, false);
-		this.entityData.define(ANIMATION, "undefined");
-		this.entityData.define(TEXTURE, "centipedetexture");
-		this.entityData.define(DATA_life, 0);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(SHOOT, false);
+		builder.define(ANIMATION, "undefined");
+		builder.define(TEXTURE, "centipedetexture");
+		builder.define(DATA_life, 0);
 	}
 
 	public void setTexture(String texture) {
@@ -91,14 +84,9 @@ public class CentipedeEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, false) {
+		this.goalSelector.addGoal(1, new LegacyMeleeAttackGoal(this, 1.2, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
 				return this.mob.getBbWidth() * this.mob.getBbWidth() + entity.getBbWidth();
@@ -113,23 +101,18 @@ public class CentipedeEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
-	}
-
-	@Override
 	public SoundEvent getHurtSound(DamageSource ds) {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.hurt"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.hurt"));
 	}
 
 	@Override
 	public SoundEvent getDeathSound() {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.death"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.death"));
 	}
 
 	@Override
-	public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData livingdata, @Nullable CompoundTag tag) {
-		SpawnGroupData retval = super.finalizeSpawn(world, difficulty, reason, livingdata, tag);
+	public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData livingdata) {
+		SpawnGroupData retval = super.finalizeSpawn(world, difficulty, reason, livingdata);
 		CentipedeOnInitialEntitySpawnProcedure.execute(this);
 		return retval;
 	}
@@ -158,8 +141,8 @@ public class CentipedeEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public EntityDimensions getDimensions(Pose p_33597_) {
-		return super.getDimensions(p_33597_).scale((float) 2);
+	public EntityDimensions getDefaultDimensions(Pose p_33597_) {
+		return super.getDefaultDimensions(p_33597_).scale((float) 2);
 	}
 
 	public static void init() {
@@ -207,7 +190,7 @@ public class CentipedeEntity extends Monster implements GeoEntity {
 		++this.deathTime;
 		if (this.deathTime == 5) {
 			this.remove(CentipedeEntity.RemovalReason.KILLED);
-			this.dropExperience();
+			this.dropExperience(this.getKillCredit());
 		}
 	}
 

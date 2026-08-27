@@ -5,7 +5,7 @@ import net.solocraft.world.inventory.FireGriamoreMenu;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.network.NetworkHooks;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -54,7 +54,7 @@ public class Ability1OnKeyPressedProcedure {
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).combatmode) {
 			DaggerRushActProcedure.execute(world, x, y, z, entity);
 		} else {
-			if (!((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:survival_dimension"))))) {
+			if (!((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:survival_dimension"))))) {
 				if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 1) {
 					if (entity instanceof ServerPlayer _ent) {
 						BlockPos _bpos = BlockPos.containing(x, y, z);
@@ -88,7 +88,7 @@ public class Ability1OnKeyPressedProcedure {
 						}
 					} else {
 						if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.USING_FIRE.get(), 999, 1, false, false));
+							_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.USING_FIRE, 999, 1, false, false));
 						CooldownManager.set(entity, "mana_refresh", 999);
 					}
 				} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {

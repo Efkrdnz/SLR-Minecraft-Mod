@@ -3,10 +3,11 @@ package net.solocraft.network;
 import net.solocraft.SololevelingMod;
 import net.solocraft.util.ClassPassiveClientState;
 
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.solocraft.network.compat.NetworkEvent;
 
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -21,8 +22,9 @@ import java.util.function.Supplier;
  *   2 = Tanker   iron-wall stacks   (int 0-10)
  *   3 = Healer   resonance stacks   (int 0-5)
  *   4 = Ranger   focus charge       (double 0-100)
+ *   5 = Assassin Infiltrator Veil   (double 0-100)
  */
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class ClassPassiveMessage {
 
     public final int    passiveType;

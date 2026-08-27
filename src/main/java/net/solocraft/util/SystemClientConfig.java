@@ -1,6 +1,6 @@
 package net.solocraft.util;
 
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.io.InputStream;
 import java.io.OutputStream;

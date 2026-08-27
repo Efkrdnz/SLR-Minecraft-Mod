@@ -278,7 +278,7 @@ public final class DungeonBuilderStudioSimulation {
 				socket.facing(), socket.required(), 1)).toList();
 		List<Marker> markers = project.markers().stream().map(marker -> new Marker(marker.id(), marker.type(),
 				marker.group(), int3(marker.position().subtract(base)))).toList();
-		return new DungeonRoomDefinition(new ResourceLocation(project.namespace(), project.name()), 2,
+		return new DungeonRoomDefinition(ResourceLocation.fromNamespaceAndPath(project.namespace(), project.name()), 2,
 				snapshot.structureKey(), roomRole(project.roomRole()), project.roomWeight(), size,
 				new Int3(0, 0, 0), Optional.empty(), Optional.empty(), regions, sockets, markers, List.of());
 	}

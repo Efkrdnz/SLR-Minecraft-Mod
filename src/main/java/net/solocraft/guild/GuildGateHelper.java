@@ -23,14 +23,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 
 public final class GuildGateHelper {
     public static final TagKey<EntityType<?>> PORTAL_TAG =
-            TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals"));
+            TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("portals"));
     private static final String INTERACTED_KEY = "slr_guild_gate_interacted";
     private static final String RESERVED_KEY = "slr_guild_gate_reserved";
     private static final String RESERVED_GUILD_NAME_KEY = "slr_guild_gate_reserved_name";
@@ -182,7 +182,7 @@ public final class GuildGateHelper {
     }
 
     private static String entityPath(Entity entity) {
-        ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         return id == null ? "" : id.getPath();
     }
 }

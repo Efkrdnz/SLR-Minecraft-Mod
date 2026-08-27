@@ -2,14 +2,10 @@
 package net.solocraft.item;
 
 import net.solocraft.world.inventory.SelectionBoxGUIMenu;
-import net.solocraft.item.inventory.SelectionSpecialBoxInventoryCapability;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.solocraft.network.compat.NetworkHooks;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.TooltipFlag;
@@ -25,9 +21,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.nbt.CompoundTag;
 
-import javax.annotation.Nullable;
 
 import java.util.List;
 
@@ -45,8 +39,8 @@ public class SelectionSpecialBoxItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 	}
 
 	@Override
@@ -74,22 +68,4 @@ public class SelectionSpecialBoxItem extends Item {
 		return ar;
 	}
 
-	@Override
-	public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag compound) {
-		return new SelectionSpecialBoxInventoryCapability();
-	}
-
-	@Override
-	public CompoundTag getShareTag(ItemStack stack) {
-		CompoundTag nbt = stack.getOrCreateTag();
-		stack.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(capability -> nbt.put("Inventory", ((ItemStackHandler) capability).serializeNBT()));
-		return nbt;
-	}
-
-	@Override
-	public void readShareTag(ItemStack stack, @Nullable CompoundTag nbt) {
-		super.readShareTag(stack, nbt);
-		if (nbt != null)
-			stack.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(capability -> ((ItemStackHandler) capability).deserializeNBT((CompoundTag) nbt.get("Inventory")));
-	}
 }

@@ -42,11 +42,10 @@ public class QuestsScreen extends AbstractContainerScreen<QuestsMenu> {
 		this.imageHeight = 0;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/quests.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/quests.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 		if (mouseX > leftPos + -19 && mouseX < leftPos + 5 && mouseY > topPos + -43 && mouseY < topPos + -19)
@@ -85,7 +84,7 @@ public class QuestsScreen extends AbstractContainerScreen<QuestsMenu> {
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/panel_rework_empty_small.png"), this.leftPos + -101, this.topPos + -85, 0, 0, 200, 160, 200, 160);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/panel_rework_empty_small.png"), this.leftPos + -101, this.topPos + -85, 0, 0, 200, 160, 200, 160);
 
 		RenderSystem.disableBlend();
 	}
@@ -119,7 +118,7 @@ public class QuestsScreen extends AbstractContainerScreen<QuestsMenu> {
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_panel_rework_quests_daily = new ImageButton(this.leftPos + -19, this.topPos + -43, 36, 36, 0, 0, 36, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_quests_daily.png"), 36, 72, e -> {
+		imagebutton_panel_rework_quests_daily = new LegacyAtlasImageButton(this.leftPos + -19, this.topPos + -43, 36, 36, 0, 0, 36, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_panel_rework_quests_daily.png"), 36, 72, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new QuestsButtonMessage(0, x, y, z));
 				QuestsButtonMessage.handleButtonAction(entity, 0, x, y, z);
@@ -127,7 +126,7 @@ public class QuestsScreen extends AbstractContainerScreen<QuestsMenu> {
 		});
 		guistate.put("button:imagebutton_panel_rework_quests_daily", imagebutton_panel_rework_quests_daily);
 		this.addRenderableWidget(imagebutton_panel_rework_quests_daily);
-		imagebutton_panel_rework_quests_path = new ImageButton(this.leftPos + -19, this.topPos + 2, 36, 36, 0, 0, 36, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_quests_path.png"), 36, 72, e -> {
+		imagebutton_panel_rework_quests_path = new LegacyAtlasImageButton(this.leftPos + -19, this.topPos + 2, 36, 36, 0, 0, 36, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_panel_rework_quests_path.png"), 36, 72, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new QuestsButtonMessage(1, x, y, z));
 				QuestsButtonMessage.handleButtonAction(entity, 1, x, y, z);

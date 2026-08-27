@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class VulcanModel extends GeoModel<VulcanEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(VulcanEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/vulcan.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/vulcan.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(VulcanEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/vulcan.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/vulcan.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(VulcanEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

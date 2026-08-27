@@ -1,10 +1,11 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.DemonCastleBossDamageRules;
 import net.solocraft.entity.BaranEntity;
 import net.solocraft.entity.KaiselinEntity;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
@@ -28,10 +29,10 @@ import net.minecraft.world.phys.Vec3;
  * Timeline (MF ticks):
  *   1   – apply SPEED II, trail particles, menacing sound
  *   5   – start propelling Baran toward target every tick
- *   5-18– propulsion ticks: deal 17 damage to any entity he collides with
- *   18  – deal guaranteed 21-damage hit if target is still within 6 blocks
+ *   5-18– propulsion ticks: damage an entity once if Baran collides with it
+ *   18  – deal a final hit if the target is still within 6 blocks
  *          + knockback
- *   Phase 2: MF=1 gives SPEED III; collision damage = 23
+ *   Phase 2: MF=1 gives SPEED III and strengthens both hits
  *   ≥40 – remove speed effect, reset to idle
  */
 public class BaranChargeProcedure {
@@ -60,7 +61,7 @@ public class BaranChargeProcedure {
 			if (world instanceof ServerLevel sl) {
 				sl.sendParticles(ParticleTypes.CRIT, x, y + 1, z, 15, 0.3, 0.3, 0.3, 0.3);
 				sl.playSound(null, BlockPos.containing(x, y, z),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.ravager.step")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.ravager.step")),
 						SoundSource.HOSTILE, 1.5f, 0.6f);
 			}
 		}
@@ -79,7 +80,7 @@ public class BaranChargeProcedure {
 
 			// Collision damage: hurt anything close to Baran during the charge
 			if (world instanceof ServerLevel sl) {
-				float collisionDmg = phase2 ? 23f : 17f;
+				float collisionDmg = DemonCastleBossDamageRules.baranChargeCollision(phase2);
 				DamageSource src = new DamageSource(
 						world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
 								.getHolderOrThrow(DamageTypes.MOB_ATTACK), baran);
@@ -102,7 +103,7 @@ public class BaranChargeProcedure {
 				DamageSource src = new DamageSource(
 						world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE)
 								.getHolderOrThrow(DamageTypes.MOB_ATTACK), baran);
-				target.hurt(src, phase2 ? 29f : 21f);
+				target.hurt(src, DemonCastleBossDamageRules.baranChargeImpact(phase2));
 				// Knockback away
 				Vec3 dir = target.position().subtract(baran.position()).normalize();
 				target.setDeltaMovement(dir.x * 1.5, 0.5, dir.z * 1.5);
@@ -111,7 +112,7 @@ public class BaranChargeProcedure {
 			if (world instanceof ServerLevel sl) {
 				sl.sendParticles(ParticleTypes.EXPLOSION, x, y + 0.5, z, 3, 0.3, 0.3, 0.3, 0);
 				sl.playSound(null, BlockPos.containing(x, y, z),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")),
 						SoundSource.HOSTILE, 1.0f, 1.2f);
 			}
 			// Clear per-entity hit flags

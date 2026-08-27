@@ -3,10 +3,10 @@ package net.solocraft.world.inventory;
 
 import net.solocraft.init.SololevelingModMenus;
 
-import net.minecraftforge.items.SlotItemHandler;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.solocraft.util.ItemHandlerAccess;
 
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.Level;
@@ -56,7 +56,7 @@ public class PocketDimensionGUIMenu extends AbstractContainerMenu implements Sup
 				byte hand = extraData.readByte();
 				ItemStack itemstack = hand == 0 ? this.entity.getMainHandItem() : this.entity.getOffhandItem();
 				this.boundItemMatcher = () -> itemstack == (hand == 0 ? this.entity.getMainHandItem() : this.entity.getOffhandItem());
-				itemstack.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(capability -> {
+				ItemHandlerAccess.get(itemstack).ifPresent(capability -> {
 					this.internal = capability;
 					this.bound = true;
 				});
@@ -64,14 +64,14 @@ public class PocketDimensionGUIMenu extends AbstractContainerMenu implements Sup
 				extraData.readByte(); // drop padding
 				boundEntity = world.getEntity(extraData.readVarInt());
 				if (boundEntity != null)
-					boundEntity.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(capability -> {
+					ItemHandlerAccess.get(boundEntity).ifPresent(capability -> {
 						this.internal = capability;
 						this.bound = true;
 					});
 			} else { // might be bound to block
 				boundBlockEntity = this.world.getBlockEntity(pos);
 				if (boundBlockEntity != null)
-					boundBlockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER, null).ifPresent(capability -> {
+					ItemHandlerAccess.get(boundBlockEntity).ifPresent(capability -> {
 						this.internal = capability;
 						this.bound = true;
 					});
@@ -228,7 +228,7 @@ public class PocketDimensionGUIMenu extends AbstractContainerMenu implements Sup
 				}
 				Slot slot = this.slots.get(i);
 				ItemStack itemstack = slot.getItem();
-				if (slot.mayPlace(itemstack) && !itemstack.isEmpty() && ItemStack.isSameItemSameTags(p_38904_, itemstack)) {
+				if (slot.mayPlace(itemstack) && !itemstack.isEmpty() && ItemStack.isSameItemSameComponents(p_38904_, itemstack)) {
 					int j = itemstack.getCount() + p_38904_.getCount();
 					int maxSize = Math.min(slot.getMaxStackSize(), p_38904_.getMaxStackSize());
 					if (j <= maxSize) {

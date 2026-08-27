@@ -3,6 +3,7 @@ package net.solocraft.guild;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -16,6 +17,8 @@ import java.util.*;
 public class GuildSavedData extends SavedData {
 
     private static final String DATA_NAME = "solocraft_guilds";
+    private static final SavedData.Factory<GuildSavedData> FACTORY =
+            new SavedData.Factory<>(GuildSavedData::new, GuildSavedData::load);
 
     /** All guilds keyed by their UUID. */
     private final Map<UUID, GuildData> guilds = new LinkedHashMap<>();
@@ -26,7 +29,7 @@ public class GuildSavedData extends SavedData {
         return level.getServer()
                     .overworld()
                     .getDataStorage()
-                    .computeIfAbsent(GuildSavedData::load, GuildSavedData::new, DATA_NAME);
+                    .computeIfAbsent(FACTORY, DATA_NAME);
     }
 
     // ── CRUD ──────────────────────────────────────────────────────────────────
@@ -97,20 +100,20 @@ public class GuildSavedData extends SavedData {
 
     @Nonnull
     @Override
-    public CompoundTag save(@Nonnull CompoundTag tag) {
+    public CompoundTag save(@Nonnull CompoundTag tag, HolderLookup.Provider registries) {
         ListTag list = new ListTag();
         for (GuildData g : guilds.values()) {
-            list.add(g.save());
+            list.add(g.save(registries));
         }
         tag.put("guilds", list);
         return tag;
     }
 
-    private static GuildSavedData load(CompoundTag tag) {
+    private static GuildSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         GuildSavedData data = new GuildSavedData();
         ListTag list = tag.getList("guilds", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
-            GuildData g = GuildData.load(list.getCompound(i));
+            GuildData g = GuildData.load(list.getCompound(i), registries);
             data.guilds.put(g.id, g);
         }
         return data;

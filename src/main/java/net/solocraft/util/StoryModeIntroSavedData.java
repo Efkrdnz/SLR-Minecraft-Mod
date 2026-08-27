@@ -1,6 +1,7 @@
 package net.solocraft.util;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
@@ -26,6 +27,8 @@ import java.util.UUID;
  */
 public final class StoryModeIntroSavedData extends SavedData {
 	private static final String DATA_NAME = "sololeveling_story_mode_intro";
+	private static final SavedData.Factory<StoryModeIntroSavedData> FACTORY =
+			new SavedData.Factory<>(StoryModeIntroSavedData::new, StoryModeIntroSavedData::load);
 	private static final int SCHEMA_VERSION = 3;
 	public static final int DUNGEON_BREAK_GRACE_CLEARS = 10;
 
@@ -101,8 +104,7 @@ public final class StoryModeIntroSavedData extends SavedData {
 	public static StoryModeIntroSavedData get(MinecraftServer server) {
 		if (server == null)
 			throw new IllegalArgumentException("A Minecraft server is required.");
-		return server.overworld().getDataStorage().computeIfAbsent(
-				StoryModeIntroSavedData::load, StoryModeIntroSavedData::new, DATA_NAME);
+		return server.overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 	}
 
 	public Stage stage() {
@@ -388,7 +390,7 @@ public final class StoryModeIntroSavedData extends SavedData {
 
 	@Nonnull
 	@Override
-	public CompoundTag save(@Nonnull CompoundTag root) {
+	public CompoundTag save(@Nonnull CompoundTag root, HolderLookup.Provider registries) {
 		root.putInt("SchemaVersion", SCHEMA_VERSION);
 		root.putString("Stage", stage.name());
 		if (ownerId != null)
@@ -418,7 +420,7 @@ public final class StoryModeIntroSavedData extends SavedData {
 		return root;
 	}
 
-	private static StoryModeIntroSavedData load(CompoundTag root) {
+	private static StoryModeIntroSavedData load(CompoundTag root, HolderLookup.Provider registries) {
 		StoryModeIntroSavedData data = new StoryModeIntroSavedData();
 		String storedStage = root.getString("Stage");
 		boolean unknownStage = !Stage.recognizes(storedStage);

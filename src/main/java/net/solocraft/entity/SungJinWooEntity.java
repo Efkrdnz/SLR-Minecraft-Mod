@@ -5,9 +5,8 @@ import net.solocraft.procedures.SungJinWooRightClickedOnEntityProcedure;
 import net.solocraft.procedures.SungJinWooEntityIsHurtProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.Level;
@@ -21,7 +20,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Entity;
@@ -34,24 +32,15 @@ import net.minecraft.world.Difficulty;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 
 public class SungJinWooEntity extends Monster {
-	public SungJinWooEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.SUNG_JIN_WOO.get(), world);
-	}
 
 	public SungJinWooEntity(EntityType<SungJinWooEntity> type, Level world) {
 		super(type, world);
-		setMaxUpStep(0.6f);
+		getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6f);
 		xpReward = 0;
 		setNoAi(false);
 		setPersistenceRequired();
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
 	}
 
 	@Override
@@ -61,28 +50,23 @@ public class SungJinWooEntity extends Monster {
 	}
 
 	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
-	}
-
-	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
 	}
 
 	@Override
-	public double getMyRidingOffset() {
-		return -0.35D;
+	public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
+		return super.getVehicleAttachmentPoint(vehicle).add(0.0D, 0.35D, 0.0D);
 	}
 
 	@Override
 	public SoundEvent getHurtSound(DamageSource ds) {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.hurt"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.hurt"));
 	}
 
 	@Override
 	public SoundEvent getDeathSound() {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.death"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.death"));
 	}
 
 	@Override
@@ -154,10 +138,6 @@ public class SungJinWooEntity extends Monster {
 	}
 
 	public static void init() {
-		SpawnPlacements.register(SololevelingModEntities.SUNG_JIN_WOO.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-				(entityType, world, reason, pos, random) -> (reason != MobSpawnType.NATURAL && reason != MobSpawnType.CHUNK_GENERATION
-						&& world.getDifficulty() != Difficulty.PEACEFUL && Monster.isDarkEnoughToSpawn(world, pos, random)
-						&& Mob.checkMobSpawnRules(entityType, world, reason, pos, random)));
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {

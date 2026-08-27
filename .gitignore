@@ -13,9 +13,12 @@ build/
 
 # Minecraft client/server files
 run/
+run-server/
 temp/
+logs/
 
 # Generated tool output
+*.log
 __pycache__/
 *.py[cod]
 .impeccable/

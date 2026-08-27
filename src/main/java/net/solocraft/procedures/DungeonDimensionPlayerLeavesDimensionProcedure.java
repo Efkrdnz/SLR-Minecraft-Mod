@@ -26,6 +26,9 @@ import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 import java.util.ArrayList;
 import java.util.Optional;
@@ -40,9 +43,9 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 		if (entity == null || sourceentity == null)
 			return;
 		if (!((sourceentity.level().dimension()) == Level.OVERWORLD)) {
-			if ((sourceentity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_kasaka")))
-					|| (sourceentity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_igris")))) {
-				boolean isIgrisDungeon = (sourceentity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_igris")));
+			if ((sourceentity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_kasaka")))
+					|| (sourceentity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_igris")))) {
+				boolean isIgrisDungeon = (sourceentity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_igris")));
 				boolean canLeave = isIgrisDungeon ? JobChangeQuestManager.isFinished(sourceentity) : (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).instancecomplete == true;
 				if (canLeave) {
 					if (!isIgrisDungeon && sourceentity instanceof Player player)
@@ -60,7 +63,7 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 							_player.teleportTo(nextLevel, _player.getX(), _player.getY(), _player.getZ(), _player.getYRot(), _player.getXRot());
 							_player.connection.send(new ClientboundPlayerAbilitiesPacket(_player.getAbilities()));
 							for (MobEffectInstance _effectinstance : _player.getActiveEffects())
-								_player.connection.send(new ClientboundUpdateMobEffectPacket(_player.getId(), _effectinstance));
+								_player.connection.send(new ClientboundUpdateMobEffectPacket(_player.getId(), _effectinstance, false));
 							_player.connection.send(new ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false));
 						}
 					}
@@ -87,7 +90,7 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 					if (sourceentity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal(isIgrisDungeon ? "You cant leave the Job Change Quest before it is complete" : "You cant leave before you complete the dungeon"), true);
 				}
-			} else if ((sourceentity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_snow")))) {
+			} else if ((sourceentity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_snow")))) {
 				boolean hasScopedInstance = !sourceentity.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank()
 						|| !entity.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank();
 				Optional<DungeonInstanceSavedData.Instance> scopedInstance = runtimeInstance(sourceentity, entity);
@@ -122,7 +125,7 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 					return;
 				}
 				for (Entity entityiterator : new ArrayList<>(world.players())) {
-					if ((entityiterator.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_snow")))) {
+					if ((entityiterator.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_snow")))) {
 						if (!entityiterator.getPersistentData().getString(DungeonMobLevelAdapter.INSTANCE_TAG).isBlank())
 							continue;
 						String dungeonTag = currentDungeonTag(entityiterator, entity);
@@ -184,9 +187,14 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 		double returnX = vars.DunX + RETURN_X_OFFSET;
 		double returnY = vars.DunY;
 		double returnZ = vars.DunZ;
+		BlockPos safeReturn = findSafeOverworldReturn(overworld,
+				returnX, returnY, returnZ);
 		player.setNoGravity(false);
+		player.setDeltaMovement(0.0D, 0.0D, 0.0D);
 		player.fallDistance = 0.0F;
-		player.teleportTo(overworld, returnX, returnY, returnZ, player.getYRot(), player.getXRot());
+		player.teleportTo(overworld, safeReturn.getX() + 0.5D,
+				safeReturn.getY(), safeReturn.getZ() + 0.5D,
+				player.getYRot(), player.getXRot());
 		return true;
 	}
 
@@ -223,6 +231,8 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 			returnY = spawn.getY() + 1.0D;
 			returnZ = spawn.getZ() + 0.5D;
 		}
+		BlockPos safeReturn = findSafeOverworldReturn(overworld,
+				returnX, returnY, returnZ);
 
 		resetDungeonReturnState(player);
 		player.getPersistentData().remove("dungeon_tag");
@@ -231,11 +241,95 @@ public class DungeonDimensionPlayerLeavesDimensionProcedure {
 		player.setNoGravity(false);
 		player.setDeltaMovement(0.0D, 0.0D, 0.0D);
 		player.fallDistance = 0.0F;
-		BlockPos destination = BlockPos.containing(returnX, returnY, returnZ);
-		overworld.getChunk(destination);
-		player.teleportTo(overworld, returnX, returnY, returnZ,
+		overworld.getChunk(safeReturn);
+		player.teleportTo(overworld, safeReturn.getX() + 0.5D,
+				safeReturn.getY(), safeReturn.getZ() + 0.5D,
 				player.getYRot(), player.getXRot());
 		return true;
+	}
+
+	private static BlockPos findSafeOverworldReturn(ServerLevel overworld,
+			double requestedX, double requestedY, double requestedZ) {
+		BlockPos requested = BlockPos.containing(requestedX, requestedY,
+				requestedZ);
+		overworld.getChunk(requested);
+		int[] verticalOffsets = {0, 1, -1, 2, -2, 3, -3, 4, -4};
+		for (int radius = 0; radius <= 8; radius++) {
+			for (int dx = -radius; dx <= radius; dx++) {
+				for (int dz = -radius; dz <= radius; dz++) {
+					if (Math.max(Math.abs(dx), Math.abs(dz)) != radius)
+						continue;
+					for (int dy : verticalOffsets) {
+						BlockPos candidate = requested.offset(dx, dy, dz);
+						if (isSafeStandingPosition(overworld, candidate))
+							return candidate;
+					}
+					int surfaceY = overworld.getHeight(
+							Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+							requested.getX() + dx, requested.getZ() + dz);
+					BlockPos surface = new BlockPos(requested.getX() + dx,
+							surfaceY, requested.getZ() + dz);
+					if (isSafeStandingPosition(overworld, surface))
+						return surface;
+				}
+			}
+		}
+		// A gate over water has no dry footing anywhere in range, and teleporting
+		// the player to world spawn from the far side of the map is far worse than
+		// putting them back where they went in. Surfacing them at the gate column
+		// leaves them treading water next to their own gate, which is recoverable.
+		BlockPos surfaced = surfaceAboveFluid(overworld, requested);
+		if (surfaced != null)
+			return surfaced;
+
+		BlockPos spawn = overworld.getSharedSpawnPos().above();
+		overworld.getChunk(spawn);
+		if (isSafeStandingPosition(overworld, spawn))
+			return spawn;
+		int surfaceY = overworld.getHeight(
+				Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+				spawn.getX(), spawn.getZ());
+		return new BlockPos(spawn.getX(), surfaceY, spawn.getZ());
+	}
+
+	/**
+	 * Last resort before world spawn: the first open, non-solid block at or above
+	 * the requested column's surface. Standing in water is acceptable here; being
+	 * teleported across the world is not.
+	 */
+	private static BlockPos surfaceAboveFluid(ServerLevel overworld,
+			BlockPos requested) {
+		int surfaceY = overworld.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+				requested.getX(), requested.getZ());
+		if (surfaceY <= overworld.getMinBuildHeight())
+			return null;
+		for (int y = surfaceY; y < Math.min(surfaceY + 6,
+				overworld.getMaxBuildHeight() - 1); y++) {
+			BlockPos candidate = new BlockPos(requested.getX(), y, requested.getZ());
+			BlockState feet = overworld.getBlockState(candidate);
+			BlockState head = overworld.getBlockState(candidate.above());
+			if (feet.getCollisionShape(overworld, candidate).isEmpty()
+					&& head.getCollisionShape(overworld, candidate.above()).isEmpty())
+				return candidate;
+		}
+		return null;
+	}
+
+	private static boolean isSafeStandingPosition(ServerLevel level,
+			BlockPos position) {
+		if (position.getY() <= level.getMinBuildHeight()
+				|| position.getY() >= level.getMaxBuildHeight() - 1)
+			return false;
+		BlockPos belowPos = position.below();
+		BlockState below = level.getBlockState(belowPos);
+		BlockState feet = level.getBlockState(position);
+		BlockState head = level.getBlockState(position.above());
+		return below.isFaceSturdy(level, belowPos, Direction.UP)
+				&& below.getFluidState().isEmpty()
+				&& feet.getFluidState().isEmpty()
+				&& head.getFluidState().isEmpty()
+				&& feet.getCollisionShape(level, position).isEmpty()
+				&& head.getCollisionShape(level, position.above()).isEmpty();
 	}
 
 	/**

@@ -2,11 +2,9 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -43,30 +41,21 @@ public class FireMageVfxEntity extends Entity {
 	private static final EntityDataAccessor<Integer> SECONDARY_COLOR = SynchedEntityData.defineId(FireMageVfxEntity.class, EntityDataSerializers.INT);
 	private static final EntityDataAccessor<Integer> SEED = SynchedEntityData.defineId(FireMageVfxEntity.class, EntityDataSerializers.INT);
 
-	public FireMageVfxEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.FIRE_MAGE_VFX.get(), level);
-	}
-
 	public FireMageVfxEntity(EntityType<? extends FireMageVfxEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(STYLE, FLAME_WEAVING);
-		this.entityData.define(STAGE, 1);
-		this.entityData.define(SCALE, 1.0F);
-		this.entityData.define(LENGTH, 1.0F);
-		this.entityData.define(LIFETIME, 12);
-		this.entityData.define(PRIMARY_COLOR, 0xFF5A0A);
-		this.entityData.define(SECONDARY_COLOR, 0xFFD34A);
-		this.entityData.define(SEED, 0);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(STYLE, FLAME_WEAVING);
+		builder.define(STAGE, 1);
+		builder.define(SCALE, 1.0F);
+		builder.define(LENGTH, 1.0F);
+		builder.define(LIFETIME, 12);
+		builder.define(PRIMARY_COLOR, 0xFF5A0A);
+		builder.define(SECONDARY_COLOR, 0xFFD34A);
+		builder.define(SEED, 0);
 	}
 
 	public static FireMageVfxEntity spawn(ServerLevel level, double x, double y, double z,

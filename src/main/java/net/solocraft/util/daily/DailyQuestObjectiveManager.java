@@ -7,19 +7,24 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.DailyQuestHelper;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.SystemPlayerAccess;
+import net.solocraft.util.AbilityDestructionManager;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityTeleportEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.level.BlockEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -63,7 +68,7 @@ import java.util.UUID;
  * {@link DailyQuestObjectivesCompletedEvent}, perform the existing reward
  * transaction, and then clear {@code ActiveDaily}.</p>
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DailyQuestObjectiveManager {
 	public static final double NORMAL_MINING_TARGET = 32.0D;
 	public static final double SECRET_MINING_TARGET = 64.0D;
@@ -77,7 +82,7 @@ public final class DailyQuestObjectiveManager {
 	 * count toward the mining objective.
 	 */
 	public static final TagKey<Block> DAILY_MINEABLE = TagKey.create(Registries.BLOCK,
-			new ResourceLocation(SololevelingMod.MODID, "daily_mineable"));
+			ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "daily_mineable"));
 
 	/** Data-pack overrides for threat eligibility and point weighting. */
 	public static final TagKey<EntityType<?>> DAILY_THREAT_EXCLUDED = entityTag("daily_threat_excluded");
@@ -105,6 +110,7 @@ public final class DailyQuestObjectiveManager {
 	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void onBlockBroken(BlockEvent.BreakEvent event) {
 		if (!(event.getPlayer() instanceof ServerPlayer player) || player instanceof FakePlayer
+				|| AbilityDestructionManager.isPostingAbilityBreakEvent()
 				|| !isSurvival(player) || !isQuestActive(player))
 			return;
 		BlockState state = event.getState();
@@ -131,8 +137,8 @@ public final class DailyQuestObjectiveManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		SololevelingModVariables.PlayerVariables variables = variables(player);
 		if (variables == null || !variables.ActiveDaily
@@ -411,7 +417,7 @@ public final class DailyQuestObjectiveManager {
 		if (booleanTag(data, "Elite", "elite", "slr_elite"))
 			return 3;
 
-		ResourceLocation id = ForgeRegistries.ENTITY_TYPES.getKey(type);
+		ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
 		String path = id == null ? "" : id.getPath().toLowerCase(Locale.ROOT);
 		if (path.contains("boss"))
 			return 8;
@@ -449,7 +455,7 @@ public final class DailyQuestObjectiveManager {
 		RuntimeState runtime = RUNTIME.computeIfAbsent(player.getUUID(), ignored -> new RuntimeState());
 		if (runtime.dirty)
 			syncNow(player, variables, runtime);
-		MinecraftForge.EVENT_BUS.post(new DailyQuestObjectivesCompletedEvent(player, snapshot(player)));
+		NeoForge.EVENT_BUS.post(new DailyQuestObjectivesCompletedEvent(player, snapshot(player)));
 		return true;
 	}
 
@@ -582,7 +588,7 @@ public final class DailyQuestObjectiveManager {
 
 	private static TagKey<EntityType<?>> entityTag(String path) {
 		return TagKey.create(Registries.ENTITY_TYPE,
-				new ResourceLocation(SololevelingMod.MODID, path));
+				ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, path));
 	}
 
 	@Nullable

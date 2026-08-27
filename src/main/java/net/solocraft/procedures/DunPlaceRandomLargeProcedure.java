@@ -21,7 +21,7 @@ public class DunPlaceRandomLargeProcedure {
 			final Vec3 _center = new Vec3(x, y, z);
 			List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(2000 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 			for (Entity entityiterator : _entfound) {
-				if (entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("dm"))) || entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("portals")))
+				if (entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("dm"))) || entityiterator.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("portals")))
 						|| entityiterator instanceof ItemEntity || entityiterator instanceof ExperienceOrb) {
 					if (!entityiterator.level().isClientSide())
 						entityiterator.discard();

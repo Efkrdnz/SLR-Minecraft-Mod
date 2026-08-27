@@ -4,11 +4,10 @@ package net.solocraft.entity;
 import net.solocraft.procedures.DivineArrowWhileProjectileFlyingTickProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Level;
@@ -21,15 +20,10 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 
 @OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
-public class DivineArrowEntity extends AbstractArrow implements ItemSupplier {
+public class DivineArrowEntity extends LegacyAbstractArrow implements ItemSupplier {
 	public static final ItemStack PROJECTILE_ITEM = new ItemStack(Blocks.AIR);
-
-	public DivineArrowEntity(PlayMessages.SpawnEntity packet, Level world) {
-		super(SololevelingModEntities.DIVINE_ARROW.get(), world);
-	}
 
 	public DivineArrowEntity(EntityType<? extends DivineArrowEntity> type, Level world) {
 		super(type, world);
@@ -44,18 +38,13 @@ public class DivineArrowEntity extends AbstractArrow implements ItemSupplier {
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
 	@OnlyIn(Dist.CLIENT)
 	public ItemStack getItem() {
 		return PROJECTILE_ITEM;
 	}
 
 	@Override
-	protected ItemStack getPickupItem() {
+	protected ItemStack getDefaultPickupItem() {
 		return PROJECTILE_ITEM;
 	}
 
@@ -85,7 +74,7 @@ public class DivineArrowEntity extends AbstractArrow implements ItemSupplier {
 		entityarrow.setBaseDamage(damage);
 		entityarrow.setKnockback(knockback);
 		world.addFreshEntity(entityarrow);
-		world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.beacon.activate")), SoundSource.PLAYERS, 1, 1f / (random.nextFloat() * 0.5f + 1) + (power / 2));
+		world.playSound(null, entity.getX(), entity.getY(), entity.getZ(), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.beacon.activate")), SoundSource.PLAYERS, 1, 1f / (random.nextFloat() * 0.5f + 1) + (power / 2));
 		return entityarrow;
 	}
 
@@ -100,7 +89,7 @@ public class DivineArrowEntity extends AbstractArrow implements ItemSupplier {
 		entityarrow.setKnockback(0);
 		entityarrow.setCritArrow(true);
 		entity.level().addFreshEntity(entityarrow);
-		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("block.beacon.activate")), SoundSource.PLAYERS, 1, 1f / (RandomSource.create().nextFloat() * 0.5f + 1));
+		entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("block.beacon.activate")), SoundSource.PLAYERS, 1, 1f / (RandomSource.create().nextFloat() * 0.5f + 1));
 		return entityarrow;
 	}
 }

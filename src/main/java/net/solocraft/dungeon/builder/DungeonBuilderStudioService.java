@@ -8,8 +8,8 @@ import net.solocraft.dungeon.builder.model.RoomSnapshot;
 import net.solocraft.network.DungeonBuilderStudioStateMessage;
 import net.solocraft.util.DungeonBuilderMode;
 
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.solocraft.network.compat.PacketDistributor;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -143,7 +143,7 @@ public final class DungeonBuilderStudioService {
 			return ActionResult.error("Dungeon draft " + id + " already exists. Use Open instead of overwriting it.");
 		DungeonDraft blank = new DungeonDraft(id, DungeonDraft.Mode.PROCEDURAL, DungeonDraft.Topology.LINEAR,
 				List.of(), EnumSet.allOf(ProceduralDungeonRank.class), 3, 8, 16,
-				new ResourceLocation("minecraft", "bedrock"), 1, List.of(), List.of());
+				ResourceLocation.fromNamespaceAndPath("minecraft", "bedrock"), 1, List.of(), List.of());
 		DungeonBuilderProjectData.MutationResult result = data.upsertDungeonDraft(player, blank);
 		if (!result.success())
 			return ActionResult.error(result.message());
@@ -205,8 +205,8 @@ public final class DungeonBuilderStudioService {
 			ranks = EnumSet.allOf(ProceduralDungeonRank.class);
 		ResourceLocation shell = resource(payload.getString("ShellBlock"));
 		int thickness = payload.getInt("ShellThickness");
-		if (shell == null || !ForgeRegistries.BLOCKS.containsKey(shell)
-				|| ForgeRegistries.BLOCKS.getValue(shell) == net.minecraft.world.level.block.Blocks.AIR)
+		if (shell == null || !BuiltInRegistries.BLOCK.containsKey(shell)
+				|| BuiltInRegistries.BLOCK.get(shell) == net.minecraft.world.level.block.Blocks.AIR)
 			return ActionResult.error("Choose a loaded, solid shell block.");
 		if (thickness < 0 || thickness > 4)
 			return ActionResult.error("Shell thickness must be 0-4.");
@@ -823,7 +823,7 @@ public final class DungeonBuilderStudioService {
 				ResourceLocation poolId = resource(encounter.pool());
 				if (!used || poolId == null)
 					continue;
-				if (ForgeRegistries.ENTITY_TYPES.containsKey(poolId)) {
+				if (BuiltInRegistries.ENTITY_TYPE.containsKey(poolId)) {
 					if (checkedDirectEntities.add(poolId)
 							&& !BuilderMobPoolPreflight.resolvesSpawnable(player.serverLevel(),
 									BuilderMobPool.SelectorKind.ENTITY, poolId)) {
@@ -910,7 +910,7 @@ public final class DungeonBuilderStudioService {
 			ranks = EnumSet.allOf(ProceduralDungeonRank.class);
 		ResourceLocation shell = resource(payload.getString("ShellBlock"));
 		if (shell == null)
-			shell = new ResourceLocation("minecraft", "bedrock");
+			shell = ResourceLocation.fromNamespaceAndPath("minecraft", "bedrock");
 		List<DungeonDraft.FixedPlacement> placements = new ArrayList<>();
 		ListTag nodes = payload.getList("Nodes", Tag.TAG_COMPOUND);
 		for (int index = 0; index < Math.min(64, nodes.size()); index++) {

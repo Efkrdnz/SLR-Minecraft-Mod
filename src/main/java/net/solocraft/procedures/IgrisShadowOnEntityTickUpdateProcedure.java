@@ -27,6 +27,8 @@ public class IgrisShadowOnEntityTickUpdateProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		if (ShadowMonarchManager.handleUnavailableShadowOwner(entity))
+			return;
 		double rand = 0;
 		double hei = 0;
 		double rand2 = 0;
@@ -77,7 +79,7 @@ public class IgrisShadowOnEntityTickUpdateProcedure {
 		} else {
 			entity.getPersistentData().putDouble("MF", 0);
 		}
-		if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+		if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 			if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).isAlive())) {
 				if (world instanceof ServerLevel _level)
 					_level.sendParticles(ParticleTypes.SMOKE, (entity.getX()), (entity.getY()), (entity.getZ()), 30, 0.05, 0.05, 0.05, 1);
@@ -87,14 +89,14 @@ public class IgrisShadowOnEntityTickUpdateProcedure {
 				}
 			}
 		}
-		if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+		if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 			if (!entity.level().isClientSide()) {
 				ShadowMonarchManager.dropStoredShadowInventory(entity);
 				entity.discard();
 			}
 		}
 		hei = entity.getBbHeight();
-		if (entity instanceof LivingEntity _livEnt41 && _livEnt41.hasEffect(SololevelingModMobEffects.DOMAIN_BOOST.get())) {
+		if (entity instanceof LivingEntity _livEnt41 && _livEnt41.hasEffect(SololevelingModMobEffects.DOMAIN_BOOST)) {
 			if (world instanceof ServerLevel _level)
 				_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.MANA_PURPLE.get()), (entity.getX()), (entity.getY() + hei / 2), (entity.getZ()), 2, (entity.getBbWidth() * 0.5), (hei / 2), (entity.getBbWidth() * 0.5), 0.05);
 		} else {

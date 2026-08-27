@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "sololeveling:hammer"
+    },
+    "title": {
+      "translate": "advancements.vessels.rulers.goliath_manifestation.title"
+    },
+    "description": {
+      "translate": "advancements.vessels.rulers.goliath_manifestation.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:vessels/thomas_andre"
+}

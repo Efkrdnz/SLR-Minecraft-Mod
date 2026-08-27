@@ -3,10 +3,11 @@ package net.solocraft.util;
 import net.solocraft.SololevelingMod;
 import net.solocraft.init.SololevelingModItems;
 
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -19,14 +20,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 
 /** Shared held-item checks and server-side amplification for the Orb of Avarice. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class OrbOfAvariceManager {
 	public static final int BLUE_FIRE_PRIMARY = 0x174DFF;
 	public static final int BLUE_FIRE_SECONDARY = 0x69E7FF;
 	public static final double MANA_COST_MULTIPLIER = 1.5D;
 
 	private static final ResourceKey<DamageType> MAGE_DAMAGE = ResourceKey.create(
-			Registries.DAMAGE_TYPE, new ResourceLocation(SololevelingMod.MODID, "mage"));
+			Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "mage"));
 
 	private OrbOfAvariceManager() {
 	}
@@ -47,7 +48,7 @@ public final class OrbOfAvariceManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void amplifyMagicDamage(LivingHurtEvent event) {
+	public static void amplifyMagicDamage(LivingIncomingDamageEvent event) {
 		if (event.getEntity().level().isClientSide() || event.getAmount() <= 0.0F
 				|| !isMagic(event.getSource()))
 			return;

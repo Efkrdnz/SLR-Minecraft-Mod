@@ -20,6 +20,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.PickaxeItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.Direction;
@@ -37,8 +38,8 @@ public class DungeonBarrelBlock extends Block {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, BlockGetter world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 	}
 
 	@Override
@@ -86,9 +87,7 @@ public class DungeonBarrelBlock extends Block {
 
 	@Override
 	public boolean canHarvestBlock(BlockState state, BlockGetter world, BlockPos pos, Player player) {
-		if (player.getInventory().getSelected().getItem() instanceof PickaxeItem tieredItem)
-			return tieredItem.getTier().getLevel() >= 1;
-		return false;
+		return player.getInventory().getSelected().isCorrectToolForDrops(state);
 	}
 
 	@Override

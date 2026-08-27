@@ -3,9 +3,10 @@ package net.solocraft.item;
 
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -34,7 +35,7 @@ import net.minecraft.client.Minecraft;
 import java.util.Comparator;
 import java.util.List;
 
-public class DemonKingsLongSwordItem extends SwordItem {
+public class DemonKingsLongSwordItem extends LegacySwordItem {
 	public DemonKingsLongSwordItem() {
 		super(new Tier() {
 			public int getUses() {
@@ -49,8 +50,8 @@ public class DemonKingsLongSwordItem extends SwordItem {
 				return 10f;
 			}
 
-			public int getLevel() {
-				return 1;
+			public net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> getIncorrectBlocksForDrops() {
+				return net.minecraft.tags.BlockTags.INCORRECT_FOR_STONE_TOOL;
 			}
 
 			public int getEnchantmentValue() {
@@ -75,14 +76,16 @@ public class DemonKingsLongSwordItem extends SwordItem {
 			return;
 		double limit = 0;
 		double max = 0;
-		if (sourceentity instanceof LivingEntity living && living.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get()) && !(sourceentity instanceof Player player && player.getCooldowns().isOnCooldown(itemstack.getItem()))) {
+		if (sourceentity instanceof LivingEntity living && living.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE)
+				&& !(sourceentity instanceof Player player && !player.isCreative()
+						&& player.getCooldowns().isOnCooldown(itemstack.getItem()))) {
 			if (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).JOB == 4) {
 				max = 6;
 			} else {
 				max = 3;
 			}
-			if (sourceentity instanceof Player player)
-				player.getCooldowns().addCooldown(itemstack.getItem(), player.isCreative() ? 10 : 60);
+			if (sourceentity instanceof Player player && !player.isCreative())
+				player.getCooldowns().addCooldown(itemstack.getItem(), 60);
 			final Vec3 center = new Vec3(x, y, z);
 			List<Entity> entities = world.getEntitiesOfClass(Entity.class, new AABB(center, center).inflate(15 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(found -> found.distanceToSqr(center))).toList();
 			for (Entity nearby : entities) {
@@ -96,7 +99,7 @@ public class DemonKingsLongSwordItem extends SwordItem {
 							level.addFreshEntity(lightning);
 						}
 						nearby.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.LIGHTNING_BOLT), sourceentity),
-								(float) (5 + sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).Intelligence / 15));
+								(float) (5 + TemporaryStatBonusManager.effectiveIntelligence(sourceentity) / 15));
 					}
 				}
 			}
@@ -120,19 +123,20 @@ public class DemonKingsLongSwordItem extends SwordItem {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("\u00A76LEVEL OF DIFFICULTY: S"));
 		list.add(Component.literal("\u00A76ATTACK +350"));
 		list.add(Component.literal("\u00A76TYPE: LONGSWORD"));
-		list.add(Component.literal("\u00A76A LONGSWORD CONTANING THE POWERS OF BARAN, THE DEMON KING. THE EFFECT \"STORM OF THE FLAMES\" WILL ACTIVATE EVERY TIME THIS SWORD IS SWUNG."));
+		list.add(Component.literal("\u00A76A LONGSWORD CONTAINING THE POWERS OF BARAN, THE DEMON KING. THE EFFECT \"STORM OF THE FLAMES\" WILL ACTIVATE EVERY TIME THIS SWORD IS SWUNG."));
 		list.add(Component.literal("\u00A76EFFECT \"STORM OF THE FLAMES\" : A VIOLENT THUNDERSTORM IS SUMMONED WITHIN A SPECIFIED AREA"));
+		list.add(Component.literal("\u00A76PASSIVE \"DEMONIC ATTUNEMENT\": WHILE HELD, THE SWORD DRAWS ON PERMANENT INTELLIGENCE TO STRENGTHEN THE WIELDER."));
 	}
 
 	@Override
 	@OnlyIn(Dist.CLIENT)
 	public boolean isFoil(ItemStack itemstack) {
 		return Minecraft.getInstance().player != null
-				&& Minecraft.getInstance().player.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get());
+				&& Minecraft.getInstance().player.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE);
 	}
 }

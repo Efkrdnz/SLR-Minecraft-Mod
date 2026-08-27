@@ -3,10 +3,11 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.TrainingBotEntity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -19,7 +20,7 @@ import javax.annotation.Nullable;
 
 import java.util.Comparator;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class TrainingBotOnInitialEntitySpawnProcedure {
 	@SubscribeEvent
 	public static void onEntityJoin(EntityJoinLevelEvent event) {

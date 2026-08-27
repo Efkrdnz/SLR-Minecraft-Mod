@@ -3,10 +3,11 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.ICancellableEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.player.Player;
@@ -18,10 +19,10 @@ import net.minecraft.core.particles.ParticleTypes;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class WillPowerDamageProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity.level(), entity.getX(), entity.getZ(), entity, event.getAmount());
@@ -32,10 +33,10 @@ public class WillPowerDamageProcedure {
 		execute(null, world, x, z, entity, amount);
 	}
 
-	private static void execute(@Nullable Event event, LevelAccessor world, double x, double z, Entity entity, double amount) {
+	private static void execute(@Nullable ICancellableEvent event, LevelAccessor world, double x, double z, Entity entity, double amount) {
 		if (entity == null)
 			return;
-		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.WILL_POWER.get())) {
+		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.WILL_POWER)) {
 			{
 				double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).wp + amount;
 				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -52,7 +53,7 @@ public class WillPowerDamageProcedure {
 					_player.displayClientMessage(
 							Component.literal(("\u00A7cDamage absorbed: " + Math.round((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).wp))), true);
 			}
-			if (event != null && event.isCancelable()) {
+			if (event != null) {
 				event.setCanceled(true);
 			}
 			if (world instanceof ServerLevel _level)

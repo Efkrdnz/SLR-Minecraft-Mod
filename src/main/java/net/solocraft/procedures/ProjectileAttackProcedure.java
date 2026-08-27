@@ -50,7 +50,7 @@ public class ProjectileAttackProcedure {
 							AbstractArrow entityToSpawn = new NecroBlastEntity(SololevelingModEntities.NECRO_BLAST.get(), level);
 							entityToSpawn.setOwner(shooter);
 							entityToSpawn.setBaseDamage(damage);
-							entityToSpawn.setKnockback(knockback);
+							net.solocraft.entity.LegacyProjectileCompat.setKnockback(entityToSpawn, knockback);
 							entityToSpawn.setSilent(true);
 							return entityToSpawn;
 						}

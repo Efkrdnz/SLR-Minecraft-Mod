@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Item;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -34,23 +35,43 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * source available to the resolver and System UI; it does not automatically
  * update every gameplay formula. New consumers must read {@link #effectiveValue}
  * (or a stat-specific helper) instead of the permanent capability field.
- * Current built-in gameplay consumers cover Strength and Agility; providers for
- * Perception, Vitality, or Intelligence must wire their relevant gameplay
+ * Current built-in gameplay consumers cover Strength, Agility, and Intelligence;
+ * providers for Perception or Vitality must wire their relevant gameplay
  * consumers as those sources are introduced.</p>
  */
 public final class TemporaryStatBonusManager {
 	public static final ResourceLocation EFFECT_PROVIDER =
-			new ResourceLocation("sololeveling", "active_effects");
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "active_effects");
 	public static final ResourceLocation EQUIPMENT_PROVIDER =
-			new ResourceLocation("sololeveling", "equipment_sets");
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "equipment_sets");
 	public static final ResourceLocation HASTE_BUFF_SOURCE =
-			new ResourceLocation("sololeveling", "haste_buff");
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "haste_buff");
 	public static final ResourceLocation PHYSICAL_BUFF_SOURCE =
-			new ResourceLocation("sololeveling", "physical_buff");
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "physical_buff");
 	public static final ResourceLocation TWO_AS_ONE_SOURCE =
-			new ResourceLocation("sololeveling", "two_as_one");
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "two_as_one");
+	public static final ResourceLocation MANA_SENSITIVITY_SOURCE =
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "mana_sensitivity");
+	public static final ResourceLocation DEMONIC_ATTUNEMENT_SOURCE =
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "demonic_attunement");
+	public static final ResourceLocation AVARICIOUS_INSIGHT_SOURCE =
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "avaricious_insight");
+	public static final ResourceLocation TEMPEST_AUTHORITY_SOURCE =
+			ResourceLocation.fromNamespaceAndPath("sololeveling", "tempest_authority");
 	public static final double HASTE_BUFF_AGILITY_BONUS = 30.0D;
 	public static final double PHYSICAL_BUFF_STRENGTH_BONUS = 30.0D;
+	public static final double TWO_AS_ONE_FLAT_BONUS = 20.0D;
+	public static final double TWO_AS_ONE_PERCENT_BONUS = 0.20D;
+	public static final double MANA_SENSITIVITY_STRENGTH_FLAT_BONUS = 10.0D;
+	public static final double MANA_SENSITIVITY_STRENGTH_PERCENT_BONUS = 0.10D;
+	public static final double MANA_SENSITIVITY_INTELLIGENCE_FLAT_BONUS = 10.0D;
+	public static final double MANA_SENSITIVITY_INTELLIGENCE_PERCENT_BONUS = 0.10D;
+	public static final double DEMONIC_ATTUNEMENT_FLAT_BONUS = 10.0D;
+	public static final double DEMONIC_ATTUNEMENT_PERCENT_BONUS = 0.10D;
+	public static final double AVARICIOUS_INSIGHT_FLAT_BONUS = 10.0D;
+	public static final double AVARICIOUS_INSIGHT_PERCENT_BONUS = 0.10D;
+	public static final double TEMPEST_AUTHORITY_FLAT_BONUS = 10.0D;
+	public static final double TEMPEST_AUTHORITY_PERCENT_BONUS = 0.10D;
 
 	private static final List<ProviderEntry> PROVIDERS = new CopyOnWriteArrayList<>();
 
@@ -195,14 +216,14 @@ public final class TemporaryStatBonusManager {
 			return;
 
 		if (stat == Stat.AGILITY) {
-			MobEffectInstance haste = living.getEffect(SololevelingModMobEffects.HASTE_BUFF.get());
+			MobEffectInstance haste = living.getEffect(SololevelingModMobEffects.HASTE_BUFF);
 			if (haste != null) {
 				sink.add(HASTE_BUFF_SOURCE, Component.literal("Haste Buff effect"),
 						HASTE_BUFF_AGILITY_BONUS);
 			}
 		}
 		if (stat == Stat.STRENGTH) {
-			MobEffectInstance physical = living.getEffect(SololevelingModMobEffects.PHYSICAL_BUFF.get());
+			MobEffectInstance physical = living.getEffect(SololevelingModMobEffects.PHYSICAL_BUFF);
 			if (physical != null) {
 				sink.add(PHYSICAL_BUFF_SOURCE, Component.literal("Physical Buff effect"),
 						PHYSICAL_BUFF_STRENGTH_BONUS);
@@ -211,11 +232,66 @@ public final class TemporaryStatBonusManager {
 	}
 
 	private static void collectEquipmentBonuses(Entity entity, Stat stat, double baseValue, BonusSink sink) {
-		if (stat == Stat.STRENGTH && baseValue > 0.0D && isTwoAsOneActive(entity)) {
-			// The pair grants one additional copy of permanent Strength. Other
-			// temporary sources remain additive instead of being multiplied.
-			sink.add(TWO_AS_ONE_SOURCE, Component.literal("Two as One set effect"), baseValue);
+		if (!(entity instanceof LivingEntity living))
+			return;
+
+		if (stat == Stat.STRENGTH) {
+			if (isTwoAsOneActive(living))
+				sink.add(TWO_AS_ONE_SOURCE, Component.literal("Two as One"),
+						scaledBonus(baseValue, TWO_AS_ONE_FLAT_BONUS, TWO_AS_ONE_PERCENT_BONUS));
+
+			int kamishFangs = kamishWrathCount(living);
+			if (kamishFangs > 0) {
+				// Every fang combines permanent Strength and Intelligence.
+				// Temporary sources never recursively amplify either component.
+				double permanentIntelligence = TemporaryStatBonusManager.baseValue(
+						entity, Stat.INTELLIGENCE);
+				sink.add(MANA_SENSITIVITY_SOURCE, Component.literal("Mana Sensitivity"),
+						kamishFangs * manaSensitivityBonus(baseValue, permanentIntelligence));
+			}
+			return;
 		}
+		if (stat != Stat.INTELLIGENCE)
+			return;
+
+		if (isHeld(living, SololevelingModItems.DEMON_KINGS_LONG_SWORD.get()))
+			sink.add(DEMONIC_ATTUNEMENT_SOURCE, Component.literal("Demonic Attunement"),
+					scaledBonus(baseValue, DEMONIC_ATTUNEMENT_FLAT_BONUS,
+							DEMONIC_ATTUNEMENT_PERCENT_BONUS));
+		if (isHeld(living, SololevelingModItems.ORB_OF_AVARICE.get()))
+			sink.add(AVARICIOUS_INSIGHT_SOURCE, Component.literal("Avaricious Insight"),
+					scaledBonus(baseValue, AVARICIOUS_INSIGHT_FLAT_BONUS,
+							AVARICIOUS_INSIGHT_PERCENT_BONUS));
+		if (isHeld(living, SololevelingModItems.STORM_GRIAMORE.get()))
+			sink.add(TEMPEST_AUTHORITY_SOURCE, Component.literal("Tempest Authority"),
+					scaledBonus(baseValue, TEMPEST_AUTHORITY_FLAT_BONUS,
+							TEMPEST_AUTHORITY_PERCENT_BONUS));
+	}
+
+	private static int kamishWrathCount(LivingEntity living) {
+		int count = isKamishWrath(living.getMainHandItem().getItem()) ? 1 : 0;
+		return count + (isKamishWrath(living.getOffhandItem().getItem()) ? 1 : 0);
+	}
+
+	private static boolean isKamishWrath(Item item) {
+		return item == SololevelingModItems.KAMISH_WRATH.get()
+				|| item == SololevelingModItems.KAMISH_WRATH_2.get();
+	}
+
+	private static boolean isHeld(LivingEntity living, Item item) {
+		return living.getMainHandItem().is(item) || living.getOffhandItem().is(item);
+	}
+
+	private static double scaledBonus(double baseValue, double flatBonus, double percentBonus) {
+		return flatBonus + Math.floor(Math.max(0.0D, baseValue) * percentBonus);
+	}
+
+	private static double manaSensitivityBonus(double permanentStrength,
+			double permanentIntelligence) {
+		return scaledBonus(permanentStrength, MANA_SENSITIVITY_STRENGTH_FLAT_BONUS,
+						MANA_SENSITIVITY_STRENGTH_PERCENT_BONUS)
+				+ scaledBonus(permanentIntelligence, MANA_SENSITIVITY_INTELLIGENCE_FLAT_BONUS,
+						MANA_SENSITIVITY_INTELLIGENCE_PERCENT_BONUS);
 	}
 
 	private record ProviderEntry(ResourceLocation id, BonusProvider provider) {

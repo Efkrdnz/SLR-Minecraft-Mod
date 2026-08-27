@@ -87,7 +87,12 @@ public final class IgrisCombatTeleportHelper {
 		candidates.add(center.add(primary.scale(-distance)));
 	}
 
-	private static boolean isSafeDestination(ServerLevel level, Entity igris, Vec3 destination) {
+	/**
+	 * Shared collision, support, hazard, fluid, border and occupancy validation
+	 * for combat teleports. Callers must still perform the actual teleport.
+	 */
+	public static boolean isSafeDestination(ServerLevel level, Entity igris,
+			Vec3 destination) {
 		AABB moved = igris.getBoundingBox().move(destination.subtract(igris.position()));
 		if (moved.minY < level.getMinBuildHeight()
 				|| moved.maxY > level.getMaxBuildHeight()

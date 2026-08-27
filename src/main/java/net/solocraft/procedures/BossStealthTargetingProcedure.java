@@ -1,18 +1,19 @@
 package net.solocraft.procedures;
 
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class BossStealthTargetingProcedure {
 	@SubscribeEvent
-	public static void onEntityTick(LivingEvent.LivingTickEvent event) {
+	public static void onEntityTick(EntityTickEvent.Post event) {
 		if (event.getEntity().level().isClientSide() || !(event.getEntity() instanceof Mob boss) || !StealthBossDetectionHelper.seesThroughStealth(boss))
 			return;
 		if (boss.tickCount % 10 != 0 || boss.isNoAi() || !boss.isAlive())

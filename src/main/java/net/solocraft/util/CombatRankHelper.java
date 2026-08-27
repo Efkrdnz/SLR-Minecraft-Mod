@@ -18,7 +18,7 @@ public final class CombatRankHelper {
 	private static final TagKey<Biome> A_RANK_BIOME = biomeTag("duna");
 	private static final TagKey<Biome> S_RANK_BIOME = biomeTag("duns");
 	private static final TagKey<EntityType<?>> HIGH_TIER = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("hightier"));
+			ResourceLocation.parse("hightier"));
 
 	private CombatRankHelper() {
 	}
@@ -109,7 +109,7 @@ public final class CombatRankHelper {
 			case "kasaka", "fanged_kasaka", "goblin_king", "spider_boss", "ancient_golem" -> 3;
 			case "igris", "blood_red_com_igris", "baruka", "skeleton_summoner" -> 4;
 			case "gem_golem", "futuristic_golem", "kargalgan" -> 5;
-			case "beru_boss", "kamish", "cerberus", "vulcan", "baran", "kaiselin", "statue_of_god" -> 6;
+			case "beru_boss", "kamish", "cerberus", "vulcan", "baran", "kaiselin", "statue_of_god", "sillad_boss" -> 6;
 			default -> 0;
 		};
 	}
@@ -129,6 +129,6 @@ public final class CombatRankHelper {
 	}
 
 	private static TagKey<Biome> biomeTag(String id) {
-		return TagKey.create(Registries.BIOME, new ResourceLocation(id));
+		return TagKey.create(Registries.BIOME, ResourceLocation.parse(id));
 	}
 }

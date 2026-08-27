@@ -54,7 +54,7 @@ void main() {
     float broadFlame = smoothstep(0.43, 0.82, flow + detail * 0.27);
     float tongueWave = sin(angle * 7.0 + height * 31.0 - time * 1.05 + flow * 7.0);
     float tongues = pow(max(0.0, tongueWave), 4.0) * smoothstep(0.38, 0.78, detail);
-    float filament = smoothstep(0.055, 0.0, abs(detail - 0.55));
+    float filament = 1.0 - smoothstep(0.0, 0.055, abs(detail - 0.55));
     filament *= 0.42 + 0.58 * (sin(height * 72.0 - time * 1.7 + flow * 9.0) * 0.5 + 0.5);
 
     float emberTexture = texture(Sampler0, vec2(fract(texCoord0.x * 2.0 - time * 0.012),

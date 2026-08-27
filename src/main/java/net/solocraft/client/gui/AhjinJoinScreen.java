@@ -44,7 +44,6 @@ public class AhjinJoinScreen extends AbstractContainerScreen<AhjinJoinMenu> {
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
@@ -55,7 +54,7 @@ public class AhjinJoinScreen extends AbstractContainerScreen<AhjinJoinMenu> {
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/base.png"), this.leftPos + -76, this.topPos + -113, 0, 0, 150, 225, 150, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/base.png"), this.leftPos + -76, this.topPos + -113, 0, 0, 150, 225, 150, 225);
 
 		RenderSystem.disableBlend();
 	}
@@ -98,7 +97,7 @@ public class AhjinJoinScreen extends AbstractContainerScreen<AhjinJoinMenu> {
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_guildjoin = new ImageButton(this.leftPos + -16, this.topPos + 72, 28, 12, 0, 0, 12, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_guildjoin.png"), 28, 24, e -> {
+		imagebutton_guildjoin = new LegacyAtlasImageButton(this.leftPos + -16, this.topPos + 72, 28, 12, 0, 0, 12, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_guildjoin.png"), 28, 24, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new AhjinJoinButtonMessage(0, x, y, z));
 				AhjinJoinButtonMessage.handleButtonAction(entity, 0, x, y, z);

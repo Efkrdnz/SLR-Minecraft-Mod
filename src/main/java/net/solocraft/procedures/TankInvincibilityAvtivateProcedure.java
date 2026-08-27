@@ -19,7 +19,7 @@ public class TankInvincibilityAvtivateProcedure {
 			if (entity instanceof Player _player && !_player.level().isClientSide())
 				_player.displayClientMessage(Component.literal("You are Invincible for 3 seconds!"), true);
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FORTIFY.get(), 100, 1, false, false));
+				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FORTIFY, 100, 1, false, false));
 		}
 	}
 }

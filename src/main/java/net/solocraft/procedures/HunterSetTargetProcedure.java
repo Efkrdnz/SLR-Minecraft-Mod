@@ -2,10 +2,11 @@ package net.solocraft.procedures;
 
 import net.solocraft.entity.HunterEntity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -24,10 +25,10 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Comparator;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class HunterSetTargetProcedure {
 	@SubscribeEvent
-	public static void onEntityTick(LivingEvent.LivingTickEvent event) {
+	public static void onEntityTick(EntityTickEvent.Post event) {
 		execute(event, event.getEntity().level(), event.getEntity().getX(), event.getEntity().getY(), event.getEntity().getZ(), event.getEntity());
 	}
 

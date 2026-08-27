@@ -16,7 +16,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
 public class Modelgoliathchest<T extends Entity> extends EntityModel<T> {
 	// This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
-	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation("sololeveling", "goliath_chest"), "main");
+	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath("sololeveling", "goliath_chest"), "main");
 	public final ModelPart Body;
 	public final ModelPart RightArm;
 	public final ModelPart LeftArm;
@@ -71,9 +71,9 @@ public class Modelgoliathchest<T extends Entity> extends EntityModel<T> {
 	}
 
 	@Override
-	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
-		Body.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		RightArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
-		LeftArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
+	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, int color) {
+		Body.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		RightArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
+		LeftArm.render(poseStack, vertexConsumer, packedLight, packedOverlay, color);
 	}
 }

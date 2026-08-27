@@ -3,13 +3,14 @@ package net.solocraft.network;
 import net.solocraft.SololevelingMod;
 import net.solocraft.client.gui.PartyClientState;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.solocraft.network.compat.DistExecutor;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.solocraft.network.compat.NetworkDirection;
+import net.solocraft.network.compat.NetworkEvent;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -17,7 +18,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import java.util.function.Supplier;
 
 /** Server-filtered party interface state for one viewer. */
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public final class PartyStateMessage {
 	private final boolean open;
 	private final CompoundTag snapshot;

@@ -4,7 +4,7 @@ import net.solocraft.entity.CrossStrikeEntity;
 import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.util.CooldownManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -36,6 +36,6 @@ public class CrossStrikeProcedure {
 		if (!(world instanceof Level level))
 			return;
 		float pitch = Mth.nextFloat(level.getRandom(), 1.22F, 1.45F);
-		level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:basic_slash")), SoundSource.NEUTRAL, 0.75F, pitch);
+		level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:basic_slash")), SoundSource.NEUTRAL, 0.75F, pitch);
 	}
 }

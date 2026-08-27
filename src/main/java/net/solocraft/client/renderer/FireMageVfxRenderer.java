@@ -16,7 +16,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
 public class FireMageVfxRenderer extends EntityRenderer<FireMageVfxEntity> {
-	private static final ResourceLocation FALLBACK = new ResourceLocation("sololeveling", "textures/particle/glow_yellow.png");
+	private static final ResourceLocation FALLBACK = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/glow_yellow.png");
 
 	public FireMageVfxRenderer(EntityRendererProvider.Context context) {
 		super(context);
@@ -309,10 +309,10 @@ public class FireMageVfxRenderer extends EntityRenderer<FireMageVfxEntity> {
 
 	private static void vertex(VertexConsumer out, PoseStack.Pose pose, float x, float y, float z,
 			float u, float v, int color, int alpha, float nx, float ny, float nz) {
-		out.vertex(pose.pose(), x, y, z)
-				.color((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
-				.uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240)
-				.normal(pose.normal(), nx, ny, nz).endVertex();
+		out.addVertex(pose, x, y, z)
+				.setColor((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
+				.setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240)
+				.setNormal(pose, nx, ny, nz);
 	}
 
 	private static int lighten(int color, float amount) {

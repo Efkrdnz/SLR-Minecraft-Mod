@@ -8,23 +8,27 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.procedures.TankerProgressionHelper;
 import net.solocraft.procedures.TankerProgressionRules;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingFallEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.entity.living.LivingKnockBackEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -75,7 +79,7 @@ import java.util.UUID;
  * <p>Legacy mob effects and entity registry entries intentionally remain
  * registered for save compatibility. This manager never activates them.</p>
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class TankerSkillManager {
 	public static final String TAUNT = TankerProgressionRules.TAUNT;
 	public static final String REINFORCEMENT = TankerProgressionRules.REINFORCEMENT;
@@ -182,8 +186,9 @@ public final class TankerSkillManager {
 	private static final String WP_MAX_HEALTH_TAG = "slr_tanker_willpower_max_health";
 	private static final String WP_PULSES_TAG = "slr_tanker_willpower_pulses";
 
-	private static final UUID CONTROL_SLOW_MODIFIER_ID =
-			UUID.fromString("485234e8-34c6-4468-b62c-c1d2dc5650e4");
+	private static final ResourceLocation CONTROL_SLOW_MODIFIER_ID =
+			ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID,
+					"attribute/tanker_control_slow");
 
 	private static final Map<String, SkillBalance> BALANCE = Map.of(
 			TAUNT, new SkillBalance(TAUNT_FLAT_COST, TAUNT_PERCENT_COST, TAUNT_COOLDOWN, TAUNT_REGEN_LOCK),
@@ -255,10 +260,6 @@ public final class TankerSkillManager {
 		String skill = canonicalName(requestedSkill);
 		if (!SKILLS.contains(skill))
 			return false;
-		if (!isTanker(player)) {
-			message(player, "Only Tankers can use this skill.");
-			return false;
-		}
 		if (!hasSkill(player, skill)) {
 			message(player, "You have not learned " + skill + ".");
 			return false;
@@ -288,7 +289,7 @@ public final class TankerSkillManager {
 		if (player == null)
 			return;
 		TankerProgressionHelper.reconcileRankEntitlements(player);
-		boolean tanker = TankerProgressionHelper.isTanker(player);
+		boolean tanker = isTanker(player);
 
 		clearLegacyCancellationState(player);
 		player.getPersistentData().remove(LEGACY_IRON_TIMER_TAG);
@@ -457,6 +458,25 @@ public final class TankerSkillManager {
 			emit(player, VFX_TAUNT_RING, null, center, now, TAUNT_MOB_DURATION,
 					accepted.size(), VFX_FLAG_ESSENTIAL);
 		});
+	}
+
+	/**
+	 * Lets autonomous tank companions respect an intentional player Taunt. A
+	 * live manual claim always wins instead of allowing two tank systems to
+	 * bounce one mob's target back and forth.
+	 */
+	public static boolean hasActiveTauntClaim(LivingEntity target) {
+		if (target == null)
+			return false;
+		TauntClaim claim = TAUNT_CLAIMS.get(target.getUUID());
+		if (claim == null)
+			return false;
+		long now = target.level().getGameTime();
+		if (claim.level != target.level() || now >= claim.expiresAt) {
+			TAUNT_CLAIMS.remove(target.getUUID(), claim);
+			return false;
+		}
+		return true;
 	}
 
 	private static boolean castShieldBash(ServerPlayer player) {
@@ -663,7 +683,7 @@ public final class TankerSkillManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public static void onLivingHurt(LivingHurtEvent event) {
+	public static void onLivingHurt(LivingIncomingDamageEvent event) {
 		if (event.getEntity().level().isClientSide() || event.getAmount() <= 0.0F)
 			return;
 		applyChallengedOutgoing(event);
@@ -737,10 +757,10 @@ public final class TankerSkillManager {
 	/**
 	 * Neutralizes save-compatible legacy Tanker cancellation state before the
 	 * retired LivingAttack handlers can observe it. Damage is handled only in
-	 * {@link #onLivingHurt(LivingHurtEvent)}.
+	 * {@link #onLivingHurt(LivingIncomingDamageEvent)}.
 	 */
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void onLivingAttack(LivingAttackEvent event) {
+	public static void onLivingAttack(LivingIncomingDamageEvent event) {
 		if (!event.getEntity().level().isClientSide()
 				&& event.getEntity() instanceof ServerPlayer player)
 			clearLegacyCancellationState(player);
@@ -778,9 +798,9 @@ public final class TankerSkillManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END
-				|| !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false
+				|| !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		long now = player.level().getGameTime();
 		boolean tanker = isTanker(player);
@@ -820,9 +840,7 @@ public final class TankerSkillManager {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
+	public static void onServerTick(ServerTickEvent.Post event) {
 		tickSlows(event.getServer());
 		pruneClaims(event.getServer());
 		pruneChallenges(event.getServer());
@@ -954,7 +972,7 @@ public final class TankerSkillManager {
 		ACTIVE_SLOWS.clear();
 	}
 
-	private static void applyChallengedOutgoing(LivingHurtEvent event) {
+	private static void applyChallengedOutgoing(LivingIncomingDamageEvent event) {
 		Entity owner = resolveSourceOwner(event.getSource());
 		if (!(owner instanceof ServerPlayer attacker))
 			return;
@@ -1177,6 +1195,13 @@ public final class TankerSkillManager {
 		}
 		if (hits > 0)
 			addIronWall(player, 1, now);
+		SololevelingModVariables.PlayerVariables variables = variables(player);
+		AbilityDestructionManager.impact(player,
+				AbilityDestructionManager.Profile.TANKER_SLAM, origin,
+				TemporaryStatBonusManager.effectiveStrength(player)
+						+ variables.Vitality * 0.5D
+						+ player.getAttributeValue(Attributes.ATTACK_DAMAGE) * 14.0D,
+				false);
 		emit(player, VFX_LEAP_LAND, null, origin, now, 10,
 				hits, VFX_FLAG_ESSENTIAL
 						| (hits > 0 ? VFX_FLAG_CONFIRMED_HIT : 0));
@@ -1217,6 +1242,20 @@ public final class TankerSkillManager {
 					&& (player.getBoundingBox().inflate(0.7D).intersects(target.getBoundingBox())
 							|| progress >= 1.0D && player.distanceToSqr(target) <= 4.0D))
 				performBashHit(player, state, bash, target, now);
+		} else if (!bash.hit) {
+			// No victim was locked at cast time. The charge still happens, so it
+			// has to connect with whatever it actually runs into -- otherwise a
+			// bash aimed a few degrees off its target is a dash that deals
+			// nothing and reads as the skill being broken.
+			LivingEntity struck = player.serverLevel()
+					.getEntitiesOfClass(LivingEntity.class,
+							player.getBoundingBox().inflate(0.7D),
+							candidate -> validEnemy(player, candidate, false))
+					.stream()
+					.min(java.util.Comparator.comparingDouble(player::distanceToSqr))
+					.orElse(null);
+			if (struck != null)
+				performBashHit(player, state, bash, struck, now);
 		}
 		if (!safe || progress >= 1.0D)
 			state.bash = null;
@@ -1558,11 +1597,11 @@ public final class TankerSkillManager {
 			return false;
 		AttributeModifier current = speed.getModifier(CONTROL_SLOW_MODIFIER_ID);
 		double clamped = Mth.clamp(fraction, 0.0D, 0.95D);
-		if (current == null || Math.abs(current.getAmount() + clamped) > EPSILON) {
+		if (current == null || Math.abs(current.amount() + clamped) > EPSILON) {
 			speed.removeModifier(CONTROL_SLOW_MODIFIER_ID);
 			speed.addTransientModifier(new AttributeModifier(
-					CONTROL_SLOW_MODIFIER_ID, "Tanker control slow", -clamped,
-					AttributeModifier.Operation.MULTIPLY_TOTAL));
+					CONTROL_SLOW_MODIFIER_ID, -clamped,
+					AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 		}
 		return true;
 	}
@@ -1646,15 +1685,15 @@ public final class TankerSkillManager {
 	private static void stripLegacyEffects(ServerPlayer player) {
 		// wp is cleared before WILL_POWER removal because that legacy effect's
 		// removal callback otherwise deals surprise feedback damage.
-		removeEffect(player, SololevelingModMobEffects.FORTIFY.get());
-		removeEffect(player, SololevelingModMobEffects.WILL_POWER.get());
-		removeEffect(player, SololevelingModMobEffects.SHIELD_BASH_EFFECT.get());
-		removeEffect(player, SololevelingModMobEffects.WILLPOWER_COOLDOWN.get());
-		removeEffect(player, SololevelingModMobEffects.SHIELD_BASH_COOLDOWN.get());
-		removeEffect(player, SololevelingModMobEffects.TAUNT_COOLDOWN.get());
+		removeEffect(player, SololevelingModMobEffects.FORTIFY);
+		removeEffect(player, SololevelingModMobEffects.WILL_POWER);
+		removeEffect(player, SololevelingModMobEffects.SHIELD_BASH_EFFECT);
+		removeEffect(player, SololevelingModMobEffects.WILLPOWER_COOLDOWN);
+		removeEffect(player, SololevelingModMobEffects.SHIELD_BASH_COOLDOWN);
+		removeEffect(player, SololevelingModMobEffects.TAUNT_COOLDOWN);
 	}
 
-	private static void removeEffect(LivingEntity entity, MobEffect effect) {
+	private static void removeEffect(LivingEntity entity, Holder<MobEffect> effect) {
 		if (effect != null && entity.hasEffect(effect))
 			entity.removeEffect(effect);
 	}
@@ -2133,7 +2172,16 @@ public final class TankerSkillManager {
 	}
 
 	private static boolean isTanker(Entity entity) {
-		return entity != null && isTanker(variables(entity));
+		if (entity == null)
+			return false;
+		SololevelingModVariables.PlayerVariables vars = variables(entity);
+		if (isTanker(vars))
+			return true;
+		for (String skill : SKILLS) {
+			if (TankerProgressionRules.hasSkill(vars.Plist, skill))
+				return true;
+		}
+		return false;
 	}
 
 	private static boolean isTanker(SololevelingModVariables.PlayerVariables vars) {
@@ -2277,14 +2325,14 @@ public final class TankerSkillManager {
 	private static final class RuntimeKeys {
 		private static final ResourceKey<DamageType> TANKER_DAMAGE =
 				ResourceKey.create(Registries.DAMAGE_TYPE,
-						new ResourceLocation(SololevelingMod.MODID, "tanker"));
+						ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "tanker"));
 		private static final ResourceKey<DamageType> WILLPOWER_STRAIN_DAMAGE =
 				ResourceKey.create(Registries.DAMAGE_TYPE,
-						new ResourceLocation(SololevelingMod.MODID, "willpower_strain"));
+						ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "willpower_strain"));
 		private static final TagKey<net.minecraft.world.entity.EntityType<?>> BOSS_TAG =
-				TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("soloboss"));
+				TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("soloboss"));
 		private static final TagKey<net.minecraft.world.item.Item> SHIELDS =
-				ItemTags.create(new ResourceLocation("minecraft", "shields"));
+				ItemTags.create(ResourceLocation.fromNamespaceAndPath("minecraft", "shields"));
 
 		private RuntimeKeys() {
 		}

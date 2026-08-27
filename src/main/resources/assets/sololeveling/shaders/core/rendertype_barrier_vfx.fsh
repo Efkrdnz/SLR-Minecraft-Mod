@@ -52,6 +52,10 @@ float hexLines(vec2 p) {
     return 1.0 - smoothstep(0.015, 0.052, edge);
 }
 
+vec3 safeNormalize(vec3 value) {
+    return value * inversesqrt(max(dot(value, value), 1.0e-8));
+}
+
 void main() {
     float kind = floor(texCoord0.x + 0.0001);
     float stage = clamp(floor(texCoord0.y + 0.0001), 1.0, 5.0);
@@ -63,7 +67,7 @@ void main() {
     float detail = fbm(uv * (10.0 + stage) + vec2(-time * 0.22, time * 0.31) + broad * 1.7);
     float scan = 0.5 + 0.5 * sin((uv.y * (34.0 + stage * 5.0) - time * 2.4) + detail * 2.0);
     float crack = pow(clamp(1.0 - abs(detail - 0.49) * (19.0 - stageN * 3.0), 0.0, 1.0), 2.4);
-    float fresnel = pow(clamp(1.0 - abs(dot(normalize(-viewPosition), normalize(viewNormal))), 0.0, 1.0), 1.7);
+    float fresnel = pow(clamp(1.0 - abs(dot(safeNormalize(-viewPosition), safeNormalize(viewNormal))), 0.0, 1.0), 1.7);
     float alpha = 0.0;
     float core = 0.0;
 

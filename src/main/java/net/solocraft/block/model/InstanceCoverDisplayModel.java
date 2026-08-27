@@ -9,16 +9,16 @@ import net.minecraft.resources.ResourceLocation;
 public class InstanceCoverDisplayModel extends GeoModel<InstanceCoverDisplayItem> {
 	@Override
 	public ResourceLocation getAnimationResource(InstanceCoverDisplayItem animatable) {
-		return new ResourceLocation("sololeveling", "animations/instancecover.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/instancecover.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(InstanceCoverDisplayItem animatable) {
-		return new ResourceLocation("sololeveling", "geo/instancecover.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/instancecover.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(InstanceCoverDisplayItem entity) {
-		return new ResourceLocation("sololeveling", "textures/block/instancecover1.png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/block/instancecover1.png");
 	}
 }

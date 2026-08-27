@@ -8,10 +8,14 @@ import net.solocraft.util.FrostArchitectureManager;
 import net.solocraft.util.CooldownManager;
 import net.solocraft.init.SololevelingModKeyMappings;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
@@ -23,7 +27,7 @@ import net.minecraft.util.Mth;
  * Client-only interaction state for the hold radial. Horizontal raw mouse
  * movement rotates the options while the player's view remains locked.
  */
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 public final class FrostArchitectureClientState {
 	private static final double RADIANS_PER_PIXEL = 0.0105D;
 	private static boolean active;
@@ -54,7 +58,7 @@ public final class FrostArchitectureClientState {
 			activationKey = hotbarKey(hotbarSlot).getKey();
 			lockedYaw = player.getYRot();
 			lockedPitch = player.getXRot();
-			minecraft.setScreen(new FrostArchitecturePauseScreen());
+			RadialScreenTransition.run(() -> minecraft.setScreen(new FrostArchitecturePauseScreen()));
 		}
 	}
 
@@ -92,7 +96,7 @@ public final class FrostArchitectureClientState {
 		activationKey = null;
 		Minecraft minecraft = Minecraft.getInstance();
 		if (minecraft.screen instanceof FrostArchitecturePauseScreen)
-			minecraft.setScreen(null);
+			RadialScreenTransition.run(() -> minecraft.setScreen(null));
 	}
 
 	static void onPauseScreenRemoved(FrostArchitecturePauseScreen screen) {
@@ -140,8 +144,8 @@ public final class FrostArchitectureClientState {
 	}
 
 	@SubscribeEvent
-	public static void onClientTick(TickEvent.ClientTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || !active)
+	public static void onClientTick(ClientTickEvent.Post event) {
+		if (false || !active)
 			return;
 		Minecraft minecraft = Minecraft.getInstance();
 		LocalPlayer player = minecraft.player;
@@ -170,15 +174,11 @@ public final class FrostArchitectureClientState {
 	}
 
 	private static KeyMapping hotbarKey(int slot) {
-		return switch (slot) {
-			case 1 -> SololevelingModKeyMappings.AB_1;
-			case 2 -> SololevelingModKeyMappings.AB_2;
-			case 3 -> SololevelingModKeyMappings.AB_3;
-			case 4 -> SololevelingModKeyMappings.AB_4;
-			case 5 -> SololevelingModKeyMappings.AB_5;
-			case 6 -> SololevelingModKeyMappings.AB_6;
-			case 7 -> SololevelingModKeyMappings.AB_7;
-			default -> SololevelingModKeyMappings.AB_8;
-		};
+		// The skill slots ride the vanilla hotbar keys now, so hold-and-release
+		// detection has to watch the key the player actually pressed rather than
+		// a dedicated binding that no longer exists.
+		KeyMapping[] slots = Minecraft.getInstance().options.keyHotbarSlots;
+		int index = Math.max(0, Math.min(slots.length - 1, slot - 1));
+		return slots[index];
 	}
 }

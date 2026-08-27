@@ -3,7 +3,12 @@
 uniform float GameTime;
 uniform vec2 MousePos;
 uniform vec4 ThemeWeights0; // System, Ruler, Shadow, Frost
-uniform vec4 ThemeWeights1; // White Flame, Beast, generic Monarch, reserved
+uniform vec4 ThemeWeights1; // White Flame, Beast, contributed Monarch, Destruction
+// A contributed Monarch cannot ship GLSL into a core shader, so it picks one of
+// the shipped animations and recolours it. Defaults reproduce the neutral
+// Monarch look exactly, so nothing changes when no addon vessel is hovered.
+uniform vec3 CustomAccent;
+uniform float CustomBackdrop;
 
 in vec2 texCoord;
 out vec4 fragColor;
@@ -128,6 +133,69 @@ vec3 beastTheme(vec2 uv, float t) {
     return col;
 }
 
+vec3 destructionTheme(vec2 uv, float t) {
+    vec3 col = mix(vec3(0.008, 0.0005, 0.001), vec3(0.16, 0.004, 0.008), 1.0 - uv.y);
+    vec2 p = (uv - vec2(0.5, 0.43)) * vec2(1.0, 1.28);
+    float radius = length(p);
+    float angle = atan(p.y, p.x);
+
+    // A slow collapsing corona gives Antares a sovereign, apocalyptic
+    // silhouette instead of Rakan's fast claw marks.
+    float distortion = fbm(p * 5.4 + vec2(t * 0.025, -t * 0.018));
+    float corona = exp(-abs(radius - 0.235 - (distortion - 0.5) * 0.035) * 34.0);
+    float eclipse = 1.0 - smoothstep(0.075, 0.215, radius);
+    float outerHeat = 1.0 - smoothstep(0.18, 0.68, radius);
+    col += vec3(0.62, 0.008, 0.012) * outerHeat * (0.25 + distortion * 0.36);
+    col += vec3(1.0, 0.075, 0.025) * corona * 0.82;
+    col += vec3(1.0, 0.42, 0.08) * pow(corona, 3.0) * 0.82;
+    col *= 1.0 - eclipse * 0.78;
+
+    // Radial destruction fissures pulse outward from the eclipsed core.
+    float branchNoise = fbm(vec2(angle * 2.8, radius * 9.0 - t * 0.16));
+    float branches = abs(sin(angle * 11.0 + branchNoise * 5.4));
+    float fissure = 1.0 - smoothstep(0.018, 0.105, branches);
+    fissure *= smoothstep(0.19, 0.31, radius) * (1.0 - smoothstep(0.34, 0.84, radius));
+    fissure *= 0.74 + 0.26 * sin(t * 1.7 - radius * 18.0);
+    col += vec3(0.95, 0.018, 0.008) * fissure * 0.72;
+    col += vec3(1.0, 0.36, 0.08) * pow(fissure, 3.0) * 0.72;
+
+    float cinderGrid = hash(floor(uv * vec2(150.0, 210.0))
+            + vec2(floor(t * 1.4), floor(t * 0.9)));
+    float cinders = step(0.986, cinderGrid);
+    float rise = fract(uv.y + t * (0.018 + hash(floor(uv * 92.0)) * 0.028));
+    cinders *= smoothstep(0.15, 0.92, rise);
+    col += vec3(1.0, 0.17, 0.025) * cinders * 0.95;
+
+    // The narrow vertical pupil reads as dragon authority without a texture.
+    float eyeMask = exp(-length(p * vec2(1.45, 4.8)) * 19.0);
+    float pupil = exp(-length(p * vec2(7.5, 1.35)) * 25.0);
+    col += vec3(1.0, 0.24, 0.035) * eyeMask * 1.15;
+    col *= 1.0 - pupil * 0.88;
+    return col;
+}
+
+/**
+ * The backdrop a contributed Monarch selected, pulled toward its own colour.
+ *
+ * Tinting rather than replacing keeps the animation's shape and motion while
+ * letting two Monarchs that picked the same backdrop still read as different.
+ */
+vec3 customTheme(vec2 uv, float t) {
+    int pick = int(CustomBackdrop + 0.5);
+    vec3 base;
+    if (pick == 1) base = frostTheme(uv, t);
+    else if (pick == 2) base = whiteFlameTheme(uv, t);
+    else if (pick == 3) base = beastTheme(uv, t);
+    else if (pick == 4) base = destructionTheme(uv, t);
+    else if (pick == 5) base = systemTheme(uv, t);
+    else base = shadowTheme(uv, t);
+
+    // Preserve the animation's own brightness and swing its hue to the declared
+    // colour. Straight multiplication would crush the darks to nothing.
+    float luma = dot(base, vec3(0.299, 0.587, 0.114));
+    return mix(base, CustomAccent * luma * 1.35, 0.62);
+}
+
 void main() {
     vec2 uv = texCoord;
     float t = GameTime * 1200.0;
@@ -142,7 +210,8 @@ void main() {
     if (w0.w > 0.001) col += frostTheme(uv, t) * w0.w;
     if (w1.x > 0.001) col += whiteFlameTheme(uv, t) * w1.x;
     if (w1.y > 0.001) col += beastTheme(uv, t) * w1.y;
-    if (w1.z > 0.001) col += shadowTheme(uv, t) * w1.z;
+    if (w1.z > 0.001) col += customTheme(uv, t) * w1.z;
+    if (w1.w > 0.001) col += destructionTheme(uv, t) * w1.w;
     col /= total;
 
     vec3 accent = (vec3(0.25, 0.78, 1.0) * w0.x
@@ -151,7 +220,8 @@ void main() {
             + vec3(0.77, 0.94, 1.0) * w0.w
             + vec3(0.48, 0.82, 1.0) * w1.x
             + vec3(1.0, 0.20, 0.10) * w1.y
-            + vec3(0.72, 0.34, 1.0) * w1.z) / total;
+            + CustomAccent * w1.z
+            + vec3(1.0, 0.08, 0.035) * w1.w) / total;
     float cursor = exp(-length((uv - MousePos) * vec2(1.0, 1.35)) * 8.5);
     col += accent * cursor * 0.12;
 

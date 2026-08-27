@@ -11,10 +11,11 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.util.DkcQuestManager;
 import net.solocraft.dkc.DkcFloorRegistry;
 
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.solocraft.network.compat.NetworkEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
@@ -26,7 +27,7 @@ import net.minecraft.core.BlockPos;
 import java.util.function.Supplier;
 import java.util.HashMap;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class QuestsButtonMessage {
 	private final int buttonID, x, y, z;
 

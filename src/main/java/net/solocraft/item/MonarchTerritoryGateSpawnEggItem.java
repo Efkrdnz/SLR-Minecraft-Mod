@@ -4,7 +4,7 @@ import net.solocraft.dungeon.runtime.SnowRedGateArenaManager;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.world.dimension.rift.RiftTerritory;
 
-import net.minecraftforge.common.ForgeSpawnEggItem;
+import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -21,7 +21,7 @@ import net.minecraft.world.level.Level;
 
 import java.util.List;
 
-public class MonarchTerritoryGateSpawnEggItem extends ForgeSpawnEggItem {
+public class MonarchTerritoryGateSpawnEggItem extends DeferredSpawnEggItem {
 	private final RiftTerritory territory;
 
 	public MonarchTerritoryGateSpawnEggItem(RiftTerritory territory, int backgroundColor, int highlightColor) {
@@ -49,7 +49,7 @@ public class MonarchTerritoryGateSpawnEggItem extends ForgeSpawnEggItem {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
 		tooltip.add(Component.literal("Territory: " + territory.displayName()).withStyle(ChatFormatting.DARK_RED));
 		tooltip.add(Component.literal(levelRangeText()).withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.literal("Wave-based red gate encounter.").withStyle(ChatFormatting.DARK_GRAY));

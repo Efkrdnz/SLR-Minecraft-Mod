@@ -2,10 +2,11 @@ package net.solocraft.procedures;
 
 import net.solocraft.entity.FireFlyEntity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -15,10 +16,10 @@ import net.minecraft.core.particles.ParticleTypes;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class FireFlyHitsSomeoneProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity, event.getSource().getEntity());
@@ -33,13 +34,16 @@ public class FireFlyHitsSomeoneProcedure {
 		if (entity == null || sourceentity == null)
 			return;
 		if (sourceentity instanceof FireFlyEntity) {
-			entity.setSecondsOnFire(5);
+			entity.igniteForSeconds(5);
 			if (!sourceentity.level().isClientSide())
 				sourceentity.discard();
 			if (world instanceof ServerLevel _level)
 				_level.sendParticles(ParticleTypes.FLAME, x, y, z, 5, 3, 3, 3, 1);
 			if (world instanceof Level _level && !_level.isClientSide())
-				_level.explode(null, x, y, z, 1, Level.ExplosionInteraction.NONE);
+				// The firefly, not nobody. It has already been discarded, which the
+				// explosion does not mind, and attributing it is what lets the item
+				// guard recognise this as one of ours.
+				_level.explode(sourceentity, x, y, z, 1, Level.ExplosionInteraction.NONE);
 		}
 	}
 }

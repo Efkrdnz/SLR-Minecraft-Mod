@@ -15,7 +15,7 @@ public class CurseMagicRenderer extends MobRenderer<CurseMagicEntity, Modelinv<C
 
 	@Override
 	public ResourceLocation getTextureLocation(CurseMagicEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/invistext.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/invistext.png");
 	}
 
 	@Override

@@ -26,10 +26,10 @@ public class RandomCemeteryProcedure {
 		Zoff = entity.getZ() + -5;
 		component = 0;
 		if (world instanceof ServerLevel _serverworld) {
-			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_enterance"));
+			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_enterance"));
 			if (template != null) {
 				template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-						_serverworld.random, 3);
+						_serverworld.random, 2);
 			}
 		}
 		Xoff = Xoff + 26;
@@ -40,34 +40,34 @@ public class RandomCemeteryProcedure {
 					rand1 = Mth.nextInt(RandomSource.create(), 1, 4);
 					if (rand1 == 1) {
 						if (world instanceof ServerLevel _serverworld) {
-							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_corridor1"));
+							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_corridor1"));
 							if (template != null) {
 								template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-										_serverworld.random, 3);
+										_serverworld.random, 2);
 							}
 						}
 					} else if (rand1 == 2) {
 						if (world instanceof ServerLevel _serverworld) {
-							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_corridor2"));
+							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_corridor2"));
 							if (template != null) {
 								template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-										_serverworld.random, 3);
+										_serverworld.random, 2);
 							}
 						}
 					} else if (rand1 == 3) {
 						if (world instanceof ServerLevel _serverworld) {
-							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_corridor3"));
+							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_corridor3"));
 							if (template != null) {
 								template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-										_serverworld.random, 3);
+										_serverworld.random, 2);
 							}
 						}
 					} else if (rand1 == 4) {
 						if (world instanceof ServerLevel _serverworld) {
-							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_corridor4"));
+							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_corridor4"));
 							if (template != null) {
 								template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-										_serverworld.random, 3);
+										_serverworld.random, 2);
 							}
 						}
 					}
@@ -76,20 +76,20 @@ public class RandomCemeteryProcedure {
 				} else if (rand1 == 4) {
 					Zoff = Zoff - 25;
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_turn_left"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_turn_left"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-									_serverworld.random, 3);
+									_serverworld.random, 2);
 						}
 					}
 					component = component + 1;
 					Xoff = Xoff + 25;
 				} else if (rand1 == 5) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_turn_right"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_turn_right"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-									_serverworld.random, 3);
+									_serverworld.random, 2);
 						}
 					}
 					component = component + 1;
@@ -100,20 +100,20 @@ public class RandomCemeteryProcedure {
 				rand1 = Mth.nextInt(RandomSource.create(), 1, 2);
 				if (rand1 == 1) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_mid1"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_mid1"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff - 8), BlockPos.containing(Xoff, Yoff, Zoff - 8),
-									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 						}
 					}
 					Xoff = Xoff + 29;
 					component = component + 1;
 				} else if (rand1 == 2) {
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_mid2"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_mid2"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff - 8), BlockPos.containing(Xoff, Yoff, Zoff - 8),
-									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 3);
+									new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false), _serverworld.random, 2);
 						}
 					}
 					Xoff = Xoff + 29;
@@ -122,10 +122,10 @@ public class RandomCemeteryProcedure {
 			} else {
 				Zoff = Zoff - 8;
 				if (world instanceof ServerLevel _serverworld) {
-					StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "b_rank_cemetery_boss"));
+					StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "b_rank_cemetery_boss"));
 					if (template != null) {
 						template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-								_serverworld.random, 3);
+								_serverworld.random, 2);
 					}
 				}
 				break;

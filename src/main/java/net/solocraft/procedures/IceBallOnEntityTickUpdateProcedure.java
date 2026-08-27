@@ -2,8 +2,9 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.Vec2;
@@ -82,9 +83,9 @@ public class IceBallOnEntityTickUpdateProcedure {
 			if (entity.getPersistentData().getDouble("IceLife") >= 2 && entity.getPersistentData().getDouble("IceLife") % 2 == 0) {
 				if (world instanceof Level _level) {
 					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 1, 1);
+						_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 1, 1);
 					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 1, 1, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 1, 1, false);
 					}
 				}
 				{
@@ -93,9 +94,9 @@ public class IceBallOnEntityTickUpdateProcedure {
 					for (Entity entityiterator : _entfound) {
 						if (!(entity.getPersistentData().getString("caster")).equals(entityiterator.getDisplayName().getString()) && !(entity == entityiterator)) {
 							if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE.get(), 60, 1, false, false));
+								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.FREEZE, 60, 1, false, false));
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MAGIC), caster),
-									(float) (5 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 20));
+									(float) (5 + TemporaryStatBonusManager.effectiveIntelligence(entity) / 20));
 						}
 					}
 				}
@@ -115,9 +116,9 @@ public class IceBallOnEntityTickUpdateProcedure {
 			if (entity.getPersistentData().getDouble("IceLife") >= 40) {
 				if (world instanceof Level _level) {
 					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 2, 1);
+						_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 2, 1);
 					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, 2, 1, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, 2, 1, false);
 					}
 				}
 				int horizontalRadiusSphere = (int) 8 - 1;
@@ -143,7 +144,7 @@ public class IceBallOnEntityTickUpdateProcedure {
 					for (Entity entityiterator : _entfound) {
 						if (!(entity.getPersistentData().getString("caster")).equals(entityiterator.getDisplayName().getString()) && !(entity == entityiterator)) {
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MAGIC), caster),
-									(float) (16 + (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 10));
+									(float) (16 + TemporaryStatBonusManager.effectiveIntelligence(entity) / 10));
 						}
 					}
 				}

@@ -38,11 +38,10 @@ public class MiscItemsScreen extends AbstractContainerScreen<MiscItemsMenu> {
 		this.imageHeight = 0;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/misc_items.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/misc_items.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 		if (mouseX > leftPos + -59 && mouseX < leftPos + -35 && mouseY > topPos + -78 && mouseY < topPos + -54)
@@ -60,7 +59,7 @@ public class MiscItemsScreen extends AbstractContainerScreen<MiscItemsMenu> {
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/base.png"), this.leftPos + -77, this.topPos + -116, 0, 0, 150, 225, 150, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/base.png"), this.leftPos + -77, this.topPos + -116, 0, 0, 150, 225, 150, 225);
 
 		RenderSystem.disableBlend();
 	}
@@ -97,7 +96,7 @@ public class MiscItemsScreen extends AbstractContainerScreen<MiscItemsMenu> {
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_device = new ImageButton(this.leftPos + -63, this.topPos + -82, 32, 32, 0, 0, 32, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_device.png"), 32, 64, e -> {
+		imagebutton_device = new LegacyAtlasImageButton(this.leftPos + -63, this.topPos + -82, 32, 32, 0, 0, 32, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_device.png"), 32, 64, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new MiscItemsButtonMessage(0, x, y, z));
 				MiscItemsButtonMessage.handleButtonAction(entity, 0, x, y, z);
@@ -105,7 +104,7 @@ public class MiscItemsScreen extends AbstractContainerScreen<MiscItemsMenu> {
 		});
 		guistate.put("button:imagebutton_device", imagebutton_device);
 		this.addRenderableWidget(imagebutton_device);
-		imagebutton_speciallootbox = new ImageButton(this.leftPos + -60, this.topPos + -29, 24, 24, 0, 0, 24, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_speciallootbox.png"), 24, 48, e -> {
+		imagebutton_speciallootbox = new LegacyAtlasImageButton(this.leftPos + -60, this.topPos + -29, 24, 24, 0, 0, 24, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_speciallootbox.png"), 24, 48, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new MiscItemsButtonMessage(1, x, y, z));
 				MiscItemsButtonMessage.handleButtonAction(entity, 1, x, y, z);
@@ -113,7 +112,7 @@ public class MiscItemsScreen extends AbstractContainerScreen<MiscItemsMenu> {
 		});
 		guistate.put("button:imagebutton_speciallootbox", imagebutton_speciallootbox);
 		this.addRenderableWidget(imagebutton_speciallootbox);
-		imagebutton_chooseboxicon = new ImageButton(this.leftPos + -60, this.topPos + 19, 24, 24, 0, 0, 24, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_chooseboxicon.png"), 24, 48, e -> {
+		imagebutton_chooseboxicon = new LegacyAtlasImageButton(this.leftPos + -60, this.topPos + 19, 24, 24, 0, 0, 24, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_chooseboxicon.png"), 24, 48, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new MiscItemsButtonMessage(2, x, y, z));
 				MiscItemsButtonMessage.handleButtonAction(entity, 2, x, y, z);

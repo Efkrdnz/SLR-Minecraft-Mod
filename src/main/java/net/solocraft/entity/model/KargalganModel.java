@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class KargalganModel extends GeoModel<KargalganEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(KargalganEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/kardalgan_boss.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/kardalgan_boss.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(KargalganEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/kardalgan_boss.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/kardalgan_boss.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(KargalganEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

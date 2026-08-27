@@ -21,7 +21,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
@@ -53,20 +52,19 @@ public class ShadowGUIScreen extends AbstractContainerScreen<ShadowGUIMenu> {
 		this.imageHeight = 0;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/shadow_gui.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/shadow_gui.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		if (ReturnShadowIgrisProcedure.execute(world, x, y, z, entity) instanceof LivingEntity livingEntity) {
 			if (IgrisSpawnedProcedure.execute(entity))
-				InventoryScreen.renderEntityInInventoryFollowsAngle(guiGraphics, this.leftPos + -103, this.topPos + 3, 30, 0f + (float) Math.atan((this.leftPos + -103 - mouseX) / 40.0), (float) Math.atan((this.topPos + -46 - mouseY) / 40.0),
+				LegacyInventoryEntityRenderer.renderEntityInInventoryFollowsAngle(guiGraphics, this.leftPos + -103, this.topPos + 3, 30, 0f + (float) Math.atan((this.leftPos + -103 - mouseX) / 40.0), (float) Math.atan((this.topPos + -46 - mouseY) / 40.0),
 						livingEntity);
 		}
 		if (ReturnShadowBeruProcedure.execute(world, x, y, z, entity) instanceof LivingEntity livingEntity) {
 			if (BeruSpawnedProcedure.execute(entity))
-				InventoryScreen.renderEntityInInventoryFollowsAngle(guiGraphics, this.leftPos + 101, this.topPos + 1, 30, 0f, 0, livingEntity);
+				LegacyInventoryEntityRenderer.renderEntityInInventoryFollowsAngle(guiGraphics, this.leftPos + 101, this.topPos + 1, 30, 0f, 0, livingEntity);
 		}
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
@@ -78,13 +76,13 @@ public class ShadowGUIScreen extends AbstractContainerScreen<ShadowGUIMenu> {
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/basewide2.png"), this.leftPos + -151, this.topPos + -119, 0, 0, 300, 225, 300, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/basewide2.png"), this.leftPos + -151, this.topPos + -119, 0, 0, 300, 225, 300, 225);
 
 		if (IgrisNotSpawnedProcedure.execute(entity)) {
-			guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/shadowunlocked.png"), this.leftPos + -135, this.topPos + -98, 0, 0, 67, 105, 67, 105);
+			guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/shadowunlocked.png"), this.leftPos + -135, this.topPos + -98, 0, 0, 67, 105, 67, 105);
 		}
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/shadowunlocked.png"), this.leftPos + 67, this.topPos + -100, 0, 0, 67, 105, 67, 105);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/shadowunlocked.png"), this.leftPos + 67, this.topPos + -100, 0, 0, 67, 105, 67, 105);
 
 		RenderSystem.disableBlend();
 	}

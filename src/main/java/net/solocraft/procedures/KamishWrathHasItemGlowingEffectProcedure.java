@@ -9,7 +9,7 @@ public class KamishWrathHasItemGlowingEffectProcedure {
 	public static boolean execute(Entity entity) {
 		if (entity == null)
 			return false;
-		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get())) {
+		if (entity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE)) {
 			return true;
 		}
 		return false;

@@ -22,11 +22,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 import org.joml.Matrix4f;
 
 /**
@@ -37,10 +37,10 @@ import org.joml.Matrix4f;
  * territory palette without another dimension or synchronization packet.</p>
  */
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
 public final class SnowDungeonSpecialEffects extends DimensionSpecialEffects {
 	private static final ResourceLocation DIMENSION_ID =
-			new ResourceLocation(SololevelingMod.MODID, "dungeon_dimension_snow");
+			ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "dungeon_dimension_snow");
 	private static final float TERRAIN_FOG_NEAR = 30.0F;
 	private static final float TERRAIN_FOG_FAR = 88.0F;
 	private static final float SKY_RADIUS = 96.0F;
@@ -109,14 +109,16 @@ public final class SnowDungeonSpecialEffects extends DimensionSpecialEffects {
 
 	@Override
 	public boolean renderClouds(ClientLevel level, int ticks, float partialTick, PoseStack poseStack,
-			double camX, double camY, double camZ, Matrix4f projectionMatrix) {
+			double camX, double camY, double camZ, Matrix4f modelViewMatrix,
+			Matrix4f projectionMatrix) {
 		// The aurora supplies the high-altitude silhouette. Vanilla clouds look
 		// too bright and are not useful inside this bounded encounter dimension.
 		return true;
 	}
 
 	@Override
-	public boolean renderSky(ClientLevel level, int ticks, float partialTick, PoseStack poseStack, Camera camera,
+	public boolean renderSky(ClientLevel level, int ticks, float partialTick,
+			Matrix4f modelViewMatrix, Camera camera,
 			Matrix4f projectionMatrix, boolean isFoggy, Runnable setupFog) {
 		if (isFoggy || camera.getFluidInCamera() != FogType.NONE) {
 			return false;
@@ -131,25 +133,27 @@ public final class SnowDungeonSpecialEffects extends DimensionSpecialEffects {
 		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
-		Matrix4f matrix = poseStack.last().pose();
 		SkyPalette palette = paletteFor(RedGateRealmLayout.territoryAtX(camera.getPosition().x)
 				.orElse(RiftTerritory.FROST));
-		renderTwilightBox(matrix, palette);
-		float animationTime = ticks + partialTick;
-		renderAurora(matrix, animationTime, palette);
-		renderMoon(matrix, palette);
-
-		RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-		RenderSystem.disableBlend();
-		RenderSystem.enableCull();
-		RenderSystem.depthMask(true);
-		RenderSystem.enableDepthTest();
+		try {
+			renderTwilightBox(modelViewMatrix, palette);
+			float animationTime = ticks + partialTick;
+			renderAurora(modelViewMatrix, animationTime, palette);
+			renderMoon(modelViewMatrix, palette);
+		} finally {
+			RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+			RenderSystem.defaultBlendFunc();
+			RenderSystem.disableBlend();
+			RenderSystem.enableCull();
+			RenderSystem.depthMask(true);
+			RenderSystem.enableDepthTest();
+		}
 		return true;
 	}
 
 	private static void renderTwilightBox(Matrix4f matrix, SkyPalette palette) {
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(
+				VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
 		// Upper vault.
 		vertex(buffer, matrix, -SKY_RADIUS, SKY_TOP, -SKY_RADIUS, palette.top(), 1.0F);
@@ -169,7 +173,7 @@ public final class SnowDungeonSpecialEffects extends DimensionSpecialEffects {
 		vertex(buffer, matrix, SKY_RADIUS, SKY_BOTTOM, -SKY_RADIUS, palette.bottom(), 1.0F);
 		vertex(buffer, matrix, SKY_RADIUS, SKY_BOTTOM, SKY_RADIUS, palette.bottom(), 1.0F);
 
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void side(BufferBuilder buffer, Matrix4f matrix, float x0, float z0, float x1, float z1,
@@ -194,8 +198,8 @@ public final class SnowDungeonSpecialEffects extends DimensionSpecialEffects {
 
 	private static void renderAuroraBand(Matrix4f matrix, float phase, float z, float startX, float baseY,
 			float red, float green, float blue, float alpha) {
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(
+				VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 		for (int i = 0; i <= 16; i++) {
 			float x = startX + i * 8.0F;
 			float wave = Mth.sin(phase + i * 0.62F) * 5.5F + Mth.sin(phase * 0.61F + i * 0.27F) * 2.5F;
@@ -204,7 +208,7 @@ public final class SnowDungeonSpecialEffects extends DimensionSpecialEffects {
 			vertex(buffer, matrix, x, lowerY, z, red, green, blue, 0.0F);
 			vertex(buffer, matrix, x, upperY, z, red, green, blue, alpha);
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void renderMoon(Matrix4f matrix, SkyPalette palette) {
@@ -218,20 +222,20 @@ public final class SnowDungeonSpecialEffects extends DimensionSpecialEffects {
 
 	private static void renderDisc(Matrix4f matrix, float centerX, float centerY, float z, float radius,
 			float red, float green, float blue, float centerAlpha, float edgeAlpha) {
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(
+				VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
 		vertex(buffer, matrix, centerX, centerY, z, red, green, blue, centerAlpha);
 		for (int i = 0; i <= 40; i++) {
 			float angle = (float) (Math.PI * 2.0D * i / 40.0D);
 			vertex(buffer, matrix, centerX + Mth.cos(angle) * radius, centerY + Mth.sin(angle) * radius, z,
 					red, green, blue, edgeAlpha);
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void vertex(BufferBuilder buffer, Matrix4f matrix, float x, float y, float z,
 			float red, float green, float blue, float alpha) {
-		buffer.vertex(matrix, x, y, z).color(red, green, blue, alpha).endVertex();
+		buffer.addVertex(matrix, x, y, z).setColor(red, green, blue, alpha);
 	}
 
 	private static void vertex(BufferBuilder buffer, Matrix4f matrix, float x, float y, float z,

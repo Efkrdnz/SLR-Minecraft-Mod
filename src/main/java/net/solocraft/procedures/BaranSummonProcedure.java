@@ -6,7 +6,7 @@ import net.solocraft.entity.BaranEntity;
 import net.solocraft.entity.DemonKnightEntity;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
@@ -71,7 +71,7 @@ public class BaranSummonProcedure {
 				sl.sendParticles(ParticleTypes.PORTAL, x, y + 1, z, 60, 1.5, 1.5, 1.5, 0.5);
 				sl.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 1, z, 20, 0.5, 0.5, 0.5, 0.02);
 				sl.playSound(null, BlockPos.containing(x, y, z),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.spawn")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.spawn")),
 						SoundSource.HOSTILE, 1.0f, 1.5f);
 			}
 		}
@@ -103,7 +103,7 @@ public class BaranSummonProcedure {
 				spawnKnight(sl, baran, target, backX, ty, backZ, baranFloor, baranOwner);
 				sl.sendParticles(ParticleTypes.PORTAL, backX, ty + 1, backZ, 20, 0.5, 1.0, 0.5, 0.3);
 				sl.playSound(null, BlockPos.containing(backX, ty, backZ),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.enderman.teleport")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.enderman.teleport")),
 						SoundSource.HOSTILE, 1.0f, 0.7f);
 			}
 		}

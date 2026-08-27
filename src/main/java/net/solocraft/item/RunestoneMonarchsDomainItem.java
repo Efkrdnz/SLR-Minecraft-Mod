@@ -2,8 +2,8 @@ package net.solocraft.item;
 
 import net.solocraft.procedures.RunestoneMonarchsDomainRightclickedProcedure;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -29,8 +29,8 @@ public class RunestoneMonarchsDomainItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.literal("\u00A76Right click this rune to obtain \u00A7d\"Monarch's Domain\""));
 		list.add(Component.literal("\u00A76Charge the domain to empower nearby Shadow Soldiers."));
 	}

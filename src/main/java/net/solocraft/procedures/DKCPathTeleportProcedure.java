@@ -28,7 +28,7 @@ public class DKCPathTeleportProcedure {
 	private static final String RETURN_YAW = "dkc_return_yaw";
 	private static final String RETURN_PITCH = "dkc_return_pitch";
 	private static final TagKey<net.minecraft.world.entity.EntityType<?>> SHADOWS_TAG =
-			TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows"));
+			TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows"));
 
 	public static boolean isFloorAvailable(Entity entity, int floor) {
 		if (entity == null || floor < 1 || floor > DkcFloorRegistry.LAST_FLOOR)

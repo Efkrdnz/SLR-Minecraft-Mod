@@ -11,7 +11,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.commands.CommandFunction;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.functions.CommandFunction;
 
 import java.util.Optional;
 
@@ -25,7 +26,7 @@ public class ShadowMonarchRightclickedProcedure {
 				&& (int) entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables()).JOB != 1) {
 			if (VesselManager.assignPlayer(player, VesselManager.RULER, "ashborn", true) == VesselManager.AssignmentResult.SUCCESS) {
 				JobChangeQuestManager.finish(player);
-				Optional<CommandFunction> function = player.getServer().getFunctions().get(new ResourceLocation("mod:purple_lightning_23"));
+				Optional<CommandFunction<CommandSourceStack>> function = player.getServer().getFunctions().get(ResourceLocation.parse("mod:purple_lightning_23"));
 				function.ifPresent(value -> player.getServer().getFunctions().execute(value, player.createCommandSourceStack()));
 			}
 		}

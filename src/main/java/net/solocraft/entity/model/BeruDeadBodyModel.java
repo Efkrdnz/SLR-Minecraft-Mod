@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class BeruDeadBodyModel extends GeoModel<BeruDeadBodyEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(BeruDeadBodyEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/beru_final.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/beru_final.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(BeruDeadBodyEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/beru_final.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/beru_final.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(BeruDeadBodyEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

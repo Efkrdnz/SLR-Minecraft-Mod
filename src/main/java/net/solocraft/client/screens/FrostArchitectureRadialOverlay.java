@@ -11,10 +11,11 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.solocraft.client.gui.FrostArchitectureClientState;
 import net.solocraft.util.FrostArchitectureBlueprint;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -23,7 +24,7 @@ import net.minecraft.network.chat.Component;
 
 import org.joml.Matrix4f;
 
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 public final class FrostArchitectureRadialOverlay {
 	private static final float INNER_RADIUS = 31.0F;
 	private static final float OUTER_RADIUS = 94.0F;
@@ -96,19 +97,18 @@ public final class FrostArchitectureRadialOverlay {
 			float start, float end, float red, float green, float blue, float alpha) {
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 		Matrix4f matrix = pose.last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 		int segments = 18;
 		for (int i = 0; i <= segments; i++) {
 			float angle = start + (end - start) * i / segments;
 			float cosine = (float) Math.cos(angle);
 			float sine = (float) Math.sin(angle);
-			buffer.vertex(matrix, centerX + cosine * OUTER_RADIUS, centerY + sine * OUTER_RADIUS, 0.0F)
-					.color(red, green, blue, alpha).endVertex();
-			buffer.vertex(matrix, centerX + cosine * INNER_RADIUS, centerY + sine * INNER_RADIUS, 0.0F)
-					.color(red * 0.42F, green * 0.52F, blue * 0.60F, alpha).endVertex();
+			buffer.addVertex(matrix, centerX + cosine * OUTER_RADIUS, centerY + sine * OUTER_RADIUS, 0.0F)
+					.setColor(red, green, blue, alpha);
+			buffer.addVertex(matrix, centerX + cosine * INNER_RADIUS, centerY + sine * INNER_RADIUS, 0.0F)
+					.setColor(red * 0.42F, green * 0.52F, blue * 0.60F, alpha);
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void renderArc(PoseStack pose, float centerX, float centerY,
@@ -116,45 +116,42 @@ public final class FrostArchitectureRadialOverlay {
 			float red, float green, float blue, float alpha) {
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 		Matrix4f matrix = pose.last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
 		int segments = 18;
 		for (int i = 0; i <= segments; i++) {
 			float angle = start + (end - start) * i / segments;
 			float cosine = (float) Math.cos(angle);
 			float sine = (float) Math.sin(angle);
-			buffer.vertex(matrix, centerX + cosine * outer, centerY + sine * outer, 0.3F)
-					.color(red, green, blue, alpha).endVertex();
-			buffer.vertex(matrix, centerX + cosine * inner, centerY + sine * inner, 0.3F)
-					.color(red, green, blue, alpha).endVertex();
+			buffer.addVertex(matrix, centerX + cosine * outer, centerY + sine * outer, 0.3F)
+					.setColor(red, green, blue, alpha);
+			buffer.addVertex(matrix, centerX + cosine * inner, centerY + sine * inner, 0.3F)
+					.setColor(red, green, blue, alpha);
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void renderCenter(PoseStack pose, float centerX, float centerY) {
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 		Matrix4f matrix = pose.last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
-		buffer.vertex(matrix, centerX, centerY, 0.6F).color(0.03F, 0.12F, 0.18F, 0.98F).endVertex();
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+		buffer.addVertex(matrix, centerX, centerY, 0.6F).setColor(0.03F, 0.12F, 0.18F, 0.98F);
 		for (int i = 0; i <= 48; i++) {
 			float angle = (float) (Math.PI * 2.0D * i / 48.0D);
-			buffer.vertex(matrix, centerX + (float) Math.cos(angle) * (INNER_RADIUS - 2.0F),
+			buffer.addVertex(matrix, centerX + (float) Math.cos(angle) * (INNER_RADIUS - 2.0F),
 					centerY + (float) Math.sin(angle) * (INNER_RADIUS - 2.0F), 0.6F)
-					.color(0.12F, 0.42F, 0.55F, 0.98F).endVertex();
+					.setColor(0.12F, 0.42F, 0.55F, 0.98F);
 		}
-		BufferUploader.drawWithShader(buffer.end());
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 
 	private static void drawTopPointer(PoseStack pose, float centerX, float centerY) {
 		RenderSystem.setShader(GameRenderer::getPositionColorShader);
 		Matrix4f matrix = pose.last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLES, DefaultVertexFormat.POSITION_COLOR);
 		float y = centerY - OUTER_RADIUS - 5.0F;
-		buffer.vertex(matrix, centerX, y + 10.0F, 1.0F).color(0.85F, 1.0F, 1.0F, 1.0F).endVertex();
-		buffer.vertex(matrix, centerX - 7.0F, y, 1.0F).color(0.20F, 0.85F, 1.0F, 1.0F).endVertex();
-		buffer.vertex(matrix, centerX + 7.0F, y, 1.0F).color(0.20F, 0.85F, 1.0F, 1.0F).endVertex();
-		BufferUploader.drawWithShader(buffer.end());
+		buffer.addVertex(matrix, centerX, y + 10.0F, 1.0F).setColor(0.85F, 1.0F, 1.0F, 1.0F);
+		buffer.addVertex(matrix, centerX - 7.0F, y, 1.0F).setColor(0.20F, 0.85F, 1.0F, 1.0F);
+		buffer.addVertex(matrix, centerX + 7.0F, y, 1.0F).setColor(0.20F, 0.85F, 1.0F, 1.0F);
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 	}
 }

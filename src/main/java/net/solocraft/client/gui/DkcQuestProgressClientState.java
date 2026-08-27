@@ -4,15 +4,16 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.dkc.DkcFloorRegistry;
 import net.solocraft.dkc.DkcSpatialLayout;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.world.entity.player.Player;
 
 /** Latest compact, server-authoritative DKC objective shown by the hold-Tab HUD. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
 public final class DkcQuestProgressClientState {
 	private static boolean active;
 	private static int floor;

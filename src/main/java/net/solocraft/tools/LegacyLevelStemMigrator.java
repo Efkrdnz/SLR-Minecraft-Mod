@@ -2,6 +2,7 @@ package net.solocraft.tools;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.Tag;
 
 import java.io.IOException;
@@ -68,7 +69,7 @@ public final class LegacyLevelStemMigrator {
 		System.out.println("World: " + world);
 		System.out.println("Mode: " + (apply ? "APPLY" : "DRY RUN (no files will be changed)"));
 		try (HeldSessionLock ignored = acquireSessionLock(world)) {
-			CompoundTag root = NbtIo.readCompressed(levelDat.toFile());
+			CompoundTag root = NbtIo.readCompressed(levelDat, NbtAccounter.unlimitedHeap());
 			CompoundTag dimensions = dimensionsTag(root);
 			Set<String> before = new TreeSet<>(dimensions.getAllKeys());
 			List<String> present = RETIRED_LEVEL_STEMS.stream().filter(before::contains).sorted().toList();
@@ -99,7 +100,7 @@ public final class LegacyLevelStemMigrator {
 			Path backup = nextBackupPath(world);
 			boolean replaced = false;
 			try {
-				NbtIo.writeCompressed(root, temporary.toFile());
+				NbtIo.writeCompressed(root, temporary);
 				forceFile(temporary);
 				verifyDimensionKeys(temporary, expected);
 
@@ -142,7 +143,7 @@ public final class LegacyLevelStemMigrator {
 	}
 
 	private static void verifyDimensionKeys(Path levelDat, Set<String> expected) throws IOException {
-		CompoundTag check = NbtIo.readCompressed(levelDat.toFile());
+		CompoundTag check = NbtIo.readCompressed(levelDat, NbtAccounter.unlimitedHeap());
 		Set<String> actual = new TreeSet<>(dimensionsTag(check).getAllKeys());
 		if (!actual.equals(expected))
 			throw new IOException("Verification failed for " + levelDat + "; expected "

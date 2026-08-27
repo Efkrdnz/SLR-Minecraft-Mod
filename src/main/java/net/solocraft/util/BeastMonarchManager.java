@@ -6,28 +6,35 @@ import net.solocraft.init.SololevelingModBlocks;
 import net.solocraft.network.BeastHuntStatusMessage;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingFallEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
@@ -58,7 +65,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Server-authoritative combat foundation for Rakan's vessel moveset. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class BeastMonarchManager {
 	public static final int JOB_ID = 9;
 	public static final String IDENTITY = "rakan";
@@ -93,7 +100,9 @@ public final class BeastMonarchManager {
 	private static final int HUNT_DECAY_DELAY = 100;
 	private static final int CULL_DECAY_GRACE = 240;
 	private static final int PROVOKED_DURATION = 1200;
-	private static final UUID WHITE_FANG_SPEED_MODIFIER = UUID.fromString("f4b6d431-11f9-47c9-8d9d-1cc8829d1c56");
+	private static final ResourceLocation WHITE_FANG_SPEED_MODIFIER =
+			ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID,
+					"attribute/white_fang_sovereign_speed");
 
 	private static final Map<UUID, HuntState> HUNTS = new HashMap<>();
 	private static final Map<UUID, InterceptCharge> CHARGES = new HashMap<>();
@@ -203,7 +212,7 @@ public final class BeastMonarchManager {
 					state.openingMask = 0;
 					BeastVfxEntity.spawnAttached(player.serverLevel(), target, BeastVfxEntity.OPENING,
 							0xFF5548, 0x4A0000, 1.45F, 1.62F, 0.0F, 18, 2);
-					player.level().playSound(null, target.blockPosition(), SoundEvents.GENERIC_EXPLODE,
+					player.level().playSound(null, target.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(),
 							SoundSource.PLAYERS, 0.68F, 0.72F);
 				}
 				if (finisher)
@@ -293,7 +302,7 @@ public final class BeastMonarchManager {
 		BeastVfxEntity.spawnAttached(player.serverLevel(), player, BeastVfxEntity.INTERCEPT,
 				0xE31824, 0x420005, 1.6F + (float) power * 0.35F, 3.4F + (float) power,
 				0.0F, lifetime, target == null ? 0 : 1);
-		player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_RIPTIDE_1,
+		player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_RIPTIDE_1.value(),
 				SoundSource.PLAYERS, 0.9F, target == null ? 0.7F : 0.58F);
 	}
 
@@ -327,8 +336,11 @@ public final class BeastMonarchManager {
 		BeastVfxEntity.spawn(player.serverLevel(), middle, direction, BeastVfxEntity.CLAW,
 				0xFF8A24, 0x3D0900, sovereign ? 3.8F : 3.2F, sovereign ? 3.3F : 2.8F,
 				0.0F, 14, 3);
+		AbilityDestructionManager.fissure(player,
+				AbilityDestructionManager.Profile.BEAST_CLAW_RIFT, start,
+				direction, start.distanceTo(destination), strength, sovereign);
 		player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, true);
-		player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_RIPTIDE_2,
+		player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_RIPTIDE_2.value(),
 				SoundSource.PLAYERS, 1.0F, hits > 0 ? 0.72F : 0.9F);
 	}
 
@@ -373,7 +385,10 @@ public final class BeastMonarchManager {
 		BeastVfxEntity.spawn(player.serverLevel(), center, horizontalLook(player), BeastVfxEntity.RUBBLE_JAW,
 				0xFF9A2E, 0x3E0C00, sovereign ? 3.1F : 2.55F, sovereign ? 6.2F : 5.1F,
 				0.0F, 20, hits > 0 ? 1 : 0);
-		player.level().playSound(null, BlockPos.containing(center), SoundEvents.GENERIC_EXPLODE,
+		AbilityDestructionManager.impact(player,
+				AbilityDestructionManager.Profile.BEAST_RUBBLE_JAW, center,
+				strength, sovereign);
+		player.level().playSound(null, BlockPos.containing(center), SoundEvents.GENERIC_EXPLODE.value(),
 				SoundSource.PLAYERS, 1.15F, sovereign ? 0.58F : 0.68F);
 	}
 
@@ -472,9 +487,9 @@ public final class BeastMonarchManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()
-				|| !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || event.getEntity().level().isClientSide()
+				|| !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		if (!isBeastVessel(player)) {
 			if (player.getPersistentData().getBoolean(STATUS_ACTIVE) || HUNTS.containsKey(player.getUUID())
@@ -547,12 +562,12 @@ public final class BeastMonarchManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public static void onLivingDamage(LivingDamageEvent event) {
+	public static void onLivingDamage(LivingDamageEvent.Post event) {
 		Entity damageOwner = event.getSource().getEntity();
 		if (damageOwner instanceof ServerPlayer attacker && isBeastVessel(attacker)
 				&& event.getSource().getDirectEntity() == attacker && event.getEntity() != attacker)
 			markDirectlyProvoked(attacker, event.getEntity());
-		if (!(event.getEntity() instanceof ServerPlayer player) || event.getAmount() <= 0.0F)
+		if (!(event.getEntity() instanceof ServerPlayer player) || event.getNewDamage() <= 0.0F)
 			return;
 		if (RECONSTITUTIONS.containsKey(player.getUUID()))
 			interruptReconstitution(player);
@@ -565,7 +580,7 @@ public final class BeastMonarchManager {
 		if (hunt == null || hunt.quarryId == null || attacker == null
 				|| !hunt.quarryId.equals(attacker.getUUID()))
 			return;
-		double recoverable = event.getAmount();
+		double recoverable = event.getNewDamage();
 		if (event.getSource().is(net.minecraft.tags.DamageTypeTags.IS_FIRE))
 			recoverable *= 0.5D;
 		Deque<Wound> wounds = WOUNDS.computeIfAbsent(player.getUUID(), ignored -> new ArrayDeque<>());
@@ -1126,8 +1141,8 @@ public final class BeastMonarchManager {
 			if (target instanceof Player fleeingPlayer)
 				fleeingPlayer.setSprinting(false);
 		} else if (target.isBlocking() && !target.getUseItem().isEmpty()) {
-			target.getUseItem().hurtAndBreak(2, target, broken -> {
-			});
+			target.getUseItem().hurtAndBreak(2, target,
+					target.getUsedItemHand() == InteractionHand.MAIN_HAND ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND);
 		}
 		BeastVfxEntity.spawnAttached(player.serverLevel(), target, BeastVfxEntity.KINGS_MAUL,
 				0xFF3540, 0x340005, Mth.clamp(target.getBbWidth() * 1.3F, 1.3F, 3.2F),
@@ -1317,7 +1332,7 @@ public final class BeastMonarchManager {
 			return;
 		speed.removeModifier(WHITE_FANG_SPEED_MODIFIER);
 		speed.addTransientModifier(new AttributeModifier(WHITE_FANG_SPEED_MODIFIER,
-				"White Fang Sovereign speed", 0.18D, AttributeModifier.Operation.MULTIPLY_TOTAL));
+				0.18D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
 	}
 
 	private static void removeWhiteFangSpeed(ServerPlayer player) {

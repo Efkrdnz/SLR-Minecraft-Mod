@@ -36,6 +36,9 @@ import java.util.List;
 public class SystemPanelScreen extends SystemScreen {
 	private static final int STAT_ROW0 = 136;
 	private static final int STAT_STEP = 16;
+	private static final int[] INVESTMENT_MULTIPLIERS = { 1, 5, 10 };
+	private int investmentMultiplierIndex;
+	private Button investmentMultiplierButton;
 
 	private static final List<List<Component>> STAT_TIPS = List.of(
 			List.of(tipTitle("Strength"), tipText("Increases physical attack damage.")),
@@ -56,6 +59,9 @@ public class SystemPanelScreen extends SystemScreen {
 		addRenderableWidget(new SystemButton(panelX + panelW - 15, panelY + 3, 12, 12, Component.literal("X"), b -> beginClose()));
 		addRenderableWidget(new SystemButton(panelX + panelW - 29, panelY + 3, 12, 12, Component.literal("S"), b -> openChild(new SystemSettingsScreen())));
 		addRenderableWidget(new InvisibleButton(panelX + 12, panelY + 46, 135, 14, b -> openChild(new SystemTitlesScreen())));
+		investmentMultiplierButton = addRenderableWidget(new SystemButton(
+				panelX + panelW - 30, panelY + 120, 26, 12,
+				multiplierLabel(), b -> cycleInvestmentMultiplier()));
 
 		for (int i = 0; i < 5; i++) {
 			final int id = i;
@@ -100,7 +106,22 @@ public class SystemPanelScreen extends SystemScreen {
 		if (player == null)
 			return;
 		BlockPos bp = player.blockPosition();
-		SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(id, bp.getX(), bp.getY(), bp.getZ()));
+		int amount = id >= 0 && id < 5 ? selectedInvestmentMultiplier() : 0;
+		SololevelingMod.PACKET_HANDLER.sendToServer(new PanelRework2ButtonMessage(
+				id, bp.getX(), bp.getY(), bp.getZ(), amount));
+	}
+
+	private void cycleInvestmentMultiplier() {
+		investmentMultiplierIndex = (investmentMultiplierIndex + 1) % INVESTMENT_MULTIPLIERS.length;
+		investmentMultiplierButton.setMessage(multiplierLabel());
+	}
+
+	private int selectedInvestmentMultiplier() {
+		return INVESTMENT_MULTIPLIERS[investmentMultiplierIndex];
+	}
+
+	private Component multiplierLabel() {
+		return Component.literal("x" + selectedInvestmentMultiplier());
 	}
 
 	@Override
@@ -161,6 +182,10 @@ public class SystemPanelScreen extends SystemScreen {
 		}
 		if (isOver(mouseX, mouseY, panelX + panelW - 29, panelY + 3, 12, 12))
 			return List.of(tipTitle("Settings"), tipText("Open System settings."));
+		if (isOver(mouseX, mouseY, panelX + panelW - 30, panelY + 120, 26, 12))
+			return List.of(tipTitle("Attribute Investment"),
+					tipText("Each + spends up to " + selectedInvestmentMultiplier() + " skill points."),
+					tipText("Click to cycle x1, x5, and x10."));
 		return null;
 	}
 

@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.entity.GoblinClubShadowEntity;
 import net.solocraft.util.CombatRangeHelper;
+import net.solocraft.util.ShadowMonarchManager;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.TamableAnimal;
@@ -29,9 +30,11 @@ public class GoblinClubShadowattackProcedure {
 							_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 12, 2, false, false));
 					}
 					if ((entity instanceof GoblinClubShadowEntity _datEntI ? _datEntI.getEntityData().get(GoblinClubShadowEntity.DATA_MF) : 0) == 4) {
+						Entity target = entity instanceof Mob mob ? mob.getTarget() : null;
 						if (CombatRangeHelper.withinSurfaceRange(entity,
-								(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 2.5D)) {
-							(entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 5);
+								target, 2.5D)
+								&& ShadowMonarchManager.canShadowDamage(entity, target)) {
+							target.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 5);
 						}
 					}
 					if ((entity instanceof GoblinClubShadowEntity _datEntI ? _datEntI.getEntityData().get(GoblinClubShadowEntity.DATA_MF) : 0) == 8) {
@@ -59,9 +62,11 @@ public class GoblinClubShadowattackProcedure {
 							_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 22, 2, false, false));
 					}
 					if ((entity instanceof GoblinClubShadowEntity _datEntI ? _datEntI.getEntityData().get(GoblinClubShadowEntity.DATA_MF) : 0) == 2) {
+						Entity target = entity instanceof Mob mob ? mob.getTarget() : null;
 						if (CombatRangeHelper.withinSurfaceRange(entity,
-								(entity instanceof Mob _mobEnt ? _mobEnt.getTarget() : null), 2.5D)) {
-							(entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 8);
+								target, 2.5D)
+								&& ShadowMonarchManager.canShadowDamage(entity, target)) {
+							target.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK), entity), 8);
 						}
 					}
 					if ((entity instanceof GoblinClubShadowEntity _datEntI ? _datEntI.getEntityData().get(GoblinClubShadowEntity.DATA_MF) : 0) >= 21) {

@@ -15,7 +15,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
 public class LiuSwordBeamRenderer extends EntityRenderer<LiuSwordBeamEntity> {
-	private static final ResourceLocation FALLBACK = new ResourceLocation("sololeveling", "textures/particle/slashgood1.png");
+	private static final ResourceLocation FALLBACK = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/particle/slashgood1.png");
 
 	public LiuSwordBeamRenderer(EntityRendererProvider.Context context) {
 		super(context);
@@ -111,20 +111,20 @@ public class LiuSwordBeamRenderer extends EntityRenderer<LiuSwordBeamEntity> {
 
 	private static void vertex(VertexConsumer out, PoseStack.Pose pose, float x, float y, float z,
 			float u, float v, int color, int alpha) {
-		out.vertex(pose.pose(), x, y, z)
-				.color((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
-				.uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240)
-				.normal(pose.normal(), 0.0F, 0.0F, 1.0F).endVertex();
+		out.addVertex(pose, x, y, z)
+				.setColor((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
+				.setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240)
+				.setNormal(pose, 0.0F, 0.0F, 1.0F);
 	}
 
 	private static void ringVertex(VertexConsumer out, PoseStack.Pose pose, float x, float z,
 			float radius, float kind, int color, int alpha) {
 		float u = kind + 0.5F + 0.499F * x / radius;
 		float v = 0.5F + 0.499F * z / radius;
-		out.vertex(pose.pose(), x, 0.02F, z)
-				.color((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
-				.uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240)
-				.normal(pose.normal(), 0.0F, 1.0F, 0.0F).endVertex();
+		out.addVertex(pose, x, 0.02F, z)
+				.setColor((color >> 16) & 255, (color >> 8) & 255, color & 255, alpha)
+				.setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240)
+				.setNormal(pose, 0.0F, 1.0F, 0.0F);
 	}
 
 	private static int lighten(int color, float amount) {

@@ -182,7 +182,7 @@ public class MutilationUseProcedure {
 						if (world instanceof ServerLevel _level)
 							_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GOODSLASH_1.get()), (entityiterator.getX()), (entityiterator.getY() + (2 * entityiterator.getBbHeight()) / 3), (entityiterator.getZ()), 2, 0.35, 1,
 									0.35, 0);
-						entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
+						entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"))), entity),
 								(float) (((LivingEntity) entity).getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE).getValue() * 3));
 					}
 				}

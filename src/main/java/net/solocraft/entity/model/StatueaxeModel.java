@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class StatueaxeModel extends GeoModel<StatueaxeEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(StatueaxeEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/statue_axe.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/statue_axe.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(StatueaxeEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/statue_axe.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/statue_axe.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(StatueaxeEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

@@ -15,8 +15,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
 public class SlashEffectRenderer extends EntityRenderer<SlashEffectEntity> {
-	private static final ResourceLocation TEXTURE = new ResourceLocation("sololeveling:textures/particle/slashfury.png");
-	private static final ResourceLocation ASSASSIN_TEXTURE = new ResourceLocation("sololeveling:textures/particle/slashgood1.png");
+	private static final ResourceLocation TEXTURE = ResourceLocation.parse("sololeveling:textures/particle/slashfury.png");
+	private static final ResourceLocation ASSASSIN_TEXTURE = ResourceLocation.parse("sololeveling:textures/particle/slashgood1.png");
 
 	public SlashEffectRenderer(EntityRendererProvider.Context context) {
 		super(context);
@@ -76,7 +76,7 @@ public class SlashEffectRenderer extends EntityRenderer<SlashEffectEntity> {
 	}
 
 	private static void vertex(VertexConsumer vertexConsumer, PoseStack.Pose pose, float x, float y, float z, float u, float v, float red, float green, float blue, int alpha) {
-		vertexConsumer.vertex(pose.pose(), x, y, z).color((int) red, (int) green, (int) blue, alpha).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(pose.normal(), 0.0F, 1.0F, 0.0F).endVertex();
+		vertexConsumer.addVertex(pose, x, y, z).setColor((int) red, (int) green, (int) blue, alpha).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(pose, 0.0F, 1.0F, 0.0F);
 	}
 
 	@Override

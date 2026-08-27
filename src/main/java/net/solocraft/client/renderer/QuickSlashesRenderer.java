@@ -16,7 +16,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
 public class QuickSlashesRenderer extends EntityRenderer<QuickSlashesEntity> {
-	private static final ResourceLocation TEXTURE = new ResourceLocation("sololeveling:textures/particle/slashgood1.png");
+	private static final ResourceLocation TEXTURE = ResourceLocation.parse("sololeveling:textures/particle/slashgood1.png");
 	private static final int SLASH_COUNT = 8;
 
 	public QuickSlashesRenderer(EntityRendererProvider.Context context) {
@@ -85,7 +85,7 @@ public class QuickSlashesRenderer extends EntityRenderer<QuickSlashesEntity> {
 	}
 
 	private static void vertex(VertexConsumer vertexConsumer, PoseStack.Pose pose, float x, float y, float z, float u, float v, int red, int green, int blue, int alpha) {
-		vertexConsumer.vertex(pose.pose(), x, y, z).color(red, green, blue, alpha).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(pose.normal(), 0.0F, 1.0F, 0.0F).endVertex();
+		vertexConsumer.addVertex(pose, x, y, z).setColor(red, green, blue, alpha).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(pose, 0.0F, 1.0F, 0.0F);
 	}
 
 	@Override

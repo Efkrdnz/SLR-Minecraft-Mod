@@ -2,11 +2,12 @@ package net.solocraft.client.screens;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PostChain;
@@ -14,9 +15,9 @@ import net.minecraft.client.renderer.PostPass;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
 public final class LiuExecutionImpactRenderer {
-	private static final ResourceLocation CHAIN = new ResourceLocation(SololevelingMod.MODID,
+	private static final ResourceLocation CHAIN = ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID,
 			"shaders/post/liu_execution_impact.json");
 
 	private static PostChain postChain;
@@ -53,7 +54,8 @@ public final class LiuExecutionImpactRenderer {
 			stop();
 			return;
 		}
-		float elapsed = minecraft.level.getGameTime() - startedAt + event.getPartialTick();
+		float elapsed = minecraft.level.getGameTime() - startedAt
+				+ event.getPartialTick().getGameTimeDeltaPartialTick(false);
 		if (elapsed >= durationTicks) {
 			stop();
 			return;
@@ -69,7 +71,7 @@ public final class LiuExecutionImpactRenderer {
 			impactPass.getEffect().safeGetUniform("AccentA").set(red(primaryColor), green(primaryColor), blue(primaryColor));
 			impactPass.getEffect().safeGetUniform("AccentB").set(red(secondaryColor), green(secondaryColor), blue(secondaryColor));
 			impactPass.getEffect().safeGetUniform("SequenceTime").set(elapsed / durationTicks);
-			postChain.process(event.getPartialTick());
+			postChain.process(event.getPartialTick().getGameTimeDeltaTicks());
 			minecraft.getMainRenderTarget().bindWrite(true);
 		} catch (Exception exception) {
 			failed = true;
@@ -83,8 +85,9 @@ public final class LiuExecutionImpactRenderer {
 			postChain = new PostChain(minecraft.getTextureManager(), minecraft.getResourceManager(),
 					minecraft.getMainRenderTarget(), CHAIN);
 			impactPass = postChain.addPass("sololeveling:liu_execution_impact",
-					minecraft.getMainRenderTarget(), postChain.getTempTarget("swap"));
-			postChain.addPass("blit", postChain.getTempTarget("swap"), minecraft.getMainRenderTarget());
+					minecraft.getMainRenderTarget(), postChain.getTempTarget("swap"), false);
+			postChain.addPass("blit", postChain.getTempTarget("swap"),
+					minecraft.getMainRenderTarget(), false);
 			renderWidth = -1;
 			renderHeight = -1;
 		}

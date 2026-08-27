@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-public class GravityDaggerItem extends SwordItem {
+public class GravityDaggerItem extends LegacySwordItem {
 	public GravityDaggerItem() {
 		super(new Tier() {
 			public int getUses() {
@@ -30,8 +30,8 @@ public class GravityDaggerItem extends SwordItem {
 				return 6f;
 			}
 
-			public int getLevel() {
-				return 1;
+			public net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> getIncorrectBlocksForDrops() {
+				return net.minecraft.tags.BlockTags.INCORRECT_FOR_STONE_TOOL;
 			}
 
 			public int getEnchantmentValue() {
@@ -52,7 +52,7 @@ public class GravityDaggerItem extends SwordItem {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 	}
 }

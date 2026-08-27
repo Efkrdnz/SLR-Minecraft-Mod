@@ -38,7 +38,6 @@ public class StoreWeaponReworkScreen extends AbstractContainerScreen<StoreWeapon
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
@@ -49,7 +48,7 @@ public class StoreWeaponReworkScreen extends AbstractContainerScreen<StoreWeapon
 		RenderSystem.enableBlend();
 		RenderSystem.defaultBlendFunc();
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/basewide.png"), this.leftPos + -145, this.topPos + -113, 0, 0, 300, 225, 300, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/basewide.png"), this.leftPos + -145, this.topPos + -113, 0, 0, 300, 225, 300, 225);
 
 		RenderSystem.disableBlend();
 	}

@@ -1,6 +1,7 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.MageSpellProgression;
 
 import net.minecraft.world.entity.Entity;
 
@@ -11,11 +12,11 @@ public class ReturnClassNameProcedure {
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Classes == 1) {
 			return "\u00A7bAssassin";
 		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Classes == 2) {
-			String specialization = entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-					.map(data -> data.mageSpecialization).orElse("");
+			String specialization = MageSpellProgression.specialization(entity);
 			return "barrier".equals(specialization) ? "\u00A7bBarrier Mage"
 					: "arcane".equals(specialization) ? "\u00A7dArcane Mage"
-					: "storm".equals(specialization) ? "\u00A7eStorm Mage" : "\u00A7cFire Mage";
+					: "storm".equals(specialization) ? "\u00A7eStorm Mage"
+					: "curse".equals(specialization) ? "\u00A75Curse Mage" : "\u00A7cFire Mage";
 		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Classes == 3) {
 			return "\u00A7cFighter";
 		} else if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Classes == 4) {

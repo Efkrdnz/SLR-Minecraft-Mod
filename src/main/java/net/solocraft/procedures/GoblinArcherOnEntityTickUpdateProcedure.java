@@ -84,7 +84,7 @@ public class GoblinArcherOnEntityTickUpdateProcedure {
 		AbstractArrow arrow = new Arrow(EntityType.ARROW, projectileLevel);
 		arrow.setOwner(shooter);
 		arrow.setBaseDamage(2);
-		arrow.setKnockback(0);
+		net.solocraft.entity.LegacyProjectileCompat.setKnockback(arrow, 0);
 		arrow.setCritArrow(true);
 		arrow.setPos(shooter.getX(), shooter.getEyeY() - 0.1D, shooter.getZ());
 		double dx = target.getX() - shooter.getX();

@@ -3,9 +3,10 @@ package net.solocraft.util;
 import net.solocraft.SololevelingMod;
 import net.solocraft.entity.DKCTowerAuraEntity;
 
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -28,7 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /** Places connected, staged previews of the authored DKC rework modules. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DkcStructurePreviewBuilder {
 	private static final String FLOOR_ONE = "dkcfloor1";
 	private static final String LOWER_CITY = "dkclowercity";
@@ -149,7 +150,7 @@ public final class DkcStructurePreviewBuilder {
 	}
 
 	private static Placement piece(String name, int x, int y, int z, Rotation rotation) {
-		return new Placement(new ResourceLocation(SololevelingMod.MODID, name), x, y, z, rotation);
+		return new Placement(ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, name), x, y, z, rotation);
 	}
 
 	private static void place(ServerLevel level, BlockPos origin, Placement placement) {
@@ -161,7 +162,7 @@ public final class DkcStructurePreviewBuilder {
 		BlockPos templateOrigin = rotationOrigin(desiredMin, size, placement.rotation());
 		StructurePlaceSettings settings = new StructurePlaceSettings()
 				.setRotation(placement.rotation()).setMirror(Mirror.NONE).setIgnoreEntities(true);
-		template.placeInWorld(level, templateOrigin, templateOrigin, settings, level.random, 3);
+		template.placeInWorld(level, templateOrigin, templateOrigin, settings, level.random, 2);
 		for (StructureTemplate.StructureBlockInfo marker : template.filterBlocks(templateOrigin, settings, Blocks.STRUCTURE_BLOCK))
 			level.setBlock(marker.pos(), Blocks.AIR.defaultBlockState(), 3);
 	}

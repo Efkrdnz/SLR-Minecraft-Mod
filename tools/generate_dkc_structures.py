@@ -15,7 +15,7 @@ import time
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "src/main/resources/data/sololeveling/structures"
+OUTPUT = ROOT / "src/main/resources/data/sololeveling/structure"
 DATA_VERSION = 3465
 
 

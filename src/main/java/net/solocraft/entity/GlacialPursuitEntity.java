@@ -2,11 +2,9 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -35,10 +33,6 @@ public class GlacialPursuitEntity extends Entity {
 			GlacialPursuitEntity.class, EntityDataSerializers.BOOLEAN);
 	private int missingOwnerTicks;
 
-	public GlacialPursuitEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.GLACIAL_PURSUIT.get(), level);
-	}
-
 	public GlacialPursuitEntity(EntityType<? extends GlacialPursuitEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
@@ -58,15 +52,10 @@ public class GlacialPursuitEntity extends Entity {
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(OWNER, Optional.empty());
-		this.entityData.define(RIDER_MODE, false);
-		this.entityData.define(MANIFESTED, false);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(OWNER, Optional.empty());
+		builder.define(RIDER_MODE, false);
+		builder.define(MANIFESTED, false);
 	}
 
 	public Optional<UUID> getOwnerId() {
@@ -115,8 +104,10 @@ public class GlacialPursuitEntity extends Entity {
 	}
 
 	@Override
-	public double getPassengersRidingOffset() {
-		return 0.55D;
+	protected Vec3 getPassengerAttachmentPoint(Entity passenger,
+			net.minecraft.world.entity.EntityDimensions dimensions, float scaleFactor) {
+		Vec3 attachment = super.getPassengerAttachmentPoint(passenger, dimensions, scaleFactor);
+		return new Vec3(attachment.x, 0.55D, attachment.z);
 	}
 
 	@Override
@@ -125,9 +116,10 @@ public class GlacialPursuitEntity extends Entity {
 			return;
 		Vec3 backward = this.getDeltaMovement().lengthSqr() < 1.0E-6D
 				? Vec3.ZERO : this.getDeltaMovement().normalize().scale(-0.34D);
-		moveFunction.accept(passenger, this.getX() + backward.x,
-				this.getY() + this.getPassengersRidingOffset() + passenger.getMyRidingOffset(),
-				this.getZ() + backward.z);
+		Vec3 ridingPosition = this.getPassengerRidingPosition(passenger).add(backward.x, 0.0D, backward.z);
+		Vec3 vehicleAttachment = passenger.getVehicleAttachmentPoint(this);
+		moveFunction.accept(passenger, ridingPosition.x - vehicleAttachment.x,
+				ridingPosition.y - vehicleAttachment.y, ridingPosition.z - vehicleAttachment.z);
 	}
 
 	@Override

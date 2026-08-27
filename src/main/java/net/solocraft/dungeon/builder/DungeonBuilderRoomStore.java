@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -60,7 +61,7 @@ public final class DungeonBuilderRoomStore {
 		if (readiness != null)
 			return CaptureResult.failure(readiness);
 
-		ResourceLocation structureKey = new ResourceLocation(project.namespace(),
+		ResourceLocation structureKey = ResourceLocation.fromNamespaceAndPath(project.namespace(),
 				"slr_dungeons/" + project.name());
 		Path destination;
 		try {
@@ -77,7 +78,7 @@ public final class DungeonBuilderRoomStore {
 					false, Blocks.STRUCTURE_VOID);
 			template.setAuthor(player.getGameProfile().getName());
 			CompoundTag structureTag = NbtUtils.addCurrentDataVersion(template.save(new CompoundTag()));
-			NbtIo.writeCompressed(structureTag, staging.toFile());
+			NbtIo.writeCompressed(structureTag, staging);
 			String checksum = checksum(staging);
 			moveAtomically(staging, destination);
 
@@ -153,7 +154,7 @@ public final class DungeonBuilderRoomStore {
 			Path source = snapshotPath(player, optionalSnapshot.get().structureKey());
 			if (!Files.isRegularFile(source))
 				return Footprint.empty();
-			CompoundTag structure = NbtIo.readCompressed(source.toFile());
+			CompoundTag structure = NbtIo.readCompressed(source, NbtAccounter.unlimitedHeap());
 			ListTag size = structure.getList("size", Tag.TAG_INT);
 			if (size.size() < 3)
 				return Footprint.empty();

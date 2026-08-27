@@ -2,9 +2,10 @@ package net.solocraft.command;
 
 import net.solocraft.util.SystemNotifications;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -22,7 +23,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
  *   <li>{@code /slnotify both <title> | <under>} — title + undertext</li>
  * </ul>
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class SlNotifyCommand {
 	private static final int DURATION = 80; // ticks
 

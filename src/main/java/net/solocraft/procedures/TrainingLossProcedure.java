@@ -3,10 +3,11 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.TrainingBotEntity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.ICancellableEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -23,7 +24,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Comparator;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class TrainingLossProcedure {
 	@SubscribeEvent
 	public static void onEntityDeath(LivingDeathEvent event) {
@@ -36,11 +37,11 @@ public class TrainingLossProcedure {
 		execute(null, world, entity, sourceentity);
 	}
 
-	private static void execute(@Nullable Event event, LevelAccessor world, Entity entity, Entity sourceentity) {
+	private static void execute(@Nullable ICancellableEvent event, LevelAccessor world, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
 		if (sourceentity instanceof TrainingBotEntity) {
-			if (event != null && event.isCancelable()) {
+			if (event != null) {
 				event.setCanceled(true);
 			}
 			{

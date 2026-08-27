@@ -5,6 +5,7 @@ import net.solocraft.entity.ShadowKaiselinEntity;
 import net.solocraft.entity.KamishShadowEntity;
 import net.solocraft.entity.IgrisShadowEntity;
 import net.solocraft.entity.BeruShadowEntity;
+import net.solocraft.entity.ShadowIronEntity;
 
 import net.minecraft.world.entity.Entity;
 
@@ -22,5 +23,7 @@ public class DomainBoostEffectStartedappliedProcedure {
 			animatable.setTexture("dragonshadow_purple");
 		if (entity instanceof ShadowKaiselinEntity animatable)
 			animatable.setTexture("shadow_kaiselin_domain");
+		if (entity instanceof ShadowIronEntity iron)
+			iron.setDomainBoosted(true);
 	}
 }

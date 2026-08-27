@@ -4,6 +4,7 @@ package net.solocraft.client.renderer;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 
+import net.solocraft.client.renderer.shader.AfterImageFractureRenderTypes;
 import net.solocraft.entity.model.AfterImageModel;
 import net.solocraft.entity.AfterImageEntity;
 
@@ -21,17 +22,24 @@ public class AfterImageRenderer extends GeoEntityRenderer<AfterImageEntity> {
 		this.shadowRadius = 0.5f;
 	}
 
+	/** Marker written by AssassinSkillManager when it spawns a Shadow Feint. */
+	private static final String FEINT_OWNER_TAG = "slr_feint_owner";
+
 	@Override
 	public RenderType getRenderType(AfterImageEntity animatable, ResourceLocation texture, MultiBufferSource bufferSource, float partialTick) {
-		return RenderType.entityTranslucent(getTextureLocation(animatable));
+		ResourceLocation ownTexture = getTextureLocation(animatable);
+		// A Shadow Feint can be attacked; the Stealth decoy cannot. Rendering
+		// the feint as fractured glass is what makes that difference readable.
+		if (animatable.getPersistentData().hasUUID(FEINT_OWNER_TAG))
+			return AfterImageFractureRenderTypes.fracture(ownTexture);
+		return RenderType.entityTranslucent(ownTexture);
 	}
 
 	@Override
-	public void preRender(PoseStack poseStack, AfterImageEntity entity, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, float red, float green,
-			float blue, float alpha) {
+	public void preRender(PoseStack poseStack, AfterImageEntity entity, BakedGeoModel model, MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
 		float scale = 1f;
 		this.scaleHeight = scale;
 		this.scaleWidth = scale;
-		super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, red, green, blue, alpha);
+		super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
 	}
 }

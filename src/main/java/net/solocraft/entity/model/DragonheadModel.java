@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class DragonheadModel extends GeoModel<DragonheadEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(DragonheadEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/dragonhead.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/dragonhead.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(DragonheadEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/dragonhead.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/dragonhead.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(DragonheadEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

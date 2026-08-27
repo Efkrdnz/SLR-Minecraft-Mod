@@ -26,10 +26,10 @@ public class RandomLabProcedure {
 		Zoff = entity.getZ() + -5;
 		component = 0;
 		if (world instanceof ServerLevel _serverworld) {
-			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "labdunstart"));
+			StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "labdunstart"));
 			if (template != null) {
 				template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-						_serverworld.random, 3);
+						_serverworld.random, 2);
 			}
 		}
 		Xoff = Xoff + 25;
@@ -40,26 +40,26 @@ public class RandomLabProcedure {
 					rand1 = Mth.nextInt(RandomSource.create(), 1, 3);
 					if (rand1 == 1) {
 						if (world instanceof ServerLevel _serverworld) {
-							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "labduncor1"));
+							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "labduncor1"));
 							if (template != null) {
 								template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-										_serverworld.random, 3);
+										_serverworld.random, 2);
 							}
 						}
 					} else if (rand1 == 2) {
 						if (world instanceof ServerLevel _serverworld) {
-							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "labduncor2"));
+							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "labduncor2"));
 							if (template != null) {
 								template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-										_serverworld.random, 3);
+										_serverworld.random, 2);
 							}
 						}
 					} else if (rand1 == 3) {
 						if (world instanceof ServerLevel _serverworld) {
-							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "labduncor3"));
+							StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "labduncor3"));
 							if (template != null) {
 								template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-										_serverworld.random, 3);
+										_serverworld.random, 2);
 							}
 						}
 					}
@@ -68,10 +68,10 @@ public class RandomLabProcedure {
 				} else if (rand1 == 4) {
 					Zoff = Zoff - 33;
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "labdunrturn"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "labdunrturn"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-									_serverworld.random, 3);
+									_serverworld.random, 2);
 						}
 					}
 					component = component + 1;
@@ -80,10 +80,10 @@ public class RandomLabProcedure {
 				} else if (rand1 == 5) {
 					Zoff = Zoff - 42;
 					if (world instanceof ServerLevel _serverworld) {
-						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "labdunlturn"));
+						StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "labdunlturn"));
 						if (template != null) {
 							template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-									_serverworld.random, 3);
+									_serverworld.random, 2);
 						}
 					}
 					component = component + 1;
@@ -92,10 +92,10 @@ public class RandomLabProcedure {
 			} else {
 				Zoff = Zoff - 24;
 				if (world instanceof ServerLevel _serverworld) {
-					StructureTemplate template = _serverworld.getStructureManager().getOrCreate(new ResourceLocation("sololeveling", "labdunboss"));
+					StructureTemplate template = _serverworld.getStructureManager().getOrCreate(ResourceLocation.fromNamespaceAndPath("sololeveling", "labdunboss"));
 					if (template != null) {
 						template.placeInWorld(_serverworld, BlockPos.containing(Xoff, Yoff, Zoff), BlockPos.containing(Xoff, Yoff, Zoff), new StructurePlaceSettings().setRotation(Rotation.NONE).setMirror(Mirror.NONE).setIgnoreEntities(false),
-								_serverworld.random, 3);
+								_serverworld.random, 2);
 					}
 				}
 				break;

@@ -2,10 +2,11 @@ package net.solocraft.client.renderer.shader;
 
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
@@ -20,14 +21,14 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
  * callers fall back to a pure-Java animated background, so this can never crash
  * the menu or resource reload.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class SystemBackgroundRenderTypes {
 	private static ShaderInstance systemBackgroundShader;
 
 	@SubscribeEvent
 	public static void registerShaders(RegisterShadersEvent event) {
 		try {
-			event.registerShader(new ShaderInstance(event.getResourceProvider(), new ResourceLocation(SololevelingMod.MODID, "rendertype_system_background"), DefaultVertexFormat.POSITION_TEX),
+			event.registerShader(new ShaderInstance(event.getResourceProvider(), ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "rendertype_system_background"), DefaultVertexFormat.POSITION_TEX),
 					shader -> systemBackgroundShader = shader);
 		} catch (Exception e) {
 			// leave the shader null -> Java fallback is used

@@ -2,14 +2,19 @@ package net.solocraft.util;
 
 import net.solocraft.SololevelingMod;
 import net.solocraft.entity.FireMageVfxEntity;
+import net.solocraft.entity.LiuSwordVfxEntity;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.server.ServerStoppedEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.ChatFormatting;
@@ -38,7 +43,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Server-authoritative mechanics for the staged Fire Mage spell set. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class FireMageSpellManager {
 	public static final String FLAME_WEAVING = "Flame Weaving";
 	public static final String IGNITION_ORB = "Ignition Orb";
@@ -61,7 +66,8 @@ public final class FireMageSpellManager {
 	private static final String FLAME_WEAVING_HITS = "sl_flame_weaving_hits";
 	private static final double[] COST_MULTIPLIER = {0.0D, 1.0D, 1.10D, 1.20D, 1.30D, 1.40D};
 	private static final double CREMATION_BASE_MANA_PERCENT = 0.025D;
-	private static final double CREMATION_MANA_PER_DAMAGE = 4.0D;
+	/** Structural load per Scorch stack beyond the first on each linked target. */
+	private static final double CREMATION_LOAD_PER_STACK = 0.06D;
 
 	private static final List<FireProjectile> ACTIVE_PROJECTILES = new ArrayList<>();
 	private static final List<FlashfireCast> ACTIVE_DASHES = new ArrayList<>();
@@ -234,8 +240,7 @@ public final class FireMageSpellManager {
 		float cremationStackDamage = (float) (4.0D + intelligence * 0.07D);
 		QTEResult resolvedQte = qteResult == null ? QTEResult.MISS : qteResult;
 		int cost = CREMATION.equals(skill)
-				? cremationManaCost(level, caster, stage, resolvedQte, cremationTargets,
-						cremationInitialDamage, cremationStackDamage)
+				? cremationManaCost(level, caster, stage, resolvedQte, cremationTargets)
 				: manaCost(caster, skill, stage, resolvedQte);
 		SololevelingModVariables.PlayerVariables data = variables(caster);
 		if (!(caster instanceof Player player && player.isCreative()) && data.MP < cost) {
@@ -325,32 +330,45 @@ public final class FireMageSpellManager {
 			default -> 0.0D;
 		};
 		double intelligence = Math.max(0.0D, MageCombatHelper.intelligence(caster));
-		double maximumMana = 1000.0D + intelligence * 100.0D;
+		double maximumMana = ManaRules.maximumManaFor(intelligence);
 		double qte = MageQTEHelper.getManaCostMultiplier(result == null ? QTEResult.MISS : result, intelligence);
 		return OrbOfAvariceManager.adjustManaCost(caster, maximumMana * basePercent
 				* COST_MULTIPLIER[Mth.clamp(stage, 1, 5)] * qte);
 	}
 
-	private static int cremationManaCost(ServerLevel level, Entity caster, int stage, QTEResult result,
-			List<UUID> targets, float initialDamage, float stackDamage) {
-		double projectedDamage = 0.0D;
+	/**
+	 * Cremation is charged for the structural work it performs — how many targets
+	 * it links and how many Scorch stacks it consumes — never for the damage it
+	 * is predicted to deal. Charging predicted damage taxed Intelligence twice,
+	 * once through maximum mana and again through the calculated output, so
+	 * raising the stat made the caster's own finisher unaffordable.
+	 */
+	private static int cremationManaCost(ServerLevel level, Entity caster, int stage,
+			QTEResult result, List<UUID> targets) {
+		int acceptedTargets = 0;
+		int consumedStacks = 0;
 		for (UUID targetId : targets) {
 			Entity entity = level.getEntity(targetId);
 			if (!(entity instanceof LivingEntity target) || !target.isAlive()
 					|| !MageCombatHelper.isValidTarget(caster, target))
 				continue;
 			int stacks = getScorch(level, caster, target);
-			if (stacks > 0)
-				projectedDamage += initialDamage + stackDamage * stacks;
+			if (stacks > 0) {
+				acceptedTargets++;
+				consumedStacks += stacks;
+			}
 		}
 		double intelligence = Math.max(0.0D, MageCombatHelper.intelligence(caster));
-		double maximumMana = 1000.0D + intelligence * 100.0D;
-		double activationCost = maximumMana * CREMATION_BASE_MANA_PERCENT
+		double activationCost = ManaRules.maximumManaFor(intelligence)
+				* CREMATION_BASE_MANA_PERCENT
 				* COST_MULTIPLIER[Mth.clamp(stage, 1, 5)];
-		double outputCost = projectedDamage * CREMATION_MANA_PER_DAMAGE;
+		// Additional stacks beyond one per target are the only stack-driven load.
+		int extraStacks = Math.max(0, consumedStacks - acceptedTargets);
+		double effectLoad = ManaRules.effectLoad(acceptedTargets)
+				* (1.0D + CREMATION_LOAD_PER_STACK * extraStacks);
 		double qte = MageQTEHelper.getManaCostMultiplier(result, intelligence);
 		return Math.max(1, OrbOfAvariceManager.adjustManaCost(caster,
-				(activationCost + outputCost) * qte));
+				activationCost * effectLoad * qte));
 	}
 
 	private static int cooldownTicks(String skill) {
@@ -403,9 +421,7 @@ public final class FireMageSpellManager {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
+	public static void onServerTick(ServerTickEvent.Post event) {
 		tick(ACTIVE_PROJECTILES);
 		tick(ACTIVE_DASHES);
 		tick(ACTIVE_CREMATIONS);
@@ -436,7 +452,7 @@ public final class FireMageSpellManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH)
-	public static void reduceFlashfireDamage(LivingHurtEvent event) {
+	public static void reduceFlashfireDamage(LivingIncomingDamageEvent event) {
 		LivingEntity target = event.getEntity();
 		if (!target.level().isClientSide()
 				&& target.getPersistentData().getLong(FLASHFIRE_GUARD) >= target.level().getGameTime())
@@ -710,7 +726,7 @@ public final class FireMageSpellManager {
 				MageCombatHelper.hurt(level, caster, target, initialDamage + stackDamage * stacks);
 				if (stage >= 4)
 					spreadScorch(level, caster, target, 2 + (stage >= 5 ? 2 : 0));
-				play(level, targetPosition, SoundEvents.GENERIC_EXPLODE, 0.55F, 1.25F + stage * 0.04F);
+				play(level, targetPosition, SoundEvents.GENERIC_EXPLODE.value(), 0.55F, 1.25F + stage * 0.04F);
 				break;
 			}
 			return index >= targets.size();
@@ -754,10 +770,15 @@ public final class FireMageSpellManager {
 				pulse(caster, age / 10);
 			if (age >= 82) {
 				blast(level, caster, center, radius * 0.76D, finalDamage, stage, true);
+				if (caster instanceof ServerPlayer player)
+					AbilityDestructionManager.impact(player,
+							AbilityDestructionManager.Profile.FIRE_DOMINION, center,
+							TemporaryStatBonusManager.effectiveIntelligence(player),
+							stage >= 5);
 				spawnVfx(level, caster, center.x, center.y, center.z,
 						FireMageVfxEntity.HEAVENFALL_IMPACT, stage, (float) (radius * 0.72D),
 						5.0F + stage * 1.7F, 24, 0.0F, 0.0F);
-				play(level, center, SoundEvents.GENERIC_EXPLODE, 1.35F, 0.72F);
+				play(level, center, SoundEvents.GENERIC_EXPLODE.value(), 1.35F, 0.72F);
 				return finish();
 			}
 			return false;
@@ -878,6 +899,11 @@ public final class FireMageSpellManager {
 						5.0F + stage * 3.0F, 26 + stage * 4, 0.0F, 0.0F);
 			}
 			blast(level, caster, center, radius, impactDamage, stage, true);
+			if (caster instanceof ServerPlayer player)
+				AbilityDestructionManager.impact(player,
+						AbilityDestructionManager.Profile.FIRE_HEAVENFALL, center,
+						TemporaryStatBonusManager.effectiveIntelligence(player),
+						stage >= 4);
 			DELAYED_BURSTS.add(new DelayedBurst(level, caster, center, 14,
 					radius * 1.16D, followupDamage, stage, FireMageVfxEntity.HEAVENFALL_IMPACT, true));
 			if (stage >= 5) {
@@ -890,7 +916,7 @@ public final class FireMageSpellManager {
 							FireMageVfxEntity.ORB_IMPACT, false));
 				}
 			}
-			play(level, center, SoundEvents.GENERIC_EXPLODE, stage >= 5 ? 2.0F : 1.2F, 0.48F + stage * 0.035F);
+			play(level, center, SoundEvents.GENERIC_EXPLODE.value(), stage >= 5 ? 2.0F : 1.2F, 0.48F + stage * 0.035F);
 			return finish();
 		}
 
@@ -951,7 +977,7 @@ public final class FireMageSpellManager {
 			if (age < 18)
 				return false;
 			blast(level, caster, center, radius, damage, stage, true);
-			play(level, center, SoundEvents.GENERIC_EXPLODE, 1.45F, 0.58F);
+			play(level, center, SoundEvents.GENERIC_EXPLODE.value(), 1.45F, 0.58F);
 			return true;
 		}
 	}
@@ -991,13 +1017,18 @@ public final class FireMageSpellManager {
 			blast(level, caster, center, radius, damage, stage, scorch);
 			spawnVfx(level, caster, center.x, center.y, center.z, style, stage,
 					(float) radius, 3.0F + stage * 1.2F, 18 + stage * 2, 0.0F, 0.0F);
-			play(level, center, SoundEvents.GENERIC_EXPLODE, 0.75F, 0.78F + stage * 0.04F);
+			play(level, center, SoundEvents.GENERIC_EXPLODE.value(), 0.75F, 0.78F + stage * 0.04F);
 			return true;
 		}
 	}
 
 	private static void resolveOrbImpact(ServerLevel level, Entity caster, Vec3 center, int stage, float damage) {
 		double radius = 2.4D + stage * 1.25D;
+		if (caster instanceof ServerPlayer player)
+			AbilityDestructionManager.impact(player,
+					AbilityDestructionManager.Profile.FIRE_ORB, center,
+					TemporaryStatBonusManager.effectiveIntelligence(player),
+					stage >= 5);
 		int lifetime = stage >= 5 ? 34 : 18 + stage * 2;
 		spawnVfx(level, caster, center.x, center.y, center.z,
 				FireMageVfxEntity.ORB_IMPACT, stage, (float) radius,
@@ -1016,11 +1047,12 @@ public final class FireMageSpellManager {
 						2.6D, damage * 0.20F, stage, FireMageVfxEntity.ORB_IMPACT, false));
 			}
 		}
-		play(level, center, SoundEvents.GENERIC_EXPLODE, 1.0F, 0.72F + stage * 0.045F);
+		play(level, center, SoundEvents.GENERIC_EXPLODE.value(), 1.0F, 0.72F + stage * 0.045F);
 	}
 
 	private static void blast(ServerLevel level, Entity caster, Vec3 center, double radius,
 			float damage, int stage, boolean scorch) {
+		spawnExecutionExplosionVfx(level, caster, center, radius, stage);
 		AABB area = new AABB(center, center).inflate(radius, Math.max(2.5D, radius * 0.72D), radius);
 		for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
 				candidate -> MageCombatHelper.isValidTarget(caster, candidate))) {
@@ -1038,6 +1070,24 @@ public final class FireMageSpellManager {
 				target.hurtMarked = true;
 			}
 		}
+	}
+
+	/**
+	 * Reuses the delayed maximum-charge Liu beam detonation geometry at the
+	 * moment a Fire Mage blast resolves.
+	 */
+	private static void spawnExecutionExplosionVfx(ServerLevel level, Entity caster,
+			Vec3 center, double radius, int stage) {
+		boolean blueFire = OrbOfAvariceManager.isHeldBy(caster);
+		int primaryColor = blueFire ? OrbOfAvariceManager.BLUE_FIRE_PRIMARY : 0xD73B09;
+		int secondaryColor = blueFire ? OrbOfAvariceManager.BLUE_FIRE_SECONDARY : 0xFFD34A;
+		float blastWidth = Mth.clamp((float) radius * 0.88F, 2.8F, 12.0F);
+		float blastHeight = Mth.clamp((float) radius * 1.05F, 3.2F, 14.0F);
+		double visualY = center.y + Math.min(1.2D, Math.max(0.45D, radius * 0.22D));
+		LiuSwordVfxEntity.spawn(level, center.x, visualY, center.z,
+				LiuSwordVfxEntity.EXECUTION_EXPLOSION, primaryColor, secondaryColor,
+				blastWidth, blastHeight, level.getRandom().nextFloat() * 360.0F,
+				18 + Math.min(6, Math.max(1, stage)), 0.0F, 0.0F, false);
 	}
 
 	private static List<UUID> findCremationTargets(ServerLevel level, Entity caster, int stage) {

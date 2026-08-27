@@ -22,6 +22,8 @@ public class GoblinClubShadowOnEntityTickUpdateProcedure {
 	public static void execute(LevelAccessor world, Entity entity) {
 		if (entity == null)
 			return;
+		if (ShadowMonarchManager.handleUnavailableShadowOwner(entity))
+			return;
 		double hei = 0;
 		if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) == null)) {
 			if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == null)) {
@@ -63,7 +65,7 @@ public class GoblinClubShadowOnEntityTickUpdateProcedure {
 						_datEntSetI.getEntityData().set(GoblinClubShadowEntity.DATA_MF, 0);
 				}
 			}
-			if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+			if ((entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 				if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null).isAlive())) {
 					if (world instanceof ServerLevel _level)
 						_level.sendParticles(ParticleTypes.SMOKE, (entity.getX()), (entity.getY()), (entity.getZ()), 30, 0.05, 0.05, 0.05, 1);
@@ -73,7 +75,7 @@ public class GoblinClubShadowOnEntityTickUpdateProcedure {
 					}
 				}
 			}
-			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 				if (!entity.level().isClientSide()) {
 					ShadowMonarchManager.dropStoredShadowInventory(entity);
 					entity.discard();

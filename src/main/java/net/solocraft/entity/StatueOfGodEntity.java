@@ -2,32 +2,30 @@
 package net.solocraft.entity;
 
 import software.bernie.geckolib.util.GeckoLibUtil;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.GeoEntity;
 
 import net.solocraft.procedures.StatueOfGodOnInitialEntitySpawnProcedure;
 import net.solocraft.procedures.StatueOfGodOnEntityTickUpdateProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.solocraft.network.compat.NetworkHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.solocraft.entity.ai.LegacyMeleeAttackGoal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
@@ -46,13 +44,14 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.nbt.CompoundTag;
 
 import javax.annotation.Nullable;
 
 public class StatueOfGodEntity extends Monster implements GeoEntity {
 	private static final String STORY_STATUE_TAG = "slr_story_intro_statue";
+	/** Set by CartenonFinaleManager when this statue becomes the return's boss. */
+	public static final String FINALE_BOSS_TAG = "slr_temple_finale_god";
 	private static final String STORY_INSTANCE_TAG = "slr_story_intro_instance";
 	private static final String STORY_OWNER_TAG = "slr_story_intro_owner";
 	private static final String STORY_HUNTER_TAG = "slr_story_intro_hunter";
@@ -72,10 +71,6 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	private long lastSwing;
 	public String animationprocedure = "empty";
 
-	public StatueOfGodEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.STATUE_OF_GOD.get(), world);
-	}
-
 	public StatueOfGodEntity(EntityType<StatueOfGodEntity> type, Level world) {
 		super(type, world);
 		xpReward = 100;
@@ -84,17 +79,17 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(SHOOT, false);
-		this.entityData.define(ANIMATION, "undefined");
-		this.entityData.define(TEXTURE, "statue_of_god");
-		this.entityData.define(DATA_state, "throne");
-		this.entityData.define(DATA_smiled, true);
-		this.entityData.define(DATA_story_upright, false);
-		this.entityData.define(DATA_default_x, 0);
-		this.entityData.define(DATA_default_y, 0);
-		this.entityData.define(DATA_default_z, 0);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(SHOOT, false);
+		builder.define(ANIMATION, "undefined");
+		builder.define(TEXTURE, "statue_of_god");
+		builder.define(DATA_state, "throne");
+		builder.define(DATA_smiled, true);
+		builder.define(DATA_story_upright, false);
+		builder.define(DATA_default_x, 0);
+		builder.define(DATA_default_y, 0);
+		builder.define(DATA_default_z, 0);
 	}
 
 	public void setTexture(String texture) {
@@ -106,14 +101,9 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2, false) {
+		this.goalSelector.addGoal(1, new LegacyMeleeAttackGoal(this, 1.2, false) {
 			@Override
 			public boolean canUse() {
 				return !StatueOfGodEntity.this.isStoryIntroStatue()
@@ -160,20 +150,27 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
-	}
-
-	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
 	}
 
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
+		// As Cartenon's prologue set piece the statue is meant to be unkillable:
+		// it shrugs off small hits and turns blades and arrows aside entirely.
+		// As the boss of the Cartenon return it has to be a real fight, and those
+		// same rules made it immune to every sword, dagger, axe and bow in the
+		// game -- the player could not damage it at all.
+		if (isFinaleBoss())
+			return !source.is(DamageTypes.CACTUS) && super.hurt(source, amount);
 		if (source.is(DamageTypes.CACTUS) || amount < 25.0F || isSharpDamage(source))
 			return false;
 		return super.hurt(source, amount);
+	}
+
+	/** True once the Cartenon return has woken this statue as its final boss. */
+	public boolean isFinaleBoss() {
+		return this.getPersistentData().getBoolean(FINALE_BOSS_TAG);
 	}
 
 	private static boolean isSharpDamage(DamageSource source) {
@@ -189,7 +186,7 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 				|| stack.getItem() instanceof AxeItem
 				|| stack.getItem() instanceof TridentItem)
 			return true;
-		var itemId = ForgeRegistries.ITEMS.getKey(stack.getItem());
+		var itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
 		if (itemId == null)
 			return false;
 		String path = itemId.getPath();
@@ -199,8 +196,8 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData livingdata, @Nullable CompoundTag tag) {
-		SpawnGroupData retval = super.finalizeSpawn(world, difficulty, reason, livingdata, tag);
+	public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType reason, @Nullable SpawnGroupData livingdata) {
+		SpawnGroupData retval = super.finalizeSpawn(world, difficulty, reason, livingdata);
 		StatueOfGodOnInitialEntitySpawnProcedure.execute(this);
 		return retval;
 	}
@@ -275,7 +272,7 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public EntityDimensions getDimensions(Pose p_33597_) {
+	public EntityDimensions getDefaultDimensions(Pose p_33597_) {
 		// The rendered Blockbench model is roughly 23 blocks tall at its 3x render scale.
 		// Keep the width around the body instead of including the full throne silhouette.
 		return EntityDimensions.scalable(5.25F, 23.25F);
@@ -343,7 +340,7 @@ public class StatueOfGodEntity extends Monster implements GeoEntity {
 		++this.deathTime;
 		if (this.deathTime == 1) {
 			this.remove(StatueOfGodEntity.RemovalReason.KILLED);
-			this.dropExperience();
+			this.dropExperience(this.getKillCredit());
 		}
 	}
 

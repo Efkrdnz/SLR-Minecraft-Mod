@@ -1,22 +1,18 @@
 
 package net.solocraft.entity;
 
-import net.solocraft.procedures.DialogueProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.Level;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Entity;
@@ -28,29 +24,15 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 
 public class SecretaryEntity extends Monster {
-	public SecretaryEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.SECRETARY.get(), world);
-	}
 
 	public SecretaryEntity(EntityType<SecretaryEntity> type, Level world) {
 		super(type, world);
-		setMaxUpStep(0.6f);
+		getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6f);
 		xpReward = 0;
 		setNoAi(true);
 		setPersistenceRequired();
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
 	}
 
 	@Override
@@ -59,18 +41,18 @@ public class SecretaryEntity extends Monster {
 	}
 
 	@Override
-	public double getMyRidingOffset() {
-		return -0.35D;
+	public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
+		return super.getVehicleAttachmentPoint(vehicle).add(0.0D, 0.35D, 0.0D);
 	}
 
 	@Override
 	public SoundEvent getHurtSound(DamageSource ds) {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.hurt"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.hurt"));
 	}
 
 	@Override
 	public SoundEvent getDeathSound() {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.death"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.death"));
 	}
 
 	@Override
@@ -106,17 +88,9 @@ public class SecretaryEntity extends Monster {
 
 	@Override
 	public InteractionResult mobInteract(Player sourceentity, InteractionHand hand) {
-		ItemStack itemstack = sourceentity.getItemInHand(hand);
-		InteractionResult retval = InteractionResult.sidedSuccess(this.level().isClientSide());
-		super.mobInteract(sourceentity, hand);
-		double x = this.getX();
-		double y = this.getY();
-		double z = this.getZ();
-		Entity entity = this;
-		Level world = this.level();
-
-		DialogueProcedure.execute(world, x, y, z, sourceentity);
-		return retval;
+		// The Secretary is intentionally aesthetic. Evaluation is performed
+		// entirely by the crystal.
+		return InteractionResult.PASS;
 	}
 
 	public static void init() {

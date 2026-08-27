@@ -2,7 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.world.inventory.ShadowCommandMenu;
 
-import net.minecraftforge.network.NetworkHooks;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;

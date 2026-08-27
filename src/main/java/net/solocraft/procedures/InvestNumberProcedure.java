@@ -3,6 +3,7 @@ package net.solocraft.procedures;
 import org.checkerframework.checker.units.qual.s;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.SkillPointRules;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.client.gui.components.EditBox;
@@ -33,7 +34,7 @@ public class InvestNumberProcedure {
 					}
 				}.convert(guistate.containsKey("text:investvalue") ? ((EditBox) guistate.get("text:investvalue")).getValue() : "");
 				entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-					capability.investvalue = _setval;
+					capability.investvalue = SkillPointRules.investmentSize(_setval);
 					capability.syncPlayerVariables(entity);
 				});
 			}

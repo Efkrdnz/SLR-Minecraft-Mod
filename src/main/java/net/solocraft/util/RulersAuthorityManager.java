@@ -8,11 +8,15 @@ import net.solocraft.entity.RulersAuthorityAuraEntity;
 import net.solocraft.entity.HunterEntity;
 import net.solocraft.entity.ThrownDaggerEntity;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.entity.living.LivingFallEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
@@ -31,7 +35,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -41,7 +44,6 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
@@ -60,7 +62,7 @@ import java.util.UUID;
  * Server-authoritative controller for Ruler's Hand and Ruler's Authority.
  * One key supports taps, holds, camera control, scroll distance, throws and slams.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.GAME)
 public final class RulersAuthorityManager {
     private static final String COOLDOWN = "telekinesis";
     private static final String LAUNCH_PROTECTION = "sl_telekinesis_launch_protection_until";
@@ -74,7 +76,7 @@ public final class RulersAuthorityManager {
     private static final double DAGGER_AUTHORITY_DRAIN_MAX_MANA_PERCENT = 0.018D;
     private static final double DAGGER_HAND_DRAIN_MAX_MANA_PERCENT = 0.012D;
     private static final TagKey<net.minecraft.world.entity.EntityType<?>> BOSS_TAG =
-            TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("soloboss"));
+            TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("soloboss"));
 
     private static final Map<UUID, ControlSession> SESSIONS = new HashMap<>();
     private static final Map<UUID, ThrownState> THROWN = new HashMap<>();
@@ -174,8 +176,8 @@ public final class RulersAuthorityManager {
     }
 
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player))
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (false || !(event.getEntity() instanceof ServerPlayer player))
             return;
 
         ControlSession session = SESSIONS.get(player.getUUID());
@@ -229,8 +231,8 @@ public final class RulersAuthorityManager {
     }
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || THROWN.isEmpty())
+    public static void onServerTick(ServerTickEvent.Post event) {
+        if (false || THROWN.isEmpty())
             return;
 
         Iterator<Map.Entry<UUID, ThrownState>> iterator = THROWN.entrySet().iterator();
@@ -836,19 +838,9 @@ public final class RulersAuthorityManager {
     private static double daggerMeleeDamage(ItemStack stack) {
         if (stack == null || stack.isEmpty())
             return 4.0D;
-        double addition = 0.0D;
-        double multiplier = 1.0D;
-        for (AttributeModifier modifier : stack.getAttributeModifiers(EquipmentSlot.MAINHAND).get(Attributes.ATTACK_DAMAGE)) {
-            if (modifier.getOperation() == AttributeModifier.Operation.ADDITION) {
-                addition += modifier.getAmount();
-            } else if (modifier.getOperation() == AttributeModifier.Operation.MULTIPLY_BASE) {
-                multiplier += modifier.getAmount();
-            } else if (modifier.getOperation() == AttributeModifier.Operation.MULTIPLY_TOTAL) {
-                multiplier *= 1.0D + modifier.getAmount();
-            }
-        }
-        double enchantment = EnchantmentHelper.getDamageBonus(stack, MobType.UNDEFINED);
-        return Mth.clamp(addition * multiplier + enchantment, 4.0D, 40.0D);
+        double modifiers = ItemStackData.computedModifierValue(stack, Attributes.ATTACK_DAMAGE, EquipmentSlot.MAINHAND);
+        double enchantment = ItemStackData.legacyUndefinedDamageBonus(stack);
+        return Mth.clamp(modifiers + enchantment, 4.0D, 40.0D);
     }
 
     private static double maximumMana(ServerPlayer player) {
@@ -856,7 +848,8 @@ public final class RulersAuthorityManager {
                 .getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(null);
         if (variables == null)
             return 1000.0D;
-        double fallback = 1000.0D + Math.max(0.0D, variables.Intelligence) * 100.0D;
+        double fallback = 1000.0D
+                + Math.max(0.0D, TemporaryStatBonusManager.effectiveIntelligence(player)) * 100.0D;
         return Math.max(1.0D, Math.max(Math.max(variables.Mana, variables.MP), fallback));
     }
 
@@ -867,8 +860,7 @@ public final class RulersAuthorityManager {
     }
 
     private static float telekineticDamage(ServerPlayer player, boolean authority) {
-        double intelligence = player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
-                .map(data -> data.Intelligence).orElse(0.0D);
+        double intelligence = TemporaryStatBonusManager.effectiveIntelligence(player);
         return (float) ((authority ? 7.0D : 4.0D) + Math.min(authority ? 24.0D : 12.0D,
                 intelligence * (authority ? 0.065D : 0.04D)));
     }

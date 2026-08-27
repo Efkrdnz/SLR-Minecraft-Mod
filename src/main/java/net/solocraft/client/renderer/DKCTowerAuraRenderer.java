@@ -15,11 +15,9 @@ import net.minecraft.util.Mth;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 public class DKCTowerAuraRenderer extends EntityRenderer<DKCTowerAuraEntity> {
-	private static final ResourceLocation FALLBACK_TEXTURE = new ResourceLocation("sololeveling:textures/particle/mana_red.png");
+	private static final ResourceLocation FALLBACK_TEXTURE = ResourceLocation.parse("sololeveling:textures/particle/mana_red.png");
 	private static final int SEGMENTS = 48;
 	private static final int BANDS = 18;
 
@@ -80,11 +78,9 @@ public class DKCTowerAuraRenderer extends EntityRenderer<DKCTowerAuraEntity> {
 		float u = segment / (float) SEGMENTS + uvPhase;
 		int alpha = Mth.clamp(Math.round(alphaProfile(heightFraction) * alphaScale * 255.0F), 0, 255);
 
-		Matrix4f matrix = pose.pose();
-		Matrix3f normal = pose.normal();
-		vertices.vertex(matrix, x, y, z).color(255, 255, 255, alpha).uv(u, heightFraction)
-				.overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240)
-				.normal(normal, Mth.cos(angle), 0.08F, Mth.sin(angle)).endVertex();
+		vertices.addVertex(pose, x, y, z).setColor(255, 255, 255, alpha).setUv(u, heightFraction)
+				.setOverlay(OverlayTexture.NO_OVERLAY).setLight(240)
+				.setNormal(pose, Mth.cos(angle), 0.08F, Mth.sin(angle));
 	}
 
 	private static float alphaProfile(float heightFraction) {

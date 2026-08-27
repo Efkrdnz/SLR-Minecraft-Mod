@@ -3,7 +3,7 @@ package net.solocraft.client.gui;
 import net.solocraft.client.renderer.shader.OrbOfAvariceTooltipRenderTypes;
 import net.solocraft.client.renderer.shader.WeaponTooltipRenderTypes;
 
-import net.minecraftforge.client.event.RenderTooltipEvent;
+import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.ShaderInstance;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -86,13 +87,12 @@ public final class WeaponTooltipRenderer {
 		RenderSystem.setShader(() -> shader);
 
 		Matrix4f matrix = graphics.pose().last().pose();
-		BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-		buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-		buffer.vertex(matrix, x, y + height, 0.0F).uv(0.0F, 1.0F).endVertex();
-		buffer.vertex(matrix, x + width, y + height, 0.0F).uv(1.0F, 1.0F).endVertex();
-		buffer.vertex(matrix, x + width, y, 0.0F).uv(1.0F, 0.0F).endVertex();
-		buffer.vertex(matrix, x, y, 0.0F).uv(0.0F, 0.0F).endVertex();
-		Tesselator.getInstance().end();
+		BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+		buffer.addVertex(matrix, x, y + height, 0.0F).setUv(0.0F, 1.0F);
+		buffer.addVertex(matrix, x + width, y + height, 0.0F).setUv(1.0F, 1.0F);
+		buffer.addVertex(matrix, x + width, y, 0.0F).setUv(1.0F, 0.0F);
+		buffer.addVertex(matrix, x, y, 0.0F).setUv(0.0F, 0.0F);
+		BufferUploader.drawWithShader(buffer.buildOrThrow());
 
 		RenderSystem.enableCull();
 		RenderSystem.disableBlend();

@@ -2,11 +2,12 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.ICancellableEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -19,10 +20,10 @@ import net.minecraft.network.chat.Component;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class PartyMemberDisableDamageProcedure {
 	@SubscribeEvent
-	public static void onEntityAttacked(LivingAttackEvent event) {
+	public static void onEntityAttacked(LivingIncomingDamageEvent event) {
 		Entity entity = event.getEntity();
 		if (event != null && entity != null) {
 			execute(event, entity.level(), entity.getX(), entity.getY(), entity.getZ(), entity, event.getSource().getEntity());
@@ -33,7 +34,7 @@ public class PartyMemberDisableDamageProcedure {
 		execute(null, world, x, y, z, entity, sourceentity);
 	}
 
-	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
+	private static void execute(@Nullable ICancellableEvent event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
 		if (!((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).party).equals("")) {
@@ -43,10 +44,10 @@ public class PartyMemberDisableDamageProcedure {
 					_player.displayClientMessage(Component.literal(("\u00A7e" + entity.getDisplayName().getString() + " \u00A7fIs your party member!")), true);
 				if (world instanceof Level _level) {
 					if (_level.isClientSide()) {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, (float) 0.6, 1, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, (float) 0.6, 1, false);
 					}
 				}
-				if (event != null && event.isCancelable()) {
+				if (event != null) {
 					event.setCanceled(true);
 				}
 			}
@@ -59,10 +60,10 @@ public class PartyMemberDisableDamageProcedure {
 									true);
 						if (world instanceof Level _level) {
 							if (_level.isClientSide()) {
-								_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, (float) 0.6, 1, false);
+								_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, (float) 0.6, 1, false);
 							}
 						}
-						if (event != null && event.isCancelable()) {
+						if (event != null) {
 							event.setCanceled(true);
 						}
 					}

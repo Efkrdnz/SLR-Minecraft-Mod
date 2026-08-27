@@ -2,8 +2,10 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.SololevelingMod;
+import net.solocraft.util.TemporaryStatBonusManager;
+import net.solocraft.util.AbilityDestructionManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -21,6 +23,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.core.particles.ParticleTypes;
@@ -33,6 +36,23 @@ public class FireReleaseBeamProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		double destructionCharge = (entity.getCapability(
+				SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables())).firecharge;
+		if (entity instanceof ServerPlayer player && destructionCharge > 20.0D) {
+			Vec3 start = player.getEyePosition();
+			Vec3 intended = start.add(player.getLookAngle().normalize().scale(30.0D));
+			var hit = player.serverLevel().clip(new ClipContext(start, intended,
+					ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+			Vec3 end = hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS
+					? intended : hit.getLocation();
+			AbilityDestructionManager.line(player,
+					destructionCharge > 40.0D
+							? AbilityDestructionManager.Profile.FIRE_BEAM_OVERCHARGED
+							: AbilityDestructionManager.Profile.FIRE_BEAM_CHARGED,
+					start, end, TemporaryStatBonusManager.effectiveIntelligence(player),
+					destructionCharge > 40.0D);
+		}
 		double delay = 0;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).firecharge > 0
 				&& (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).firecharge <= 20) {
@@ -40,16 +60,16 @@ public class FireReleaseBeamProcedure {
 				_entity.swing(InteractionHand.MAIN_HAND, true);
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2);
+					_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2);
 				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2, false);
 				}
 			}
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
+					_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
 				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
 				}
 			}
 			entity.getPersistentData().putDouble("range", 20);
@@ -92,8 +112,8 @@ public class FireReleaseBeamProcedure {
 											: "").equals(""))
 									&& !(entity == entityiterator || entityiterator instanceof ExperienceOrb || entityiterator instanceof ItemEntity)) {
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MAGIC), entity),
-										(float) (5 + Math.round((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 50)));
-								entityiterator.setSecondsOnFire(5);
+										(float) (5 + Math.round(TemporaryStatBonusManager.effectiveIntelligence(entity) / 50)));
+								entityiterator.igniteForSeconds(5);
 							}
 						}
 					}
@@ -105,16 +125,16 @@ public class FireReleaseBeamProcedure {
 				_entity.swing(InteractionHand.MAIN_HAND, true);
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2);
+					_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2);
 				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2, false);
 				}
 			}
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
+					_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
 				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
 				}
 			}
 			entity.getPersistentData().putDouble("range", 70);
@@ -157,10 +177,10 @@ public class FireReleaseBeamProcedure {
 											: "").equals(""))
 									&& !(entity == entityiterator || entityiterator instanceof ExperienceOrb || entityiterator instanceof ItemEntity)) {
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MAGIC), entity),
-										(float) (7 + Math.round((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 35)));
-								entityiterator.setSecondsOnFire(8);
+										(float) (7 + Math.round(TemporaryStatBonusManager.effectiveIntelligence(entity) / 35)));
+								entityiterator.igniteForSeconds(8);
 								if (world instanceof Level _level && !_level.isClientSide()) {
-									_level.explode(entity, (entityiterator.getX()), (entityiterator.getY() + entityiterator.getBbHeight()), (entityiterator.getZ()), 1, true, Level.ExplosionInteraction.TNT);
+									_level.explode(entity, (entityiterator.getX()), (entityiterator.getY() + entityiterator.getBbHeight()), (entityiterator.getZ()), 1, false, Level.ExplosionInteraction.NONE);
 								}
 							}
 						}
@@ -173,16 +193,16 @@ public class FireReleaseBeamProcedure {
 				_entity.swing(InteractionHand.MAIN_HAND, true);
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2);
+					_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2);
 				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("item.firecharge.use")), SoundSource.NEUTRAL, 1, 2, false);
 				}
 			}
 			if (world instanceof Level _level) {
 				if (!_level.isClientSide()) {
-					_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
+					_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1);
 				} else {
-					_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
+					_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.5, 1, false);
 				}
 			}
 			entity.getPersistentData().putDouble("range", 100);
@@ -220,7 +240,7 @@ public class FireReleaseBeamProcedure {
 							&& !((world.getBlockState(BlockPos.containing(entity.getPersistentData().getDouble("sx"), entity.getPersistentData().getDouble("sy"), entity.getPersistentData().getDouble("sz")))).getBlock() == Blocks.BUBBLE_COLUMN)
 							&& !((world.getBlockState(BlockPos.containing(entity.getPersistentData().getDouble("sx"), entity.getPersistentData().getDouble("sy"), entity.getPersistentData().getDouble("sz")))).getBlock() == Blocks.TALL_GRASS)) {
 						if (world instanceof Level _level && !_level.isClientSide()) {
-							_level.explode(entity, (entity.getPersistentData().getDouble("sx")), (entity.getPersistentData().getDouble("sy")), (entity.getPersistentData().getDouble("sz")), 3, false, Level.ExplosionInteraction.TNT);
+							_level.explode(entity, (entity.getPersistentData().getDouble("sx")), (entity.getPersistentData().getDouble("sy")), (entity.getPersistentData().getDouble("sz")), 3, false, Level.ExplosionInteraction.NONE);
 						}
 					}
 					{
@@ -238,10 +258,10 @@ public class FireReleaseBeamProcedure {
 											: "").equals(""))
 									&& !(entity == entityiterator || entityiterator instanceof ExperienceOrb || entityiterator instanceof ItemEntity)) {
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MAGIC), entity),
-										(float) (10 + Math.round((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 20)));
-								entityiterator.setSecondsOnFire(12);
+										(float) (10 + Math.round(TemporaryStatBonusManager.effectiveIntelligence(entity) / 20)));
+								entityiterator.igniteForSeconds(12);
 								if (world instanceof Level _level && !_level.isClientSide()) {
-									_level.explode(entity, (entityiterator.getX()), (entityiterator.getY() + entityiterator.getBbHeight()), (entityiterator.getZ()), 1, true, Level.ExplosionInteraction.TNT);
+									_level.explode(entity, (entityiterator.getX()), (entityiterator.getY() + entityiterator.getBbHeight()), (entityiterator.getZ()), 1, false, Level.ExplosionInteraction.NONE);
 								}
 							}
 						}

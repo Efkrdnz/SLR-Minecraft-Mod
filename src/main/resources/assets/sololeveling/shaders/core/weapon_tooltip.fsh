@@ -161,7 +161,7 @@ void main() {
     color += mix(SecondaryColor, PrimaryColor, edgeCurrent) * edge * (0.08 + intensity * 0.18);
 
     float pulse = 0.92 + sin(time * 0.045 + phase) * rank * 0.08;
-    float vignette = smoothstep(0.96, 0.30, length((uv - 0.5) * vec2(1.06, 0.84)));
+    float vignette = 1.0 - smoothstep(0.30, 0.96, length((uv - 0.5) * vec2(1.06, 0.84)));
     color *= (0.66 + vignette * 0.34) * pulse;
     fragColor = vec4(color, 0.988);
 }

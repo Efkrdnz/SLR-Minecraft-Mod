@@ -6,7 +6,7 @@ import net.solocraft.entity.IceChunkEntity;
 import net.solocraft.entity.DualWieldFlurryEntity;
 import net.solocraft.SololevelingMod;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -80,11 +80,11 @@ public class DualWieldProcedure {
 		double zpos = 0;
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 550) {
 			if (!CooldownManager.isOnCooldown(entity, "Dualwield")) {
-				if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("minecraft:dagger")))
-						&& (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("minecraft:dagger")))) {
+				if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).is(ItemTags.create(ResourceLocation.parse("minecraft:dagger")))
+						&& (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(ResourceLocation.parse("minecraft:dagger")))) {
 					CooldownManager.set(entity, "Dualwield", 260);
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 999, 1, false, false));
+						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE, 999, 1, false, false));
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 						_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 15, 99, false, false));
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
@@ -104,9 +104,9 @@ public class DualWieldProcedure {
 						DualWieldFlurryEntity.spawn(world, livingEntity);
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
-							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.5, 2);
+							_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.5, 2);
 						} else {
-							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.5, 2, false);
+							_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:slash")), SoundSource.NEUTRAL, (float) 0.5, 2, false);
 						}
 					}
 					{
@@ -114,7 +114,7 @@ public class DualWieldProcedure {
 						List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(4 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 						for (Entity entityiterator : _entfound) {
 							if (!(entity == entityiterator) && !(entityiterator instanceof ExperienceOrb) && !(entityiterator instanceof IceChunkEntity) && !(entityiterator instanceof ItemEntity)) {
-								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
+								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"))), entity),
 										(float) (10 + TemporaryStatBonusManager.effectiveStrength(entity) / 10.0D));
 							}
 						}
@@ -124,7 +124,7 @@ public class DualWieldProcedure {
 						List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(4 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 						for (Entity entityiterator : _entfound) {
 							if (!(entity == entityiterator) && !(entityiterator instanceof ExperienceOrb) && !(entityiterator instanceof IceChunkEntity) && !(entityiterator instanceof ItemEntity)) {
-								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
+								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"))), entity),
 										(float) (10 + TemporaryStatBonusManager.effectiveStrength(entity) / 10.0D));
 							}
 						}
@@ -134,7 +134,7 @@ public class DualWieldProcedure {
 						List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(4 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
 						for (Entity entityiterator : _entfound) {
 							if (!(entity == entityiterator) && !(entityiterator instanceof ExperienceOrb) && !(entityiterator instanceof IceChunkEntity) && !(entityiterator instanceof ItemEntity)) {
-								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:assassin"))), entity),
+								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:assassin"))), entity),
 										(float) (10 + TemporaryStatBonusManager.effectiveStrength(entity) / 10.0D));
 							}
 						}

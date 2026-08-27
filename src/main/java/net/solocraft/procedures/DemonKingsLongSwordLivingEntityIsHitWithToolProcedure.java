@@ -2,6 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
+import net.solocraft.util.TemporaryStatBonusManager;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -28,14 +29,16 @@ public class DemonKingsLongSwordLivingEntityIsHitWithToolProcedure {
 			return;
 		double limit = 0;
 		double max = 0;
-		if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE.get()) && !(sourceentity instanceof Player _plrCldCheck2 && _plrCldCheck2.getCooldowns().isOnCooldown(itemstack.getItem()))) {
+		if (sourceentity instanceof LivingEntity _livEnt0 && _livEnt0.hasEffect(SololevelingModMobEffects.SWORD_ENHANCE)
+				&& !(sourceentity instanceof Player _plrCldCheck2 && !_plrCldCheck2.isCreative()
+						&& _plrCldCheck2.getCooldowns().isOnCooldown(itemstack.getItem()))) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).JOB == 4) {
 				max = 6;
 			} else {
 				max = 3;
 			}
-			if (sourceentity instanceof Player _player)
-				_player.getCooldowns().addCooldown(itemstack.getItem(), _player.isCreative() ? 10 : 60);
+			if (sourceentity instanceof Player _player && !_player.isCreative())
+				_player.getCooldowns().addCooldown(itemstack.getItem(), 60);
 			{
 				final Vec3 _center = new Vec3(x, y, z);
 				List<Entity> _entfound = world.getEntitiesOfClass(Entity.class, new AABB(_center, _center).inflate(15 / 2d), e -> true).stream().sorted(Comparator.comparingDouble(_entcnd -> _entcnd.distanceToSqr(_center))).toList();
@@ -59,7 +62,7 @@ public class DemonKingsLongSwordLivingEntityIsHitWithToolProcedure {
 								_level.addFreshEntity(entityToSpawn);
 							}
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.LIGHTNING_BOLT), sourceentity),
-									(float) (5 + (sourceentity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 15));
+									(float) (5 + TemporaryStatBonusManager.effectiveIntelligence(sourceentity) / 15));
 						}
 					}
 				}

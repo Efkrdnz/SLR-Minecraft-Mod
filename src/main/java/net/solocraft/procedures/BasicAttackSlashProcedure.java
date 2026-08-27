@@ -3,7 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.entity.BasicAttackSlashEntity;
 import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -43,13 +43,13 @@ public class BasicAttackSlashProcedure {
 		if (!(world instanceof Level level))
 			return;
 		boolean fist = style == BasicAttackSlashEntity.STYLE_FIST;
-		ResourceLocation sound = fist ? new ResourceLocation("sololeveling:impact1") : new ResourceLocation("sololeveling:basic_slash");
+		ResourceLocation sound = fist ? ResourceLocation.parse("sololeveling:impact1") : ResourceLocation.parse("sololeveling:basic_slash");
 		float volume = fist ? 0.55F : 0.5F;
 		float pitch = fist ? 0.82F : Mth.nextFloat(level.getRandom(), 1.35F, 1.65F);
 		if (!level.isClientSide()) {
-			level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(sound), SoundSource.NEUTRAL, volume, pitch);
+			level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(sound), SoundSource.NEUTRAL, volume, pitch);
 		} else {
-			level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(sound), SoundSource.NEUTRAL, volume, pitch, false);
+			level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(sound), SoundSource.NEUTRAL, volume, pitch, false);
 		}
 	}
 }

@@ -7,14 +7,18 @@ import net.solocraft.init.SololevelingModItems;
 import net.solocraft.network.LiuExecutionImpactMessage;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingFallEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -37,7 +41,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
@@ -59,7 +62,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class LiuZhigangCombatManager {
 	public static final String HEAVENLY_COUNTER = "Heavenly Counter";
 	public static final String GOLDEN_DRAGON_DANCE = "Golden Dragon Dance";
@@ -110,8 +113,8 @@ public final class LiuZhigangCombatManager {
 	private static final float ENHANCED_STRIKE_DAMAGE_MULTIPLIER = 0.72F;
 	private static final float DANCE_WAVE_BEAM_DAMAGE_MULTIPLIER = 0.82F;
 
-	private static final TagKey<net.minecraft.world.item.Item> NORMAL_SWORDS = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "nsword"));
-	private static final TagKey<net.minecraft.world.item.Item> DAGGERS = TagKey.create(Registries.ITEM, new ResourceLocation("minecraft", "dagger"));
+	private static final TagKey<net.minecraft.world.item.Item> NORMAL_SWORDS = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("minecraft", "nsword"));
+	private static final TagKey<net.minecraft.world.item.Item> DAGGERS = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("minecraft", "dagger"));
 
 	private static final Map<UUID, BeamChargeState> BEAM_CHARGES = new HashMap<>();
 	private static final Map<UUID, FlashChargeState> FLASH_CHARGES = new HashMap<>();
@@ -294,7 +297,7 @@ public final class LiuZhigangCombatManager {
 			case 3 -> 55;
 			default -> 13;
 		});
-		player.level().playSound(null, player.blockPosition(), tier == 3 ? SoundEvents.WARDEN_SONIC_BOOM : SoundEvents.TRIDENT_THROW,
+		player.level().playSound(null, player.blockPosition(), tier == 3 ? SoundEvents.WARDEN_SONIC_BOOM : SoundEvents.TRIDENT_THROW.value(),
 				SoundSource.PLAYERS, tier == 3 ? 1.2F : 0.82F, tier == 3 ? 0.72F : 1.15F + tier * 0.14F);
 	}
 
@@ -497,7 +500,7 @@ public final class LiuZhigangCombatManager {
 				GOLD, PALE_GOLD, 3.8F, 6.2F, 0.0F, 32, true);
 		LiuSwordVfxEntity.spawnAttached(player.serverLevel(), player, LiuSwordVfxEntity.DETONATION,
 				GOLD, PALE_GOLD, 4.5F, 7.0F, 18.0F, 20, true);
-		player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THUNDER,
+		player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THUNDER.value(),
 				SoundSource.PLAYERS, 1.0F, 1.72F);
 	}
 
@@ -531,7 +534,7 @@ public final class LiuZhigangCombatManager {
 				releaseExecutionRestraint(owner, target);
 		}
 		if (!victims.isEmpty())
-			owner.level().playSound(null, BlockPos.containing(victims.get(0).position()), SoundEvents.GENERIC_EXPLODE,
+			owner.level().playSound(null, BlockPos.containing(victims.get(0).position()), SoundEvents.GENERIC_EXPLODE.value(),
 					SoundSource.PLAYERS, 1.5F, 0.68F);
 	}
 
@@ -674,9 +677,9 @@ public final class LiuZhigangCombatManager {
 	}
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()
-				|| !(event.player instanceof ServerPlayer player))
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false || event.getEntity().level().isClientSide()
+				|| !(event.getEntity() instanceof ServerPlayer player))
 			return;
 		if (!player.isAlive() || !isLiuVessel(player)) {
 			clearState(player);
@@ -690,7 +693,7 @@ public final class LiuZhigangCombatManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void onOwnedProjectileAttack(LivingAttackEvent event) {
+	public static void onOwnedProjectileAttack(LivingIncomingDamageEvent event) {
 		if (!(event.getSource().getDirectEntity() instanceof Projectile projectile)
 				|| !(projectile.level() instanceof ServerLevel level))
 			return;
@@ -706,8 +709,9 @@ public final class LiuZhigangCombatManager {
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGHEST)
-	public static void onAttacked(LivingAttackEvent event) {
+	public static void onAttacked(LivingIncomingDamageEvent event) {
 		if (!(event.getEntity() instanceof ServerPlayer player) || !isLiuVessel(player)
+				|| CartenonSuppression.blockVesselPassive(player)
 				|| event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY))
 			return;
 		long now = player.level().getGameTime();
@@ -978,7 +982,7 @@ public final class LiuZhigangCombatManager {
 			clearDomainMark(target);
 		}
 		if (!marked.isEmpty())
-			player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THUNDER,
+			player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THUNDER.value(),
 					SoundSource.PLAYERS, 0.92F, 1.62F);
 	}
 
@@ -1146,7 +1150,7 @@ public final class LiuZhigangCombatManager {
 	private static String itemSignature(ItemStack stack) {
 		if (stack.isEmpty())
 			return "empty";
-		ResourceLocation id = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(stack.getItem());
+		ResourceLocation id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem());
 		return id == null ? stack.getItem().getDescriptionId() : id.toString();
 	}
 
@@ -1154,8 +1158,7 @@ public final class LiuZhigangCombatManager {
 		if (stack.isEmpty())
 			return 2.0D;
 		double value = 1.0D;
-		for (AttributeModifier modifier : stack.getAttributeModifiers(EquipmentSlot.MAINHAND).get(Attributes.ATTACK_DAMAGE))
-			value += modifier.getAmount();
+		value += ItemStackData.totalModifierAmount(stack, Attributes.ATTACK_DAMAGE, EquipmentSlot.MAINHAND);
 		return Mth.clamp(value, 2.0D, 42.0D);
 	}
 

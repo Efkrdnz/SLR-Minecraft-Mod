@@ -4,7 +4,8 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.commands.CommandFunction;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.functions.CommandFunction;
 
 import java.util.Optional;
 
@@ -17,7 +18,7 @@ public class ElderBeastOnInitialEntitySpawnProcedure {
 			{
 				Entity _ent = entity;
 				if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-					Optional<CommandFunction> _fopt = _ent.getServer().getFunctions().get(new ResourceLocation("mod:circle"));
+					Optional<CommandFunction<CommandSourceStack>> _fopt = _ent.getServer().getFunctions().get(ResourceLocation.parse("mod:circle"));
 					if (_fopt.isPresent())
 						_ent.getServer().getFunctions().execute(_fopt.get(), _ent.createCommandSourceStack());
 				}
@@ -27,7 +28,7 @@ public class ElderBeastOnInitialEntitySpawnProcedure {
 			{
 				Entity _ent = entity;
 				if (!_ent.level().isClientSide() && _ent.getServer() != null) {
-					Optional<CommandFunction> _fopt = _ent.getServer().getFunctions().get(new ResourceLocation("mod:circle"));
+					Optional<CommandFunction<CommandSourceStack>> _fopt = _ent.getServer().getFunctions().get(ResourceLocation.parse("mod:circle"));
 					if (_fopt.isPresent())
 						_ent.getServer().getFunctions().execute(_fopt.get(), _ent.createCommandSourceStack());
 				}

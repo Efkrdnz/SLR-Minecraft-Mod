@@ -3,7 +3,6 @@ package net.solocraft.entity;
 import net.solocraft.dungeon.DatapackDungeonGateHandler;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.PlayMessages;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,10 +28,6 @@ import javax.annotation.Nullable;
 public class DatapackGateEntity extends Portal1Entity {
 	public static final String TEXTURE_NAME = "gate_zero_purple";
 
-	public DatapackGateEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.DATAPACK_GATE.get(), level);
-	}
-
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public DatapackGateEntity(EntityType<? extends DatapackGateEntity> type, Level level) {
 		// Portal1Entity predates subtype-friendly entity type generics. The runtime
@@ -44,9 +39,9 @@ public class DatapackGateEntity extends Portal1Entity {
 	@Override
 	public SpawnGroupData finalizeSpawn(ServerLevelAccessor level,
 			DifficultyInstance difficulty, MobSpawnType reason,
-			@Nullable SpawnGroupData spawnData, @Nullable CompoundTag entityTag) {
+			@Nullable SpawnGroupData spawnData) {
 		SpawnGroupData result = super.finalizeSpawn(level, difficulty, reason,
-				spawnData, entityTag);
+				spawnData);
 		setTexture(TEXTURE_NAME);
 		DatapackDungeonGateHandler.initializeSpawn(this, reason);
 		return result;

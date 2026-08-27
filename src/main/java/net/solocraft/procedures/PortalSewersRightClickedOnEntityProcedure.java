@@ -36,7 +36,7 @@ public class PortalSewersRightClickedOnEntityProcedure {
 	private static final String ENTRY_GATE_KEY = "slr_pending_gate_entry";
 	private static final String ENTRY_UNTIL_KEY = "slr_pending_gate_entry_until";
 	private static final int ENTRY_TIMEOUT_TICKS = 60;
-	private static final ResourceKey<Level> DUNGEON_DIMENSION = ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling", "dungeon_dimension_d"));
+	private static final ResourceKey<Level> DUNGEON_DIMENSION = ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath("sololeveling", "dungeon_dimension_d"));
 
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null || world.isClientSide())
@@ -173,7 +173,7 @@ public class PortalSewersRightClickedOnEntityProcedure {
 	}
 
 	private static void removeOwnedShadows(LevelAccessor world, double x, double y, double z, ServerPlayer player) {
-		TagKey<net.minecraft.world.entity.EntityType<?>> shadowTag = TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows"));
+		TagKey<net.minecraft.world.entity.EntityType<?>> shadowTag = TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows"));
 		for (Entity nearby : world.getEntitiesOfClass(Entity.class, AABB.ofSize(new Vec3(x, y, z), 500, 500, 500), candidate -> true)) {
 			if (nearby.getType().is(shadowTag) && nearby instanceof TamableAnimal shadow && shadow.isOwnedBy(player))
 				nearby.discard();
@@ -194,7 +194,7 @@ public class PortalSewersRightClickedOnEntityProcedure {
 		player.teleportTo(destination, player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
 		player.connection.send(new ClientboundPlayerAbilitiesPacket(player.getAbilities()));
 		for (MobEffectInstance effect : player.getActiveEffects())
-			player.connection.send(new ClientboundUpdateMobEffectPacket(player.getId(), effect));
+			player.connection.send(new ClientboundUpdateMobEffectPacket(player.getId(), effect, false));
 		player.connection.send(new ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false));
 	}
 

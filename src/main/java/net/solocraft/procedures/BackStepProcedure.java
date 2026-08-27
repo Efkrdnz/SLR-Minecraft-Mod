@@ -26,7 +26,7 @@ public class BackStepProcedure {
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
 				_entity.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 40, 0, false, false));
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 80, 0, false, false));
+				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE, 80, 0, false, false));
 			Vec3 look = entity.getLookAngle();
 			Vec3 retreat = new Vec3(-look.x, 0.0D, -look.z);
 			if (retreat.lengthSqr() > 0.0001D)

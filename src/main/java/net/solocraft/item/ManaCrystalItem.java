@@ -3,8 +3,8 @@ package net.solocraft.item;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.SystemPlayerAccess;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;

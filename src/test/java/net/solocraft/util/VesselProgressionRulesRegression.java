@@ -2,7 +2,7 @@ package net.solocraft.util;
 
 /**
  * Dependency-free regression checks for progression rules. This remains a
- * small Java entry point so the Forge project does not need a second test
+	 * small Java entry point so the NeoForge project does not need a second test
  * framework solely for pure entitlement predicates.
  */
 public final class VesselProgressionRulesRegression {
@@ -29,10 +29,12 @@ public final class VesselProgressionRulesRegression {
 	}
 
 	private static void shadowPrerequisitesAreReconciledFromCurrentState() {
-		expectTrue(VesselProgressionRules.canUnlockShadowExchange(1, false, 30),
-				"Stored shadows earned before a reconciliation must still unlock Shadow Exchange");
-		expectFalse(VesselProgressionRules.canUnlockShadowExchange(0, false, 30),
-				"Shadow Exchange remains tied to the Shadow Monarch job");
+		expectTrue(VesselProgressionRules.canUseShadowExchangeRunestone(1, false),
+				"The Shadow Monarch must be able to consume Baran's runestone");
+		expectFalse(VesselProgressionRules.canUseShadowExchangeRunestone(0, false),
+				"Another job must not be able to consume Baran's Shadow Exchange reward");
+		expectFalse(VesselProgressionRules.canUseShadowExchangeRunestone(1, true),
+				"An already-unlocked Shadow Exchange must not consume another runestone");
 
 		expectFalse(VesselProgressionRules.canUnlockShadowManifestation(
 				0, false, 120, 60, true, 10),

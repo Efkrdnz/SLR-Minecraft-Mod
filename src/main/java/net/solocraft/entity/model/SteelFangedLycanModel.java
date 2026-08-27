@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class SteelFangedLycanModel extends GeoModel<SteelFangedLycanEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(SteelFangedLycanEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/lycan_normal.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/lycan_normal.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(SteelFangedLycanEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/lycan_normal.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/lycan_normal.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(SteelFangedLycanEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

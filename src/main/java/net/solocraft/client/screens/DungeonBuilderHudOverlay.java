@@ -5,11 +5,12 @@ import net.solocraft.item.DungeonBuilderWandItem;
 import net.solocraft.network.DungeonBuilderStatusMessage;
 import net.solocraft.util.DungeonBuilderMode;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Locale;
 
 /** Live, builder-world-only checklist that replaces chat spam with actionable status. */
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 public final class DungeonBuilderHudOverlay {
 	private static final int CYAN = 0xFF52DDF5;
 	private static final int GREEN = 0xFF64E68A;
@@ -43,8 +44,8 @@ public final class DungeonBuilderHudOverlay {
 		if (!view.active())
 			return;
 
-		int screenWidth = event.getWindow().getGuiScaledWidth();
-		int screenHeight = event.getWindow().getGuiScaledHeight();
+		int screenWidth = event.getGuiGraphics().guiWidth();
+		int screenHeight = event.getGuiGraphics().guiHeight();
 		int width = Math.max(190, Math.min(254, screenWidth - 12));
 		int x = Math.max(6, screenWidth - width - 6);
 		int y = 6;

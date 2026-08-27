@@ -1,20 +1,20 @@
 package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
+import net.solocraft.dungeon.runtime.DungeonLevelHelper;
+import net.solocraft.util.AriseExtractionRules;
 
 import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -36,7 +36,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -50,8 +49,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.BlockPos;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.entity.PartEntity;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.entity.PartEntity;
 
 public class KaiselinEntity extends Monster implements GeoEntity {
 	public static final String DKC_SOUL_SPAWNED = "dkc_floor_20_kaisel_soul_spawned";
@@ -73,10 +72,6 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 	private Vec3 attackVector = Vec3.ZERO;
 	private Vec3 hoverOffset = Vec3.ZERO;
 
-	public KaiselinEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.KAISELIN.get(), world);
-	}
-
 	public KaiselinEntity(EntityType<? extends KaiselinEntity> type, Level world) {
 		super(type, world);
 		xpReward = 40;
@@ -86,10 +81,10 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(ANIMATION, "undefined");
-		this.entityData.define(TEXTURE, "kaiselin");
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(ANIMATION, "undefined");
+		builder.define(TEXTURE, "kaiselin");
 	}
 
 	public void setTexture(String texture) {
@@ -113,11 +108,6 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 		String nextAnimation = normalizeAnimation(animation);
 		this.entityData.set(ANIMATION, nextAnimation);
 		this.animationprocedure = nextAnimation;
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
 	}
 
 	@Override
@@ -145,23 +135,18 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
-	}
-
-	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
 	}
 
 	@Override
 	public SoundEvent getHurtSound(DamageSource ds) {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.ender_dragon.hurt"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.ender_dragon.hurt"));
 	}
 
 	@Override
 	public SoundEvent getDeathSound() {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.ender_dragon.growl"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.ender_dragon.growl"));
 	}
 
 	@Override
@@ -389,7 +374,7 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 			double sideDistance = toEntity.subtract(attackVector.scale(forward)).length();
 			if (sideDistance <= 2.4D) {
 				nearby.hurt(this.damageSources().mobAttack(this), 5.0F);
-				nearby.setSecondsOnFire(3);
+				nearby.igniteForSeconds(3);
 				pushEntity(nearby, attackVector, 0.35D, 0.08D);
 			}
 		}
@@ -468,6 +453,10 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 		if (soul != null) {
 			soul.moveTo(this.getX(), groundPos.getY() + 0.05D, this.getZ(), this.getYRot(), 0.0F);
 			soul.getPersistentData().putString("soultype", "kaisel");
+			double targetLevel = DungeonLevelHelper.levelOf(this);
+			if (targetLevel > 0.0D)
+				soul.getPersistentData().putDouble(
+						AriseExtractionRules.TARGET_LEVEL_TAG, targetLevel);
 		}
 	}
 
@@ -512,13 +501,13 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 		++this.deathTime;
 		if (this.deathTime == 30) {
 			this.remove(KaiselinEntity.RemovalReason.KILLED);
-			this.dropExperience();
+			this.dropExperience(this.getKillCredit());
 		}
 	}
 
 	@Override
-	public EntityDimensions getDimensions(Pose pose) {
-		return super.getDimensions(pose);
+	public EntityDimensions getDefaultDimensions(Pose pose) {
+		return super.getDefaultDimensions(pose);
 	}
 
 	public static void init() {
@@ -592,7 +581,7 @@ public class KaiselinEntity extends Monster implements GeoEntity {
 		}
 
 		@Override
-		protected void defineSynchedData() {
+		protected void defineSynchedData(SynchedEntityData.Builder builder) {
 		}
 
 		@Override

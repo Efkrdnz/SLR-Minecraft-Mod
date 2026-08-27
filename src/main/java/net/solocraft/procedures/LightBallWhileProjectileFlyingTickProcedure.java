@@ -18,13 +18,16 @@ public class LightBallWhileProjectileFlyingTickProcedure {
 		if (world instanceof ServerLevel _level)
 			_level.sendParticles((SimpleParticleType) (SololevelingModParticleTypes.GLOW_YELLOW.get()), x, y, z, 10, 0.1, 0.1, 0.1, 0.1);
 		immediatesourceentity.setNoGravity(true);
-		if (!(entity instanceof LivingEntity _livEnt2 && _livEnt2.hasEffect(SololevelingModMobEffects.TIEMR.get()))) {
+		if (!(entity instanceof LivingEntity _livEnt2 && _livEnt2.hasEffect(SololevelingModMobEffects.TIEMR))) {
 			if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.TIEMR.get(), 9999, 1, false, false));
+				_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.TIEMR, 9999, 1, false, false));
 		}
-		if ((entity instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.TIEMR.get()) ? _livEnt.getEffect(SololevelingModMobEffects.TIEMR.get()).getDuration() : 0) % 20 == 0) {
+		if ((entity instanceof LivingEntity _livEnt && _livEnt.hasEffect(SololevelingModMobEffects.TIEMR) ? _livEnt.getEffect(SololevelingModMobEffects.TIEMR).getDuration() : 0) % 20 == 0) {
 			if (world instanceof Level _level && !_level.isClientSide())
-				_level.explode(null, x, y, z, 3, Level.ExplosionInteraction.NONE);
+				// Attributed to the projectile rather than to nobody: an unowned
+				// explosion cannot be recognised as this mod's, so the item guard
+				// could not spare dropped loot from it.
+				_level.explode(immediatesourceentity, x, y, z, 3, Level.ExplosionInteraction.NONE);
 			if (!immediatesourceentity.level().isClientSide())
 				immediatesourceentity.discard();
 		}

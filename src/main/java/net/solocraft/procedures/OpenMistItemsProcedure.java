@@ -3,7 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.world.inventory.MiscItemsMenu;
 import net.solocraft.init.SololevelingModGameRules;
 
-import net.minecraftforge.network.NetworkHooks;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.inventory.AbstractContainerMenu;

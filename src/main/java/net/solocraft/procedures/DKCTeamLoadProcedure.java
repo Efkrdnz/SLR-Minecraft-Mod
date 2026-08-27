@@ -1,9 +1,10 @@
 package net.solocraft.procedures;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.entity.player.Player;
@@ -14,7 +15,7 @@ import net.minecraft.core.registries.Registries;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class DKCTeamLoadProcedure {
 	@SubscribeEvent
 	public static void onEntityJoin(EntityJoinLevelEvent event) {
@@ -28,7 +29,9 @@ public class DKCTeamLoadProcedure {
 	private static void execute(@Nullable Event event, Entity entity) {
 		if (entity == null)
 			return;
-		if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("demons")))) {
+		if (entity.level().isClientSide())
+			return;
+		if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("demons")))) {
 			{
 				Entity _entityTeam = entity;
 				PlayerTeam _pt = _entityTeam.level().getScoreboard().getPlayerTeam("slr_dkc_demon");

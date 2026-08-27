@@ -45,7 +45,7 @@ public class SummoningAttackProcedure {
 						Entity _entityToSpawn = SololevelingModEntities.MAGICAL_SKULL.get().create(_level);
 						_entityToSpawn.moveTo(rx, (ry + 3), rz, world.getRandom().nextFloat() * 360.0F, 0.0F);
 						if (_entityToSpawn instanceof Mob _mobToSpawn) {
-							_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+							_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 						}
 						if (!((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) == (null))) {
 							if ((_entityToSpawn) instanceof Mob _entity && (entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null) instanceof LivingEntity _ent)

@@ -15,7 +15,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 public class DaggerSlashLayer extends GeoRenderLayer<DaggerSlashEntity> {
-	private static final ResourceLocation LAYER = new ResourceLocation("sololeveling", "textures/entities/daggerslashpng.png");
+	private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/daggerslashpng.png");
 
 	public DaggerSlashLayer(GeoRenderer<DaggerSlashEntity> entityRenderer) {
 		super(entityRenderer);
@@ -24,6 +24,6 @@ public class DaggerSlashLayer extends GeoRenderLayer<DaggerSlashEntity> {
 	@Override
 	public void render(PoseStack poseStack, DaggerSlashEntity animatable, BakedGeoModel bakedModel, RenderType renderType, MultiBufferSource bufferSource, VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
 		RenderType glowRenderType = RenderType.eyes(LAYER);
-		getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, glowRenderType, bufferSource.getBuffer(glowRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY, 1, 1, 1, 1);
+		getRenderer().reRender(getDefaultBakedModel(animatable), poseStack, bufferSource, animatable, glowRenderType, bufferSource.getBuffer(glowRenderType), partialTick, packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
 	}
 }

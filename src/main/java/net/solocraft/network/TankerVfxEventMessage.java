@@ -4,14 +4,15 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.client.renderer.TankerVfxRenderer;
 import net.solocraft.util.TankerSkillManager;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.solocraft.network.compat.DistExecutor;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.solocraft.network.compat.NetworkDirection;
+import net.solocraft.network.compat.NetworkEvent;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
@@ -28,7 +29,7 @@ import java.util.function.Supplier;
  * <p>The packet carries visual facts only. Damage, mitigation, target acceptance,
  * movement, Strain, integrity, and cooldown decisions remain server-side.</p>
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = SololevelingMod.MODID, bus = EventBusSubscriber.Bus.MOD)
 public final class TankerVfxEventMessage {
 	private static boolean registered;
 

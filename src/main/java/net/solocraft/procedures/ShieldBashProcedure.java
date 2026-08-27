@@ -3,7 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModMobEffects;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -36,7 +36,7 @@ public class ShieldBashProcedure {
 		if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 300) {
 			if (!CooldownManager.isOnCooldown(entity, "Shield Bash")) {
 				if ((entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).getItem() == Items.SHIELD
-						|| (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("minecraft:shields")))) {
+						|| (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(ResourceLocation.parse("minecraft:shields")))) {
 					{
 						double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 300;
 						entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -48,16 +48,16 @@ public class ShieldBashProcedure {
 					CooldownManager.set(entity, "mana_refresh", 40);
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
-							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:dash")), SoundSource.NEUTRAL, (float) 0.5, 2);
+							_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:dash")), SoundSource.NEUTRAL, (float) 0.5, 2);
 						} else {
-							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("sololeveling:dash")), SoundSource.NEUTRAL, (float) 0.5, 2, false);
+							_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("sololeveling:dash")), SoundSource.NEUTRAL, (float) 0.5, 2, false);
 						}
 					}
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
-							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.25, 1);
+							_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.25, 1);
 						} else {
-							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.25, 1, false);
+							_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")), SoundSource.NEUTRAL, (float) 0.25, 1, false);
 						}
 					}
 					world.addParticle(ParticleTypes.EXPLOSION, x, (y + 1.6), z, 0, 1, 0);
@@ -70,7 +70,7 @@ public class ShieldBashProcedure {
 					motionZ = deltaZ * speed;
 					entity.setDeltaMovement(entity.getDeltaMovement().add(motionX, motionY, motionZ));
 					if (entity instanceof LivingEntity _entity && !_entity.level().isClientSide())
-						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SHIELD_BASH_EFFECT.get(), 60, 1, false, false));
+						_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.SHIELD_BASH_EFFECT, 60, 1, false, false));
 				} else {
 					if (entity instanceof Player _player && !_player.level().isClientSide())
 						_player.displayClientMessage(Component.literal("You need to hold a shield"), true);

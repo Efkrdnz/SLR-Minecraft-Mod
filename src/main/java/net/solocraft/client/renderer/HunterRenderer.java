@@ -35,7 +35,7 @@ public class HunterRenderer extends HumanoidMobRenderer<HunterEntity, HumanoidMo
 	/** Adds a simple variant layer that renders texturePath when DATA matches value (with invisibility check). */
 	private void addVariantLayer(EntityRendererProvider.Context context, String texturePath,
 			EntityDataAccessor<Integer> accessor, int value) {
-		final ResourceLocation tex = new ResourceLocation("sololeveling:" + texturePath);
+		final ResourceLocation tex = ResourceLocation.parse("sololeveling:" + texturePath);
 		this.addLayer(new RenderLayer<HunterEntity, HumanoidModel<HunterEntity>>(this) {
 			@Override
 			public void render(PoseStack poseStack, MultiBufferSource bufferSource, int light, HunterEntity entity,
@@ -44,7 +44,7 @@ public class HunterRenderer extends HumanoidMobRenderer<HunterEntity, HumanoidMo
 				if (variantVisible(entity, accessor, value)) {
 					VertexConsumer vc = bufferSource.getBuffer(RenderType.entityCutoutNoCull(tex));
 					this.getParentModel().renderToBuffer(poseStack, vc, 15728640,
-							LivingEntityRenderer.getOverlayCoords(entity, 0), 1, 1, 1, 1);
+							LivingEntityRenderer.getOverlayCoords(entity, 0));
 				}
 			}
 		});
@@ -53,7 +53,7 @@ public class HunterRenderer extends HumanoidMobRenderer<HunterEntity, HumanoidMo
 	/** Adds a variant layer without the invisibility check (used for Eyes). */
 	private void addVariantLayerNoInvis(EntityRendererProvider.Context context, String texturePath,
 			EntityDataAccessor<Integer> accessor, int value) {
-		final ResourceLocation tex = new ResourceLocation("sololeveling:" + texturePath);
+		final ResourceLocation tex = ResourceLocation.parse("sololeveling:" + texturePath);
 		this.addLayer(new RenderLayer<HunterEntity, HumanoidModel<HunterEntity>>(this) {
 			@Override
 			public void render(PoseStack poseStack, MultiBufferSource bufferSource, int light, HunterEntity entity,
@@ -62,7 +62,7 @@ public class HunterRenderer extends HumanoidMobRenderer<HunterEntity, HumanoidMo
 				if (variantVisibleNoInvis(entity, accessor, value)) {
 					VertexConsumer vc = bufferSource.getBuffer(RenderType.entityCutoutNoCull(tex));
 					this.getParentModel().renderToBuffer(poseStack, vc, 15728640,
-							LivingEntityRenderer.getOverlayCoords(entity, 0), 1, 1, 1, 1);
+							LivingEntityRenderer.getOverlayCoords(entity, 0));
 				}
 			}
 		});
@@ -118,6 +118,6 @@ public class HunterRenderer extends HumanoidMobRenderer<HunterEntity, HumanoidMo
 
 	@Override
 	public ResourceLocation getTextureLocation(HunterEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/human_base.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/human_base.png");
 	}
 }

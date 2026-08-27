@@ -3,22 +3,27 @@ package net.solocraft.network;
 import org.checkerframework.checker.units.qual.Speed;
 
 import net.solocraft.SololevelingMod;
+import net.solocraft.util.ItemStackData;
 
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
-import net.minecraftforge.common.capabilities.ICapabilitySerializable;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.Capability;
+import net.solocraft.network.compat.PacketDistributor;
+import net.solocraft.network.compat.NetworkEvent;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.common.util.INBTSerializable;
+import net.neoforged.neoforge.capabilities.EntityCapability;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -27,13 +32,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.client.Minecraft;
 
 import joptsimple.internal.Classes;
@@ -41,9 +49,22 @@ import joptsimple.internal.Classes;
 import java.util.function.Supplier;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class SololevelingModVariables {
+	public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
+			DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, SololevelingMod.MODID);
+	public static final DeferredHolder<AttachmentType<?>, AttachmentType<PlayerVariables>> PLAYER_VARIABLES_ATTACHMENT =
+			ATTACHMENT_TYPES.register("player_variables",
+					() -> AttachmentType.serializable(PlayerVariables::new).build());
+
+	@SuppressWarnings({"unchecked", "rawtypes"})
+	public static final EntityCapability<Optional<PlayerVariables>, Void> PLAYER_VARIABLES_CAPABILITY =
+			EntityCapability.createVoid(
+					ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "player_variables"),
+					(Class) Optional.class);
+
 	@SubscribeEvent
 	public static void init(FMLCommonSetupEvent event) {
 		SololevelingMod.addNetworkMessage(SavedDataSyncMessage.class, SavedDataSyncMessage::buffer, SavedDataSyncMessage::new, SavedDataSyncMessage::handler);
@@ -52,10 +73,27 @@ public class SololevelingModVariables {
 
 	@SubscribeEvent
 	public static void init(RegisterCapabilitiesEvent event) {
-		event.register(PlayerVariables.class);
+		BuiltInRegistries.ENTITY_TYPE.forEach(type -> registerPlayerVariablesCapability(event, type));
 	}
 
-	@Mod.EventBusSubscriber
+	private static <E extends Entity> void registerPlayerVariablesCapability(
+			RegisterCapabilitiesEvent event, EntityType<E> entityType) {
+		event.registerEntity(PLAYER_VARIABLES_CAPABILITY, entityType, (entity, ignored) -> {
+			if (entity instanceof Player && !(entity instanceof FakePlayer)) {
+				return Optional.of(entity.getData(PLAYER_VARIABLES_ATTACHMENT));
+			}
+			return Optional.empty();
+		});
+	}
+
+	private static HolderLookup.Provider registryProvider(FriendlyByteBuf buffer) {
+		if (buffer instanceof RegistryFriendlyByteBuf registryBuffer) {
+			return registryBuffer.registryAccess();
+		}
+		throw new IllegalStateException("Solo Leveling packets require a registry-aware buffer");
+	}
+
+	@EventBusSubscriber
 	public static class EventBusVariableHandlers {
 		@SubscribeEvent
 		public static void onPlayerLoggedInSyncPlayerVariables(PlayerEvent.PlayerLoggedInEvent event) {
@@ -78,15 +116,14 @@ public class SololevelingModVariables {
 			}
 		}
 
-		@SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
-		public static void flushPlayerVariablesSyncs(TickEvent.PlayerTickEvent event) {
-			if (event.phase != TickEvent.Phase.END) return;
-			event.player.getCapability(PLAYER_VARIABLES_CAPABILITY, null).ifPresent(cap -> cap.flushSyncIfPending(event.player));
+		@SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
+		public static void flushPlayerVariablesSyncs(PlayerTickEvent.Post event) {
+			if (false) return;
+			event.getEntity().getCapability(PLAYER_VARIABLES_CAPABILITY, null).ifPresent(cap -> cap.flushSyncIfPending(event.getEntity()));
 		}
 
 		@SubscribeEvent
 		public static void clonePlayer(PlayerEvent.Clone event) {
-			event.getOriginal().revive();
 			PlayerVariables original = ((PlayerVariables) event.getOriginal().getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables()));
 			PlayerVariables clone = ((PlayerVariables) event.getEntity().getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables()));
 			clone.shopitem5 = original.shopitem5;
@@ -108,6 +145,8 @@ public class SololevelingModVariables {
 			clone.BossKilled = original.BossKilled;
 			clone.Call4Death = original.Call4Death;
 			clone.Classes = original.Classes;
+			clone.hunterClassId = original.hunterClassId;
+			clone.classStyle = original.classStyle;
 			clone.mageSpecialization = original.mageSpecialization;
 			clone.combatmode = original.combatmode;
 			clone.commanddeath = original.commanddeath;
@@ -146,7 +185,9 @@ public class SololevelingModVariables {
 			clone.investvalue = original.investvalue;
 			clone.JOB = original.JOB;
 			clone.vesselType = original.vesselType;
+			clone.armedCurse = original.armedCurse;
 			clone.vesselIdentity = original.vesselIdentity;
+			clone.activeForms = original.activeForms;
 			clone.vesselGrantedAuthority = original.vesselGrantedAuthority;
 			clone.jobkey = original.jobkey;
 			clone.killmission = original.killmission;
@@ -244,6 +285,11 @@ public class SololevelingModVariables {
 			clone.ExchangeDimensions = original.ExchangeDimensions;
 			clone.ExchangeCords = original.ExchangeCords;
 			clone.ShadowBody = original.ShadowBody;
+			// Releasing the System is a one-way, end-of-run decision. It has to
+			// survive death like the rest of the run, or dying would quietly hand
+			// the player their quests back.
+			clone.systemReleased = original.systemReleased;
+			clone.trueMonarchHeart = original.trueMonarchHeart;
 			clone.progression_multiplier_assassin = original.progression_multiplier_assassin;
 			clone.progression_multiplier_mage = original.progression_multiplier_mage;
 			clone.progression_multiplier_fighter = original.progression_multiplier_fighter;
@@ -374,8 +420,10 @@ public class SololevelingModVariables {
 
 	public static class WorldVariables extends SavedData {
 		public static final String DATA_NAME = "sololeveling_worldvars";
+		private static final SavedData.Factory<WorldVariables> FACTORY =
+				new SavedData.Factory<>(WorldVariables::new, WorldVariables::load);
 
-		public static WorldVariables load(CompoundTag tag) {
+		public static WorldVariables load(CompoundTag tag, HolderLookup.Provider registries) {
 			WorldVariables data = new WorldVariables();
 			data.read(tag);
 			return data;
@@ -385,7 +433,7 @@ public class SololevelingModVariables {
 		}
 
 		@Override
-		public CompoundTag save(CompoundTag nbt) {
+		public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registries) {
 			return nbt;
 		}
 
@@ -399,7 +447,7 @@ public class SololevelingModVariables {
 
 		public static WorldVariables get(LevelAccessor world) {
 			if (world instanceof ServerLevel level) {
-				return level.getDataStorage().computeIfAbsent(e -> WorldVariables.load(e), WorldVariables::new, DATA_NAME);
+				return level.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 			} else {
 				return clientSide;
 			}
@@ -408,6 +456,8 @@ public class SololevelingModVariables {
 
 	public static class MapVariables extends SavedData {
 		public static final String DATA_NAME = "sololeveling_mapvars";
+		private static final SavedData.Factory<MapVariables> FACTORY =
+				new SavedData.Factory<>(MapVariables::new, MapVariables::load);
 		public boolean RedGate = false;
 		public double gatetimer = 0;
 		public double shmlimit = 0;
@@ -417,7 +467,7 @@ public class SololevelingModVariables {
 		public String ActiveGateInstances = "\"\"";
 		public String GateBreakMemory = "";
 
-		public static MapVariables load(CompoundTag tag) {
+		public static MapVariables load(CompoundTag tag, HolderLookup.Provider registries) {
 			MapVariables data = new MapVariables();
 			data.read(tag);
 			return data;
@@ -425,7 +475,7 @@ public class SololevelingModVariables {
 
 		public void read(CompoundTag nbt) {
 			if (nbt == null) {
-				nbt = save(new CompoundTag());
+				nbt = new CompoundTag();
 			}
 			RedGate = nbt.getBoolean("RedGate");
 			gatetimer = nbt.getDouble("gatetimer");
@@ -438,7 +488,7 @@ public class SololevelingModVariables {
 		}
 
 		@Override
-		public CompoundTag save(CompoundTag nbt) {
+		public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registries) {
 			nbt.putBoolean("RedGate", RedGate);
 			nbt.putDouble("gatetimer", gatetimer);
 			nbt.putDouble("shmlimit", shmlimit);
@@ -460,7 +510,7 @@ public class SololevelingModVariables {
 
 		public static MapVariables get(LevelAccessor world) {
 			if (world instanceof ServerLevelAccessor serverLevelAcc) {
-				return serverLevelAcc.getLevel().getServer().getLevel(Level.OVERWORLD).getDataStorage().computeIfAbsent(e -> MapVariables.load(e), MapVariables::new, DATA_NAME);
+				return serverLevelAcc.getLevel().getServer().getLevel(Level.OVERWORLD).getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 			} else {
 				return clientSide;
 			}
@@ -491,7 +541,7 @@ public class SololevelingModVariables {
 		public static void buffer(SavedDataSyncMessage message, FriendlyByteBuf buffer) {
 			buffer.writeInt(message.type);
 			if (message.data != null)
-				buffer.writeNbt(message.data.save(new CompoundTag()));
+				buffer.writeNbt(message.data.save(new CompoundTag(), registryProvider(buffer)));
 		}
 
 		public static void handler(SavedDataSyncMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -508,37 +558,7 @@ public class SololevelingModVariables {
 		}
 	}
 
-	public static final Capability<PlayerVariables> PLAYER_VARIABLES_CAPABILITY = CapabilityManager.get(new CapabilityToken<PlayerVariables>() {
-	});
-
-	@Mod.EventBusSubscriber
-	private static class PlayerVariablesProvider implements ICapabilitySerializable<Tag> {
-		@SubscribeEvent
-		public static void onAttachCapabilities(AttachCapabilitiesEvent<Entity> event) {
-			if (event.getObject() instanceof Player && !(event.getObject() instanceof FakePlayer))
-				event.addCapability(new ResourceLocation("sololeveling", "player_variables"), new PlayerVariablesProvider());
-		}
-
-		private final PlayerVariables playerVariables = new PlayerVariables();
-		private final LazyOptional<PlayerVariables> instance = LazyOptional.of(() -> playerVariables);
-
-		@Override
-		public <T> LazyOptional<T> getCapability(Capability<T> cap, Direction side) {
-			return cap == PLAYER_VARIABLES_CAPABILITY ? instance.cast() : LazyOptional.empty();
-		}
-
-		@Override
-		public Tag serializeNBT() {
-			return playerVariables.writeNBT();
-		}
-
-		@Override
-		public void deserializeNBT(Tag nbt) {
-			playerVariables.readNBT(nbt);
-		}
-	}
-
-	public static class PlayerVariables {
+	public static class PlayerVariables implements INBTSerializable<CompoundTag> {
 		public ItemStack shopitem5 = ItemStack.EMPTY;
 		public double LoreAccurateRankStart = 1.0;
 		public double ariset = 0;
@@ -619,6 +639,18 @@ public class SololevelingModVariables {
 		public boolean BossKilled = false;
 		public boolean Call4Death = false;
 		public double Classes = 0;
+		/**
+		 * Identity of the awakened class as a ResourceLocation string.
+		 *
+		 * <p>Takes precedence over {@link #Classes} when set. Classes stays behind
+		 * as a numeric mirror so the comparisons still spread through the codebase
+		 * keep working, and so a save written here stays readable by an older build.
+		 * Write both through HunterClassRegistry rather than by hand.
+		 */
+		public String hunterClassId = "";
+		/** Generic class-style ID; only Mage styles are playable currently. */
+		public String classStyle = "";
+		/** Legacy Mage alias retained for save and integration compatibility. */
 		public String mageSpecialization = "";
 		public boolean combatmode = false;
 		public boolean commanddeath = false;
@@ -656,7 +688,18 @@ public class SololevelingModVariables {
 		public double investvalue = 1.0;
 		public double JOB = 0.0;
 		public String vesselType = "";
+		/** Curse Mage: the curse the radial wheel currently has armed. */
+		public String armedCurse = "";
 		public String vesselIdentity = "";
+		/**
+		 * Ids of heightened forms currently active, comma separated.
+		 *
+		 * <p>Built-in vessels each track their own form through their own manager.
+		 * This exists so a contributed vessel has somewhere to say the same thing,
+		 * and because it rides the normal sync the client can render an aura for it
+		 * without the addon writing a packet. See VesselState.
+		 */
+		public String activeForms = "";
 		public boolean vesselGrantedAuthority = false;
 		public boolean jobkey = false;
 		public double killmission = 9.0;
@@ -757,6 +800,10 @@ public class SololevelingModVariables {
 		public String ExchangeDimensions = ".";
 		public String ExchangeCords = ".";
 		public boolean ShadowBody = false;
+		/** True once the player has left the System running unattended. */
+		public boolean systemReleased = false;
+		/** Empty, "black" (Shadow Monarch) or "vessel". See TrueMonarchRules. */
+		public String trueMonarchHeart = "";
 		public double progression_multiplier_assassin = 1.0;
 		public double progression_multiplier_mage = 1.0;
 		public double progression_multiplier_fighter = 1.0;
@@ -818,9 +865,19 @@ public class SololevelingModVariables {
 			SololevelingMod.PACKET_HANDLER.send(PacketDistributor.PLAYER.with(() -> serverPlayer), new PlayerVariablesSyncMessage(this, serverPlayer.getId()));
 		}
 
-		public Tag writeNBT() {
+		@Override
+		public CompoundTag serializeNBT(HolderLookup.Provider registries) {
+			return writeNBT(registries);
+		}
+
+		@Override
+		public void deserializeNBT(HolderLookup.Provider registries, CompoundTag tag) {
+			readNBT(registries, tag);
+		}
+
+		public CompoundTag writeNBT(HolderLookup.Provider registries) {
 			CompoundTag nbt = new CompoundTag();
-			nbt.put("shopitem5", shopitem5.save(new CompoundTag()));
+			nbt.put("shopitem5", ItemStackData.save(shopitem5, registries));
 			nbt.putDouble("LoreAccurateRankStart", LoreAccurateRankStart);
 			nbt.putDouble("ariset", ariset);
 			nbt.putBoolean("berserk", berserk);
@@ -882,11 +939,11 @@ public class SololevelingModVariables {
 			nbt.putDouble("randplayerz", randplayerz);
 			nbt.putString("traintype", traintype);
 			nbt.putBoolean("isdailytraining", isdailytraining);
-			nbt.put("shopitem1", shopitem1.save(new CompoundTag()));
-			nbt.put("shopitem2", shopitem2.save(new CompoundTag()));
-			nbt.put("shopitem3", shopitem3.save(new CompoundTag()));
-			nbt.put("shopitem4", shopitem4.save(new CompoundTag()));
-			nbt.put("shopitem6", shopitem6.save(new CompoundTag()));
+			nbt.put("shopitem1", ItemStackData.save(shopitem1, registries));
+			nbt.put("shopitem2", ItemStackData.save(shopitem2, registries));
+			nbt.put("shopitem3", ItemStackData.save(shopitem3, registries));
+			nbt.put("shopitem4", ItemStackData.save(shopitem4, registries));
+			nbt.put("shopitem6", ItemStackData.save(shopitem6, registries));
 			nbt.putBoolean("Ab1", Ab1);
 			nbt.putBoolean("Ab2", Ab2);
 			nbt.putBoolean("Ab3", Ab3);
@@ -900,6 +957,8 @@ public class SololevelingModVariables {
 			nbt.putBoolean("BossKilled", BossKilled);
 			nbt.putBoolean("Call4Death", Call4Death);
 			nbt.putDouble("Classes", Classes);
+			nbt.putString("hunterClassId", hunterClassId);
+			nbt.putString("classStyle", classStyle);
 			nbt.putString("mageSpecialization", mageSpecialization);
 			nbt.putBoolean("combatmode", combatmode);
 			nbt.putBoolean("commanddeath", commanddeath);
@@ -937,7 +996,9 @@ public class SololevelingModVariables {
 			nbt.putDouble("investvalue", investvalue);
 			nbt.putDouble("JOB", JOB);
 			nbt.putString("vesselType", vesselType);
+			nbt.putString("armedCurse", armedCurse);
 			nbt.putString("vesselIdentity", vesselIdentity);
+			nbt.putString("activeForms", activeForms);
 			nbt.putBoolean("vesselGrantedAuthority", vesselGrantedAuthority);
 			nbt.putBoolean("jobkey", jobkey);
 			nbt.putDouble("killmission", killmission);
@@ -950,10 +1011,10 @@ public class SololevelingModVariables {
 			nbt.putDouble("orcspawned", orcspawned);
 			nbt.putDouble("OrdShadow", OrdShadow);
 			nbt.putDouble("ordshadowmax", ordshadowmax);
-			nbt.put("overridefeet", overridefeet.save(new CompoundTag()));
-			nbt.put("overridehead", overridehead.save(new CompoundTag()));
-			nbt.put("overridelegs", overridelegs.save(new CompoundTag()));
-			nbt.put("overridetorso", overridetorso.save(new CompoundTag()));
+			nbt.put("overridefeet", ItemStackData.save(overridefeet, registries));
+			nbt.put("overridehead", ItemStackData.save(overridehead, registries));
+			nbt.put("overridelegs", ItemStackData.save(overridelegs, registries));
+			nbt.put("overridetorso", ItemStackData.save(overridetorso, registries));
 			nbt.putDouble("perception", perception);
 			nbt.putBoolean("Player", Player);
 			nbt.putDouble("polarbear", polarbear);
@@ -1038,6 +1099,8 @@ public class SololevelingModVariables {
 			nbt.putString("ExchangeDimensions", ExchangeDimensions);
 			nbt.putString("ExchangeCords", ExchangeCords);
 			nbt.putBoolean("ShadowBody", ShadowBody);
+			nbt.putBoolean("systemReleased", systemReleased);
+			nbt.putString("trueMonarchHeart", trueMonarchHeart);
 			nbt.putDouble("progression_multiplier_assassin", progression_multiplier_assassin);
 			nbt.putDouble("progression_multiplier_mage", progression_multiplier_mage);
 			nbt.putDouble("progression_multiplier_fighter", progression_multiplier_fighter);
@@ -1074,15 +1137,15 @@ public class SololevelingModVariables {
 			return nbt;
 		}
 
-		public void readNBT(Tag tag) {
+		public void readNBT(HolderLookup.Provider registries, Tag tag) {
 			if (tag == null) {
-				tag = writeNBT();
+				tag = writeNBT(registries);
 			}
 			CompoundTag nbt = (CompoundTag) tag;
 			if (nbt == null) {
-				nbt = (CompoundTag) writeNBT();
+				nbt = writeNBT(registries);
 			}
-			shopitem5 = ItemStack.of(nbt.getCompound("shopitem5"));
+			shopitem5 = ItemStackData.load(nbt.getCompound("shopitem5"), registries);
 			LoreAccurateRankStart = nbt.getDouble("LoreAccurateRankStart");
 			ariset = nbt.getDouble("ariset");
 			berserk = nbt.getBoolean("berserk");
@@ -1144,11 +1207,11 @@ public class SololevelingModVariables {
 			randplayerz = nbt.getDouble("randplayerz");
 			traintype = nbt.getString("traintype");
 			isdailytraining = nbt.getBoolean("isdailytraining");
-			shopitem1 = ItemStack.of(nbt.getCompound("shopitem1"));
-			shopitem2 = ItemStack.of(nbt.getCompound("shopitem2"));
-			shopitem3 = ItemStack.of(nbt.getCompound("shopitem3"));
-			shopitem4 = ItemStack.of(nbt.getCompound("shopitem4"));
-			shopitem6 = ItemStack.of(nbt.getCompound("shopitem6"));
+			shopitem1 = ItemStackData.load(nbt.getCompound("shopitem1"), registries);
+			shopitem2 = ItemStackData.load(nbt.getCompound("shopitem2"), registries);
+			shopitem3 = ItemStackData.load(nbt.getCompound("shopitem3"), registries);
+			shopitem4 = ItemStackData.load(nbt.getCompound("shopitem4"), registries);
+			shopitem6 = ItemStackData.load(nbt.getCompound("shopitem6"), registries);
 			Ab1 = nbt.getBoolean("Ab1");
 			Ab2 = nbt.getBoolean("Ab2");
 			Ab3 = nbt.getBoolean("Ab3");
@@ -1162,6 +1225,8 @@ public class SololevelingModVariables {
 			BossKilled = nbt.getBoolean("BossKilled");
 			Call4Death = nbt.getBoolean("Call4Death");
 			Classes = nbt.getDouble("Classes");
+			hunterClassId = nbt.getString("hunterClassId");
+			classStyle = nbt.getString("classStyle");
 			mageSpecialization = nbt.getString("mageSpecialization");
 			combatmode = nbt.getBoolean("combatmode");
 			commanddeath = nbt.getBoolean("commanddeath");
@@ -1199,7 +1264,9 @@ public class SololevelingModVariables {
 			investvalue = nbt.getDouble("investvalue");
 			JOB = nbt.getDouble("JOB");
 			vesselType = nbt.getString("vesselType");
+			armedCurse = nbt.getString("armedCurse");
 			vesselIdentity = nbt.getString("vesselIdentity");
+			activeForms = nbt.getString("activeForms");
 			vesselGrantedAuthority = nbt.getBoolean("vesselGrantedAuthority");
 			jobkey = nbt.getBoolean("jobkey");
 			killmission = nbt.getDouble("killmission");
@@ -1212,10 +1279,10 @@ public class SololevelingModVariables {
 			orcspawned = nbt.getDouble("orcspawned");
 			OrdShadow = nbt.getDouble("OrdShadow");
 			ordshadowmax = nbt.getDouble("ordshadowmax");
-			overridefeet = ItemStack.of(nbt.getCompound("overridefeet"));
-			overridehead = ItemStack.of(nbt.getCompound("overridehead"));
-			overridelegs = ItemStack.of(nbt.getCompound("overridelegs"));
-			overridetorso = ItemStack.of(nbt.getCompound("overridetorso"));
+			overridefeet = ItemStackData.load(nbt.getCompound("overridefeet"), registries);
+			overridehead = ItemStackData.load(nbt.getCompound("overridehead"), registries);
+			overridelegs = ItemStackData.load(nbt.getCompound("overridelegs"), registries);
+			overridetorso = ItemStackData.load(nbt.getCompound("overridetorso"), registries);
 			perception = nbt.getDouble("perception");
 			Player = nbt.getBoolean("Player");
 			polarbear = nbt.getDouble("polarbear");
@@ -1303,6 +1370,8 @@ public class SololevelingModVariables {
 			ExchangeDimensions = nbt.getString("ExchangeDimensions");
 			ExchangeCords = nbt.getString("ExchangeCords");
 			ShadowBody = nbt.getBoolean("ShadowBody");
+			systemReleased = nbt.getBoolean("systemReleased");
+			trueMonarchHeart = nbt.getString("trueMonarchHeart");
 			progression_multiplier_assassin = nbt.getDouble("progression_multiplier_assassin");
 			progression_multiplier_mage = nbt.getDouble("progression_multiplier_mage");
 			progression_multiplier_fighter = nbt.getDouble("progression_multiplier_fighter");
@@ -1350,7 +1419,7 @@ public class SololevelingModVariables {
 
 		public PlayerVariablesSyncMessage(FriendlyByteBuf buffer) {
 			this.data = new PlayerVariables();
-			this.data.readNBT(buffer.readNbt());
+			this.data.readNBT(registryProvider(buffer), buffer.readNbt());
 			this.target = buffer.readInt();
 		}
 
@@ -1360,7 +1429,7 @@ public class SololevelingModVariables {
 		}
 
 		public static void buffer(PlayerVariablesSyncMessage message, FriendlyByteBuf buffer) {
-			buffer.writeNbt((CompoundTag) message.data.writeNBT());
+			buffer.writeNbt(message.data.writeNBT(registryProvider(buffer)));
 			buffer.writeInt(message.target);
 		}
 
@@ -1368,7 +1437,16 @@ public class SololevelingModVariables {
 			NetworkEvent.Context context = contextSupplier.get();
 			context.enqueueWork(() -> {
 				if (!context.getDirection().getReceptionSide().isServer()) {
-					PlayerVariables variables = ((PlayerVariables) Minecraft.getInstance().player.level().getEntity(message.target).getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables()));
+					// A sync can arrive for an entity the client has already dropped --
+					// most often the tick a player dies or respawns, where the packet is
+					// in flight while the entity id is removed from the client level.
+					// Resolving it then yields null and the whole payload task fails.
+					net.minecraft.client.player.LocalPlayer receiver = Minecraft.getInstance().player;
+					net.minecraft.world.entity.Entity subject = receiver == null
+							? null : receiver.level().getEntity(message.target);
+					if (subject == null)
+						return;
+					PlayerVariables variables = ((PlayerVariables) subject.getCapability(PLAYER_VARIABLES_CAPABILITY, null).orElse(new PlayerVariables()));
 					variables.shopitem5 = message.data.shopitem5;
 					variables.LoreAccurateRankStart = message.data.LoreAccurateRankStart;
 					variables.ariset = message.data.ariset;
@@ -1449,6 +1527,8 @@ public class SololevelingModVariables {
 					variables.BossKilled = message.data.BossKilled;
 					variables.Call4Death = message.data.Call4Death;
 					variables.Classes = message.data.Classes;
+					variables.hunterClassId = message.data.hunterClassId;
+					variables.classStyle = message.data.classStyle;
 					variables.mageSpecialization = message.data.mageSpecialization;
 					variables.combatmode = message.data.combatmode;
 					variables.commanddeath = message.data.commanddeath;
@@ -1486,7 +1566,9 @@ public class SololevelingModVariables {
 					variables.investvalue = message.data.investvalue;
 					variables.JOB = message.data.JOB;
 					variables.vesselType = message.data.vesselType;
+					variables.armedCurse = message.data.armedCurse;
 					variables.vesselIdentity = message.data.vesselIdentity;
+					variables.activeForms = message.data.activeForms;
 					variables.vesselGrantedAuthority = message.data.vesselGrantedAuthority;
 					variables.jobkey = message.data.jobkey;
 					variables.killmission = message.data.killmission;
@@ -1587,6 +1669,8 @@ public class SololevelingModVariables {
 					variables.ExchangeDimensions = message.data.ExchangeDimensions;
 					variables.ExchangeCords = message.data.ExchangeCords;
 					variables.ShadowBody = message.data.ShadowBody;
+					variables.systemReleased = message.data.systemReleased;
+					variables.trueMonarchHeart = message.data.trueMonarchHeart;
 					variables.progression_multiplier_assassin = message.data.progression_multiplier_assassin;
 					variables.progression_multiplier_mage = message.data.progression_multiplier_mage;
 					variables.progression_multiplier_fighter = message.data.progression_multiplier_fighter;

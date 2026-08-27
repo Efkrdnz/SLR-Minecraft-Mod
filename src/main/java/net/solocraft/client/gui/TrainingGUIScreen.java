@@ -41,11 +41,10 @@ public class TrainingGUIScreen extends AbstractContainerScreen<TrainingGUIMenu> 
 		return false;
 	}
 
-	private static final ResourceLocation texture = new ResourceLocation("sololeveling:textures/screens/training_gui.png");
+	private static final ResourceLocation texture = ResourceLocation.parse("sololeveling:textures/screens/training_gui.png");
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 		if (mouseX > leftPos + -128 && mouseX < leftPos + -104 && mouseY > topPos + -15 && mouseY < topPos + 9)
@@ -59,7 +58,7 @@ public class TrainingGUIScreen extends AbstractContainerScreen<TrainingGUIMenu> 
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 
-		guiGraphics.blit(new ResourceLocation("sololeveling:textures/screens/panel_rework_vertical2.png"), this.leftPos + -104, this.topPos + -107, 0, 0, 200, 225, 200, 225);
+		guiGraphics.blit(ResourceLocation.parse("sololeveling:textures/screens/panel_rework_vertical2.png"), this.leftPos + -104, this.topPos + -107, 0, 0, 200, 225, 200, 225);
 
 		RenderSystem.disableBlend();
 	}
@@ -97,7 +96,7 @@ public class TrainingGUIScreen extends AbstractContainerScreen<TrainingGUIMenu> 
 	@Override
 	public void init() {
 		super.init();
-		imagebutton_back = new ImageButton(this.leftPos + -126, this.topPos + -13, 20, 20, 0, 0, 20, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_back.png"), 20, 40, e -> {
+		imagebutton_back = new LegacyAtlasImageButton(this.leftPos + -126, this.topPos + -13, 20, 20, 0, 0, 20, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_back.png"), 20, 40, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new TrainingGUIButtonMessage(0, x, y, z));
 				TrainingGUIButtonMessage.handleButtonAction(entity, 0, x, y, z);
@@ -105,7 +104,7 @@ public class TrainingGUIScreen extends AbstractContainerScreen<TrainingGUIMenu> 
 		});
 		guistate.put("button:imagebutton_back", imagebutton_back);
 		this.addRenderableWidget(imagebutton_back);
-		imagebutton_panel_rework_rewardbutton = new ImageButton(this.leftPos + -41, this.topPos + 48, 64, 21, 0, 0, 21, new ResourceLocation("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton.png"), 64, 42, e -> {
+		imagebutton_panel_rework_rewardbutton = new LegacyAtlasImageButton(this.leftPos + -41, this.topPos + 48, 64, 21, 0, 0, 21, ResourceLocation.parse("sololeveling:textures/screens/atlas/imagebutton_panel_rework_rewardbutton.png"), 64, 42, e -> {
 			if (true) {
 				SololevelingMod.PACKET_HANDLER.sendToServer(new TrainingGUIButtonMessage(1, x, y, z));
 				TrainingGUIButtonMessage.handleButtonAction(entity, 1, x, y, z);

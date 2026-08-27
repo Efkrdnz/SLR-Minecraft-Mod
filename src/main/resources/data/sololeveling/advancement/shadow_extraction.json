@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "sololeveling:shadow_armor_boots"
+    },
+    "title": {
+      "translate": "advancements.shadow_extraction.title"
+    },
+    "description": {
+      "translate": "advancements.shadow_extraction.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "shadow_extraction": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:vessels/shadow_monarch"
+}

@@ -3,8 +3,8 @@ package net.solocraft.item;
 
 import net.solocraft.procedures.TankerStarterpackRightclickedProcedure;
 
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.level.ServerPlayer;
@@ -32,8 +32,8 @@ public class TankerStarterpackItem extends Item {
 	}
 
 	@Override
-	public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-		super.appendHoverText(itemstack, world, list, flag);
+	public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+		super.appendHoverText(itemstack, context, list, flag);
 		list.add(Component.translatable("tooltip.sololeveling.tanker.starter.baseline")
 				.withStyle(ChatFormatting.GOLD));
 		list.add(Component.translatable("tooltip.sololeveling.tanker.starter.contents")

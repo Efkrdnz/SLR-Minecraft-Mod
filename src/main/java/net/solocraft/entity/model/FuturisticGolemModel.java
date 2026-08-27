@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class FuturisticGolemModel extends GeoModel<FuturisticGolemEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(FuturisticGolemEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/futuristicgolem.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/futuristicgolem.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(FuturisticGolemEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/futuristicgolem.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/futuristicgolem.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(FuturisticGolemEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

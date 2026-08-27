@@ -1,115 +1,59 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.LevelRewardRules;
 
-import net.minecraft.world.entity.Entity;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.world.entity.Entity;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-public class SLRSetLevelProcedure {
+/**
+ * Sets a System level while preserving the command's legacy base-stat behavior.
+ * Positive level differences receive the same spendable points as XP leveling.
+ */
+public final class SLRSetLevelProcedure {
+	private SLRSetLevelProcedure() {
+	}
+
 	public static void execute(CommandContext<CommandSourceStack> arguments) {
-		double uplvl = 0;
-		double diff = 0;
-		double diff2 = 0;
+		int targetLevel = IntegerArgumentType.getInteger(arguments, "amount");
 		try {
-			for (Entity entityiterator : EntityArgument.getEntities(arguments, "name")) {
-				uplvl = DoubleArgumentType.getDouble(arguments, "amount");
-				diff = DoubleArgumentType.getDouble(arguments, "amount") - (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level;
-				diff2 = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level - DoubleArgumentType.getDouble(arguments, "amount");
-				if (DoubleArgumentType.getDouble(arguments, "amount") > (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level) {
-					{
-						double _setval = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level + diff;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Level = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Vitality + diff;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Vitality = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Strength + diff;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Strength = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence + diff;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Intelligence = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Speed + diff;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Speed = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).perception + diff;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.perception = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-				} else if (DoubleArgumentType.getDouble(arguments, "amount") < (entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Level) {
-					{
-						double _setval = uplvl;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Level = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = uplvl;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Vitality = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = uplvl;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Strength = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = uplvl;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Intelligence = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = uplvl;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.Speed = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-					{
-						double _setval = uplvl;
-						entityiterator.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
-							capability.perception = _setval;
-							capability.syncPlayerVariables(entityiterator);
-						});
-					}
-				}
-			}
-		} catch (CommandSyntaxException e) {
-			e.printStackTrace();
+			for (Entity target : EntityArgument.getEntities(arguments, "name"))
+				setLevel(target, targetLevel);
+		} catch (CommandSyntaxException exception) {
+			exception.printStackTrace();
 		}
+	}
+
+	private static void setLevel(Entity target, int targetLevel) {
+		target.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.ifPresent(variables -> {
+					int currentLevel = Math.max(0, (int) Math.floor(variables.Level));
+					double difference = targetLevel - variables.Level;
+					if (difference > 0.0D) {
+						variables.Level = targetLevel;
+						variables.Vitality += difference;
+						variables.Strength += difference;
+						variables.Intelligence += difference;
+						variables.Speed += difference;
+						variables.perception += difference;
+						variables.SkillPoints += LevelRewardRules.skillPointsForLevels(
+								Math.max(0, targetLevel - currentLevel));
+					} else if (difference < 0.0D) {
+						variables.Level = targetLevel;
+						variables.Vitality = targetLevel;
+						variables.Strength = targetLevel;
+						variables.Intelligence = targetLevel;
+						variables.Speed = targetLevel;
+						variables.perception = targetLevel;
+					} else {
+						return;
+					}
+					variables.syncPlayerVariables(target);
+				});
 	}
 }

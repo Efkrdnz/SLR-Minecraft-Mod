@@ -4,7 +4,7 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.dungeon.runtime.DungeonMobLevelAdapter;
 import net.solocraft.network.EntityHighlightMessage;
 
-import net.minecraftforge.network.PacketDistributor;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -28,6 +28,7 @@ import java.util.UUID;
  */
 public final class EntityHighlightSystem {
 	public static final String SOURCE_PARTY_MEMBERS = "party:members";
+	public static final String SOURCE_SHADOW_GLOW = "shadow:glow";
 	public static final int COLOR_WAVE_NORMAL = 0x58D8FF;
 	public static final int COLOR_WAVE_ELITE = 0xFFB347;
 	public static final int COLOR_WAVE_BOSS = 0xFF304F;
@@ -36,6 +37,7 @@ public final class EntityHighlightSystem {
 	public static final int COLOR_PERCEPTION_NEUTRAL = 0xF2D35E;
 
 	public static final int PRIORITY_PARTY = 80;
+	public static final int PRIORITY_SHADOW_GLOW = 90;
 	public static final int PRIORITY_PERCEPTION = 100;
 	public static final int PRIORITY_DUNGEON_NORMAL = 200;
 	public static final int PRIORITY_DUNGEON_ELITE = 250;
@@ -44,11 +46,11 @@ public final class EntityHighlightSystem {
 	private static final int MAX_DURATION_TICKS = 1_200_000;
 	private static final int MAX_PRIORITY = 10_000;
 	private static final TagKey<EntityType<?>> BOSS_TAG = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("minecraft", "soloboss"));
+			ResourceLocation.fromNamespaceAndPath("minecraft", "soloboss"));
 	private static final TagKey<EntityType<?>> PORTAL_TAG = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("minecraft", "portals"));
+			ResourceLocation.fromNamespaceAndPath("minecraft", "portals"));
 	private static final TagKey<EntityType<?>> SIDE_TAG = TagKey.create(Registries.ENTITY_TYPE,
-			new ResourceLocation("minecraft", "side"));
+			ResourceLocation.fromNamespaceAndPath("minecraft", "side"));
 
 	private EntityHighlightSystem() {
 	}

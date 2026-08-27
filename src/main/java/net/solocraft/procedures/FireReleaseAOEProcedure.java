@@ -1,11 +1,16 @@
 package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -26,12 +31,12 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Comparator;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class FireReleaseAOEProcedure {
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase == TickEvent.Phase.END) {
-			execute(event, event.player.level(), event.player);
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (true) {
+			execute(event, event.getEntity().level(), event.getEntity());
 		}
 	}
 
@@ -85,11 +90,11 @@ public class FireReleaseAOEProcedure {
 									|| (entity instanceof LivingEntity _teamEnt && _teamEnt.level().getScoreboard().getPlayersTeam(_teamEnt.getStringUUID()) != null
 											? _teamEnt.level().getScoreboard().getPlayersTeam(_teamEnt instanceof Player _pl ? _pl.getGameProfile().getName() : _teamEnt.getStringUUID()).getName()
 											: "").equals("")) {
-								entityiterator.setSecondsOnFire((int) (1 * 2));
+								entityiterator.igniteForSeconds((int) (1 * 2));
 								if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
 									_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1, false, false));
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.IN_FIRE), entity),
-										(float) (2 + ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 200) * (1 / 3)));
+										(float) (2 + (TemporaryStatBonusManager.effectiveIntelligence(entity) / 200) * (1 / 3)));
 							}
 						}
 					}
@@ -124,11 +129,11 @@ public class FireReleaseAOEProcedure {
 									|| (entity instanceof LivingEntity _teamEnt && _teamEnt.level().getScoreboard().getPlayersTeam(_teamEnt.getStringUUID()) != null
 											? _teamEnt.level().getScoreboard().getPlayersTeam(_teamEnt instanceof Player _pl ? _pl.getGameProfile().getName() : _teamEnt.getStringUUID()).getName()
 											: "").equals("")) {
-								entityiterator.setSecondsOnFire((int) (2 * 5));
+								entityiterator.igniteForSeconds((int) (2 * 5));
 								if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
 									_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1, false, false));
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.IN_FIRE), entity),
-										(float) (3 + ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 175) * (2 / 3)));
+										(float) (3 + (TemporaryStatBonusManager.effectiveIntelligence(entity) / 175) * (2 / 3)));
 							}
 						}
 					}
@@ -163,11 +168,11 @@ public class FireReleaseAOEProcedure {
 									|| (entity instanceof LivingEntity _teamEnt && _teamEnt.level().getScoreboard().getPlayersTeam(_teamEnt.getStringUUID()) != null
 											? _teamEnt.level().getScoreboard().getPlayersTeam(_teamEnt instanceof Player _pl ? _pl.getGameProfile().getName() : _teamEnt.getStringUUID()).getName()
 											: "").equals("")) {
-								entityiterator.setSecondsOnFire((int) (3 * 5));
+								entityiterator.igniteForSeconds((int) (3 * 5));
 								if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
 									_entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 40, 1, false, false));
 								entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.IN_FIRE), entity),
-										(float) (4 + ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).Intelligence / 150) * (3 / 3)));
+										(float) (4 + (TemporaryStatBonusManager.effectiveIntelligence(entity) / 150) * (3 / 3)));
 							}
 						}
 					}

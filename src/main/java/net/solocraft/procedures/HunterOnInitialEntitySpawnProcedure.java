@@ -2,7 +2,7 @@ package net.solocraft.procedures;
 
 import net.solocraft.entity.HunterEntity;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
@@ -67,7 +67,7 @@ public class HunterOnInitialEntitySpawnProcedure {
 			if (entity instanceof HunterEntity _datEntSetS)
 				_datEntSetS.getEntityData().set(HunterEntity.DATA_HunterClass, "Assassin");
 			if (entity instanceof LivingEntity _entity) {
-				ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("hunter_assassin"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+				ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("hunter_assassin"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 				_setstack.setCount(1);
 				_entity.setItemInHand(InteractionHand.MAIN_HAND, _setstack);
 				if (_entity instanceof Player _player)
@@ -75,7 +75,7 @@ public class HunterOnInitialEntitySpawnProcedure {
 			}
 			if (Math.random() < (1) / ((float) 3)) {
 				if (entity instanceof LivingEntity _entity) {
-					ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("hunter_assassin"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+					ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("hunter_assassin"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 					_setstack.setCount(1);
 					_entity.setItemInHand(InteractionHand.OFF_HAND, _setstack);
 					if (_entity instanceof Player _player)
@@ -93,7 +93,7 @@ public class HunterOnInitialEntitySpawnProcedure {
 				if (entity instanceof HunterEntity _datEntSetS)
 					_datEntSetS.getEntityData().set(HunterEntity.DATA_HunterClass, "Mage");
 				if (entity instanceof LivingEntity _entity) {
-					ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("hunter_mage_healer"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+					ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("hunter_mage_healer"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 					_setstack.setCount(1);
 					_entity.setItemInHand(InteractionHand.OFF_HAND, _setstack);
 					if (_entity instanceof Player _player)
@@ -109,14 +109,14 @@ public class HunterOnInitialEntitySpawnProcedure {
 					if (entity instanceof HunterEntity _datEntSetS)
 						_datEntSetS.getEntityData().set(HunterEntity.DATA_HunterClass, "Fighter");
 					if (entity instanceof LivingEntity _entity) {
-						ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("hunter_fighter"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+						ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("hunter_fighter"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 						_setstack.setCount(1);
 						_entity.setItemInHand(InteractionHand.MAIN_HAND, _setstack);
 						if (_entity instanceof Player _player)
 							_player.getInventory().setChanged();
 					}
 					if (entity instanceof LivingEntity _entity) {
-						ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("hunter_fighter_tanker_off"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+						ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("hunter_fighter_tanker_off"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 						_setstack.setCount(1);
 						_entity.setItemInHand(InteractionHand.OFF_HAND, _setstack);
 						if (_entity instanceof Player _player)
@@ -133,14 +133,14 @@ public class HunterOnInitialEntitySpawnProcedure {
 						if (entity instanceof HunterEntity _datEntSetS)
 							_datEntSetS.getEntityData().set(HunterEntity.DATA_HunterClass, "Tanker");
 						if (entity instanceof LivingEntity _entity) {
-							ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("hunter_tanker"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+							ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("hunter_tanker"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 							_setstack.setCount(1);
 							_entity.setItemInHand(InteractionHand.MAIN_HAND, _setstack);
 							if (_entity instanceof Player _player)
 								_player.getInventory().setChanged();
 						}
 						if (entity instanceof LivingEntity _entity) {
-							ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("hunter_fighter_tanker_off"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+							ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("hunter_fighter_tanker_off"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 							_setstack.setCount(1);
 							_entity.setItemInHand(InteractionHand.OFF_HAND, _setstack);
 							if (_entity instanceof Player _player)
@@ -157,7 +157,7 @@ public class HunterOnInitialEntitySpawnProcedure {
 							if (entity instanceof HunterEntity _datEntSetS)
 								_datEntSetS.getEntityData().set(HunterEntity.DATA_HunterClass, "Ranger");
 							if (entity instanceof LivingEntity _entity) {
-								ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("hunter_ranger"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+								ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("hunter_ranger"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 								_setstack.setCount(1);
 								_entity.setItemInHand(InteractionHand.MAIN_HAND, _setstack);
 								if (_entity instanceof Player _player)
@@ -172,7 +172,7 @@ public class HunterOnInitialEntitySpawnProcedure {
 							if (entity instanceof HunterEntity _datEntSetS)
 								_datEntSetS.getEntityData().set(HunterEntity.DATA_HunterClass, "Healer");
 							if (entity instanceof LivingEntity _entity) {
-								ItemStack _setstack = new ItemStack((ForgeRegistries.ITEMS.tags().getTag(ItemTags.create(new ResourceLocation("hunter_mage_healer"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
+								ItemStack _setstack = new ItemStack((net.solocraft.util.RegistryTagAccess.getTag(ItemTags.create(ResourceLocation.parse("hunter_mage_healer"))).getRandomElement(RandomSource.create()).orElseGet(() -> Items.AIR)));
 								_setstack.setCount(1);
 								_entity.setItemInHand(InteractionHand.OFF_HAND, _setstack);
 								if (_entity instanceof Player _player)

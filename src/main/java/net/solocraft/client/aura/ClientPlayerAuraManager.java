@@ -3,10 +3,13 @@ package net.solocraft.client.aura;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 /** Client runtime state for packet-driven continuous auras and short bursts. */
-@Mod.EventBusSubscriber(value = Dist.CLIENT)
+@EventBusSubscriber(value = Dist.CLIENT)
 public final class ClientPlayerAuraManager {
 	private static final Map<Integer, AuraInstance> CONTINUOUS = new HashMap<>();
 	private static final Map<Integer, List<AuraInstance>> BURSTS = new HashMap<>();
@@ -99,6 +102,12 @@ public final class ClientPlayerAuraManager {
 		TRAILS.remove(entityId);
 	}
 
+	public static void clearEntity(int entityId) {
+		CONTINUOUS.remove(entityId);
+		BURSTS.remove(entityId);
+		TRAILS.remove(entityId);
+	}
+
 	public static void clear() {
 		CONTINUOUS.clear();
 		BURSTS.clear();
@@ -108,6 +117,18 @@ public final class ClientPlayerAuraManager {
 	@SubscribeEvent
 	public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
 		clear();
+	}
+
+	@SubscribeEvent
+	public static void onEntityLeave(EntityLeaveLevelEvent event) {
+		if (event.getLevel().isClientSide())
+			clearEntity(event.getEntity().getId());
+	}
+
+	@SubscribeEvent
+	public static void onLevelUnload(LevelEvent.Unload event) {
+		if (event.getLevel().isClientSide())
+			clear();
 	}
 
 	private static long gameTime() {

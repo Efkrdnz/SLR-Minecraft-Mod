@@ -9,16 +9,16 @@ import net.minecraft.resources.ResourceLocation;
 public class InstanceDungeonKeyLoggerDisplayModel extends GeoModel<InstanceDungeonKeyLoggerDisplayItem> {
 	@Override
 	public ResourceLocation getAnimationResource(InstanceDungeonKeyLoggerDisplayItem animatable) {
-		return new ResourceLocation("sololeveling", "animations/keyhole.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/keyhole.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(InstanceDungeonKeyLoggerDisplayItem animatable) {
-		return new ResourceLocation("sololeveling", "geo/keyhole.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/keyhole.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(InstanceDungeonKeyLoggerDisplayItem entity) {
-		return new ResourceLocation("sololeveling", "textures/block/instancecover1.png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/block/instancecover1.png");
 	}
 }

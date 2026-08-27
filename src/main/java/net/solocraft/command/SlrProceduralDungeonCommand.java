@@ -10,9 +10,10 @@ import net.solocraft.dungeon.ProceduralDungeonRank;
 import net.solocraft.dungeon.ProceduralDungeonResult;
 import net.solocraft.dungeon.ProceduralDungeonSettings;
 
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -25,7 +26,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class SlrProceduralDungeonCommand {
 	private static final SuggestionProvider<CommandSourceStack> RANK_SUGGESTIONS = (context, builder) ->
 			SharedSuggestionProvider.suggest(Arrays.stream(ProceduralDungeonRank.values()).map(Enum::name), builder);

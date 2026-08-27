@@ -2,6 +2,8 @@ package net.solocraft.procedures;
 
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.ShadowMonarchManager;
+import net.solocraft.util.AriseExtractionRules;
+import net.solocraft.dungeon.runtime.DungeonLevelHelper;
 import net.solocraft.init.SololevelingModItems;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.entity.SteelFangWolfEntity;
@@ -17,10 +19,11 @@ import net.solocraft.entity.DKnight3Entity;
 import net.solocraft.entity.DKnight2Entity;
 import net.solocraft.entity.DKnight1Entity;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.Event;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.bus.api.Event;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.npc.Villager;
@@ -36,11 +39,12 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerLevel;
 
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class AriseDetectEntityProcedure {
 	@SubscribeEvent
 	public static void onEntityDeath(LivingDeathEvent event) {
@@ -56,16 +60,19 @@ public class AriseDetectEntityProcedure {
 	private static void execute(@Nullable Event event, LevelAccessor world, double x, double y, double z, Entity entity, Entity sourceentity) {
 		if (entity == null || sourceentity == null)
 			return;
-		Entity creditedKiller = ShadowKillCreditHelper.creditedPlayer(world, sourceentity);
-		Entity armorEntity = creditedKiller != null ? creditedKiller : sourceentity;
-		boolean sourceIsShadow = ShadowMonarchManager.isShadowEntity(sourceentity);
-		boolean canCreateSoul = sourceIsShadow || (creditedKiller == sourceentity && isShadowMonarch(sourceentity));
-		if (hasShadowArmor(armorEntity) || !canCreateSoul)
+		Entity directSource = event instanceof LivingDeathEvent death
+				? death.getSource().getDirectEntity() : sourceentity;
+		Player creditedKiller = entity instanceof LivingEntity defeated
+				? ShadowKillCreditHelper.creditedPlayerForDeath(world, defeated,
+						sourceentity, directSource)
+				: ShadowKillCreditHelper.creditedPlayer(world, sourceentity);
+		if (creditedKiller == null || hasShadowArmor(creditedKiller)
+				|| !isShadowMonarch(creditedKiller))
 			return;
 		String soulType = soulTypeFor(entity);
 		if (soulType.isEmpty() || !(world instanceof ServerLevel level))
 			return;
-		spawnSoul(level, world, x, y, z, soulType);
+		spawnSoul(level, world, x, y, z, soulType, entity, creditedKiller);
 	}
 
 	private static String soulTypeFor(Entity entity) {
@@ -91,14 +98,23 @@ public class AriseDetectEntityProcedure {
 		return "";
 	}
 
-	private static void spawnSoul(ServerLevel level, LevelAccessor world, double x, double y, double z, String soulType) {
+	private static void spawnSoul(ServerLevel level, LevelAccessor world, double x,
+			double y, double z, String soulType, Entity defeated,
+			Player extractionOwner) {
 		Entity entityToSpawn = SololevelingModEntities.SHADOW_SOUL.get().create(level);
 		if (entityToSpawn == null)
 			return;
 		entityToSpawn.moveTo(x, y, z, world.getRandom().nextFloat() * 360.0F, 0.0F);
 		if (entityToSpawn instanceof Mob mobToSpawn)
-			mobToSpawn.finalizeSpawn(level, level.getCurrentDifficultyAt(entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+			mobToSpawn.finalizeSpawn(level, level.getCurrentDifficultyAt(entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 		entityToSpawn.getPersistentData().putString("soultype", soulType);
+		entityToSpawn.getPersistentData().putUUID(
+				AriseExtractionRules.EXTRACTION_OWNER_TAG,
+				extractionOwner.getUUID());
+		double targetLevel = DungeonLevelHelper.levelOf(defeated);
+		if (targetLevel > 0.0D)
+			entityToSpawn.getPersistentData().putDouble(
+					AriseExtractionRules.TARGET_LEVEL_TAG, targetLevel);
 		level.addFreshEntity(entityToSpawn);
 	}
 

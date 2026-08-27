@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class ThomasAndreModel extends GeoModel<ThomasAndreEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(ThomasAndreEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/thomass.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/thomass.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(ThomasAndreEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/thomass.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/thomass.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(ThomasAndreEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

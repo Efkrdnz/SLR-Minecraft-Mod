@@ -1,10 +1,11 @@
 package net.solocraft.procedures;
 
+import net.solocraft.util.DemonCastleBossDamageRules;
 import net.solocraft.entity.BaranEntity;
 import net.solocraft.entity.KaiselinEntity;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.entity.Entity;
@@ -25,11 +26,11 @@ import net.minecraft.core.BlockPos;
  * Timeline (MF ticks):
  *   1   – play attack animation, begin windup
  *   15  – spawn WITCH particle burst at Baran's position (charging energy)
- *   25  – primary magic impact at target: 25 damage + DRAGON_BREATH particles
+ *   25  – primary magic impact at target + DRAGON_BREATH particles
  *          + explosion sound
- *   35  – secondary shockwave: 12 damage to all in radius 5 around target
+ *   35  – secondary shockwave to all in radius 5 around target
  *          + SMOKE particles
- *   Phase 2 extra: at MF=20 also fires a smaller pre-shot (12 damage)
+ *   Phase 2 extra: at MF=20 also fires a smaller pre-shot
  *   ≥55 – reset to idle
  */
 public class BaranMagicBlastProcedure {
@@ -69,7 +70,8 @@ public class BaranMagicBlastProcedure {
 		// Phase 2 pre-shot
 		if (phase2 && MF == 20) {
 			double tx = target.getX(), ty = target.getY(), tz = target.getZ();
-			target.hurt(magicDamage(world, baran), 12f);
+			target.hurt(magicDamage(world, baran),
+					DemonCastleBossDamageRules.BARAN_MAGIC_PRE_SHOT);
 			if (world instanceof ServerLevel sl) {
 				sl.sendParticles(ParticleTypes.DRAGON_BREATH, tx, ty + 0.5, tz, 15, 0.3, 0.3, 0.3, 0.05);
 			}
@@ -78,12 +80,13 @@ public class BaranMagicBlastProcedure {
 		if (MF == 25) {
 			// Primary impact
 			double tx = target.getX(), ty = target.getY(), tz = target.getZ();
-			target.hurt(magicDamage(world, baran), phase2 ? 33f : 25f);
+			target.hurt(magicDamage(world, baran),
+					DemonCastleBossDamageRules.baranMagicBlast(phase2));
 			if (world instanceof ServerLevel sl) {
 				sl.sendParticles(ParticleTypes.DRAGON_BREATH, tx, ty + 1, tz, 50, 0.8, 0.8, 0.8, 0.1);
 				sl.sendParticles(ParticleTypes.FLASH, tx, ty + 1, tz, 3, 0.2, 0.2, 0.2, 0);
 				sl.playSound(null, BlockPos.containing(tx, ty, tz),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.explode")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.explode")),
 						SoundSource.HOSTILE, 1.5f, 0.6f);
 			}
 		}
@@ -98,10 +101,11 @@ public class BaranMagicBlastProcedure {
 						target.getBoundingBox().inflate(5.0D),
 						e -> e != baran && !isWildKaiselin(e)
 								&& net.solocraft.util.CombatRangeHelper.withinSurfaceRange(e, target, 5.0D))) {
-					nearby.hurt(magicDamage(world, baran), 12f);
+					nearby.hurt(magicDamage(world, baran),
+							DemonCastleBossDamageRules.BARAN_MAGIC_SHOCKWAVE);
 				}
 				sl.playSound(null, BlockPos.containing(tx, ty, tz),
-						ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.shoot")),
+						BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.shoot")),
 						SoundSource.HOSTILE, 1.5f, 1.2f);
 			}
 		}

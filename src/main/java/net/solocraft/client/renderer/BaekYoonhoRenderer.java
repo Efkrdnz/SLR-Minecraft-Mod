@@ -25,6 +25,6 @@ public class BaekYoonhoRenderer extends HumanoidMobRenderer<BaekYoonhoEntity, Hu
 
 	@Override
 	public ResourceLocation getTextureLocation(BaekYoonhoEntity entity) {
-		return new ResourceLocation("sololeveling:textures/entities/baekyoonho.png");
+		return ResourceLocation.parse("sololeveling:textures/entities/baekyoonho.png");
 	}
 }

@@ -2,7 +2,7 @@
   "blend": {
     "func": "add",
     "srcrgb": "srcalpha",
-    "dstrgb": "1"
+    "dstrgb": "1-srcalpha"
   },
   "vertex": "sololeveling:rendertype_liu_sword",
   "fragment": "sololeveling:rendertype_liu_sword",

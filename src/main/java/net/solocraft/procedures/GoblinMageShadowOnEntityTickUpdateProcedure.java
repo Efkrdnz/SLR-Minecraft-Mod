@@ -7,7 +7,7 @@ import net.solocraft.entity.GoblinMageShadowEntity;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.CombatRangeHelper;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -34,6 +34,8 @@ public class GoblinMageShadowOnEntityTickUpdateProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
+		if (ShadowMonarchManager.handleUnavailableShadowOwner(entity))
+			return;
 		double hei = 0;
 		double delay = 0;
 		if (!((entity instanceof TamableAnimal _tamEnt ? (Entity) _tamEnt.getOwner() : null) == null)) {
@@ -45,7 +47,7 @@ public class GoblinMageShadowOnEntityTickUpdateProcedure {
 					entity.discard();
 				}
 			}
-			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
+			if (!(entity instanceof TamableAnimal _tamEnt ? _tamEnt.isTame() : false) && entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
 				if (!entity.level().isClientSide()) {
 					ShadowMonarchManager.dropStoredShadowInventory(entity);
 					entity.discard();
@@ -99,7 +101,7 @@ public class GoblinMageShadowOnEntityTickUpdateProcedure {
 									AbstractArrow entityToSpawn = new ShamanMagicEntity(SololevelingModEntities.SHAMAN_MAGIC.get(), level);
 									entityToSpawn.setOwner(shooter);
 									entityToSpawn.setBaseDamage(damage);
-									entityToSpawn.setKnockback(knockback);
+									net.solocraft.entity.LegacyProjectileCompat.setKnockback(entityToSpawn, knockback);
 									entityToSpawn.setSilent(true);
 									return entityToSpawn;
 								}
@@ -111,9 +113,9 @@ public class GoblinMageShadowOnEntityTickUpdateProcedure {
 					}
 					if (world instanceof Level _level) {
 						if (!_level.isClientSide()) {
-							_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.shoot")), SoundSource.NEUTRAL, 1, (float) 0.5);
+							_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.shoot")), SoundSource.NEUTRAL, 1, (float) 0.5);
 						} else {
-							_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.shoot")), SoundSource.NEUTRAL, 1, (float) 0.5, false);
+							_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.shoot")), SoundSource.NEUTRAL, 1, (float) 0.5, false);
 						}
 					}
 				}

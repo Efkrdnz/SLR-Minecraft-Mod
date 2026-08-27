@@ -7,9 +7,8 @@ import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.FireMageSpellManager;
 import net.solocraft.util.NamedHunterCombatManager;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.Level;
@@ -27,7 +26,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
@@ -43,7 +41,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.CompoundTag;
 
@@ -51,13 +48,9 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 	public static final EntityDataAccessor<Integer> DATA_IA = SynchedEntityData.defineId(ChoijongEntity.class, EntityDataSerializers.INT);
 	public static final EntityDataAccessor<Integer> DATA_backoff = SynchedEntityData.defineId(ChoijongEntity.class, EntityDataSerializers.INT);
 
-	public ChoijongEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.CHOIJONG.get(), world);
-	}
-
 	public ChoijongEntity(EntityType<ChoijongEntity> type, Level world) {
 		super(type, world);
-		setMaxUpStep(0.6f);
+		getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6f);
 		xpReward = 35;
 		setNoAi(false);
 		setCustomName(Component.literal("Choi Jong-In"));
@@ -66,15 +59,10 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(DATA_IA, 0);
-		this.entityData.define(DATA_backoff, 0);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(DATA_IA, 0);
+		builder.define(DATA_backoff, 0);
 	}
 
 	@Override
@@ -88,28 +76,23 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 	}
 
 	@Override
-	public MobType getMobType() {
-		return MobType.ILLAGER;
-	}
-
-	@Override
 	public boolean removeWhenFarAway(double distanceToClosestPlayer) {
 		return false;
 	}
 
 	@Override
-	public double getMyRidingOffset() {
-		return -0.35D;
+	public net.minecraft.world.phys.Vec3 getVehicleAttachmentPoint(net.minecraft.world.entity.Entity vehicle) {
+		return super.getVehicleAttachmentPoint(vehicle).add(0.0D, 0.35D, 0.0D);
 	}
 
 	@Override
 	public SoundEvent getHurtSound(DamageSource ds) {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.hurt"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.hurt"));
 	}
 
 	@Override
 	public SoundEvent getDeathSound() {
-		return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.generic.death"));
+		return BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.generic.death"));
 	}
 
 	@Override
@@ -165,8 +148,6 @@ public class ChoijongEntity extends PathfinderMob implements RangedAttackMob {
 	}
 
 	public static void init() {
-		SpawnPlacements.register(SololevelingModEntities.CHOIJONG.get(), SpawnPlacements.Type.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-				(entityType, world, reason, pos, random) -> (world.getBlockState(pos.below()).is(BlockTags.ANIMALS_SPAWNABLE_ON) && world.getRawBrightness(pos, 0) > 8));
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {

@@ -4,6 +4,7 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.network.AbilitiesGUIButtonMessage;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.network.SystemSettingsButtonMessage;
+import net.solocraft.util.OverlayLayoutConfig;
 import net.solocraft.util.SystemClientConfig;
 
 import net.minecraft.client.Minecraft;
@@ -203,6 +204,16 @@ public class SystemSettingsScreen extends SystemScreen {
 				Component.literal("Toggle"), button -> settingToggle(1)));
 		addRenderableWidget(new SystemButton(buttonX, contentY(1), 62, 18,
 				Component.literal("Toggle"), button -> SystemClientConfig.toggleLegacyOverlay()));
+		// Closes the settings panel so the live HUD is unobstructed while
+		// elements are dragged, and returns here on Done.
+		addRenderableWidget(new SystemButton(buttonX, contentY(2), 62, 18,
+				Component.literal("Arrange"), button -> {
+					if (this.minecraft != null)
+						this.minecraft.setScreen(new OverlayLayoutScreen(
+								new SystemSettingsScreen(returnToSkills)));
+				}));
+		addRenderableWidget(new SystemButton(buttonX, contentY(3), 62, 18,
+				Component.literal("Reset"), button -> OverlayLayoutConfig.resetAll()));
 	}
 
 	@Override
@@ -308,9 +319,21 @@ public class SystemSettingsScreen extends SystemScreen {
 		drawRow(graphics, 0, "Custom System Overlay", onOff(variables.CustomHUD));
 		drawRow(graphics, 1, "Legacy Overlay",
 				onOff(SystemClientConfig.isLegacyOverlayEnabled()));
+		int moved = 0;
+		for (int element = 0; element < OverlayLayoutConfig.ELEMENT_COUNT; element++) {
+			if (!OverlayLayoutConfig.isDefault(element))
+				moved++;
+		}
+		drawRow(graphics, 2, "Arrange HUD Elements",
+				moved == 0 ? "§7Default layout"
+						: "§b" + moved + " of " + OverlayLayoutConfig.ELEMENT_COUNT
+								+ " customized");
+		drawRow(graphics, 3, "Restore HUD Layout",
+				moved == 0 ? "§7Nothing to restore" : "§e" + moved + " to reset");
 		drawWrapped(graphics,
-				"Choose the modern custom HUD or retain the original resource-based overlay.",
-				panelX + 16, panelY + 174, panelW - 32, TEXT_SUB);
+				"Arrange opens the live HUD: drag an element to move it, drag a corner to resize, "
+						+ "right-click one to reset it.",
+				panelX + 16, panelY + 258, panelW - 32, TEXT_SUB);
 	}
 
 	@Override

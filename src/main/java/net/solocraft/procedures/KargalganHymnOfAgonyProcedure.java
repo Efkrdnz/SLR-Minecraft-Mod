@@ -22,7 +22,7 @@ public class KargalganHymnOfAgonyProcedure {
 			_entityToSpawn.moveTo(((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getX()), ((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getY() + 1),
 					((entity instanceof Mob _mobEnt ? (Entity) _mobEnt.getTarget() : null).getZ()), world.getRandom().nextFloat() * 360.0F, 0.0F);
 			if (_entityToSpawn instanceof Mob _mobToSpawn) {
-				_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null, null);
+				_mobToSpawn.finalizeSpawn(_level, _level.getCurrentDifficultyAt(_entityToSpawn.blockPosition()), MobSpawnType.MOB_SUMMONED, null);
 			}
 			if ((_entityToSpawn) instanceof CurseMagicEntity _datEntSetS)
 				_datEntSetS.getEntityData().set(CurseMagicEntity.DATA_owner, (entity.getStringUUID()));

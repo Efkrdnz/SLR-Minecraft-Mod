@@ -1,19 +1,20 @@
 
 package net.solocraft.entity;
 
+import net.solocraft.util.DemonCastleBossDamageRules;
+
 import software.bernie.geckolib.util.GeckoLibUtil;
-import software.bernie.geckolib.core.object.PlayState;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animatable.GeoEntity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.monster.Monster;
@@ -21,12 +22,11 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.solocraft.entity.ai.LegacyMeleeAttackGoal;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
@@ -43,16 +43,11 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.phys.Vec3;
 
 public class VulcanEntity extends Monster implements GeoEntity {
-	private static final double MELEE_DAMAGE = 48.0D;
-	private static final float HAMMER_SLAM_DAMAGE = 48.0F;
-	private static final float CHARGE_DAMAGE = 32.0F;
-	private static final float MOLTEN_BURST_DAMAGE = 36.0F;
 	public static final EntityDataAccessor<Boolean> SHOOT = SynchedEntityData.defineId(VulcanEntity.class, EntityDataSerializers.BOOLEAN);
 	public static final EntityDataAccessor<String> ANIMATION = SynchedEntityData.defineId(VulcanEntity.class, EntityDataSerializers.STRING);
 	public static final EntityDataAccessor<String> TEXTURE = SynchedEntityData.defineId(VulcanEntity.class, EntityDataSerializers.STRING);
@@ -74,10 +69,6 @@ public class VulcanEntity extends Monster implements GeoEntity {
 	private Vec3 chargeDirection = Vec3.ZERO;
 	private Vec3 markedPosition = Vec3.ZERO;
 
-	public VulcanEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.VULCAN.get(), world);
-	}
-
 	public VulcanEntity(EntityType<VulcanEntity> type, Level world) {
 		super(type, world);
 		xpReward = 0;
@@ -86,11 +77,11 @@ public class VulcanEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		super.defineSynchedData();
-		this.entityData.define(SHOOT, false);
-		this.entityData.define(ANIMATION, "undefined");
-		this.entityData.define(TEXTURE, "vulcan-texture");
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(SHOOT, false);
+		builder.define(ANIMATION, "undefined");
+		builder.define(TEXTURE, "vulcan-texture");
 	}
 
 	public void setTexture(String texture) {
@@ -102,14 +93,9 @@ public class VulcanEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
 	protected void registerGoals() {
 		super.registerGoals();
-		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1, false) {
+		this.goalSelector.addGoal(1, new LegacyMeleeAttackGoal(this, 1, false) {
 			@Override
 			protected double getAttackReachSqr(LivingEntity entity) {
 				return 9;
@@ -120,11 +106,6 @@ public class VulcanEntity extends Monster implements GeoEntity {
 		this.targetSelector.addGoal(2, new HurtByTargetGoal(this));
 		this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
 		this.goalSelector.addGoal(5, new FloatGoal(this));
-	}
-
-	@Override
-	public MobType getMobType() {
-		return MobType.UNDEFINED;
 	}
 
 	@Override
@@ -178,12 +159,12 @@ public class VulcanEntity extends Monster implements GeoEntity {
 	}
 
 	@Override
-	public EntityDimensions getDimensions(Pose p_33597_) {
-		return super.getDimensions(p_33597_).scale((float) 1);
+	public EntityDimensions getDefaultDimensions(Pose p_33597_) {
+		return super.getDefaultDimensions(p_33597_).scale((float) 1);
 	}
 
 	@Override
-	public boolean canChangeDimensions() {
+	public boolean canChangeDimensions(Level fromLevel, Level toLevel) {
 		return false;
 	}
 
@@ -220,7 +201,8 @@ public class VulcanEntity extends Monster implements GeoEntity {
 		builder = builder.add(Attributes.MAX_HEALTH, 340);
 		builder = builder.add(Attributes.ARMOR, 18);
 		builder = builder.add(Attributes.ARMOR_TOUGHNESS, 8);
-		builder = builder.add(Attributes.ATTACK_DAMAGE, MELEE_DAMAGE);
+		builder = builder.add(Attributes.ATTACK_DAMAGE,
+				DemonCastleBossDamageRules.VULCAN_MELEE);
 		builder = builder.add(Attributes.FOLLOW_RANGE, 42);
 		builder = builder.add(Attributes.KNOCKBACK_RESISTANCE, 1);
 		return builder;
@@ -324,8 +306,9 @@ public class VulcanEntity extends Monster implements GeoEntity {
 			serverLevel.sendParticles(ParticleTypes.CRIT, this.getX(), this.getY() + 0.1D, this.getZ(), 12, 2.5D, 0.08D, 2.5D, 0.08D);
 		if (!this.stateHit && this.stateTicks >= 14) {
 			this.stateHit = true;
-			dealSlam(7.5D, HAMMER_SLAM_DAMAGE, 1.1D, 0.55D, ParticleTypes.LAVA);
-			this.level().playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 1.8F, 0.6F);
+			dealSlam(7.5D, DemonCastleBossDamageRules.VULCAN_HAMMER_SLAM,
+					1.1D, 0.55D, ParticleTypes.LAVA);
+			this.level().playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.8F, 0.6F);
 		}
 		if (this.stateTicks >= 30)
 			resetAttackState();
@@ -339,7 +322,8 @@ public class VulcanEntity extends Monster implements GeoEntity {
 				serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE, this.getX(), this.getY() + 0.35D, this.getZ(), 6, 0.7D, 0.2D, 0.7D, 0.025D);
 				serverLevel.sendParticles(ParticleTypes.FLAME, this.getX(), this.getY() + 0.55D, this.getZ(), 3, 0.45D, 0.15D, 0.45D, 0.02D);
 			}
-			damageNearbyOnce("vulcan_charge_hit_", 2.1D, CHARGE_DAMAGE, 1.0D, 0.25D);
+			damageNearbyOnce("vulcan_charge_hit_", 2.1D,
+					DemonCastleBossDamageRules.VULCAN_CHARGE, 1.0D, 0.25D);
 		}
 		if (this.stateTicks >= 26) {
 			clearHitFlags("vulcan_charge_hit_");
@@ -373,11 +357,12 @@ public class VulcanEntity extends Monster implements GeoEntity {
 			serverLevel.sendParticles(ParticleTypes.FLAME, this.markedPosition.x, this.markedPosition.y + 0.35D, this.markedPosition.z, 70, 2.0D, 0.35D, 2.0D, 0.06D);
 			serverLevel.sendParticles(ParticleTypes.EXPLOSION, this.markedPosition.x, this.markedPosition.y + 0.35D, this.markedPosition.z, 2, 0.4D, 0.15D, 0.4D, 0.0D);
 		}
-		this.level().playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE, SoundSource.HOSTILE, 1.4F, 0.7F);
+		this.level().playSound(null, this.blockPosition(), SoundEvents.GENERIC_EXPLODE.value(), SoundSource.HOSTILE, 1.4F, 0.7F);
 		for (LivingEntity nearby : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(24.0D),
 				entity -> entity != this && entity.isAlive() && entity.position().distanceTo(this.markedPosition) <= 4.0D)) {
-			nearby.hurt(this.damageSources().mobAttack(this), MOLTEN_BURST_DAMAGE);
-			nearby.setSecondsOnFire(5);
+			nearby.hurt(this.damageSources().mobAttack(this),
+					DemonCastleBossDamageRules.VULCAN_MOLTEN_BURST);
+			nearby.igniteForSeconds(5);
 			Vec3 direction = nearby.position().subtract(this.markedPosition).multiply(1.0D, 0.0D, 1.0D);
 			if (direction.lengthSqr() > 0.001D)
 				pushEntity(nearby, direction.normalize(), 0.7D, 0.35D);
@@ -414,7 +399,7 @@ public class VulcanEntity extends Monster implements GeoEntity {
 		for (LivingEntity nearby : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(radius),
 				entity -> entity != this && entity.isAlive() && entity.distanceTo(this) <= radius)) {
 			nearby.hurt(this.damageSources().mobAttack(this), damage);
-			nearby.setSecondsOnFire(3);
+			nearby.igniteForSeconds(3);
 			Vec3 direction = nearby.position().subtract(this.position()).multiply(1.0D, 0.0D, 1.0D);
 			if (direction.lengthSqr() > 0.001D)
 				pushEntity(nearby, direction.normalize(), horizontalKnockback, verticalKnockback);
@@ -497,7 +482,7 @@ public class VulcanEntity extends Monster implements GeoEntity {
 		++this.deathTime;
 		if (this.deathTime == 20) {
 			this.remove(VulcanEntity.RemovalReason.KILLED);
-			this.dropExperience();
+			this.dropExperience(this.getKillCredit());
 		}
 	}
 

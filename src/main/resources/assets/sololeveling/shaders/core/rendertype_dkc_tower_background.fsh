@@ -5,18 +5,27 @@ uniform vec2 MousePos;
 uniform vec2 MouseVelocity;
 uniform float ScrollOffset;
 uniform float UnlockedRatio;
+uniform float FocusRatio;
 
 in vec2 texCoord;
 out vec4 fragColor;
 
 const float PI = 3.14159265359;
 
-float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-}
+// The Java tower viewport is not centred on the panel, so the shader has to be
+// told where the drawn shaft sits. Both values are panel-relative (0..1) and
+// track PathScreen's VIEW_X / VIEW_W / shaftHalfWidth.
+const float SHAFT_CENTRE_X = 0.303;
+const float SHAFT_HALF = 0.233;
 
-float hash1(float p) {
-    return fract(sin(p * 91.3458) * 47453.5453);
+// Sin-free hash. This runs tens of times per fragment across the whole panel,
+// and at GUI scale 3-4 that panel is close to a megapixel, so a transcendental
+// here was the dominant GPU cost. Pure ALU is several times cheaper and also
+// avoids the banding that sin-based hashes show on some drivers.
+float hash(vec2 p) {
+    vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
 }
 
 float noise(vec2 p) {
@@ -30,10 +39,12 @@ float noise(vec2 p) {
     return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 
+// Three octaves rather than four: the fourth contributed 6% of the amplitude
+// for 25% of the cost, and the smoke reads the same without it.
 float fbm(vec2 p) {
     float value = 0.0;
-    float amplitude = 0.5;
-    for (int i = 0; i < 4; i++) {
+    float amplitude = 0.54;
+    for (int i = 0; i < 3; i++) {
         value += amplitude * noise(p);
         p = p * 2.03 + vec2(13.1, 7.7);
         amplitude *= 0.5;
@@ -65,43 +76,70 @@ float emberLayer(vec2 uv, float t, float scale, float speed) {
     return mote * (0.55 + 0.45 * sin(t * 4.0 + seed * 45.0));
 }
 
-float towerSilhouette(vec2 uv, float scrollPhase) {
-    float y = uv.y;
-    float bodyRange = smoothstep(0.035, 0.070, y) * (1.0 - smoothstep(0.985, 1.015, y));
-    float taper = smoothstep(0.04, 0.98, y);
-    float halfWidth = mix(0.055, 0.205, taper);
-
-    // Repeated buttresses make the central void read as an impossibly tall tower.
-    float floorCell = fract((1.0 - y + scrollPhase) * 11.0);
-    float balcony = 1.0 - smoothstep(0.055, 0.145, abs(floorCell - 0.5));
-    halfWidth += balcony * mix(0.022, 0.047, taper);
-
-    float body = (1.0 - smoothstep(halfWidth, halfWidth + 0.009, abs(uv.x - 0.5))) * bodyRange;
-    float spireHalf = max(0.0, (y - 0.012) * 0.70);
-    float spire = (1.0 - smoothstep(spireHalf, spireHalf + 0.007, abs(uv.x - 0.5)))
-            * (1.0 - smoothstep(0.078, 0.092, y));
-    return max(body, spire);
-}
-
-float towerWindows(vec2 uv, float scrollPhase) {
-    float taper = smoothstep(0.04, 0.98, uv.y);
-    float halfWidth = mix(0.055, 0.205, taper);
-    float floorCoord = (1.0 - uv.y + scrollPhase) * 11.0;
-    float floorLine = 1.0 - smoothstep(0.018, 0.055, abs(fract(floorCoord) - 0.5));
-    float inside = 1.0 - smoothstep(halfWidth * 0.78, halfWidth * 0.88, abs(uv.x - 0.5));
-    float slitPattern = step(0.58, hash(vec2(floor(floorCoord), floor((uv.x + 0.5) * 31.0))));
-    return floorLine * inside * slitPattern;
-}
-
 float distantLightning(vec2 uv, float t, float side) {
     float epoch = floor(t * 0.72 + side * 7.0);
     float gate = step(0.82, hash(vec2(epoch, side * 11.0)));
+    // The gate depends only on time, so this branch is uniform across every
+    // fragment in the frame: roughly 82% of frames skip the bolt entirely.
+    if (gate <= 0.0)
+        return 0.0;
     float baseX = mix(0.12, 0.88, side);
     float crooked = (noise(vec2(uv.y * 15.0, epoch + side * 5.0)) - 0.5) * 0.12;
     crooked += sin(uv.y * 34.0 + epoch) * 0.013;
     float bolt = exp(-abs(uv.x - baseX - crooked) * 185.0);
     float fade = (1.0 - smoothstep(0.12, 0.98, uv.y)) * (0.72 + 0.28 * sin(uv.y * 80.0 + epoch));
     return bolt * gate * fade;
+}
+
+// Slanted rain, driven hard by the storm that crowns the upper floors.
+float rainLayer(vec2 uv, float t, float scale, float speed, float slant) {
+    vec2 p = vec2(uv.x + uv.y * slant, uv.y) * vec2(scale, scale * 0.32);
+    p.y += t * speed;
+    vec2 cell = floor(p);
+    float seed = hash(cell);
+    vec2 local = fract(p) - 0.5;
+    local.x += (seed - 0.5) * 0.72;
+    float streak = (1.0 - smoothstep(0.010, 0.038, abs(local.x)))
+            * (1.0 - smoothstep(0.10, 0.46, abs(local.y)));
+    return streak * step(0.66, seed);
+}
+
+// Large, slow, dark flakes drifting in front of everything else.
+float ashLayer(vec2 uv, float t, float scale, float speed) {
+    vec2 p = uv * vec2(scale, scale * 1.2);
+    p.y += t * speed;
+    p.x += sin(t * 0.31 + uv.y * 5.0) * 0.35;
+    vec2 cell = floor(p);
+    vec2 local = fract(p) - 0.5;
+    float seed = hash(cell + 3.7);
+    local += (vec2(seed, hash(cell + 9.1)) - 0.5) * 0.6;
+    return (1.0 - smoothstep(0.05, 0.13, length(local))) * step(0.86, seed);
+}
+
+// Light spilling off the summit, broken into shafts by the smoke.
+float godRays(vec2 uv, float t) {
+    vec2 delta = uv - vec2(SHAFT_CENTRE_X, 0.045);
+    float falloff = exp(-length(delta) * 2.4) * (1.0 - smoothstep(0.0, 0.9, uv.y));
+    if (falloff < 0.004)
+        return 0.0;
+    float angle = atan(delta.x, max(delta.y, 0.0001));
+    float shafts = smoothstep(0.38, 0.86, noise(vec2(angle * 8.0, t * 0.21)));
+    return shafts * falloff;
+}
+
+// Distant spires sit near the panel edges, where the UI leaves the sky visible.
+// tipY is the spire's crown; everything below it tapers outward to the base.
+float distantSpire(vec2 uv, float centreX, float width, float tipY, float phase) {
+    float topness = 1.0 - smoothstep(tipY, 1.05, uv.y);
+    float halfWidth = width * mix(1.0, 0.20, topness);
+    float body = (1.0 - smoothstep(halfWidth, halfWidth + 0.006, abs(uv.x - centreX)))
+            * smoothstep(tipY - 0.012, tipY + 0.012, uv.y);
+    float notch = step(0.55, fract((1.0 - uv.y + phase) * 26.0));
+    return max(0.0, body - notch * 0.06);
+}
+
+float filmic(float channel) {
+    return channel / (channel + 0.78) * 1.34;
 }
 
 float demonicSeal(vec2 p, float t) {
@@ -132,8 +170,9 @@ float demonicSeal(vec2 p, float t) {
 void main() {
     float t = GameTime * 1200.0;
     float unlocked = clamp(UnlockedRatio, 0.0, 1.0);
-    // Match the Java tower's 42 px floor pitch and upward movement exactly.
-    float scrollPhase = -ScrollOffset / 462.0;
+    // One unit per eleven floor steps of PathScreen.FLOOR_STEP (48 px), so the
+    // far spires drift with the climb instead of against it.
+    float scrollPhase = -ScrollOffset / 528.0;
     vec2 mouse = clamp(MousePos, vec2(0.0), vec2(1.0));
     vec2 velocity = clamp(MouseVelocity, vec2(-1.0), vec2(1.0));
 
@@ -148,7 +187,33 @@ void main() {
     vec2 uv = originalUv + tangent * distortion;
     uv -= velocity * exp(-mouseRadius * 16.0) * 0.008;
 
+    float focus = clamp(FocusRatio, 0.0, 1.0);
+
     vec3 col = mix(vec3(0.006, 0.001, 0.002), vec3(0.095, 0.004, 0.008), 1.0 - uv.y);
+
+    // A blood eclipse anchors the composition high on the left, where the panel
+    // leaves sky visible beside the drawn shaft.
+    vec2 moonDelta = (uv - vec2(0.135, 0.175)) * vec2(1.16, 1.0);
+    float moonRadius = length(moonDelta);
+    float moonDisc = 1.0 - smoothstep(0.062, 0.068, moonRadius);
+    float moonCorona = exp(-max(0.0, moonRadius - 0.064) * 15.0);
+    // Crater detail is only visible on the disc itself, which is a tiny and
+    // spatially coherent slice of the panel.
+    float moonCrater = moonDisc > 0.0 ? noise(moonDelta * 22.0 + 4.0) : 0.0;
+    col += vec3(0.52, 0.055, 0.048) * moonDisc * (0.62 + moonCrater * 0.5);
+    col += vec3(0.34, 0.030, 0.028) * moonCorona * 0.55;
+    col += vec3(0.20, 0.014, 0.016) * exp(-moonRadius * 4.2) * 0.7;
+
+    // Two far spires, one per edge, drifting against the scroll for depth.
+    float spirePhase = scrollPhase * 0.42;
+    float spireA = distantSpire(uv, 0.085, 0.052, 0.30, spirePhase);
+    float spireB = distantSpire(uv, 0.915, 0.060, 0.21, spirePhase + 0.31);
+    float spireC = distantSpire(uv, 0.680, 0.038, 0.44, spirePhase + 0.63);
+    float spires = max(spireA, max(spireB, spireC));
+    col = mix(col, vec3(0.020, 0.005, 0.011), spires * 0.90);
+    float spireLights = step(0.80, hash(vec2(floor(uv.x * 90.0),
+            floor((1.0 - uv.y + spirePhase) * 26.0))));
+    col += vec3(0.62, 0.085, 0.030) * spires * spireLights * 0.34;
 
     // Heavy black and blood-red smoke rolls around the tower.
     vec2 smokeFlow = vec2(sin(t * 0.055) * 0.16, -t * 0.035);
@@ -157,8 +222,7 @@ void main() {
     float bloodCloud = smoothstep(0.43, 0.83, smokeA + smokeB * 0.30);
     col += vec3(0.34, 0.004, 0.010) * bloodCloud * 0.54;
     vec2 sootCoord = uv * 4.1 + vec2(t * 0.014, t * 0.018);
-    float sootField = noise(sootCoord) + noise(sootCoord * 2.07 + vec2(4.2, 8.7)) * 0.42;
-    float soot = smoothstep(0.55, 1.02, sootField);
+    float soot = smoothstep(0.42, 0.78, noise(sootCoord));
     col *= 1.0 - soot * 0.43;
 
     // Heat filaments crawl upward through the haze.
@@ -172,31 +236,54 @@ void main() {
     col += vec3(1.0, 0.075, 0.035) * lightning * 0.68;
     col += vec3(1.0, 0.42, 0.20) * pow(lightning, 3.0) * 0.42;
 
-    float tower = towerSilhouette(uv, scrollPhase);
-    float windows = towerWindows(uv, scrollPhase);
-    float towerEdgeWidth = mix(0.055, 0.205, smoothstep(0.04, 0.98, uv.y));
-    float towerEdge = exp(-abs(abs(uv.x - 0.5) - towerEdgeWidth) * 105.0);
-    towerEdge *= smoothstep(0.06, 0.14, uv.y);
+    // The shaft itself is drawn in Java on top of this quad, so the shader only
+    // supplies the mass and the heat rim that sit immediately outside it.
+    float shaftOffset = abs(uv.x - SHAFT_CENTRE_X);
+    float tower = 1.0 - smoothstep(SHAFT_HALF, SHAFT_HALF + 0.075, shaftOffset);
+    float towerEdge = exp(-abs(shaftOffset - SHAFT_HALF) * 46.0);
 
-    // The black silhouette is punctuated by unlocked energy rising from the base.
-    col = mix(col, vec3(0.001, 0.0002, 0.0005), tower * 0.88);
+    col = mix(col, vec3(0.004, 0.001, 0.002), tower * 0.62);
     float unlockedHeight = 1.0 - smoothstep(0.0, 0.030, abs(uv.y - (1.0 - unlocked)));
     float unlockedRegion = smoothstep(1.0 - unlocked - 0.025, 1.0 - unlocked + 0.025, uv.y);
-    col += vec3(0.58, 0.012, 0.018) * windows * (0.18 + unlockedRegion * 0.82);
-    col += vec3(0.85, 0.028, 0.022) * towerEdge * (0.07 + unlockedRegion * 0.20);
+    col += vec3(0.85, 0.028, 0.022) * towerEdge * (0.10 + unlockedRegion * 0.42);
     col += vec3(1.0, 0.10, 0.035) * unlockedHeight * tower * 0.56;
+
+    // Throne light bleeding down from the summit, gated on how far the run has come.
+    float rays = godRays(uv, t);
+    col += vec3(1.0, 0.24, 0.10) * rays * (0.14 + unlocked * 0.46);
+
+    // The band the dossier is inspecting glows so selection reads on the backdrop.
+    float focusBand = 1.0 - smoothstep(0.0, 0.055, abs(uv.y - (1.0 - focus)));
+    col += vec3(0.70, 0.10, 0.06) * focusBand * 0.24;
+    col += vec3(1.0, 0.36, 0.14) * focusBand * tower * 0.30;
+
+    // Storm rain: two layers, heavier as the player nears Baran's floors.
+    float stormWeight = 0.35 + unlocked * 0.65;
+    float rain = rainLayer(uv, t, 52.0, 2.9, 0.16) * 0.62
+            + rainLayer(uv + vec2(0.37, 0.11), t, 88.0, 4.4, 0.21) * 0.38;
+    col += vec3(0.55, 0.30, 0.36) * rain * stormWeight * 0.30;
+    col += vec3(1.0, 0.55, 0.45) * rain * lightning * 2.4;
 
     float embers = emberLayer(uv, t, 17.0, 0.52);
     embers += emberLayer(uv + vec2(0.31, 0.17), t, 27.0, 0.31) * 0.58;
     col += vec3(1.0, 0.11, 0.025) * embers * 0.72;
     col += vec3(1.0, 0.58, 0.21) * pow(embers, 3.0) * 0.75;
 
+    // Ash falls the other way, which keeps the ember rise from reading as a loop.
+    float ash = ashLayer(uv, t, 14.0, 0.085) + ashLayer(uv + vec2(0.53, 0.29), t, 21.0, 0.135);
+    col = mix(col, vec3(0.035, 0.014, 0.018), clamp(ash, 0.0, 1.0) * 0.68);
+
+    // The seal never reaches past radius 0.13, and the twenty-odd segment and
+    // ring evaluations behind it are the most expensive block in the shader.
+    // Skipping them outside that disc is a coherent branch on the cursor.
     vec2 sealSpace = originalUv - mouse;
     sealSpace.x *= 1.25;
-    float seal = demonicSeal(sealSpace, t);
-    float sealPulse = 0.72 + 0.28 * sin(t * 3.2);
-    col += vec3(0.82, 0.012, 0.020) * seal * sealPulse * 0.78;
-    col += vec3(1.0, 0.22, 0.08) * pow(seal, 2.0) * 0.34;
+    if (length(sealSpace) < 0.155) {
+        float seal = demonicSeal(sealSpace, t);
+        float sealPulse = 0.72 + 0.28 * sin(t * 3.2);
+        col += vec3(0.82, 0.012, 0.020) * seal * sealPulse * 0.78;
+        col += vec3(1.0, 0.22, 0.08) * pow(seal, 2.0) * 0.34;
+    }
 
     float velocityLength = min(length(velocity), 1.0);
     vec2 velocityDirection = velocity / max(velocityLength, 0.001);
@@ -204,10 +291,19 @@ void main() {
     wake *= max(0.0, dot(normalize(mouseDelta + vec2(0.0001)), -velocityDirection));
     col += vec3(0.62, 0.008, 0.012) * wake * velocityLength * 0.30;
 
+    // A bolt lights the whole frame, not just its own pixels.
+    float flash = clamp(lightning * 0.35, 0.0, 0.6);
+    col += vec3(0.30, 0.10, 0.12) * flash;
+
     float grain = hash(floor(originalUv * vec2(190.0, 260.0)) + floor(t * 2.0));
     col += vec3(0.16, 0.005, 0.008) * (grain - 0.5) * 0.055;
 
-    float vignette = 1.0 - smoothstep(0.30, 0.91, length((originalUv - 0.5) * vec2(1.12, 0.92)));
+    // Warm-tinted falloff reads as soot on glass rather than a black overlay.
+    float edge = length((originalUv - 0.5) * vec2(1.12, 0.92));
+    float vignette = 1.0 - smoothstep(0.30, 0.91, edge);
     col *= 0.47 + vignette * 0.53;
+    col = mix(col, col * vec3(1.14, 0.72, 0.66), smoothstep(0.42, 0.95, edge) * 0.55);
+
+    col = vec3(filmic(col.r), filmic(col.g), filmic(col.b));
     fragColor = vec4(clamp(col, 0.0, 1.0), 0.975);
 }

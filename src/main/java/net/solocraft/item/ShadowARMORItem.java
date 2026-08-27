@@ -2,15 +2,16 @@
 package net.solocraft.item;
 
 import net.solocraft.procedures.ShadowARMORHelmetTickEventProcedure;
+import net.solocraft.init.SololevelingModArmorMaterials;
 import net.solocraft.client.model.Modelshalegs;
 import net.solocraft.client.model.Modelshahed;
 import net.solocraft.client.model.Modelshaces;
 import net.solocraft.client.model.Modelshabots;
 
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.level.Level;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -39,52 +40,12 @@ import com.google.common.collect.Iterables;
 
 public abstract class ShadowARMORItem extends ArmorItem {
 	public ShadowARMORItem(ArmorItem.Type type, Item.Properties properties) {
-		super(new ArmorMaterial() {
-			@Override
-			public int getDurabilityForType(ArmorItem.Type type) {
-				return new int[]{13, 15, 16, 11}[type.getSlot().getIndex()] * 70;
-			}
-
-			@Override
-			public int getDefenseForType(ArmorItem.Type type) {
-				return new int[]{2, 12, 16, 6}[type.getSlot().getIndex()];
-			}
-
-			@Override
-			public int getEnchantmentValue() {
-				return 0;
-			}
-
-			@Override
-			public SoundEvent getEquipSound() {
-				return ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.ender_dragon.hurt"));
-			}
-
-			@Override
-			public Ingredient getRepairIngredient() {
-				return Ingredient.of();
-			}
-
-			@Override
-			public String getName() {
-				return "shadow_armor";
-			}
-
-			@Override
-			public float getToughness() {
-				return 4f;
-			}
-
-			@Override
-			public float getKnockbackResistance() {
-				return 0.1f;
-			}
-		}, type, properties);
+		super(SololevelingModArmorMaterials.SHADOW_ARMOR, type, properties);
 	}
 
 	public static class Helmet extends ShadowARMORItem {
 		public Helmet() {
-			super(ArmorItem.Type.HELMET, new Item.Properties());
+			super(ArmorItem.Type.HELMET, new Item.Properties().durability(770));
 		}
 
 		@Override
@@ -106,13 +67,8 @@ public abstract class ShadowARMORItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/entities/shaarm.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override
@@ -131,7 +87,7 @@ public abstract class ShadowARMORItem extends ArmorItem {
 
 	public static class Chestplate extends ShadowARMORItem {
 		public Chestplate() {
-			super(ArmorItem.Type.CHESTPLATE, new Item.Properties());
+			super(ArmorItem.Type.CHESTPLATE, new Item.Properties().durability(1120));
 		}
 
 		@Override
@@ -153,13 +109,8 @@ public abstract class ShadowARMORItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/entities/shaarm.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override
@@ -178,7 +129,7 @@ public abstract class ShadowARMORItem extends ArmorItem {
 
 	public static class Leggings extends ShadowARMORItem {
 		public Leggings() {
-			super(ArmorItem.Type.LEGGINGS, new Item.Properties());
+			super(ArmorItem.Type.LEGGINGS, new Item.Properties().durability(1050));
 		}
 
 		@Override
@@ -201,13 +152,8 @@ public abstract class ShadowARMORItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/entities/shaarm.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override
@@ -226,7 +172,7 @@ public abstract class ShadowARMORItem extends ArmorItem {
 
 	public static class Boots extends ShadowARMORItem {
 		public Boots() {
-			super(ArmorItem.Type.BOOTS, new Item.Properties());
+			super(ArmorItem.Type.BOOTS, new Item.Properties().durability(910));
 		}
 
 		@Override
@@ -249,13 +195,8 @@ public abstract class ShadowARMORItem extends ArmorItem {
 		}
 
 		@Override
-		public void appendHoverText(ItemStack itemstack, Level world, List<Component> list, TooltipFlag flag) {
-			super.appendHoverText(itemstack, world, list, flag);
-		}
-
-		@Override
-		public String getArmorTexture(ItemStack stack, Entity entity, EquipmentSlot slot, String type) {
-			return "sololeveling:textures/entities/shaarm.png";
+		public void appendHoverText(ItemStack itemstack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+			super.appendHoverText(itemstack, context, list, flag);
 		}
 
 		@Override

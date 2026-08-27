@@ -1,0 +1,23 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:wither_skeleton_skull"
+    },
+    "title": {
+      "translate": "advancements.vessels.white_flames.hells_army.title"
+    },
+    "description": {
+      "translate": "advancements.vessels.white_flames.hells_army.descr"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "unlock": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "parent": "sololeveling:vessels/white_flames/hellstorm"
+}

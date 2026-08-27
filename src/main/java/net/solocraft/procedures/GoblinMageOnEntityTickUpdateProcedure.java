@@ -6,7 +6,7 @@ import net.solocraft.entity.GoblinMageEntity;
 import net.solocraft.SololevelingMod;
 import net.solocraft.util.CombatRangeHelper;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.LevelAccessor;
@@ -93,7 +93,7 @@ public class GoblinMageOnEntityTickUpdateProcedure {
 		AbstractArrow bolt = new ShamanMagicEntity(SololevelingModEntities.SHAMAN_MAGIC.get(), projectileLevel);
 		bolt.setOwner(shooter);
 		bolt.setBaseDamage(MAGIC_DAMAGE);
-		bolt.setKnockback(0);
+		net.solocraft.entity.LegacyProjectileCompat.setKnockback(bolt, 0);
 		bolt.setSilent(true);
 		bolt.setPos(shooter.getX(), shooter.getEyeY() - 0.1D, shooter.getZ());
 		Vec3 aim = new Vec3(target.getX(), target.getY() + target.getBbHeight() * 0.65D, target.getZ())
@@ -101,7 +101,7 @@ public class GoblinMageOnEntityTickUpdateProcedure {
 		bolt.shoot(aim.x, aim.y, aim.z, 0.25F, 0);
 		projectileLevel.addFreshEntity(bolt);
 		projectileLevel.playSound(null, shooter.blockPosition(),
-				ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")),
+				BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")),
 				SoundSource.NEUTRAL, 1, 0.5F);
 	}
 }

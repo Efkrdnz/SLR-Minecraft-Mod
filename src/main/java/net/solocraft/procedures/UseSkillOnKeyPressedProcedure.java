@@ -1,5 +1,8 @@
 package net.solocraft.procedures;
 
+import net.solocraft.api.skill.HunterAbilityRegistry;
+import net.solocraft.api.skill.HunterSkillCastEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.entity.ShadowStepEntity;
 import net.solocraft.init.SololevelingModEntities;
@@ -14,20 +17,25 @@ import net.solocraft.util.MageSpellProgression;
 import net.solocraft.util.BarrierMageSpellManager;
 import net.solocraft.util.ArcaneMageSpellManager;
 import net.solocraft.util.FireMageSpellManager;
+import net.solocraft.util.CurseMageSpellManager;
 import net.solocraft.util.StormMageSpellManager;
 import net.solocraft.util.QTEResult;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.UrgentQuestManager;
+import net.solocraft.util.TemporaryStatBonusManager;
 import net.solocraft.util.DaggerThrowManager;
 import net.solocraft.util.RangerCombatManager;
 import net.solocraft.util.AssassinSkillManager;
 import net.solocraft.util.TankerSkillManager;
+import net.solocraft.util.FighterSkillManager;
+import net.solocraft.util.HealerSkillManager;
+import net.solocraft.util.JuggernautSkillManager;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
+import net.neoforged.api.distmarker.Dist;
+import net.solocraft.network.compat.DistExecutor;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -59,7 +67,8 @@ public class UseSkillOnKeyPressedProcedure {
 		boolean specializationSpell = FireMageSpellManager.isFireSkill(_selectedPower)
 				|| BarrierMageSpellManager.isBarrierSkill(_selectedPower)
 				|| ArcaneMageSpellManager.isArcaneSkill(_selectedPower)
-				|| StormMageSpellManager.isStormSkill(_selectedPower);
+				|| StormMageSpellManager.isStormSkill(_selectedPower)
+				|| CurseMageSpellManager.isCurseSkill(_selectedPower);
 		if (specializationSpell
 				&& !MageSpellProgression.canCastLearnedSkill(entity, _selectedPower)) {
 			if (world instanceof Level level && !level.isClientSide() && entity instanceof Player player)
@@ -85,6 +94,25 @@ public class UseSkillOnKeyPressedProcedure {
 		if (RangerCombatManager.isRangerSkill(_selectedPower)) {
 			if (entity instanceof ServerPlayer ranger
 					&& RangerCombatManager.activateSkill(ranger, _selectedPower))
+				UrgentQuestManager.onSkillUsed(entity, _selectedPower);
+			return;
+		}
+		// Placed ahead of the legacy Healer if-blocks below, which it replaces.
+		if (HealerSkillManager.isHealerSkill(_selectedPower)) {
+			if (entity instanceof ServerPlayer healer
+					&& HealerSkillManager.activateSkill(healer, _selectedPower))
+				UrgentQuestManager.onSkillUsed(entity, _selectedPower);
+			return;
+		}
+		if (FighterSkillManager.isFighterSkill(_selectedPower)) {
+			if (entity instanceof ServerPlayer fighter
+					&& FighterSkillManager.activateSkill(fighter, _selectedPower))
+				UrgentQuestManager.onSkillUsed(entity, _selectedPower);
+			return;
+		}
+		if (JuggernautSkillManager.isJuggernautSkill(_selectedPower)) {
+			if (entity instanceof ServerPlayer juggernaut
+					&& JuggernautSkillManager.activateSkill(juggernaut, _selectedPower))
 				UrgentQuestManager.onSkillUsed(entity, _selectedPower);
 			return;
 		}
@@ -139,6 +167,15 @@ public class UseSkillOnKeyPressedProcedure {
 		if (StormMageSpellManager.isInstantSkill(_selectedPower)) {
 			if (world instanceof Level level && !level.isClientSide())
 				StormMageSpellManager.cast(entity, _selectedPower, QTEResult.MISS);
+			return;
+		}
+		// Curse Weave is intercepted client-side by the radial and never reaches
+		// here; its deliveries split into instant and QTE like any other style.
+		if (CurseMageSpellManager.CURSE_WEAVE.equals(_selectedPower))
+			return;
+		if (CurseMageSpellManager.isInstantSkill(_selectedPower)) {
+			if (world instanceof Level level && !level.isClientSide())
+				CurseMageSpellManager.cast(entity, _selectedPower, QTEResult.MISS);
 			return;
 		}
 		if (MageQTEHelper.MAGE_SKILLS.contains(_selectedPower)) {
@@ -226,8 +263,8 @@ public class UseSkillOnKeyPressedProcedure {
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Slash Dash")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 600) {
 				if (!CooldownManager.isOnCooldown(entity, "Slash Dash")) {
-					if (!(entity instanceof LivingEntity _livEnt46 && _livEnt46.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get()))
-							&& !(entity instanceof LivingEntity _livEnt47 && _livEnt47.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT.get()))) {
+					if (!(entity instanceof LivingEntity _livEnt46 && _livEnt46.hasEffect(SololevelingModMobEffects.SWORD_DANCE))
+							&& !(entity instanceof LivingEntity _livEnt47 && _livEnt47.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT))) {
 						{
 							double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 600;
 							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -244,9 +281,9 @@ public class UseSkillOnKeyPressedProcedure {
 							_player.displayClientMessage(Component.literal("\u00A76Can't Use skill while Sword Dance is active!"), true);
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
+								_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
 							} else {
-								_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
+								_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
 							}
 						}
 					}
@@ -259,8 +296,8 @@ public class UseSkillOnKeyPressedProcedure {
 		if (_selectedPower.equals("Cross Strike") || _selectedPower.equals("Critical Strike")) {
 			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 1000) {
 				if (!CooldownManager.isOnCooldown(entity, "Cross Strike") && !CooldownManager.isOnCooldown(entity, "Critical Strike")) {
-					if (!(entity instanceof LivingEntity _livEnt54 && _livEnt54.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get()))
-							&& !(entity instanceof LivingEntity _livEnt55 && _livEnt55.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT.get()))) {
+					if (!(entity instanceof LivingEntity _livEnt54 && _livEnt54.hasEffect(SololevelingModMobEffects.SWORD_DANCE))
+							&& !(entity instanceof LivingEntity _livEnt55 && _livEnt55.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT))) {
 						{
 							double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 1000;
 							entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).ifPresent(capability -> {
@@ -276,9 +313,9 @@ public class UseSkillOnKeyPressedProcedure {
 							_player.displayClientMessage(Component.literal("\u00A76Can't Use skill while Sword Dance is active!"), true);
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
+								_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
 							} else {
-								_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
+								_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
 							}
 						}
 					}
@@ -292,16 +329,16 @@ public class UseSkillOnKeyPressedProcedure {
 			SwordOfLightGiveProcedure.execute(world, entity);
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Ground Slam")) {
-			if (!(entity instanceof LivingEntity _livEnt60 && _livEnt60.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get())) && !(entity instanceof LivingEntity _livEnt61 && _livEnt61.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT.get()))) {
+			if (!(entity instanceof LivingEntity _livEnt60 && _livEnt60.hasEffect(SololevelingModMobEffects.SWORD_DANCE)) && !(entity instanceof LivingEntity _livEnt61 && _livEnt61.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT))) {
 				UpforceSlashProcedure.execute(world, x, y, z, entity);
 			} else {
 				if (entity instanceof Player _player && !_player.level().isClientSide())
 					_player.displayClientMessage(Component.literal("\u00A76Can't Use skill while Sword Dance is active!"), true);
 				if (world instanceof Level _level) {
 					if (!_level.isClientSide()) {
-						_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
+						_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
 					} else {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
 					}
 				}
 			}
@@ -310,10 +347,12 @@ public class UseSkillOnKeyPressedProcedure {
 			SwordDanceGiveProcedure.execute(entity);
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Slash Fury")) {
-			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 300) {
+			// The affordability check used to be 300 while the deduction below was
+			// 500, so casting at 300-499 mana drove the pool negative.
+			if ((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP >= 500) {
 				if (!CooldownManager.isOnCooldown(entity, "Slash Fury")) {
-					if (!(entity instanceof LivingEntity _livEnt65 && _livEnt65.hasEffect(SololevelingModMobEffects.SWORD_DANCE.get()))
-							&& !(entity instanceof LivingEntity _livEnt66 && _livEnt66.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT.get()))) {
+					if (!(entity instanceof LivingEntity _livEnt65 && _livEnt65.hasEffect(SololevelingModMobEffects.SWORD_DANCE))
+							&& !(entity instanceof LivingEntity _livEnt66 && _livEnt66.hasEffect(SololevelingModMobEffects.SWORD_OF_LIGHT))) {
 						SlashFurryTestRightclickedProcedure.execute(entity);
 						{
 							double _setval = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).MP - 500;
@@ -330,9 +369,9 @@ public class UseSkillOnKeyPressedProcedure {
 							_player.displayClientMessage(Component.literal("\u00A76Can't Use skill while Sword Dance is active!"), true);
 						if (world instanceof Level _level) {
 							if (!_level.isClientSide()) {
-								_level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
+								_level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1);
 							} else {
-								_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
+								_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, 1, false);
 							}
 						}
 					}
@@ -428,29 +467,29 @@ public class UseSkillOnKeyPressedProcedure {
 			}
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Critical Attack")) {
-			if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("dagger")))
-					|| (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("dagger")))) {
+			if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).is(ItemTags.create(ResourceLocation.parse("dagger")))
+					|| (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(ResourceLocation.parse("dagger")))) {
 				entity.getPersistentData().putBoolean("Critical_Attack_Targetting", true);
 			} else {
 				if (entity instanceof Player _player && !_player.level().isClientSide())
 					_player.displayClientMessage(Component.literal("This is a \"Dagger\" specific skill."), true);
 				if (world instanceof Level _level) {
 					if (_level.isClientSide()) {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, (float) 0.6, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, (float) 0.6, false);
 					}
 				}
 			}
 		}
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Mutilation")) {
-			if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("dagger")))
-					|| (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(new ResourceLocation("dagger")))) {
+			if ((entity instanceof LivingEntity _livEnt ? _livEnt.getMainHandItem() : ItemStack.EMPTY).is(ItemTags.create(ResourceLocation.parse("dagger")))
+					|| (entity instanceof LivingEntity _livEnt ? _livEnt.getOffhandItem() : ItemStack.EMPTY).is(ItemTags.create(ResourceLocation.parse("dagger")))) {
 				entity.getPersistentData().putBoolean("Mutilation_Targetting", true);
 			} else {
 				if (entity instanceof Player _player && !_player.level().isClientSide())
 					_player.displayClientMessage(Component.literal("This is a \"Dagger\" specific skill."), true);
 				if (world instanceof Level _level) {
 					if (_level.isClientSide()) {
-						_level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, (float) 0.6, false);
+						_level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1, (float) 0.6, false);
 					}
 				}
 			}
@@ -458,6 +497,17 @@ public class UseSkillOnKeyPressedProcedure {
 		if (((entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower).equals("Sword Beam")) {
 			SwordBeamAttackProcedure.execute(world, x, y, z, entity);
 		}
+
+		// Gives a contributed skill somewhere to be handled. Built-in skills post
+		// this too and nothing listens for them, so the branches above are unaffected.
+		String selected = (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
+				.orElse(new SololevelingModVariables.PlayerVariables())).PselectedPower;
+		if (selected == null || selected.isBlank())
+			return;
+		// A registered ability is cast by the mod, with the mod's own checks.
+		if (HunterAbilityRegistry.cast(entity, selected))
+			return;
+		NeoForge.EVENT_BUS.post(new HunterSkillCastEvent(world, x, y, z, entity, selected));
 	}
 
 	private static void castShadowstep(LevelAccessor world, double x, double y, double z, Entity entity) {
@@ -480,19 +530,19 @@ public class UseSkillOnKeyPressedProcedure {
 		}
 		if (world instanceof Level level) {
 			if (!level.isClientSide()) {
-				level.playSound(null, BlockPos.containing(x, y, z), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.shoot")), SoundSource.NEUTRAL, 1, 1.5F);
+				level.playSound(null, BlockPos.containing(x, y, z), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.shoot")), SoundSource.NEUTRAL, 1, 1.5F);
 			} else {
-				level.playLocalSound(x, y, z, ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.wither.shoot")), SoundSource.NEUTRAL, 1, 1.5F, false);
+				level.playLocalSound(x, y, z, BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.wither.shoot")), SoundSource.NEUTRAL, 1, 1.5F, false);
 			}
 		}
 		if (entity instanceof LivingEntity living) {
 			if (!living.level().isClientSide()) {
 				living.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, 5, 1, false, false));
-				living.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE.get(), 9999, 1, false, false));
+				living.addEffect(new MobEffectInstance(SololevelingModMobEffects.NO_FALL_DAMAGE, 9999, 1, false, false));
 			}
 			if (!living.level().isClientSide()) {
 				ShadowStepEntity projectile = ShadowStepEntity.shoot(living.level(), living, living.getRandom(), 1.5F,
-						1 + vars.Intelligence / 45, 0);
+						1 + TemporaryStatBonusManager.effectiveIntelligence(entity) / 45, 0);
 				projectile.setPos(living.getX(), living.getEyeY() - 0.1D, living.getZ());
 			}
 		}

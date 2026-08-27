@@ -3,6 +3,7 @@ package net.solocraft.util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -17,12 +18,13 @@ import java.util.UUID;
 /** World-persistent ownership for the unique Ruler and Monarch vessels. */
 public final class VesselClaimSavedData extends SavedData {
 	private static final String DATA_NAME = "sololeveling_vessel_claims";
+	private static final SavedData.Factory<VesselClaimSavedData> FACTORY =
+			new SavedData.Factory<>(VesselClaimSavedData::new, VesselClaimSavedData::load);
 
 	private final Map<String, LinkedHashSet<UUID>> claims = new LinkedHashMap<>();
 
 	public static VesselClaimSavedData get(ServerLevel level) {
-		return level.getServer().overworld().getDataStorage()
-				.computeIfAbsent(VesselClaimSavedData::load, VesselClaimSavedData::new, DATA_NAME);
+		return level.getServer().overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 	}
 
 	/**
@@ -71,7 +73,7 @@ public final class VesselClaimSavedData extends SavedData {
 
 	@Nonnull
 	@Override
-	public CompoundTag save(@Nonnull CompoundTag tag) {
+	public CompoundTag save(@Nonnull CompoundTag tag, HolderLookup.Provider registries) {
 		ListTag entries = new ListTag();
 		for (Map.Entry<String, LinkedHashSet<UUID>> claim : claims.entrySet()) {
 			for (UUID owner : claim.getValue()) {
@@ -85,7 +87,7 @@ public final class VesselClaimSavedData extends SavedData {
 		return tag;
 	}
 
-	private static VesselClaimSavedData load(CompoundTag tag) {
+	private static VesselClaimSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
 		VesselClaimSavedData data = new VesselClaimSavedData();
 		ListTag entries = tag.getList("Claims", Tag.TAG_COMPOUND);
 		for (int i = 0; i < entries.size(); i++) {

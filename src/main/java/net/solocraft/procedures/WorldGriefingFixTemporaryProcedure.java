@@ -1,22 +1,12 @@
 package net.solocraft.procedures;
 
-import net.solocraft.init.SololevelingModGameRules;
-
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-
 import net.minecraft.world.level.LevelAccessor;
 
-@Mod.EventBusSubscriber
+/** Retained as a no-op binary/source compatibility shim for older generated calls. */
+@Deprecated
 public class WorldGriefingFixTemporaryProcedure {
-	@SubscribeEvent
-	public static void onServerStarted(ServerStartedEvent event) {
-		execute(event.getServer().overworld());
-	}
-
 	public static void execute(LevelAccessor world) {
-		if (world != null && world.getServer() != null)
-			world.getLevelData().getGameRules().getRule(SololevelingModGameRules.SOLO_WORLD_GRIEFING).set(true, world.getServer());
+		// The legacy rule used to be forced true on every server start. Ability
+		// destruction is now explicitly opt-in and must never be changed here.
 	}
 }

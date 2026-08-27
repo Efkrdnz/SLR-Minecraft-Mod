@@ -24,8 +24,8 @@ public class ShadowNavToBossProcedure {
 	public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
 		if (entity == null)
 			return;
-		if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, new ResourceLocation("shadows")))) {
-			if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_kasaka")))) {
+		if (entity.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse("shadows")))) {
+			if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_kasaka")))) {
 				if (!world.getEntitiesOfClass(KasakaEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).isEmpty()) {
 					if (entity instanceof Mob _entity)
 						_entity.getNavigation().moveTo((((Entity) world.getEntitiesOfClass(KasakaEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).stream().sorted(new Object() {
@@ -49,7 +49,7 @@ public class ShadowNavToBossProcedure {
 						});
 					}
 				}
-			} else if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:deleted_mod_element")))) {
+			} else if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:deleted_mod_element")))) {
 				if (!world.getEntitiesOfClass(BeruBossEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).isEmpty()) {
 					if (entity instanceof Mob _entity)
 						_entity.getNavigation().moveTo((((Entity) world.getEntitiesOfClass(BeruBossEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).stream().sorted(new Object() {
@@ -73,7 +73,7 @@ public class ShadowNavToBossProcedure {
 						});
 					}
 				}
-			} else if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:dungeon_dimension_igris")))) {
+			} else if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:dungeon_dimension_igris")))) {
 				if (!world.getEntitiesOfClass(IgrisEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).isEmpty()) {
 					if (entity instanceof Mob _entity)
 						_entity.getNavigation().moveTo((((Entity) world.getEntitiesOfClass(IgrisEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).stream().sorted(new Object() {
@@ -97,7 +97,7 @@ public class ShadowNavToBossProcedure {
 						});
 					}
 				}
-			} else if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:deleted_mod_element")))) {
+			} else if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:deleted_mod_element")))) {
 				if (!world.getEntitiesOfClass(GemGolemEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).isEmpty()) {
 					if (entity instanceof Mob _entity)
 						_entity.getNavigation().moveTo((((Entity) world.getEntitiesOfClass(GemGolemEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).stream().sorted(new Object() {
@@ -121,7 +121,7 @@ public class ShadowNavToBossProcedure {
 						});
 					}
 				}
-			} else if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, new ResourceLocation("sololeveling:deleted_mod_element")))) {
+			} else if ((entity.level().dimension()) == (ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse("sololeveling:deleted_mod_element")))) {
 				if (!world.getEntitiesOfClass(SpiderBossEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).isEmpty()) {
 					if (entity instanceof Mob _entity)
 						_entity.getNavigation().moveTo((((Entity) world.getEntitiesOfClass(SpiderBossEntity.class, AABB.ofSize(new Vec3(x, y, z), 200, 200, 200), e -> true).stream().sorted(new Object() {

@@ -5,10 +5,9 @@ import net.solocraft.procedures.WhiteFlameWhileProjectileFlyingTickProcedure;
 import net.solocraft.procedures.WhiteFlameProjectileHitsLivingEntityProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.solocraft.network.compat.NetworkHooks;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.level.block.Blocks;
@@ -20,15 +19,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.util.RandomSource;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 
 @OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
-public class WhiteFlameEntity extends AbstractArrow implements ItemSupplier {
+public class WhiteFlameEntity extends LegacyAbstractArrow implements ItemSupplier {
 	public static final ItemStack PROJECTILE_ITEM = new ItemStack(Blocks.AIR);
-
-	public WhiteFlameEntity(PlayMessages.SpawnEntity packet, Level world) {
-		super(SololevelingModEntities.WHITE_FLAME.get(), world);
-	}
 
 	public WhiteFlameEntity(EntityType<? extends WhiteFlameEntity> type, Level world) {
 		super(type, world);
@@ -43,18 +37,13 @@ public class WhiteFlameEntity extends AbstractArrow implements ItemSupplier {
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
 	@OnlyIn(Dist.CLIENT)
 	public ItemStack getItem() {
 		return PROJECTILE_ITEM;
 	}
 
 	@Override
-	protected ItemStack getPickupItem() {
+	protected ItemStack getDefaultPickupItem() {
 		return PROJECTILE_ITEM;
 	}
 

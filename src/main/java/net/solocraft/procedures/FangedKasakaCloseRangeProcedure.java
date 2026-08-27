@@ -3,7 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.init.SololevelingModMobEffects;
 import net.solocraft.entity.FangedKasakaEntity;
 
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -86,10 +86,10 @@ public class FangedKasakaCloseRangeProcedure {
 								_player.displayClientMessage(Component.literal("Jump Dodged!"), true);
 							if (world instanceof Level _level) {
 								if (!_level.isClientSide()) {
-									_level.playSound(null, BlockPos.containing(entityiterator.getX(), entityiterator.getY(), entityiterator.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")),
+									_level.playSound(null, BlockPos.containing(entityiterator.getX(), entityiterator.getY(), entityiterator.getZ()), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")),
 											SoundSource.NEUTRAL, 1, (float) 0.5);
 								} else {
-									_level.playLocalSound((entityiterator.getX()), (entityiterator.getY()), (entityiterator.getZ()), ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1,
+									_level.playLocalSound((entityiterator.getX()), (entityiterator.getY()), (entityiterator.getZ()), BuiltInRegistries.SOUND_EVENT.get(ResourceLocation.parse("entity.experience_orb.pickup")), SoundSource.NEUTRAL, 1,
 											(float) 0.5, false);
 								}
 							}
@@ -190,7 +190,7 @@ public class FangedKasakaCloseRangeProcedure {
 							if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
 								_entity.addEffect(new MobEffectInstance(MobEffects.POISON, 60, 0, false, false));
 							if (entityiterator instanceof LivingEntity _entity && !_entity.level().isClientSide())
-								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.BLEED.get(), 60, 0, false, false));
+								_entity.addEffect(new MobEffectInstance(SololevelingModMobEffects.BLEED, 60, 0, false, false));
 							entityiterator.hurt(new DamageSource(world.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(DamageTypes.MOB_ATTACK)), 15);
 						}
 					}

@@ -4,14 +4,15 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.PlayerEntryGenerationGuard;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.server.level.ServerPlayer;
 
 /** Repairs interrupted builds and migrates players left inside the legacy tower. */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class DkcFloorRecoveryHandler {
 	private DkcFloorRecoveryHandler() {
 	}

@@ -2,12 +2,10 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -38,26 +36,17 @@ public class SlashEffectEntity extends Entity {
 	private float damage;
 	private boolean dealtDamage;
 
-	public SlashEffectEntity(PlayMessages.SpawnEntity packet, Level world) {
-		this(SololevelingModEntities.SLASH_EFFECT.get(), world);
-	}
-
 	public SlashEffectEntity(EntityType<? extends SlashEffectEntity> type, Level world) {
 		super(type, world);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(OWNER_UUID, Optional.empty());
-		this.entityData.define(SCALE, 1.0F);
-		this.entityData.define(ROLL, 0.0F);
-		this.entityData.define(VARIANT, 0);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(OWNER_UUID, Optional.empty());
+		builder.define(SCALE, 1.0F);
+		builder.define(ROLL, 0.0F);
+		builder.define(VARIANT, 0);
 	}
 
 	public static void spawn(LevelAccessor world, LivingEntity owner, double x, double y, double z, float yaw, float pitch, float roll, float scale, float damage, int variant) {
@@ -136,7 +125,7 @@ public class SlashEffectEntity extends Entity {
 		float scale = this.getScale();
 		AABB hitBox = this.getBoundingBox().inflate(1.35D * scale, 0.9D * scale, 1.35D * scale);
 		List<LivingEntity> targets = this.level().getEntitiesOfClass(LivingEntity.class, hitBox, target -> target.isAlive() && target != livingOwner);
-		DamageSource source = new DamageSource(this.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("sololeveling:fighter"))),
+		DamageSource source = new DamageSource(this.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.parse("sololeveling:fighter"))),
 				livingOwner);
 		Vec3 slashCarry = livingOwner.getLookAngle().multiply(0.16D, 0.0D, 0.16D).add(0.0D, 0.025D, 0.0D);
 		for (LivingEntity target : targets) {

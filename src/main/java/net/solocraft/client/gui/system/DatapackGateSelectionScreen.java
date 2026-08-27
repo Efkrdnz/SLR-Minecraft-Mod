@@ -155,14 +155,14 @@ public final class DatapackGateSelectionScreen extends SystemScreen {
 	}
 
 	@Override
-	public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-		int next = clamp(scroll + (delta < 0.0D ? 1 : -1), 0, maxScroll());
+	public boolean mouseScrolled(double mouseX, double mouseY, double deltaX, double deltaY) {
+		int next = clamp(scroll + (deltaY < 0.0D ? 1 : -1), 0, maxScroll());
 		if (next != scroll) {
 			scroll = next;
 			rebuildWidgets();
 			return true;
 		}
-		return super.mouseScrolled(mouseX, mouseY, delta);
+		return super.mouseScrolled(mouseX, mouseY, deltaX, deltaY);
 	}
 
 	@Override

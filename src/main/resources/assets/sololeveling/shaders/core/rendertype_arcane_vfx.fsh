@@ -42,6 +42,10 @@ float line(float value, float width) {
     return 1.0 - smoothstep(0.0, width, abs(value));
 }
 
+vec3 safeNormalize(vec3 value) {
+    return value * inversesqrt(max(dot(value, value), 1.0e-8));
+}
+
 void main() {
     float kind = floor(texCoord0.x + 0.0001);
     float stage = clamp(floor(texCoord0.y + 0.0001), 1.0, 5.0);
@@ -51,7 +55,7 @@ void main() {
     float stageN = (stage - 1.0) * 0.25;
     float broad = fbm(uv * (3.2 + stage * 0.35) + vec2(time * 0.09, -time * 0.12));
     float detail = fbm(uv * (9.0 + stage * 1.4) + vec2(-time * 0.23, time * 0.17) + broad * 1.8);
-    float fresnel = pow(clamp(1.0 - abs(dot(normalize(-viewPosition), normalize(viewNormal))), 0.0, 1.0), 1.6);
+    float fresnel = pow(clamp(1.0 - abs(dot(safeNormalize(-viewPosition), safeNormalize(viewNormal))), 0.0, 1.0), 1.6);
     float alpha = 0.0;
     float core = 0.0;
 

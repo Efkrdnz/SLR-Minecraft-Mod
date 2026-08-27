@@ -9,17 +9,17 @@ import net.minecraft.resources.ResourceLocation;
 public class SpiderBossModel extends GeoModel<SpiderBossEntity> {
 	@Override
 	public ResourceLocation getAnimationResource(SpiderBossEntity entity) {
-		return new ResourceLocation("sololeveling", "animations/spiderboss.animation.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "animations/spiderboss.animation.json");
 	}
 
 	@Override
 	public ResourceLocation getModelResource(SpiderBossEntity entity) {
-		return new ResourceLocation("sololeveling", "geo/spiderboss.geo.json");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "geo/spiderboss.geo.json");
 	}
 
 	@Override
 	public ResourceLocation getTextureResource(SpiderBossEntity entity) {
-		return new ResourceLocation("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
+		return ResourceLocation.fromNamespaceAndPath("sololeveling", "textures/entities/" + entity.getTexture() + ".png");
 	}
 
 }

@@ -14,11 +14,9 @@ import net.minecraft.resources.ResourceLocation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 public class DualWieldFlurryRenderer extends EntityRenderer<DualWieldFlurryEntity> {
-	private static final ResourceLocation TEXTURE = new ResourceLocation("sololeveling:textures/particle/slashgood1.png");
+	private static final ResourceLocation TEXTURE = ResourceLocation.parse("sololeveling:textures/particle/slashgood1.png");
 	private static final int SLASH_COUNT = 19;
 	private static final float TELEPORT_DELAY_TICKS = 12.0F;
 
@@ -61,9 +59,9 @@ public class DualWieldFlurryRenderer extends EntityRenderer<DualWieldFlurryEntit
 			poseStack.pushPose();
 			poseStack.translate(side, up, forward);
 			poseStack.mulPose(Axis.ZP.rotationDegrees(roll));
-			drawQuad(vertexConsumer, poseStack.last().pose(), poseStack.last().normal(), width, height, alpha);
+			drawQuad(vertexConsumer, poseStack.last(), width, height, alpha);
 			poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
-			drawQuad(vertexConsumer, poseStack.last().pose(), poseStack.last().normal(), width * 0.7F, height * 0.9F, Math.round(alpha * 0.55F));
+			drawQuad(vertexConsumer, poseStack.last(), width * 0.7F, height * 0.9F, Math.round(alpha * 0.55F));
 			poseStack.popPose();
 		}
 		poseStack.popPose();
@@ -87,15 +85,15 @@ public class DualWieldFlurryRenderer extends EntityRenderer<DualWieldFlurryEntit
 		return Math.max(min, Math.min(max, value));
 	}
 
-	private static void drawQuad(VertexConsumer vertexConsumer, Matrix4f pose, Matrix3f normal, float halfWidth, float halfHeight, int alpha) {
-		vertex(vertexConsumer, pose, normal, -halfWidth, -halfHeight, 0.0F, 0.0F, 1.0F, alpha);
-		vertex(vertexConsumer, pose, normal, halfWidth, -halfHeight, 0.0F, 1.0F, 1.0F, alpha);
-		vertex(vertexConsumer, pose, normal, halfWidth, halfHeight, 0.0F, 1.0F, 0.0F, alpha);
-		vertex(vertexConsumer, pose, normal, -halfWidth, halfHeight, 0.0F, 0.0F, 0.0F, alpha);
+	private static void drawQuad(VertexConsumer vertexConsumer, PoseStack.Pose pose, float halfWidth, float halfHeight, int alpha) {
+		vertex(vertexConsumer, pose, -halfWidth, -halfHeight, 0.0F, 0.0F, 1.0F, alpha);
+		vertex(vertexConsumer, pose, halfWidth, -halfHeight, 0.0F, 1.0F, 1.0F, alpha);
+		vertex(vertexConsumer, pose, halfWidth, halfHeight, 0.0F, 1.0F, 0.0F, alpha);
+		vertex(vertexConsumer, pose, -halfWidth, halfHeight, 0.0F, 0.0F, 0.0F, alpha);
 	}
 
-	private static void vertex(VertexConsumer vertexConsumer, Matrix4f pose, Matrix3f normal, float x, float y, float z, float u, float v, int alpha) {
-		vertexConsumer.vertex(pose, x, y, z).color(255, 255, 255, alpha).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(normal, 0.0F, 1.0F, 0.0F).endVertex();
+	private static void vertex(VertexConsumer vertexConsumer, PoseStack.Pose pose, float x, float y, float z, float u, float v, int alpha) {
+		vertexConsumer.addVertex(pose, x, y, z).setColor(255, 255, 255, alpha).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(240).setNormal(pose, 0.0F, 1.0F, 0.0F);
 	}
 
 	@Override

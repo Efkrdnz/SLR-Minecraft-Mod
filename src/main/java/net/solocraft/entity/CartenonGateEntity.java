@@ -3,14 +3,12 @@ package net.solocraft.entity;
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.CartenonTempleManager;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -27,11 +25,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.AnimatableManager;
-import software.bernie.geckolib.core.animation.AnimationController;
-import software.bernie.geckolib.core.animation.RawAnimation;
-import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Collection;
@@ -45,10 +43,6 @@ public class CartenonGateEntity extends PathfinderMob implements GeoEntity {
 	private final Set<UUID> allowedPlayers = new LinkedHashSet<>();
 	private UUID ownerId;
 	private int instanceId;
-
-	public CartenonGateEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.CARTENON_GATE.get(), level);
-	}
 
 	public CartenonGateEntity(EntityType<CartenonGateEntity> type, Level level) {
 		super(type, level);
@@ -75,11 +69,6 @@ public class CartenonGateEntity extends PathfinderMob implements GeoEntity {
 
 	public int getInstanceId() {
 		return instanceId;
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
 	}
 
 	@Override

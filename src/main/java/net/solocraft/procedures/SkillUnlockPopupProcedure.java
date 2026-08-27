@@ -4,9 +4,13 @@ import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.util.ShadowMonarchManager;
 import net.solocraft.util.SystemNotifications;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -16,17 +20,17 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class SkillUnlockPopupProcedure {
 	private static final String KEY_READY = "sl_skill_unlock_popup_ready";
 	private static final String KEY_PLIST = "sl_skill_unlock_popup_plist";
 	private static final int ACCENT = 0xFF8A4DFF;
 
 	@SubscribeEvent
-	public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (false)
 			return;
-		if (!(event.player instanceof ServerPlayer player))
+		if (!(event.getEntity() instanceof ServerPlayer player))
 			return;
 		player.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null)
 				.ifPresent(capability -> checkForNewSkills(player, capability.Plist == null ? "" : capability.Plist));

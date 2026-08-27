@@ -7,10 +7,9 @@ import net.solocraft.procedures.DragonFireballProjectileHitsLivingEntityProcedur
 import net.solocraft.procedures.DragonFireballProjectileHitsBlockProcedure;
 import net.solocraft.init.SololevelingModEntities;
 
-import net.minecraftforge.network.PlayMessages;
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
+import net.solocraft.network.compat.NetworkHooks;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
 
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.BlockHitResult;
@@ -24,15 +23,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.util.RandomSource;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.Packet;
 
 @OnlyIn(value = Dist.CLIENT, _interface = ItemSupplier.class)
-public class DragonFireballEntity extends AbstractArrow implements ItemSupplier {
+public class DragonFireballEntity extends LegacyAbstractArrow implements ItemSupplier {
 	public static final ItemStack PROJECTILE_ITEM = new ItemStack(Blocks.AIR);
-
-	public DragonFireballEntity(PlayMessages.SpawnEntity packet, Level world) {
-		super(SololevelingModEntities.DRAGON_FIREBALL.get(), world);
-	}
 
 	public DragonFireballEntity(EntityType<? extends DragonFireballEntity> type, Level world) {
 		super(type, world);
@@ -47,18 +41,13 @@ public class DragonFireballEntity extends AbstractArrow implements ItemSupplier 
 	}
 
 	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
-	}
-
-	@Override
 	@OnlyIn(Dist.CLIENT)
 	public ItemStack getItem() {
 		return PROJECTILE_ITEM;
 	}
 
 	@Override
-	protected ItemStack getPickupItem() {
+	protected ItemStack getDefaultPickupItem() {
 		return PROJECTILE_ITEM;
 	}
 

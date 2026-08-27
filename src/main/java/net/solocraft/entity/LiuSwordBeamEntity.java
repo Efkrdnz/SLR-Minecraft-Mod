@@ -2,13 +2,13 @@ package net.solocraft.entity;
 
 import net.solocraft.init.SololevelingModEntities;
 import net.solocraft.util.LiuZhigangCombatManager;
+import net.solocraft.util.AbilityDestructionManager;
+import net.solocraft.util.TemporaryStatBonusManager;
 
-import net.minecraftforge.network.NetworkHooks;
-import net.minecraftforge.network.PlayMessages;
+import net.solocraft.network.compat.NetworkHooks;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -50,34 +50,25 @@ public class LiuSwordBeamEntity extends Entity {
 	private boolean finishing;
 	private boolean executionRegistered;
 
-	public LiuSwordBeamEntity(PlayMessages.SpawnEntity packet, Level level) {
-		this(SololevelingModEntities.LIU_SWORD_BEAM.get(), level);
-	}
-
 	public LiuSwordBeamEntity(EntityType<? extends LiuSwordBeamEntity> type, Level level) {
 		super(type, level);
 		this.noPhysics = true;
 	}
 
 	@Override
-	protected void defineSynchedData() {
-		this.entityData.define(OWNER, Optional.empty());
-		this.entityData.define(TIER, 0);
-		this.entityData.define(DUAL, false);
-		this.entityData.define(PRIMARY_COLOR, 0xFFD34E);
-		this.entityData.define(SECONDARY_COLOR, 0xFFD34E);
-		this.entityData.define(WIDTH, 4.0F);
-		this.entityData.define(MAX_RANGE, 20.0F);
-		this.entityData.define(SPEED, 3.2F);
-		this.entityData.define(DAMAGE, 10.0F);
-		this.entityData.define(DIRECTION_X, 0.0F);
-		this.entityData.define(DIRECTION_Y, 0.0F);
-		this.entityData.define(DIRECTION_Z, 1.0F);
-	}
-
-	@Override
-	public Packet<ClientGamePacketListener> getAddEntityPacket() {
-		return NetworkHooks.getEntitySpawningPacket(this);
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		builder.define(OWNER, Optional.empty());
+		builder.define(TIER, 0);
+		builder.define(DUAL, false);
+		builder.define(PRIMARY_COLOR, 0xFFD34E);
+		builder.define(SECONDARY_COLOR, 0xFFD34E);
+		builder.define(WIDTH, 4.0F);
+		builder.define(MAX_RANGE, 20.0F);
+		builder.define(SPEED, 3.2F);
+		builder.define(DAMAGE, 10.0F);
+		builder.define(DIRECTION_X, 0.0F);
+		builder.define(DIRECTION_Y, 0.0F);
+		builder.define(DIRECTION_Z, 1.0F);
 	}
 
 	public static LiuSwordBeamEntity spawn(ServerLevel level, ServerPlayer owner, Vec3 origin, Vec3 direction,
@@ -212,6 +203,13 @@ public class LiuSwordBeamEntity extends Entity {
 			}
 		}
 		processTargets(level, owner, start, end);
+		if (blocked)
+			AbilityDestructionManager.line(owner,
+					AbilityDestructionManager.Profile.LIU_SWORD_CUT,
+					end.subtract(direction.scale(1.4D)),
+					end.add(direction.scale(0.6D)),
+					TemporaryStatBonusManager.effectiveStrength(owner),
+					getTier() >= 2 || isDual());
 		this.setPos(end.x, end.y, end.z);
 		this.setRot(yawFor(direction), pitchFor(direction));
 		this.setDeltaMovement(direction.scale(getBeamSpeed()));

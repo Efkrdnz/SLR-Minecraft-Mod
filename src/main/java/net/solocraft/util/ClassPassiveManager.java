@@ -4,21 +4,29 @@ import net.solocraft.SololevelingMod;
 import net.solocraft.network.ClassPassiveMessage;
 import net.solocraft.network.SololevelingModVariables;
 
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+
+import java.util.Comparator;
 
 /**
  * Server-side passive logic for all six player classes.
@@ -27,10 +35,9 @@ import net.minecraft.world.entity.player.Player;
  *   1 = Assassin   2 = Mage   3 = Fighter
  *   4 = Tanker     5 = Healer  6 = Ranger
  *
- * Assassin – Shadow Combo
- *   Every melee hit increments a raw counter; tier = counter / 5 (cap 10).
- *   Each tier adds +5% bonus damage to subsequent hits.
- *   Combo decays after 8 s without a new hit.
+ * Assassin – Tempo
+ *   Owned by AssassinSkillManager, not this class. Varied dagger actions build
+ *   up to five Tempo, which qualifying finishers then consume.
  *
  * Fighter – Battle Gauge
  *   Each hit fills a power bar by dmg×4 points (0→100).
@@ -43,8 +50,9 @@ import net.minecraft.world.entity.player.Player;
  *
  * Healer – Resonance
  *   Using Heal Beam or Blessing Mark adds 1 resonance stack (cap 5).
- *   At 5 stacks an AoE burst heals nearby players and resets.
- *   Stacks are permanent — they never decay between casts.
+ *   At 5 stacks a burst heals the healer plus up to five genuinely allied
+ *   players, ordered by missing health.
+ *   Stacks decay one at a time after 10 s without an effective heal.
  *
  * Ranger – Focus / Deadeye
  *   Eligible arrow hits build Focus, with bonuses for distant and marked targets.
@@ -52,13 +60,14 @@ import net.minecraft.world.entity.player.Player;
  *   Partial Focus is preserved while aiming, decays gradually while idle or
  *   sprinting, and loses a chunk when a nearby attacker hits the Ranger.
  */
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public final class ClassPassiveManager {
 
     // ── PersistentData keys ───────────────────────────────────────────────────
     private static final String F_POWER   = "sl_f_power";  // double: 0-100 fighter gauge
     private static final String F_BURST_UNTIL = "sl_f_burst_until";
     private static final String H_STACKS  = "sl_h_stacks"; // int:  healer resonance stacks
+    private static final String H_LAST_GAIN = "sl_h_last_gain";
     private static final String R_FOCUS   = "sl_r_focus";  // double: 0-100 ranger focus
     private static final String R_LAST_DECAY = "sl_r_last_decay";
 
@@ -66,6 +75,11 @@ public final class ClassPassiveManager {
 
     // ── Caps ──────────────────────────────────────────────────────────────────
     private static final int    HEALER_RES_MAX     =  5;
+    /** Beneficiaries of one Resonance burst, matching the shared ally cap. */
+    private static final int    HEALER_BURST_ALLY_CAP = 5;
+    private static final double HEALER_BURST_RADIUS   = 8.0D;
+    /** Ticks without an effective heal before one Resonance stack is lost. */
+    private static final long   HEALER_RES_DECAY_TICKS = 200L;
 
     private ClassPassiveManager() {}
 
@@ -84,6 +98,7 @@ public final class ClassPassiveManager {
         data.remove(F_POWER);
         data.remove(F_BURST_UNTIL);
         data.remove(H_STACKS);
+        data.remove(H_LAST_GAIN);
         data.remove(R_FOCUS);
         data.remove(R_LAST_DECAY);
         sync(player, 1, 0.0D);
@@ -104,11 +119,11 @@ public final class ClassPassiveManager {
     }
 
     // ═════════════════════════════════════════════════════════════════════════
-    // LivingHurtEvent
+    // LivingIncomingDamageEvent
     // ═════════════════════════════════════════════════════════════════════════
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void onLivingHurt(LivingHurtEvent event) {
+    public static void onLivingHurt(LivingIncomingDamageEvent event) {
         // ── Attacker passives (Assassin / Fighter) ────────────────────────────
         Entity src = event.getSource().getEntity();
         if (src instanceof ServerPlayer attacker) {
@@ -124,14 +139,39 @@ public final class ClassPassiveManager {
     // PlayerTickEvent — decay timers and Ranger focus decay
     // ═════════════════════════════════════════════════════════════════════════
 
-    @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        if (!(event.player instanceof ServerPlayer sp)) return;
+	@SubscribeEvent
+	public static void onPlayerTick(PlayerTickEvent.Post event) {
+		if (!(event.getEntity() instanceof ServerPlayer sp)) return;
 
         tickOwnedFighterBurst(sp);
+        if (playerClass(sp) == 5)
+            tickHealer(sp);
         if (playerClass(sp) == 6)
             tickRanger(sp);
+    }
+
+    /**
+     * Resonance stacks used to be permanent, so a Healer could bank a burst
+     * indefinitely and fire it the instant a fight started. They now decay one
+     * stack at a time after a quiet period, which keeps the passive tied to
+     * sustained healing without erasing an entire setup on a single lull.
+     */
+    private static void tickHealer(ServerPlayer player) {
+        CompoundTag data = player.getPersistentData();
+        int stacks = data.getInt(H_STACKS);
+        if (stacks <= 0)
+            return;
+        long now = player.level().getGameTime();
+        long lastGain = data.getLong(H_LAST_GAIN);
+        if (lastGain <= 0L) {
+            data.putLong(H_LAST_GAIN, now);
+            return;
+        }
+        if (now - lastGain < HEALER_RES_DECAY_TICKS)
+            return;
+        data.putInt(H_STACKS, stacks - 1);
+        data.putLong(H_LAST_GAIN, now);
+        sync(player, 3, stacks - 1);
     }
 
     private static void tickOwnedFighterBurst(ServerPlayer player) {
@@ -188,6 +228,7 @@ public final class ClassPassiveManager {
         CompoundTag d = p.getPersistentData();
         int stacks    = Math.min(d.getInt(H_STACKS) + 1, HEALER_RES_MAX);
         d.putInt(H_STACKS, stacks);
+        d.putLong(H_LAST_GAIN, p.level().getGameTime());
         sync(p, 3, stacks);
 
         if (stacks >= HEALER_RES_MAX) {
@@ -198,12 +239,30 @@ public final class ClassPassiveManager {
         }
     }
 
+    /**
+     * Heals the healer plus a capped number of genuinely allied players.
+     *
+     * <p>This used to heal every {@link Player} within range with no party or
+     * hostility filter, so in PvP a Healer restored the health of the people
+     * attacking them. Membership now goes through the shared
+     * {@link MageCombatHelper#areAllied} check, which treats a blank party
+     * string as "no party" instead of matching every other unaffiliated
+     * player. Recipients are ordered by missing health so the burst reaches
+     * whoever actually needs it before the cap is spent.</p>
+     */
     private static void triggerResonanceBurst(ServerPlayer healer) {
         if (!healer.isAlive() || playerClass(healer) != 5) return;
-        // Heal nearby allies
+
         healer.level().getEntitiesOfClass(Player.class,
-                healer.getBoundingBox().inflate(8.0),
-                ally -> ally != healer && !ally.isDeadOrDying())
+                healer.getBoundingBox().inflate(HEALER_BURST_RADIUS),
+                ally -> ally != healer && ally.isAlive() && !ally.isDeadOrDying()
+                        && !ally.isSpectator()
+                        && ally.getHealth() < ally.getMaxHealth()
+                        && MageCombatHelper.areAllied(healer, ally))
+            .stream()
+            .sorted(Comparator.comparingDouble(
+                    ally -> ally.getHealth() - ally.getMaxHealth()))
+            .limit(HEALER_BURST_ALLY_CAP)
             .forEach(ally -> ally.heal(6f)); // +3 hearts each
         healer.heal(4f); // healer also benefits
     }
@@ -267,8 +326,8 @@ public final class ClassPassiveManager {
                       .orElse(new SololevelingModVariables.PlayerVariables()).Classes;
     }
 
-    private static void removeOwnedFighterBuff(ServerPlayer player,
-            net.minecraft.world.effect.MobEffect effect, int expectedRemaining) {
+	private static void removeOwnedFighterBuff(ServerPlayer player,
+			Holder<MobEffect> effect, int expectedRemaining) {
         MobEffectInstance active = player.getEffect(effect);
         if (active != null && active.getAmplifier() == 1
                 && active.getDuration() <= expectedRemaining + 2)

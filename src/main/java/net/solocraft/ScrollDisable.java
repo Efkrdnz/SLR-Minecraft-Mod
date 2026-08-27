@@ -3,13 +3,14 @@ package net.solocraft;
 import net.solocraft.init.SololevelingModKeyMappings;
 import net.solocraft.network.Ability2Message;
 import net.solocraft.network.SololevelingModVariables;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.api.distmarker.Dist;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.api.distmarker.Dist;
 import net.minecraft.client.Minecraft;
 
-@Mod.EventBusSubscriber(modid = "sololeveling", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = "sololeveling", bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class ScrollDisable {
 	@SubscribeEvent
 	public static void Scroll(InputEvent.MouseScrollingEvent event) {
@@ -20,7 +21,10 @@ public class ScrollDisable {
 				.orElse(new SololevelingModVariables.PlayerVariables());
 		if (!variables.combatmode || !net.solocraft.util.RulersAuthorityManager.hasAbility(minecraft.player))
 			return;
-		int direction = event.getScrollDelta() > 0 ? 1 : -1;
+		double scrollDelta = event.getScrollDeltaY();
+		if (scrollDelta == 0.0D)
+			return;
+		int direction = scrollDelta > 0.0D ? 1 : -1;
 		SololevelingMod.PACKET_HANDLER.sendToServer(new Ability2Message(2, direction));
 		event.setCanceled(true);
 	}

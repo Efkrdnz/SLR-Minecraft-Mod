@@ -8,15 +8,20 @@ import net.solocraft.network.DungeonBuilderStatusMessage;
 import net.solocraft.dungeon.builder.DungeonBuilderProjectData;
 import net.solocraft.dungeon.builder.DungeonBuilderStudioService;
 
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
@@ -44,10 +49,10 @@ import java.util.Set;
 import java.util.UUID;
 
 /** Runtime behavior and persistent marker for Dungeon Builder worlds. */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID)
+@EventBusSubscriber(modid = SololevelingMod.MODID)
 public final class DungeonBuilderMode {
 	private static final ResourceKey<DimensionType> DIMENSION_TYPE = ResourceKey.create(
-			Registries.DIMENSION_TYPE, new ResourceLocation(SololevelingMod.MODID, "dungeon_builder"));
+			Registries.DIMENSION_TYPE, ResourceLocation.fromNamespaceAndPath(SololevelingMod.MODID, "dungeon_builder"));
 	private static final BlockPos PLATFORM_CENTER = new BlockPos(0, 64, 0);
 	private static final int PLATFORM_RADIUS = 4;
 	private static final Set<UUID> HUD_PLAYERS = new HashSet<>();
@@ -116,8 +121,8 @@ public final class DungeonBuilderMode {
 	}
 
 	@SubscribeEvent
-	public static void onServerTick(TickEvent.ServerTickEvent event) {
-		if (event.phase != TickEvent.Phase.END || ++hudTick % 10 != 0)
+	public static void onServerTick(ServerTickEvent.Post event) {
+		if (false || ++hudTick % 10 != 0)
 			return;
 		for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
 			boolean active = isActive(player.level()) && isBuilderWorld(player.getServer());
@@ -229,12 +234,13 @@ public final class DungeonBuilderMode {
 
 	private static final class DungeonBuilderSavedData extends SavedData {
 		private static final String DATA_NAME = "sololeveling_dungeon_builder";
+		private static final SavedData.Factory<DungeonBuilderSavedData> FACTORY =
+				new SavedData.Factory<>(DungeonBuilderSavedData::new, DungeonBuilderSavedData::load);
 		private boolean platformCreated;
 		private boolean defaultsConfigured;
 
 		private static DungeonBuilderSavedData get(ServerLevel level) {
-			return level.getDataStorage().computeIfAbsent(
-					DungeonBuilderSavedData::load, DungeonBuilderSavedData::new, DATA_NAME);
+			return level.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
 		}
 
 		private boolean platformCreated() {
@@ -257,13 +263,13 @@ public final class DungeonBuilderMode {
 
 		@Nonnull
 		@Override
-		public CompoundTag save(@Nonnull CompoundTag tag) {
+		public CompoundTag save(@Nonnull CompoundTag tag, HolderLookup.Provider registries) {
 			tag.putBoolean("PlatformCreated", platformCreated);
 			tag.putBoolean("DefaultsConfigured", defaultsConfigured);
 			return tag;
 		}
 
-		private static DungeonBuilderSavedData load(CompoundTag tag) {
+		private static DungeonBuilderSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
 			DungeonBuilderSavedData data = new DungeonBuilderSavedData();
 			data.platformCreated = tag.getBoolean("PlatformCreated");
 			data.defaultsConfigured = tag.getBoolean("DefaultsConfigured");

@@ -3,7 +3,7 @@ package net.solocraft.procedures;
 import net.solocraft.network.SololevelingModVariables;
 import net.solocraft.init.SololevelingModItems;
 
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.Slot;

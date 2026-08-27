@@ -6,10 +6,11 @@ import net.solocraft.network.PartyActionMessage;
 import net.solocraft.network.PartyRequestMessage;
 import net.solocraft.util.SystemPlayerAccess;
 
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -26,7 +27,7 @@ import java.util.UUID;
  * <p>The screen reads immutable records from here. Incoming snapshots rebuild
  * only its widgets, leaving the open animation and current screen intact.
  */
-@Mod.EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = SololevelingMod.MODID, value = Dist.CLIENT)
 public final class PartyClientState {
 	private static Snapshot snapshot = Snapshot.empty();
 	private static boolean received;

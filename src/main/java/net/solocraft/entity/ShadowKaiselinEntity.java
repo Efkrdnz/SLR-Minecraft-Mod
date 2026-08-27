@@ -219,6 +219,14 @@ public class ShadowKaiselinEntity extends KaiselinEntity implements OwnableEntit
 			this.setDeltaMovement(next);
 			this.move(MoverType.SELF, this.getDeltaMovement());
 			this.hasImpulse = true;
+			// Flying under its own power, so a descent is not a fall. Without this
+			// the distance accrued on the way down was still owed on landing, and
+			// the rider paid it the moment the mount touched the ground.
+			//
+			// Only while ridden: someone who dismounts in mid-air is genuinely
+			// falling from there and should land like it.
+			this.resetFallDistance();
+			rider.resetFallDistance();
 			return;
 		}
 		super.travel(travelVector);

@@ -22,6 +22,7 @@ import net.solocraft.network.compat.PacketDistributor;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -68,6 +69,12 @@ public final class CartenonTempleManager {
 	private static final int ENTRY_PROTECTION_TICKS = 40;
 	private static final int DECLINE_DELAY_TICKS = 4;
 	private static final Map<MinecraftServer, Map<Integer, LinkedHashSet<UUID>>> WAITING_PLAYERS = new WeakHashMap<>();
+
+	/** Where the player stood when they entered, so they can be put back. */
+	private static final String RETURN_DIM_TAG = "slr_cartenon_return_dim";
+	private static final String RETURN_X_TAG = "slr_cartenon_return_x";
+	private static final String RETURN_Y_TAG = "slr_cartenon_return_y";
+	private static final String RETURN_Z_TAG = "slr_cartenon_return_z";
 
 	private static final String INSTANCE_TAG = "slr_cartenon_instance";
 	private static final String ENTRY_PROTECTION_TAG = "slr_cartenon_entry_protection";
@@ -579,6 +586,7 @@ public final class CartenonTempleManager {
 		player.getPersistentData().putInt(INSTANCE_TAG, instanceId);
 		player.getPersistentData().remove(AWAKENING_PENDING_TAG);
 		player.getPersistentData().remove(DECLINE_TICKS_TAG);
+		rememberReturnPoint(player);
 		captureProtectionState(player);
 		player.getPersistentData().putInt(ENTRY_PROTECTION_TAG, ENTRY_PROTECTION_TICKS);
 		freezePlayer(player);
@@ -647,12 +655,89 @@ public final class CartenonTempleManager {
 	public static void returnToOverworld(ServerPlayer player) {
 		if (player == null)
 			return;
-		ServerLevel overworld = player.server.overworld();
-		BlockPos spawn = findSafeOverworldSpawn(overworld);
 		player.stopRiding();
 		player.fallDistance = 0.0F;
+
+		// Back to where they walked in, not to the world spawn. Sending everyone
+		// to spawn stranded anyone who had not slept in a bed yet -- which, this
+		// early in the game, is most of them.
+		ServerLevel origin = returnLevel(player);
+		if (origin != null) {
+			BlockPos remembered = returnPosition(player);
+			if (remembered != null) {
+				BlockPos safe = findSafeNear(origin, remembered);
+				if (safe != null) {
+					clearReturnPoint(player);
+					player.teleportTo(origin, safe.getX() + 0.5D, safe.getY(),
+							safe.getZ() + 0.5D, player.getYRot(), 0.0F);
+					return;
+				}
+			}
+		}
+
+		// No remembered point: a save from before this was recorded, a dimension
+		// that no longer loads, or ground that is no longer safe. World spawn is
+		// the old behaviour and still better than the temple.
+		clearReturnPoint(player);
+		ServerLevel overworld = player.server.overworld();
+		BlockPos spawn = findSafeOverworldSpawn(overworld);
 		player.teleportTo(overworld, spawn.getX() + 0.5D, spawn.getY(), spawn.getZ() + 0.5D,
 				overworld.getSharedSpawnAngle(), 0.0F);
+	}
+
+	private static void rememberReturnPoint(ServerPlayer player) {
+		CompoundTag data = player.getPersistentData();
+		data.putString(RETURN_DIM_TAG, player.level().dimension().location().toString());
+		data.putInt(RETURN_X_TAG, player.blockPosition().getX());
+		data.putInt(RETURN_Y_TAG, player.blockPosition().getY());
+		data.putInt(RETURN_Z_TAG, player.blockPosition().getZ());
+	}
+
+	private static void clearReturnPoint(ServerPlayer player) {
+		CompoundTag data = player.getPersistentData();
+		data.remove(RETURN_DIM_TAG);
+		data.remove(RETURN_X_TAG);
+		data.remove(RETURN_Y_TAG);
+		data.remove(RETURN_Z_TAG);
+	}
+
+	private static ServerLevel returnLevel(ServerPlayer player) {
+		String id = player.getPersistentData().getString(RETURN_DIM_TAG);
+		if (id.isEmpty())
+			return null;
+		ResourceLocation parsed = ResourceLocation.tryParse(id);
+		if (parsed == null)
+			return null;
+		ServerLevel level = player.server.getLevel(
+				ResourceKey.create(Registries.DIMENSION, parsed));
+		// Never back into the temple, whatever the tag says.
+		return level == null || level.dimension().equals(player.level().dimension())
+				? null : level;
+	}
+
+	private static BlockPos returnPosition(ServerPlayer player) {
+		CompoundTag data = player.getPersistentData();
+		if (!data.contains(RETURN_X_TAG))
+			return null;
+		return new BlockPos(data.getInt(RETURN_X_TAG), data.getInt(RETURN_Y_TAG),
+				data.getInt(RETURN_Z_TAG));
+	}
+
+	/** The remembered spot, or the nearest standable one to it. */
+	private static BlockPos findSafeNear(ServerLevel level, BlockPos wanted) {
+		level.getChunk(wanted);
+		for (int radius = 0; radius <= 6; radius++)
+			for (int dx = -radius; dx <= radius; dx++)
+				for (int dz = -radius; dz <= radius; dz++) {
+					if (radius > 0 && Math.abs(dx) != radius && Math.abs(dz) != radius)
+						continue;
+					for (int dy = 4; dy >= -6; dy--) {
+						BlockPos candidate = wanted.offset(dx, dy, dz);
+						if (isSafePlayerSpace(level, candidate))
+							return candidate;
+					}
+				}
+		return null;
 	}
 
 	private static BlockPos instanceOrigin(int instanceId) {

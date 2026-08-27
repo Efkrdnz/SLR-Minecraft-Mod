@@ -554,13 +554,17 @@ public final class AddonApiSurfaceRegression {
 	}
 
 	/**
-	 * A gate must never generate without its boss.
+	 * A gate must generate with its boss, standing in open space.
 	 *
-	 * <p>The boss was dropped on the raw centre of its room while every ordinary
-	 * mob went through a vetted spawn point. {@code EntityType.spawn} returns null
-	 * when the block is not clear, so a pillar or an uneven floor in the middle of
-	 * the boss room produced a gate with nothing to fight -- no error, no log, and
-	 * no way for the player to know the dungeon was unfinishable.
+	 * <p>This has been wrong twice. Spawning on the raw room centre without
+	 * checking meant a pillar there left the gate with no boss at all, silently.
+	 * Borrowing the ordinary mob's spawn point instead was worse: that check
+	 * clears a one-block column, which is honest for a goblin and meaningless
+	 * for a boss two and a half blocks wide, so the boss appeared inside a wall
+	 * and suffocated.
+	 *
+	 * <p>Both failures are invisible to whoever generated the dungeon -- one is
+	 * an empty room, the other a boss that dies before the player reaches it.
 	 */
 	private static void dungeonBossIsAlwaysPlaced() throws IOException {
 		Path generator = Path.of("src", "main", "java", "net", "solocraft",
@@ -571,14 +575,26 @@ public final class AddonApiSurfaceRegression {
 		expect(at >= 0, "The boss spawn block must still exist");
 		String block = source.substring(at);
 
-		expect(block.contains("spawnPoint(level, bossRoom, baseY, offsetX, offsetZ, random)"),
-				"The boss must use the same vetted spawn point as ordinary mobs, not "
-						+ "the raw room centre");
-		expect(block.contains("if (boss == null)"),
-				"A failed boss spawn must be retried, not silently accepted");
+		expect(block.contains("bossRoom.centerX()") && block.contains("bossRoom.centerZ()"),
+				"The boss belongs at the room centre, the farthest point from every "
+						+ "wall; a random point can be flush against one");
+		expect(!block.contains("spawnPoint(level, bossRoom"),
+				"The boss must not use the ordinary mob spawn point: it clears a "
+						+ "one-block column, which a boss does not fit inside");
+		expect(block.contains("clearFor(level, bossPos, bossChoice.type()"),
+				"The pocket must be cleared to the boss's own size");
 		expect(block.contains("LOGGER.error"),
-				"A boss that still cannot be placed must be reported; a silent failure "
-						+ "is a gate the player cannot complete");
+				"A boss that still cannot be placed must be reported; a silent "
+						+ "failure is a gate the player cannot complete");
+
+		int carve = source.indexOf("private static void clearFor(");
+		expect(carve >= 0, "clearFor must exist");
+		String body = source.substring(carve, Math.min(source.length(), carve + 1200));
+		expect(body.contains("type.getWidth()") && body.contains("type.getHeight()"),
+				"The pocket must be sized from the entity, not from a fixed box");
+		expect(body.contains("interiorHeight"),
+				"The carve must be bounded by the room's interior height, or it "
+						+ "reaches through the ceiling and opens the dungeon");
 	}
 
 	private static String read(String... parts) throws IOException {

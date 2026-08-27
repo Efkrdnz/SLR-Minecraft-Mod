@@ -734,25 +734,22 @@ public final class ProceduralDungeonGenerator {
 				}
 			}
 		}
-		// The same vetted placement every ordinary mob gets. The boss used to be
-		// dropped on the raw room centre, and spawn() returns null when that block
-		// is not clear -- so a pillar, a decoration or an uneven floor in the
-		// middle of the boss room meant the gate simply had no boss in it, with
-		// nothing logged and no way for a player to tell.
-		BlockPos bossPos = spawnPoint(level, bossRoom, baseY, offsetX, offsetZ, random);
+		// Placed at the room centre, cleared to the boss's own size.
+		//
+		// Two ways to get this wrong, and this code has now had both. Spawning on
+		// the raw centre without checking meant a pillar there left the gate with
+		// no boss at all. Borrowing the ordinary mob's spawn point instead was
+		// worse: that check clears a one-block column, which is honest for a
+		// goblin and meaningless for a Goblin King, so the boss materialised
+		// inside a wall and suffocated.
+		//
+		// The centre is the farthest point from every wall, so it is where a large
+		// entity has the best chance. Clearing to the entity's real width and
+		// height is what makes that chance a certainty.
+		BlockPos bossPos = new BlockPos(offsetX + bossRoom.centerX(), baseY + 1,
+				offsetZ + bossRoom.centerZ());
+		clearFor(level, bossPos, bossChoice.type(), settings.rank.interiorHeight);
 		Entity boss = bossChoice.type().spawn(level, bossPos, MobSpawnType.MOB_SUMMONED);
-		if (boss == null) {
-			// Last resort: clear a pocket and place it directly. A gate without its
-			// boss cannot be completed, so an ugly boss beats no boss.
-			bossPos = new BlockPos(offsetX + bossRoom.centerX(), baseY + 1,
-					offsetZ + bossRoom.centerZ());
-			for (int y = 0; y < 4; y++)
-				for (int dx = -1; dx <= 1; dx++)
-					for (int dz = -1; dz <= 1; dz++)
-						level.setBlockAndUpdate(bossPos.offset(dx, y, dz),
-								Blocks.AIR.defaultBlockState());
-			boss = bossChoice.type().spawn(level, bossPos, MobSpawnType.MOB_SUMMONED);
-		}
 		if (boss != null) {
 			tagDungeonMob(boss, dungeonTag, settings.rank, deferredReturnPortal);
 			LowRankDungeonBalance.applyMobBalance(boss, settings.rank);
@@ -808,6 +805,34 @@ public final class ProceduralDungeonGenerator {
 			case S -> 3;
 		};
 		return Mth.clamp(size, settings.rank.packSize, maximum);
+	}
+
+	/**
+	 * Clears a pocket big enough for the entity that is about to stand in it.
+	 *
+	 * <p>Sized from the entity type rather than from a fixed 3x3, because the
+	 * bosses differ in width and the whole point is that the one being placed
+	 * fits. A generated dungeon is ours to carve, so this is cheaper and more
+	 * reliable than hunting for a spot that happens to be big enough.
+	 *
+	 * <p>Bounded by the room's own interior height so the carve cannot reach
+	 * through the ceiling.
+	 */
+	private static void clearFor(ServerLevel level, BlockPos centre, EntityType<?> type,
+			int interiorHeight) {
+		int halfWidth = Math.max(1, Mth.ceil(type.getWidth() / 2.0F));
+		// Never taller than the room. An E-rank interior is four blocks and its
+		// boss is four blocks, so a carve with any headroom added would take the
+		// ceiling out and open the dungeon to whatever is above it.
+		int height = Math.min(Math.max(2, interiorHeight),
+				Math.max(2, Mth.ceil(type.getHeight())));
+		for (int y = 0; y < height; y++)
+			for (int dx = -halfWidth; dx <= halfWidth; dx++)
+				for (int dz = -halfWidth; dz <= halfWidth; dz++) {
+					BlockPos at = centre.offset(dx, y, dz);
+					if (!level.getBlockState(at).isAir())
+						level.setBlockAndUpdate(at, Blocks.AIR.defaultBlockState());
+				}
 	}
 
 	private static BlockPos spawnPoint(ServerLevel level, DungeonRoom room, int baseY,

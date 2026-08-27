@@ -77,6 +77,13 @@ public abstract class DisableHotbarKeymappingMixin {
 	 */
 	@Inject(method = "setDown", at = @At("TAIL"))
 	public void solocraft$routeHotbarSkill(boolean isDown, CallbackInfo ci) {
+		// Opening or closing a radial makes Minecraft flip every key's state as
+		// bookkeeping -- releaseAll() on the way in, setAll() on the way out.
+		// Those arrive here indistinguishable from real input, and acting on them
+		// re-enters setScreen: begin -> release -> clear -> press -> begin, until
+		// the stack runs out.
+		if (net.solocraft.client.gui.RadialScreenTransition.isTransitioning())
+			return;
 		int slot = solocraft$slot();
 		if (slot == 0 || solocraft$slotDown == isDown)
 			return;

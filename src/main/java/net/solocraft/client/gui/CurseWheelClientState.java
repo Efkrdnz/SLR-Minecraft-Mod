@@ -58,7 +58,7 @@ public final class CurseWheelClientState {
 			activationKey = hotbarKey(hotbarSlot).getKey();
 			lockedYaw = player.getYRot();
 			lockedPitch = player.getXRot();
-			minecraft.setScreen(new CurseWheelPauseScreen());
+			RadialScreenTransition.run(() -> minecraft.setScreen(new CurseWheelPauseScreen()));
 		}
 	}
 
@@ -101,7 +101,7 @@ public final class CurseWheelClientState {
 		activationKey = null;
 		Minecraft minecraft = Minecraft.getInstance();
 		if (minecraft.screen instanceof CurseWheelPauseScreen)
-			minecraft.setScreen(null);
+			RadialScreenTransition.run(() -> minecraft.setScreen(null));
 	}
 
 	static void onPauseScreenRemoved(CurseWheelPauseScreen screen) {

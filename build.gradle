@@ -656,6 +656,14 @@ tasks.register('testHunterClassRegistryRegression', JavaExec) {
     mainClass.set('net.solocraft.util.HunterClassRegistryRegression')
 }
 
+tasks.register('testRadialScreenRecursionRegression', JavaExec) {
+    group = 'verification'
+    description = 'Keeps radial screens from re-opening themselves into a stack overflow.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.RadialScreenRecursionRegression')
+}
+
 tasks.register('testOverlayRenderStateRegression', JavaExec) {
     group = 'verification'
     description = 'Refuses HUD overlays that leave the shader colour tinted.'
@@ -741,6 +749,7 @@ tasks.named('check') {
 			'testDamageNumberRegression',
 			'testAbilityIconRegression',
 			'testNaturalGateAndRewardRegression',
+			'testRadialScreenRecursionRegression',
 			'testOverlayRenderStateRegression',
 			'testShaderReservedWordRegression',
 			'testSkillPointEconomyRegression',

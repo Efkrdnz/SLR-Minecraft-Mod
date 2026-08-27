@@ -58,7 +58,7 @@ public final class FrostArchitectureClientState {
 			activationKey = hotbarKey(hotbarSlot).getKey();
 			lockedYaw = player.getYRot();
 			lockedPitch = player.getXRot();
-			minecraft.setScreen(new FrostArchitecturePauseScreen());
+			RadialScreenTransition.run(() -> minecraft.setScreen(new FrostArchitecturePauseScreen()));
 		}
 	}
 
@@ -96,7 +96,7 @@ public final class FrostArchitectureClientState {
 		activationKey = null;
 		Minecraft minecraft = Minecraft.getInstance();
 		if (minecraft.screen instanceof FrostArchitecturePauseScreen)
-			minecraft.setScreen(null);
+			RadialScreenTransition.run(() -> minecraft.setScreen(null));
 	}
 
 	static void onPauseScreenRemoved(FrostArchitecturePauseScreen screen) {

@@ -18,9 +18,14 @@ void main() {
 
     float rings = 0.0;
     for (int index = 1; index <= 5; index++) {
-        float active = step(float(index), stageCount + 0.001);
+        // Not "active": that is a reserved word in GLSL. NVIDIA's compiler
+        // accepts it as an identifier, AMD's and Intel's reject the shader, and
+        // a core shader that fails to compile takes the whole render pipeline
+        // with it -- the game loads, plays sound and accepts clicks, and draws
+        // nothing at all.
+        float ringOn = step(float(index), stageCount + 0.001);
         float target = 0.20 + float(index) * 0.15;
-        rings += active
+        rings += ringOn
                 * smoothstep(target - 0.035, target, radial)
                 * (1.0 - smoothstep(target, target + 0.035, radial));
     }

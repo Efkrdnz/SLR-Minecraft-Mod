@@ -12,6 +12,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.block.Blocks;
+
+import net.solocraft.SololevelingMod;
 import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -732,14 +734,36 @@ public final class ProceduralDungeonGenerator {
 				}
 			}
 		}
-		Entity boss = bossChoice.type().spawn(level,
-				new BlockPos(offsetX + bossRoom.centerX(), baseY + 1,
-						offsetZ + bossRoom.centerZ()), MobSpawnType.MOB_SUMMONED);
+		// The same vetted placement every ordinary mob gets. The boss used to be
+		// dropped on the raw room centre, and spawn() returns null when that block
+		// is not clear -- so a pillar, a decoration or an uneven floor in the
+		// middle of the boss room meant the gate simply had no boss in it, with
+		// nothing logged and no way for a player to tell.
+		BlockPos bossPos = spawnPoint(level, bossRoom, baseY, offsetX, offsetZ, random);
+		Entity boss = bossChoice.type().spawn(level, bossPos, MobSpawnType.MOB_SUMMONED);
+		if (boss == null) {
+			// Last resort: clear a pocket and place it directly. A gate without its
+			// boss cannot be completed, so an ugly boss beats no boss.
+			bossPos = new BlockPos(offsetX + bossRoom.centerX(), baseY + 1,
+					offsetZ + bossRoom.centerZ());
+			for (int y = 0; y < 4; y++)
+				for (int dx = -1; dx <= 1; dx++)
+					for (int dz = -1; dz <= 1; dz++)
+						level.setBlockAndUpdate(bossPos.offset(dx, y, dz),
+								Blocks.AIR.defaultBlockState());
+			boss = bossChoice.type().spawn(level, bossPos, MobSpawnType.MOB_SUMMONED);
+		}
 		if (boss != null) {
 			tagDungeonMob(boss, dungeonTag, settings.rank, deferredReturnPortal);
 			LowRankDungeonBalance.applyMobBalance(boss, settings.rank);
 			applyBossLevel(boss, bossChoice, random);
 			spawned++;
+		} else {
+			// Still nothing. Say so: a silent failure here is a gate the player
+			// walks around in for ten minutes looking for a fight.
+			SololevelingMod.LOGGER.error(
+					"Dungeon boss {} could not be spawned in the {} boss room at {}",
+					bossChoice.type(), settings.rank, bossPos);
 		}
 		return spawned;
 	}

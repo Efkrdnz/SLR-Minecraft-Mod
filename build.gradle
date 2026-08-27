@@ -656,6 +656,14 @@ tasks.register('testHunterClassRegistryRegression', JavaExec) {
     mainClass.set('net.solocraft.util.HunterClassRegistryRegression')
 }
 
+tasks.register('testShaderReservedWordRegression', JavaExec) {
+    group = 'verification'
+    description = 'Refuses GLSL reserved words used as identifiers in core shaders.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.ShaderReservedWordRegression')
+}
+
 tasks.register('testSkillPointEconomyRegression', JavaExec) {
     group = 'verification'
     description = 'Runs skill-point payout, boss-tier band, and stat conversion regressions.'
@@ -725,6 +733,7 @@ tasks.named('check') {
 			'testDamageNumberRegression',
 			'testAbilityIconRegression',
 			'testNaturalGateAndRewardRegression',
+			'testShaderReservedWordRegression',
 			'testSkillPointEconomyRegression',
 			'testHunterClassRegistryRegression',
 			'testAddonApiSurfaceRegression',

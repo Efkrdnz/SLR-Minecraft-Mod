@@ -76,6 +76,7 @@ public final class AddonApiSurfaceRegression {
 		jobChangeGeneratesGroundBeforeDropping();
 		rulersAuthorityIsCommandOnly();
 		ourExplosionsSpareDroppedItems();
+		dungeonBossIsAlwaysPlaced();
 
 		System.out.println("Addon API surface regression checks passed.");
 	}
@@ -550,6 +551,34 @@ public final class AddonApiSurfaceRegression {
 					procedure + " must attribute its explosion, or the item guard "
 							+ "cannot tell the explosion is ours");
 		}
+	}
+
+	/**
+	 * A gate must never generate without its boss.
+	 *
+	 * <p>The boss was dropped on the raw centre of its room while every ordinary
+	 * mob went through a vetted spawn point. {@code EntityType.spawn} returns null
+	 * when the block is not clear, so a pillar or an uneven floor in the middle of
+	 * the boss room produced a gate with nothing to fight -- no error, no log, and
+	 * no way for the player to know the dungeon was unfinishable.
+	 */
+	private static void dungeonBossIsAlwaysPlaced() throws IOException {
+		Path generator = Path.of("src", "main", "java", "net", "solocraft",
+				"dungeon", "ProceduralDungeonGenerator.java");
+		String source = Files.readString(generator).replace("\r\n", "\n");
+
+		int at = source.indexOf("BossChoice bossChoice = pickBoss(");
+		expect(at >= 0, "The boss spawn block must still exist");
+		String block = source.substring(at);
+
+		expect(block.contains("spawnPoint(level, bossRoom, baseY, offsetX, offsetZ, random)"),
+				"The boss must use the same vetted spawn point as ordinary mobs, not "
+						+ "the raw room centre");
+		expect(block.contains("if (boss == null)"),
+				"A failed boss spawn must be retried, not silently accepted");
+		expect(block.contains("LOGGER.error"),
+				"A boss that still cannot be placed must be reported; a silent failure "
+						+ "is a gate the player cannot complete");
 	}
 
 	private static String read(String... parts) throws IOException {

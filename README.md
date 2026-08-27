@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Minecraft-1.21.1-62B47A" alt="Minecraft 1.21.1">
   <img src="https://img.shields.io/badge/NeoForge-21.1.244-EF7C35" alt="NeoForge 21.1.244">
-  <img src="https://img.shields.io/badge/Version-1.3.1-3F88C5" alt="Version 1.3.1">
+  <img src="https://img.shields.io/badge/Version-1.3.2-3F88C5" alt="Version 1.3.2">
   <img src="https://img.shields.io/badge/Status-In_Development-8A5CF5" alt="In development">
 </p>
 
@@ -48,7 +48,7 @@ The mod is still in active development. Some parts are polished and some are sti
 
 1. Install [NeoForge 21.1.244](https://neoforged.net) for Minecraft 1.21.1.
 2. Install GeckoLib 4.9.2 for NeoForge 1.21.1.
-3. Place `SLR1.3.1-neoforge-1.21.1.jar` and the GeckoLib jar in your `mods` folder.
+3. Place `SLR1.3.2-neoforge-1.21.1.jar` and the GeckoLib jar in your `mods` folder.
 4. Start Minecraft with the NeoForge profile.
 
 For multiplayer, the server and every player need the same mod and dependency versions.
@@ -125,7 +125,7 @@ On Linux or macOS, use `./gradlew` instead of `.\gradlew.bat`.
 The finished mod is written to:
 
 ```text
-build/libs/SLR1.3.1-neoforge-1.21.1.jar
+build/libs/SLR1.3.2-neoforge-1.21.1.jar
 ```
 
 To start a development server or run the checks separately:

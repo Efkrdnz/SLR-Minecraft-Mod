@@ -42,12 +42,18 @@ public class OverlayPanelWelcomeOverlay {
 			y = entity.getY();
 			z = entity.getZ();
 		}
+		// The alpha is read off the player, so there has to be one.
+		if (entity == null)
+			return;
+		float alpha = (float) (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).overlay_alpha_welcome;
+		if (alpha <= 0.0F)
+			return;
 		RenderSystem.disableDepthTest();
 		RenderSystem.depthMask(false);
 		RenderSystem.enableBlend();
 		RenderSystem.setShader(GameRenderer::getPositionTexShader);
 		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-		RenderSystem.setShaderColor(1, 1, 1, (float) (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).overlay_alpha_welcome);
+		RenderSystem.setShaderColor(1, 1, 1, alpha);
 		if (OverlayPanelWelcomeConditionProcedure.execute(entity)) {
 			event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/notice.png"), w / 2 + -8, h / 2 + -68, 0, 0, 16, 16, 16, 16);
 			event.getGuiGraphics().blit(ResourceLocation.parse("sololeveling:textures/screens/panel_rework_empty_small.png"), w / 2 + -96, h / 2 + -103, 0, 0, 200, 160, 200, 160);
@@ -58,7 +64,10 @@ public class OverlayPanelWelcomeOverlay {
 		RenderSystem.defaultBlendFunc();
 		RenderSystem.enableDepthTest();
 		RenderSystem.disableBlend();
-		RenderSystem.setShaderColor(1, 1, 1, (float) (entity.getCapability(SololevelingModVariables.PLAYER_VARIABLES_CAPABILITY, null).orElse(new SololevelingModVariables.PlayerVariables())).overlay_alpha_welcome);
+		// Opaque white, not this overlay's alpha. Restoring the alpha it drew
+		// with left every later draw at that alpha, so a hidden overlay -- alpha
+		// zero -- made the next screen render completely invisible.
+		RenderSystem.setShaderColor(1, 1, 1, 1);
 	}
 
 	private static boolean legacyWelcomeOverlayDisabled() {

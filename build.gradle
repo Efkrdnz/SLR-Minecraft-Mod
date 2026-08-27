@@ -656,6 +656,14 @@ tasks.register('testHunterClassRegistryRegression', JavaExec) {
     mainClass.set('net.solocraft.util.HunterClassRegistryRegression')
 }
 
+tasks.register('testOverlayRenderStateRegression', JavaExec) {
+    group = 'verification'
+    description = 'Refuses HUD overlays that leave the shader colour tinted.'
+    dependsOn 'testClasses'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass.set('net.solocraft.util.OverlayRenderStateRegression')
+}
+
 tasks.register('testShaderReservedWordRegression', JavaExec) {
     group = 'verification'
     description = 'Refuses GLSL reserved words used as identifiers in core shaders.'
@@ -733,6 +741,7 @@ tasks.named('check') {
 			'testDamageNumberRegression',
 			'testAbilityIconRegression',
 			'testNaturalGateAndRewardRegression',
+			'testOverlayRenderStateRegression',
 			'testShaderReservedWordRegression',
 			'testSkillPointEconomyRegression',
 			'testHunterClassRegistryRegression',
